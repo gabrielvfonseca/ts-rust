@@ -194,7 +194,19 @@ pub struct NodeBindRecords {
     symbol_slots: Vec<u32>,
     /// True from the start of the bind to the install.
     pending: bool,
+    /// Test builds only: the bind panics when it has written this many
+    /// symbols (`TEST_PANIC_IN_BIND`).
+    #[cfg(test)]
+    panic_at_symbols: Option<usize>,
 }
+
+/// Test builds only: `Some((file, symbols))` makes the next bind of file
+/// index `file` panic in the binder when it has written `symbols` symbols
+/// into the node records (`NodeBindRecords::set_symbol`). The bind that
+/// takes it sets it back to `None`, so only that bind panics.
+#[cfg(test)]
+pub(crate) static TEST_PANIC_IN_BIND: std::sync::Mutex<Option<(usize, usize)>> =
+    std::sync::Mutex::new(None);
 
 impl Default for NodeBindRecords {
     fn default() -> Self {
@@ -205,6 +217,8 @@ impl Default for NodeBindRecords {
             extras: Vec::new(),
             symbol_slots: Vec::new(),
             pending: false,
+            #[cfg(test)]
+            panic_at_symbols: None,
         }
     }
 }
@@ -239,6 +253,19 @@ impl NodeBindRecords {
             extras: Vec::with_capacity(slots / 16 + 1),
             symbol_slots: Vec::with_capacity(slots / 8 + 1),
             pending: true,
+            #[cfg(test)]
+            panic_at_symbols: {
+                let mut hook = TEST_PANIC_IN_BIND
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                match *hook {
+                    Some((hook_file, symbols)) if hook_file == file => {
+                        *hook = None;
+                        Some(symbols)
+                    }
+                    _ => None,
+                }
+            },
         }
     }
 
@@ -257,6 +284,13 @@ impl NodeBindRecords {
         if self.records.set_symbol(index, symbol) {
             self.symbol_slots
                 .push(u32::try_from(index).expect("slot index"));
+            #[cfg(test)]
+            if self.panic_at_symbols == Some(self.symbol_slots.len()) {
+                panic!(
+                    "test: a bind panics after it wrote {} symbols",
+                    self.symbol_slots.len()
+                );
+            }
         }
     }
 
@@ -2494,5 +2528,195 @@ mod tests {
             again.node_bind.compact().parts() == parts.parts(),
             "a bind after the reset gives other data"
         );
+    }
+
+    /// The binder data of one file of a program (`program_bind_data`).
+    /// Symbols are places (`place`), flow nodes and nodes are their indexes
+    /// in the file.
+    #[derive(Debug, PartialEq)]
+    struct FileBindData {
+        /// Each slot's record: symbol, Go `node.Flags` and `bind` word.
+        records: Vec<Option<(Option<usize>, NodeFlags, u32)>>,
+        /// Each extras entry: local symbol, locals (name and symbol), next
+        /// container, flow node, end flow node, return flow node.
+        #[allow(clippy::type_complexity)]
+        extras: Vec<(
+            Option<usize>,
+            Vec<(String, usize)>,
+            Option<usize>,
+            Option<usize>,
+            Option<usize>,
+            Option<usize>,
+        )>,
+        flow_nodes: usize,
+    }
+
+    /// The binder data of each file of the current program `program`, which
+    /// is bound. A symbol is given as its place among the lineage symbols
+    /// from the first symbol of the program, as in the test
+    /// `a_bind_that_gives_a_node_id_on_a_bind_thread_matches_the_serial_bind`
+    /// (program.rs): two loads of the same files then give the same data
+    /// when they bound the same way.
+    fn program_bind_data(program: &'static crate::core::GoProgram) -> Vec<FileBindData> {
+        let symbols = crate::program::bound_symbols();
+        let files: Vec<usize> = program
+            .source_files()
+            .map(|f| f.root.file_index())
+            .collect();
+        let ids = files.iter().flat_map(|&file| {
+            let records = crate::ast::bind_records(file);
+            (0..records.len()).filter_map(move |index| {
+                let (symbol, ..) = records.node_fields(index)?;
+                symbol.is_some().then_some(symbol.0)
+            })
+        });
+        let first = ids.min().expect("the program has symbols");
+        let place = |symbol: SymbolId| {
+            symbol.is_some().then(|| {
+                assert!(
+                    !crate::core::is_own_index(symbol.0),
+                    "symbol {} is in an odd chunk",
+                    symbol.0
+                );
+                (first..symbol.0)
+                    .filter(|&i| !crate::core::is_own_index(i))
+                    .count()
+            })
+        };
+        let flow = |flow: FlowNodeId| flow.is_some().then(|| flow.local_index());
+        files
+            .into_iter()
+            .map(|file| {
+                let go_file = crate::ast::go_file(file);
+                let records = crate::ast::bind_records(file);
+                let records = (0..records.len())
+                    .map(|index| {
+                        let (symbol, flags, word) = records.node_fields(index)?;
+                        Some((place(symbol), flags, word))
+                    })
+                    .collect();
+                let extras = go_file
+                    .node_bind
+                    .get()
+                    .expect("file is bound")
+                    .extras()
+                    .iter()
+                    .map(|extra| {
+                        let locals = symbols
+                            .iter(extra.locals)
+                            .map(|(name, symbol)| (name.to_string(), place(symbol).unwrap()))
+                            .collect();
+                        (
+                            place(extra.local_symbol),
+                            locals,
+                            (!extra.next_container.is_nil())
+                                .then(|| extra.next_container.node_id().index()),
+                            flow(extra.flow_node),
+                            flow(extra.end_flow_node),
+                            flow(extra.return_flow_node),
+                        )
+                    })
+                    .collect();
+                let flow_nodes = go_file.flow_nodes.get().expect("file is bound").len();
+                FileBindData {
+                    records,
+                    extras,
+                    flow_nodes,
+                }
+            })
+            .collect()
+    }
+
+    /// R219 reviewer item b: a bind that panics in the binder after it wrote
+    /// records, on a bind thread (`program::run_bind_link`). The binder
+    /// unwinds, so its records go back to the parse state
+    /// (`NodeBindRecords` drop). `bind_all` then binds that file and the
+    /// files after it serially, and the binder data of every file is that of
+    /// a serial bind with no panic.
+    #[test]
+    fn a_bind_that_panics_on_a_bind_thread_rebinds_as_a_clean_serial_bind() {
+        let dir = std::env::temp_dir().join(format!("ts_goport_bind_panic_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let files = [
+            ("a.ts", "export const a = 1;\n"),
+            (
+                "b.ts",
+                "export class C { x = 1; m() { return this.x; } }\n\
+                 export function f(n: number) { if (n) { return n; } }\n\
+                 namespace N { export const v = 1; }\n\
+                 outer: for (const i of [1]) { break outer; }\n\
+                 export let y = f(1) ?? N.v;\n",
+            ),
+            (
+                "c.ts",
+                "import { C } from \"./b\";\nexport const c = new C().m();\n",
+            ),
+            (
+                "d.ts",
+                "export interface I { m(): this; }\n\
+                 export function g(this: I) { return this; }\n",
+            ),
+            ("e.ts", "export const e = async () => 1;\n"),
+        ];
+        for (name, text) in files {
+            std::fs::write(dir.join(name), text).unwrap();
+        }
+        std::fs::write(
+            dir.join("tsconfig.json"),
+            r#"{ "compilerOptions": { "noLib": true, "types": [] },
+                 "files": ["a.ts", "b.ts", "c.ts", "d.ts", "e.ts"] }"#,
+        )
+        .unwrap();
+        let config = dir.join("tsconfig.json");
+        // Loads and binds the program on `threads` bind threads, each load
+        // on a new thread. With `panic_after`, the first bind of b.ts panics
+        // when it has written that many symbols. Returns the binder data,
+        // whether the panic hook is still set, and the indexes of the files
+        // that `bind_all` bound serially.
+        let bind = |threads: usize, panic_after: Option<usize>| {
+            let config = config.clone();
+            std::thread::spawn(move || {
+                crate::program::TEST_BIND_THREADS.set(Some(threads));
+                let program = crate::program::try_load_version(&config.to_string_lossy(), |_| {})
+                    .unwrap_or_else(|e| panic!("cannot load {}: {e}", config.display()));
+                let _program = crate::core::enter_program(Some(program));
+                let roots: Vec<Node> = program.source_files().map(|f| f.root).collect();
+                if let Some(symbols) = panic_after {
+                    *TEST_PANIC_IN_BIND.lock().unwrap() = Some((roots[1].file_index(), symbols));
+                }
+                crate::program::bind_all();
+                let hook_left = TEST_PANIC_IN_BIND.lock().unwrap().take().is_some();
+                let serial_binds: Vec<usize> = crate::program::TEST_SERIAL_BINDS
+                    .take()
+                    .into_iter()
+                    .map(|root| roots.iter().position(|&r| r == root).unwrap())
+                    .collect();
+                (program_bind_data(program), hook_left, serial_binds)
+            })
+            .join()
+            .unwrap()
+        };
+        let clean = bind(1, None);
+        let rebound = bind(4, Some(4));
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(clean.2, [0, 1, 2, 3, 4], "a serial bind binds every file");
+        assert!(!rebound.1, "the bind of b.ts did not take the panic hook");
+        // The bind threads bind a.ts. The bind of b.ts panics there, so
+        // bind_all binds b.ts and the files after it serially.
+        assert_eq!(
+            rebound.2,
+            [1, 2, 3, 4],
+            "b.ts and the files after it bind serially"
+        );
+        assert!(
+            clean.0[1]
+                .records
+                .iter()
+                .flatten()
+                .any(|&(_, _, word)| word != 0)
+                && !clean.0[1].extras.is_empty(),
+            "b.ts has flow nodes and extras"
+        );
+        assert_eq!(rebound.0, clean.0);
     }
 }

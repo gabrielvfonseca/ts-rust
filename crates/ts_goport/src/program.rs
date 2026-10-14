@@ -1908,12 +1908,12 @@ thread_local! {
     /// (`bind_thread_count`), in place of `GOPORT_BIND_THREADS` and the
     /// thread budget. A test sets it to compare a parallel bind with a
     /// serial one on any machine.
-    static TEST_BIND_THREADS: std::cell::Cell<Option<usize>> =
+    pub(crate) static TEST_BIND_THREADS: std::cell::Cell<Option<usize>> =
         const { std::cell::Cell::new(None) };
     /// The files that `bind_all` bound serially on this thread, in order:
     /// every file of a serial bind, and after a parallel bind the files
     /// from the first one that it did not bind (`bind_files_parallel`).
-    static TEST_SERIAL_BINDS: std::cell::RefCell<Vec<Node>> =
+    pub(crate) static TEST_SERIAL_BINDS: std::cell::RefCell<Vec<Node>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
