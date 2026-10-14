@@ -725,13 +725,27 @@ impl Binder {
 
     /// Go `node.Flags &^= flags`.
     ///
-    /// PORT: only binder-added bits can be cleared: a parser flag stays.
-    /// The binder only clears flags it sets itself (`ExportContext`, ...),
-    /// so this matches Go.
+    /// PORT: only binder-added bits are cleared: a parser flag stays, so the
+    /// reset of a bind that is not installed (`BindRecords::reset`) gives
+    /// the parse state back. This clears what Go clears: Go clears
+    /// ExportContext on a SourceFile or ModuleDeclaration (binder.go:893),
+    /// ReachabilityAndEmitFlags and ContainsThis on a control flow container
+    /// (:1554) and ContainsThis on an interface (:1600). The parser sets
+    /// none of these bits on those nodes. Of these bits it sets only
+    /// IdentifierIsInJSDocNamespace (the HasAsyncFunctions bit), on an
+    /// Identifier (parser/jsdoc.go:1013), which is never a container.
     pub fn remove_node_flags(&mut self, node: Node, flags: NodeFlags) {
         let index = self.bind_index(node);
-        let clear = flags.without(self.node_bind.parser_flags[index]);
-        self.node_bind.records.clear_flags(index, clear);
+        let parser_flags = self.node_bind.parser_flags[index];
+        debug_assert!(
+            !flags.intersects(parser_flags),
+            "binder clears parser flags {:#x} of {:?}",
+            (flags & parser_flags).bits(),
+            node.kind()
+        );
+        self.node_bind
+            .records
+            .clear_flags(index, flags.without(parser_flags));
     }
 
     /// Go `*ast.FlowNode` field reads.
