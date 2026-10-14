@@ -67,9 +67,12 @@ export async function tsc(args, options = {}) {
     }
     const worker = new Worker(new URL("./node-worker.js", import.meta.url), {
         workerData: request,
-        execArgv: process.execArgv.filter((arg, index, args) =>
-            arg !== "--input-type" && !arg.startsWith("--input-type=") && args[index - 1] !== "--input-type"
-        ),
+        // No Node options: the worker runs only this package's files, which
+        // need none. The parent's options can hold ones that a worker
+        // refuses: `--input-type` (ERR_INPUT_TYPE_NOT_ALLOWED, also when
+        // inherited), and the process options that `node --test` gives its
+        // test processes (ERR_WORKER_INVALID_EXEC_ARGV).
+        execArgv: [],
         resourceLimits: { stackSizeMb: options.stackSizeMb ?? STACK_SIZE_MB },
         stdout: !options.stream,
         stderr: !options.stream,
