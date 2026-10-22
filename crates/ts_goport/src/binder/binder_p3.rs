@@ -1123,7 +1123,7 @@ impl Binder {
     }
 }
 
-// Go: binder/binder.go:2559 SetValueDeclaration
+// Go: binder/binder.go:2560 SetValueDeclaration
 pub fn set_value_declaration(symbols: &mut SymbolArena, symbol: SymbolId, node: Node) {
     if takes_value_declaration(symbols.sym(symbol).value_declaration, node) {
         symbols.sym_mut(symbol).value_declaration = node;
@@ -1132,7 +1132,7 @@ pub fn set_value_declaration(symbols: &mut SymbolArena, symbol: SymbolId, node: 
 
 /// The test of Go `SetValueDeclaration`: whether `node` replaces the value
 /// declaration `value_declaration` of its symbol.
-// Go: binder/binder.go:2559 SetValueDeclaration
+// Go: binder/binder.go:2560 SetValueDeclaration
 // PERF: reads each node kind once (Go reads `Kind` fields; a port kind read
 // goes through the node store).
 #[inline]
@@ -1518,15 +1518,15 @@ pub fn is_top_level_logical_expression(node: Node) -> bool {
         && !(is_optional_chain(parent) && parent.expression() == node)
 }
 
-// Go: binder/binder.go:2795 isAssignmentDeclaration
+// Go: binder/binder.go:2796 isAssignmentDeclaration
 pub fn is_assignment_declaration(decl: Node) -> bool {
     is_assignment_declaration_kind(decl.kind())
 }
 
 /// `is_assignment_declaration` of a node of kind `kind`: binary, access,
 /// identifier or call expression.
-// Go: binder/binder.go:2795 isAssignmentDeclaration
-// Go: ast/utilities.go:479 IsAccessExpression
+// Go: binder/binder.go:2796 isAssignmentDeclaration
+// Go: ast/utilities.go:528 IsAccessExpression
 #[inline]
 fn is_assignment_declaration_kind(kind: SyntaxKind) -> bool {
     matches!(
@@ -1539,13 +1539,13 @@ fn is_assignment_declaration_kind(kind: SyntaxKind) -> bool {
     )
 }
 
-// Go: binder/binder.go:2799 isEffectiveModuleDeclaration
+// Go: binder/binder.go:2800 isEffectiveModuleDeclaration
 pub fn is_effective_module_declaration(node: Node) -> bool {
     is_effective_module_declaration_kind(node.kind())
 }
 
 /// `is_effective_module_declaration` of a node of kind `kind`.
-// Go: binder/binder.go:2799 isEffectiveModuleDeclaration
+// Go: binder/binder.go:2800 isEffectiveModuleDeclaration
 #[inline]
 fn is_effective_module_declaration_kind(kind: SyntaxKind) -> bool {
     matches!(kind, SyntaxKind::ModuleDeclaration | SyntaxKind::Identifier)

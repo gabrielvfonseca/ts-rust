@@ -4510,7 +4510,7 @@ pub fn set_file_store_lazy_js_doc(
     with_store_mut(file, |s| s.lazy_js_doc = lazy);
 }
 
-// Go: ast/ast.go:2745 (*SourceFile).resolveJSDoc
+// Go: ast/ast.go:2672 (*SourceFile).resolveJSDoc
 /// Go `node.JSDoc(file)` of a store file whose program is not installed
 /// yet: the cache, then, in a lazy file (`set_file_store_lazy_js_doc`), Go
 /// `parseJSDocForNode`, whose result the cache keeps. None on a cache miss
