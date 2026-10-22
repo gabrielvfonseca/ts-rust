@@ -212,8 +212,8 @@ fn build_task_with_syntax_errors_finishes_when_its_emit_ends() {
 /// modules (the repro of #88), with the lib check. The task's check and
 /// emit start with its program and end before the task finishes, so
 /// `EmitFilesAndReportErrors` waits for neither. Its check time must still
-/// be the time to the end of the check, as in `tsc -p` (build/build_task.rs
-/// `StartedTimes`): 0.05s on a testbox, where it was 0.000s. Then an
+/// be the time to the end of the check, as in `tsc -p` (`StartedTimes` in
+/// `build/build_task.rs`): 0.05s on a testbox, where it was 0.000s. Then an
 /// emit-only option change makes `tsc -b` emit every file with every check
 /// cached (Go N: Check time 0.000s, Emit time 0.030s): that emit is emit
 /// time, not check time. With jemalloc (not Windows) `Memory allocs` and
