@@ -88,7 +88,7 @@ pub fn rewrite_file_extension(
     if rewrite.is_identity(use_case_sensitive_file_names) {
         return None;
     }
-    // Go: f.RemoveExtension(suffix).AppendSuffix(rewrite.Target), where the
+    // Go `f.RemoveExtension(suffix).AppendSuffix(rewrite.Target)`, where the
     // suffix is the matched end of the path.
     let stem = &file[..file.len() - rewrite.source.len()];
     Some(format!("{stem}{}", rewrite.target))
