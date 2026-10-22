@@ -93,7 +93,18 @@ fn join_errors<const N: usize>(errs: [Option<GoError>; N]) -> GoError {
 
 /// Go `&PathError{Op: op, Path: path, Err: errno}.Error()`.
 fn path_error(op: &str, path: &str, err: &std::io::Error) -> GoError {
-    errors::new(format!("{op} {path}: {}", io_error_text(err)))
+    errors::new(format!("{op} {path}: {}", errno_text(err)))
+}
+
+/// The text of Go's errno for a failed call.
+/// PORT: std fails with no errno and `InvalidInput` where Go's syscall
+/// gives EINVAL: a path with a NUL byte (Go `syscall.BytePtrFromString`)
+/// or a socket name that is too long.
+fn errno_text(err: &std::io::Error) -> String {
+    match err.raw_os_error() {
+        None if err.kind() == ErrorKind::InvalidInput => "invalid argument".to_string(),
+        _ => io_error_text(err),
+    }
 }
 
 // Go `os.Mkdir(name, perm)` (go1.27.1 os/file.go): the mode is masked by
@@ -206,15 +217,10 @@ fn listen(path: &str) -> Result<UnixPipeListener, GoError> {
         // fails with no errno, where Go's `syscall.Bind` gives EINVAL. A
         // `socket` or `listen` failure (and the port's `set_nonblocking`)
         // also prints "bind" here.
-        Err(err) => {
-            let text = match err.raw_os_error() {
-                None if err.kind() == std::io::ErrorKind::InvalidInput => {
-                    "invalid argument".to_string()
-                }
-                _ => io_error_text(&err),
-            };
-            Err(errors::new(format!("listen unix {path}: bind: {text}")))
-        }
+        Err(err) => Err(errors::new(format!(
+            "listen unix {path}: bind: {}",
+            errno_text(&err)
+        ))),
     }
 }
 
@@ -520,6 +526,18 @@ mod tests {
             Err(err) if err.kind() == ErrorKind::NotFound => {}
             other => panic!("socket directory still exists after close: {other:?}"),
         }
+    }
+
+    // PORT: no Go test. A NUL byte in the path is EINVAL in Go
+    // (`syscall.BytePtrFromString`); std fails with no errno. Go N' text:
+    // w2/l5-skeptic/probe/nul-go-Np.txt.
+    #[test]
+    fn nul_byte_in_pipe_path_is_einval() {
+        let err = new_pipe_transport("a\0b").err().expect("a NUL byte fails");
+        assert_eq!(
+            err.error(),
+            "create private socket directory: mkdir a\0b: invalid argument"
+        );
     }
 
     // Go: ipc/transport_unix_test.go:47 TestPipeTransportPermissions
