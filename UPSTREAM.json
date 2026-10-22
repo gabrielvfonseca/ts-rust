@@ -153,6 +153,22 @@
         "build": "scripts/upstream/record.py typesyms: go build -overlay with typesyms/tools/typesymdump-main-fed0bf24149f.go (sha256 b9163914f101): the 16c25522e123 main for typed paths (#64159): NewCompilerHost without cwd, GetParsedCommandLineOfConfigFile with a RootedFilePath and the vfs.FS, PathKey and FileName().AsString(); module path rewritten to github.com/microsoft/TypeScript/tsc"
       },
       "note": "Bump D target N': the gitHead of npm typescript@7.1.0-dev.20261008.1 (#64686). origin/main c0ca4744c917 adds only the API change #64681 (bump E). Not current yet."
+    },
+    "3e9236361fa9": {
+      "repo": "microsoft/TypeScript",
+      "commit": "3e9236361fa97a9e6c685f4833ac457ae2d8c50a",
+      "date": "2026-10-19",
+      "layout": "typescript",
+      "subdir": "tsc",
+      "goCheckout": "/home/theo/.explore/repos/microsoft__TypeScript@3e9236361fa9/tsc",
+      "oracle": {
+        "path": "/home/theo/.local/bin/tsgo-oracle-3e9236361fa9",
+        "sha256": "204b0db3bfbb8504971368209ad73a00dc4c002fab804d87d7cad6b4fbf410c0",
+        "go": "go1.27.1",
+        "version": "Version 7.1.0-beta",
+        "build": "CGO_ENABLED=0 GOAMD64=v1 go build ./cmd/tsc (in tsc/)"
+      },
+      "note": "Bump E target N': the gitHead of npm typescript@7.1.0-beta, the release-7.1 merge of main d7d39da5c4 (#64874); tsc/ equals d7d39da5c4 except internal/core/version.go. Not current yet."
     }
   }
 }
