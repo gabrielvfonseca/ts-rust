@@ -24,7 +24,7 @@ pub struct BuildOptions {
     pub clean: Tristate,
 }
 
-// Go: tsoptions/parsinghelpers.go:299 buildOptionsParser
+// Go: tsoptions/parsinghelpers.go:322 buildOptionsParser
 // PORT: the embedded Go `*core.BuildOptions` is a mutable borrow, as in
 // `CompilerOptionsParser`.
 pub struct BuildOptionsParser<'a> {
@@ -32,17 +32,17 @@ pub struct BuildOptionsParser<'a> {
 }
 
 impl OptionParser for BuildOptionsParser<'_> {
-    // Go: tsoptions/parsinghelpers.go:303 (*buildOptionsParser).ParseOption
+    // Go: tsoptions/parsinghelpers.go:326 (*buildOptionsParser).ParseOption
     fn parse_option(&mut self, key: &str, value: CompilerOptionsValue) -> Vec<Diagnostic> {
         parse_build_options(key, value, self.build_options)
     }
 
-    // Go: tsoptions/parsinghelpers.go:307 (*buildOptionsParser).UnknownOptionDiagnostic
+    // Go: tsoptions/parsinghelpers.go:330 (*buildOptionsParser).UnknownOptionDiagnostic
     fn unknown_option_diagnostic(&self) -> &'static Message {
         extra_key_diagnostics("buildOptions").expect("known key")
     }
 
-    // Go: tsoptions/parsinghelpers.go:311 (*buildOptionsParser).UnknownDidYouMeanDiagnostic
+    // Go: tsoptions/parsinghelpers.go:334 (*buildOptionsParser).UnknownDidYouMeanDiagnostic
     fn unknown_did_you_mean_diagnostic(&self) -> &'static Message {
         extra_key_did_you_mean_diagnostics("buildOptions").expect("known key")
     }

@@ -8,15 +8,17 @@
 //! PORT: concurrency. Go runs `buildOrCleanProject` for the tasks of the
 //! build order (`order`, or the part of it that an API build asks for,
 //! ts#64158) on up to `numRoutines` goroutines (`rangeTasks`); each
-//! goroutine takes the next task, waits for its upstream tasks, builds, and
-//! closes the task's `built` channel. One more goroutine reports the tasks
-//! in the same order, each when it is built (ts#64220). Go computes
-//! `scheduleOrder` with the graph, but since ts#64158 the builders take the
-//! tasks in build order. Tasks here are
+//! goroutine takes the next task of the schedule order, waits for its
+//! upstream tasks, builds, and closes the task's `built` channel. The
+//! schedule order is the build order stably sorted by dependency depth
+//! (`scheduleOrder` of the graph, or `computeScheduleOrder` of the part
+//! that an API build asks for, ts#64615). One more goroutine reports the
+//! tasks in build order, each when it is built (ts#64220). Tasks here are
 //! `Rc<RefCell<BuildTask>>` on this thread, which makes, emits and releases
 //! the program of every task (see build_task.rs). `build_all_tasks` keeps
 //! the Go schedule: at most `numRoutines` tasks are taken and not yet
-//! built, and tasks are taken and report in build order.
+//! built, tasks are taken in schedule order, and they report in build
+//! order.
 //! A taken task starts when its upstream tasks are done, and a task that
 //! compiles makes its program at once (`build_project_start`) and starts
 //! its check on the program's checker threads, so the checkers of the
@@ -28,7 +30,7 @@
 //! (`build_project_finish`), in the order their check and emit end, as each
 //! Go builder writes when its own task ends. PORT (determinism): when tasks
 //! can see each other's writes (shared_outputs.rs), all tasks finish in
-//! build order instead. Tasks start before a started task writes, so a task
+//! schedule order instead. Tasks start before a started task writes, so a task
 //! that runs beside others in Go reads the file system before they write
 //! their outputs. Every task uses `o.host` and its caches (parsed `.d.ts` and
 //! `.json` files, configs, the cached file system, the mtimes), as in Go.
@@ -45,7 +47,7 @@
 //! `--extendedDiagnostics` statistics.
 //!
 //! PORT: testing. `opts.testing` is `None` outside tests. A test compiles
-//! each started task to the end at once, in build order, so the one test
+//! each started task to the end at once, in schedule order, so the one test
 //! file system and clock see one ordered sequence (see `build_all_tasks`).
 
 use crate::contentmapper;
@@ -248,7 +250,7 @@ impl Orchestrator {
         &self.schedule_order
     }
 
-    // Go: build/orchestrator.go:127 (*Orchestrator).computeScheduleOrder (ts#64220)
+    // Go: build/orchestrator.go:127 (*Orchestrator).computeScheduleOrder (ts#64220, ts#64615)
     // computeScheduleOrder sorts the build order by dependency depth (projects with no
     // upstream first, then their dependents, and so on). Builders take projects from this
     // order and block until upstream projects are done, so with the plain depth-first order
@@ -259,16 +261,17 @@ impl Orchestrator {
     // wait on that project while a later project's upstream has already finished. The stable
     // sort preserves the original order within a depth, and reporting still follows Order().
     // PORT: Go keys `depths` by `*BuildTask`; the key is the task's `Rc`
-    // pointer. A missing key is Go's zero depth.
-    fn compute_schedule_order(&self) -> Vec<String> {
+    // pointer. A missing key (an upstream task outside `order`) is Go's zero
+    // depth. Go `order` is a `[]*BuildTask`; here it holds the config names.
+    fn compute_schedule_order(&self, order: &[String]) -> Vec<String> {
         struct ScheduleEntry {
             config: String,
             depth: i32,
         }
-        let mut entries: Vec<ScheduleEntry> = Vec::with_capacity(self.order.len());
+        let mut entries: Vec<ScheduleEntry> = Vec::with_capacity(order.len());
         let mut depths: FxHashMap<*const RefCell<BuildTask>, i32> =
-            FxHashMap::with_capacity_and_hasher(self.order.len(), Default::default());
-        for config in &self.order {
+            FxHashMap::with_capacity_and_hasher(order.len(), Default::default());
+        for config in order {
             let task = self.get_task(&self.to_path(config));
             let mut depth = 0;
             for upstream in &task.borrow().up_stream {
@@ -496,7 +499,7 @@ impl Orchestrator {
         self.generate_graph(Some(&tasks));
     }
 
-    // Go: build/orchestrator.go:260 (*Orchestrator).GenerateGraph (ts#64220, ts#64158)
+    // Go: build/orchestrator.go:260 (*Orchestrator).GenerateGraph (ts#64220, ts#64158, ts#64615)
     pub fn generate_graph(&mut self, old_tasks: Option<&FxHashMap<Path, Rc<RefCell<BuildTask>>>>) {
         let projects = self.opts.command.resolved_project_paths().to_vec();
         // Parse all config files in parallel
@@ -523,7 +526,7 @@ impl Orchestrator {
                 &mut circularity_stack,
             );
         }
-        self.schedule_order = self.compute_schedule_order();
+        self.schedule_order = self.compute_schedule_order(&self.order);
         if let Some(old_tasks) = old_tasks {
             for (path, old_task) in old_tasks {
                 if self
@@ -839,7 +842,7 @@ impl Orchestrator {
         self.build_or_clean_order(&order).result
     }
 
-    // Go: build/orchestrator.go:869 (*Orchestrator).buildOrCleanOrder (ts#64158)
+    // Go: build/orchestrator.go:869 (*Orchestrator).buildOrCleanOrder (ts#64158, ts#64615)
     fn build_or_clean_order(&mut self, order: &[String]) -> OrchestratorResult {
         if !self.opts.command.build_options.clean.is_true()
             && self.opts.command.build_options.verbose.is_true()
@@ -857,7 +860,15 @@ impl Orchestrator {
         let mut build_result = OrchestratorResult::default();
         if self.errors.is_empty() {
             build_result.statistics.projects = order.len() as i32;
-            self.build_all_tasks(order, &mut build_result);
+            let computed;
+            let schedule_order: &[String] = if order.len() != self.order.len() {
+                computed = self.compute_schedule_order(order);
+                &computed
+            } else {
+                &self.schedule_order
+            };
+            // Builders pick up selected projects in dependency-depth order; reporting preserves the selected build order.
+            self.build_all_tasks(order, schedule_order, &mut build_result);
         } else {
             // Circularity errors prevent any project from being built
             build_result.result.status = ExitStatus::ProjectReferenceCycleOutputsSkipped;
@@ -871,7 +882,7 @@ impl Orchestrator {
         build_result
     }
 
-    // Go: build/orchestrator.go:918 the numRoutines part of (*Orchestrator).rangeTasks
+    // Go: build/orchestrator.go:922 the numRoutines part of (*Orchestrator).rangeTasks
     pub(crate) fn num_routines(&self) -> i64 {
         let mut num_routines = 4;
         if self.opts.command.compiler_options.single_threaded.is_true() {
@@ -882,13 +893,20 @@ impl Orchestrator {
         num_routines
     }
 
-    // Go: build/orchestrator.go:917 (*Orchestrator).rangeTasks over `order`
-    // with build/orchestrator.go:951 (*Orchestrator).buildOrCleanProject, and
-    // the reporting goroutine of build/orchestrator.go:869 buildOrCleanOrder
-    // (ts#64220, ts#64158).
-    // PORT: see the top comment for the schedule. Go `numRoutines <= 0`
+    // Go: build/orchestrator.go:921 (*Orchestrator).rangeTasks over
+    // `scheduleOrder` with build/orchestrator.go:955
+    // (*Orchestrator).buildOrCleanProject, and the reporting goroutine of
+    // build/orchestrator.go:869 buildOrCleanOrder over `order` (ts#64220,
+    // ts#64158, ts#64615).
+    // PORT: see the top comment for the schedule. `schedule_order` holds the
+    // configs of `order`, sorted by dependency depth. Go `numRoutines <= 0`
     // starts no builder, so no task runs; that is kept.
-    fn build_all_tasks(&self, order: &[String], build_result: &mut OrchestratorResult) {
+    fn build_all_tasks(
+        &self,
+        order: &[String],
+        schedule_order: &[String],
+        build_result: &mut OrchestratorResult,
+    ) {
         #[derive(Clone, Copy, PartialEq, Eq)]
         enum State {
             NotTaken,
@@ -904,17 +922,28 @@ impl Orchestrator {
         let clean = self.opts.command.build_options.clean.is_true();
         // PORT: testing (see the top comment)
         let testing = self.opts.testing.is_some();
+        // `paths` and the indices below follow `order`, the report order.
+        // `take_order` holds the same indices in schedule order: the order
+        // in which the builders take the tasks.
         let paths: Vec<Path> = order.iter().map(|c| self.to_path(c)).collect();
-        let pool = self.prefetch_pool.borrow_mut().take();
-        self.host.written.clear();
-        if !clean {
-            *self.build_info_prefetch.borrow_mut() = self.start_build_info_prefetch(&paths, pool);
-        }
         let index_of: FxHashMap<Path, usize> = paths
             .iter()
             .enumerate()
             .map(|(i, p)| (p.clone(), i))
             .collect();
+        let take_order: Vec<usize> = schedule_order
+            .iter()
+            .map(|config| index_of[&self.to_path(config)])
+            .collect();
+        debug_assert_eq!(take_order.len(), paths.len());
+        let pool = self.prefetch_pool.borrow_mut().take();
+        self.host.written.clear();
+        if !clean {
+            // The tasks check their build info in the order they are taken.
+            let take_paths: Vec<Path> = take_order.iter().map(|&i| paths[i].clone()).collect();
+            *self.build_info_prefetch.borrow_mut() =
+                self.start_build_info_prefetch(&take_paths, pool);
+        }
         let mut states = vec![State::NotTaken; paths.len()];
         // PORT: perf. Each checker thread of a compiling task's program
         // drops a `ReadySignal` of the task when the check and emit that it
@@ -933,29 +962,34 @@ impl Orchestrator {
             }
         }
         // PORT: not in Go (determinism). True when the tasks can see each
-        // other's writes (`outputs_overlap`), so they finish in build order.
-        // It is found when the first task compiles: until then every task
-        // was done when it started. With one builder the order is the same.
-        let mut in_build_order = false;
+        // other's writes (`outputs_overlap`), so they finish in schedule
+        // order. It is found when the first task compiles: until then every
+        // task was done when it started. With one builder the order is the
+        // same.
+        let mut in_take_order = false;
         let mut overlap_checked = false;
-        // Tasks taken (Go `currentTaskIndex`), taken and not built, and
-        // reported. The tasks before `next_report` are built.
+        // Tasks taken (Go `currentTaskIndex`, a position in `take_order`),
+        // taken and not built, and reported (a position in `order`). The
+        // tasks at `take_order[..take_built]` are built, and so are the
+        // tasks before `next_report`.
         let mut next_take = 0;
+        let mut take_built = 0;
         let mut in_flight = 0;
         let mut next_report = 0;
         while next_report < paths.len() {
-            // Each free builder takes the next task in order.
-            while in_flight < num_routines && next_take < paths.len() {
-                states[next_take] = State::Waiting;
+            // Each free builder takes the next task in schedule order.
+            while in_flight < num_routines && next_take < take_order.len() {
+                states[take_order[next_take]] = State::Waiting;
                 next_take += 1;
                 in_flight += 1;
             }
             // A taken task starts once its upstream tasks are done
             // (Go `waitOnUpstream`; `cleanProject` does not wait). A task
             // that compiles makes its program now. A built task frees its
-            // builder (Go `close(task.built)`).
+            // builder (Go `close(task.built)`). The taken tasks start in
+            // the order they were taken.
             let mut progressed = false;
-            for index in next_report..next_take {
+            for &index in &take_order[take_built..next_take] {
                 if states[index] != State::Waiting {
                     continue;
                 }
@@ -1002,10 +1036,13 @@ impl Orchestrator {
                 drop(task);
                 if states[index] == State::Compiling && !overlap_checked && num_routines > 1 {
                     overlap_checked = true;
-                    in_build_order = self.outputs_overlap(&paths);
+                    in_take_order = self.outputs_overlap(&paths);
                 }
             }
-            // Tasks report in order, each when it is built.
+            while take_built < next_take && states[take_order[take_built]] == State::Done {
+                take_built += 1;
+            }
+            // Tasks report in build order, each when it is built.
             while next_report < paths.len() && states[next_report] == State::Done {
                 let task = self.get_task(&paths[next_report]);
                 self.report_task(&mut task.borrow_mut(), build_result);
@@ -1016,20 +1053,23 @@ impl Orchestrator {
                 continue;
             }
             // No task can start or report, so a taken task compiles (the
-            // first task that is not built, `next_report`, has its upstream
-            // tasks done). A Go builder writes the outputs of its task
-            // when the task's check ends, and then takes the next task. So
-            // the task whose started check and emit ended first finishes
-            // now: it writes its outputs, and its builder takes the next
-            // task. When the outputs overlap, only the first task that is not
-            // built finishes, as in Go when the tasks end in build order.
-            // When no task can finish yet, this waits for a signal, and frees
-            // a kept released program first.
+            // first task in schedule order that is not built,
+            // `take_order[take_built]`, has its upstream tasks done: they
+            // have a smaller depth, so they come before it). A Go builder
+            // writes the outputs of its task when the task's check ends,
+            // and then takes the next task. So the task whose started check
+            // and emit ended first finishes now: it writes its outputs, and
+            // its builder takes the next task. When the outputs overlap,
+            // only the first task in schedule order that is not built
+            // finishes, as in Go when the tasks end in the order they were
+            // taken. When no task can finish yet, this waits for a signal,
+            // and frees a kept released program first.
+            let first_unbuilt = take_order[take_built];
             let index = loop {
                 while let Ok(index) = ready_calls.try_recv() {
                     signal_arrived(&mut signals, &mut compiled, index);
                 }
-                let can_finish = |&index: &usize| !in_build_order || index == next_report;
+                let can_finish = |&index: &usize| !in_take_order || index == first_unbuilt;
                 if let Some(at) = compiled.iter().position(can_finish) {
                     break compiled.remove(at).expect("the position is in the queue");
                 }
@@ -1063,7 +1103,7 @@ impl Orchestrator {
         self.host.written.clear();
     }
 
-    // Go: build/orchestrator.go:951 (*Orchestrator).buildOrCleanProject,
+    // Go: build/orchestrator.go:955 (*Orchestrator).buildOrCleanProject,
     // after the build (ts#64220).
     fn task_built(&self, task: &mut BuildTask) {
         if self.opts.testing.is_none() {
@@ -1234,12 +1274,12 @@ impl Orchestrator {
         }
     }
 
-    // Go: build/orchestrator.go:968 (*Orchestrator).getWriter with a nil task
+    // Go: build/orchestrator.go:972 (*Orchestrator).getWriter with a nil task
     fn writer(&self) -> Writer {
         self.opts.sys.writer()
     }
 
-    // Go: build/orchestrator.go:975 (*Orchestrator).createBuilderStatusReporter(nil)
+    // Go: build/orchestrator.go:979 (*Orchestrator).createBuilderStatusReporter(nil)
     fn create_builder_status_reporter(&self) -> DiagnosticReporter {
         create_builder_status_reporter(
             self.opts.sys.clone(),
@@ -1250,7 +1290,7 @@ impl Orchestrator {
         )
     }
 
-    // Go: build/orchestrator.go:979 (*Orchestrator).createDiagnosticReporter(nil)
+    // Go: build/orchestrator.go:983 (*Orchestrator).createDiagnosticReporter(nil)
     fn create_diagnostic_reporter(&self) -> DiagnosticReporter {
         create_diagnostic_reporter(
             &*self.opts.sys,
@@ -1260,7 +1300,7 @@ impl Orchestrator {
         )
     }
 
-    // Go: build/orchestrator.go:975 (*Orchestrator).createBuilderStatusReporter(task)
+    // Go: build/orchestrator.go:979 (*Orchestrator).createBuilderStatusReporter(task)
     fn create_task_builder_status_reporter(&self) -> TaskDiagnosticReporter {
         task_reporter(|w| {
             create_builder_status_reporter(
@@ -1273,7 +1313,7 @@ impl Orchestrator {
         })
     }
 
-    // Go: build/orchestrator.go:979 (*Orchestrator).createDiagnosticReporter(task)
+    // Go: build/orchestrator.go:983 (*Orchestrator).createDiagnosticReporter(task)
     fn create_task_diagnostic_reporter(&self) -> TaskDiagnosticReporter {
         task_reporter(|w| {
             create_diagnostic_reporter(
@@ -1437,7 +1477,7 @@ impl BuildInfoPrefetch {
     }
 }
 
-// Go: build/orchestrator.go:983 NewOrchestrator
+// Go: build/orchestrator.go:987 NewOrchestrator
 pub fn new_orchestrator(opts: Options) -> Orchestrator {
     // PORT: Go passes the method value `opts.Sys.FS().DirectoryExists`.
     let fs = opts.sys.fs();
