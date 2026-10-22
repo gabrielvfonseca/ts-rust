@@ -78,13 +78,22 @@ npx tsc-rs -p tsconfig.json
 ```
 
 `tsc-rs` takes the same options as `tsc`. The npm package is `tsc-rs` so that it does not clash
-with the `typescript` package. Each [release](https://github.com/pingdotgg/ts-rust/releases) also
-has a standalone archive per platform: the `tsc` binary with the lib files next to it.
+with the `typescript` package. To use tsc-rs as the `typescript` package (its `tsc` bin, its JS API
+and the TypeScript 7 VS Code extension), install
+[@tsc-rs/typescript](npm/typescript-readme.md) under that name (from the first release after
+0.7.0):
+
+```json
+{ "devDependencies": { "typescript": "npm:@tsc-rs/typescript@<version>" } }
+```
+
+Each [release](https://github.com/pingdotgg/ts-rust/releases) also has a standalone archive per
+platform: the `tsc` binary with the lib files next to it.
 
 Platforms: Linux x64 and arm64 (static, any distribution), macOS arm64, and (from the first
 release after 0.2.0) macOS x64, Windows x64 and Windows arm64.
 
-To use it in VS Code, see the [npm package README](npm/tsc-rs-readme.md#vs-code).
+To use it in VS Code, see [@tsc-rs/typescript](npm/typescript-readme.md#vs-code).
 
 ## Effect diagnostics
 
@@ -123,7 +132,7 @@ goes away when the port moves to a newer pin. tsc-rs 0.3.0 and earlier used the 
 (`typescript@7.1.0-dev.20260929.1`).
 
 - **Same results.** TanStack Query core and Hono check with diagnostics identical to Go's. All
-  184,749 ported Go tests pass. The language server and API answers match Go on the oracle test
+  184,773 ported Go tests pass. The language server and API answers match Go on the oracle test
   sets.
 - **Faster.** On 60 open-source projects, type checking takes about half of Go's time (geometric
   mean). The npm packages from 0.2.0 on are built in CI with PGO but without BOLT (0.1.0 has
