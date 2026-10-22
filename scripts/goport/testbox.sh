@@ -164,10 +164,12 @@ ssh_route() {
   # A host with a / would make rsync copy to a local path.
   [[ -n "$host" && $host != */* && -f "$key" ]] || { echo "no SSH route to $id (host '$host', key $key)" >&2; exit 1; }
   # The CLI saves the testbox's SSH port in connection.json. It is not always 64000: on 2026-10-22 some
-  # testboxes listened on 64001 and 64002, and the fixed port reached another testbox or nothing.
-  local port
+  # testboxes listened on 64001 and 64002, and the fixed port reached another testbox or nothing. The CLI
+  # writes the file only at its first `run` on the testbox, so make one when it is not there yet.
+  local port conn="$HOME/.blacksmith/testboxes/$id/connection.json"
+  [[ -s $conn ]] || retry net blacksmith testbox run --id "$id" true < /dev/null > /dev/null 2>&1 || true
   port="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("ssh_port") or 64000)' \
-    "$HOME/.blacksmith/testboxes/$id/connection.json" 2> /dev/null)" || port=64000
+    "$conn" 2> /dev/null)" || port=64000
   [[ $port =~ ^[0-9]+$ ]] || port=64000
   ssh="ssh -p $port -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o Compression=no -o ConnectTimeout=20"
 }
