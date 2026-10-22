@@ -448,10 +448,28 @@ impl Fs for OsFs {
 /// directory part, a directory that does not open, a failed stat, a path
 /// of `PATH_MAX` bytes or more) is stat'ed by its full path, as `stat`
 /// does, unless an `lstat` finds that its name is a link.
+///
+/// ts#64832: `stat` refuses a network path (no mtime), so this does not
+/// read one either: it gives `Some(None)` for it.
 pub fn os_mod_times_of_non_links<'a>(
     paths: impl IntoIterator<Item = &'a str>,
 ) -> Vec<Option<Option<SystemTime>>> {
-    mod_times(paths)
+    let paths: Vec<&str> = paths.into_iter().collect();
+    if !paths.iter().any(|path| is_network_path(path)) {
+        return mod_times(paths);
+    }
+    let mut local =
+        mod_times(paths.iter().copied().filter(|path| !is_network_path(path))).into_iter();
+    paths
+        .iter()
+        .map(|path| {
+            if is_network_path(path) {
+                Some(None)
+            } else {
+                local.next().expect("one mtime per local path")
+            }
+        })
+        .collect()
 }
 
 /// `os_mod_times_of_non_links`.
@@ -1424,8 +1442,9 @@ mod tests {
     // directory, a time before 1970, a path with no file name, names
     // through 30 directory links that are a chain of 30 file links (more
     // than 40 links) and one file link, and a file through 41 directory
-    // links (ELOOP). The test keeps the name of the removed `os_mod_times`
-    // (followups21), so the protected name stays.
+    // links (ELOOP), and (ts#64832) the network spelling `//<root>/a/x.ts`
+    // of a file, which `stat` refuses. The test keeps the name of the
+    // removed `os_mod_times` (followups21), so the protected name stays.
     #[test]
     fn os_mod_times_matches_stat() {
         let dir = std::env::temp_dir().join(format!("ts_goport_mod_times_{}", std::process::id()));
@@ -1453,7 +1472,7 @@ mod tests {
             .chtimes(dir.join("a/y.ts").to_str().unwrap(), None, Some(old))
             .unwrap();
         let root = dir.to_str().unwrap();
-        let paths: Vec<String> = [
+        let mut paths: Vec<String> = [
             "a/x.ts",
             "a/y.ts",
             "a/lx.ts",
@@ -1472,6 +1491,7 @@ mod tests {
         .iter()
         .map(|name| format!("{root}/{name}"))
         .collect();
+        paths.push(format!("/{root}/a/x.ts"));
         let m_times = os_mod_times_of_non_links(paths.iter().map(String::as_str));
         let fs = osvfs_fs();
         let want: Vec<Option<Option<SystemTime>>> = paths
@@ -1491,6 +1511,7 @@ mod tests {
         assert!(want[12].is_some_and(|m_time| m_time.is_some()));
         assert_eq!(want[12], want[0]);
         assert_eq!(want[13], Some(None));
+        assert_eq!(want[14], Some(None));
     }
 
     // PORT: not in Go. Go `os.ReadDir` lstats an entry whose `d_type` is
