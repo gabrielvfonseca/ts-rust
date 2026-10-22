@@ -198,10 +198,10 @@ jobs:
         env:
           WASM_PROFILE: release
           WASM_OPT: none
-      # Not `node --test`: on Node 24 its test process has execArgv flags that a Worker refuses
-      # (ERR_WORKER_INVALID_EXEC_ARGV), and npm/wasm/node.js gives its Worker that execArgv.
+      # `npm test` runs `node --test test/*.test.mjs`, with the #83 repro in test/tsc.test.mjs.
       - name: Package tests
-        run: node npm/wasm/test/tsc.test.mjs
+        working-directory: npm/wasm
+        run: npm test
       # The wasm-only Rust tests of crates/ts_wasm (release_checker), in Node.
       - name: wasm unit tests
         run: cargo test --locked -p ts_wasm --target wasm32-wasip1
