@@ -994,11 +994,11 @@ pub fn convert_option_to_absolute_path(
     (CompilerOptionsValue::Nil, false)
 }
 
-// Go: tsoptions/rawcompileroptions.go:67 RawCompilerOptions.Finalize (ts#64159)
+// Go: tsoptions/rawcompileroptions.go:67 RawCompilerOptions.Finalize (ts#64159, ts#64843)
 /// Compiler options from raw JSON values (the API's `compilerOptions`), with
 /// each file system path option rooted against `base_path` (a
 /// `${configDir}` prefix is replaced by it). Only exact option names and the
-/// internal `configFilePath`, `allowNonTsExtensions` and
+/// internal `configFilePath`, `pathsBasePath`, `allowNonTsExtensions` and
 /// `suppressOutputPathCheck` are read; other keys are dropped.
 /// PORT: Go `RawCompilerOptions` keeps the JSON values in an ordered map;
 /// here the caller converts them to `CompilerOptionsValue`. The option path
@@ -1028,6 +1028,8 @@ pub fn finalize_raw_compiler_options(
                 .is_some_and(|element| element.is_file_path),
             Some(option) => option.is_file_path,
             None if key == "configFilePath" => true,
+            // ts#64843: a directory path (Go CommandLineOptionPathKindDirectory).
+            None if key == "pathsBasePath" => true,
             None if key == "allowNonTsExtensions" || key == "suppressOutputPathCheck" => false,
             None => continue,
         };
@@ -1061,7 +1063,7 @@ pub fn finalize_raw_compiler_options(
 mod tests {
     use super::*;
 
-    // Go: tsoptions/rawcompileroptions_test.go:14 TestRawCompilerOptionsFinalizePaths (ts#64159)
+    // Go: tsoptions/rawcompileroptions_test.go:14 TestRawCompilerOptionsFinalizePaths (ts#64159, ts#64843)
     // PORT: the JSON is given as `CompilerOptionsValue`s in the same order.
     #[test]
     fn finalize_raw_compiler_options_paths() {
@@ -1088,6 +1090,7 @@ mod tests {
             ("allowNonTsExtensions", CompilerOptionsValue::Bool(true)),
             ("suppressOutputPathCheck", CompilerOptionsValue::Bool(true)),
             ("configFilePath", string("")),
+            ("pathsBasePath", string("config")),
             ("NoImplicitAny", CompilerOptionsValue::Bool(true)),
         ] {
             raw.insert(key.to_string(), value);
@@ -1116,6 +1119,7 @@ mod tests {
         assert_eq!(options.allow_non_ts_extensions, Tristate::True);
         assert_eq!(options.suppress_output_path_check, Tristate::True);
         assert_eq!(options.config_file_path, "");
+        assert_eq!(options.paths_base_path, "/project/config");
         assert_eq!(options.no_implicit_any, Tristate::Unknown);
     }
 

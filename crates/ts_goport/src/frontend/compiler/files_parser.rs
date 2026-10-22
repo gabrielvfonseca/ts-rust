@@ -3465,6 +3465,9 @@ pub struct FileRefs {
     lib_reference_directives: Vec<FileReference>,
     type_reference_directives: Vec<FileReference>,
     import_specifiers: Vec<String>,
+    /// The ambient modules that the file declares: the loader does not
+    /// resolve an import of one of them (ts#64491), so the worker does not.
+    ambient_module_names: Vec<String>,
     /// The module indicator options that the cached parse read
     /// (`FileRefs::of_kept_parse`): the host gives the parse only for these
     /// options (`fits`). `None`: any options.
@@ -3482,6 +3485,7 @@ impl FileRefs {
             lib_reference_directives: file.lib_reference_directives.clone(),
             type_reference_directives: file.type_reference_directives.clone(),
             import_specifiers: file.imports.iter().map(|n| n.text().to_string()).collect(),
+            ambient_module_names: file.ambient_module_names.clone(),
             module_indicator_options: None,
         }
     }
@@ -3516,6 +3520,7 @@ impl FileRefs {
             lib_reference_directives: file.lib_reference_directives.clone(),
             type_reference_directives: file.type_reference_directives.clone(),
             import_specifiers,
+            ambient_module_names: file.ambient_module_names.clone(),
             module_indicator_options: None,
         }
     }
@@ -4089,8 +4094,13 @@ impl WorkerResolver {
             };
             modes.push(mode);
             // ts#63915: the loader does not resolve a source phase import.
+            // ts#64491: nor an ambient module that the file declares.
             if specifier.is_empty()
                 || usage.is_some_and(|(_, _, _, source_phase)| source_phase == Some(true))
+                || refs
+                    .ambient_module_names
+                    .iter()
+                    .any(|name| name == specifier)
             {
                 answers.push(None);
                 continue;

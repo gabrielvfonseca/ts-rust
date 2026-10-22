@@ -1071,19 +1071,18 @@ impl FileLoader {
         parser.parse(root_tasks);
     }
 
-    // Go: fileloader.go:361 (*fileLoader).sortLibs
-    // PORT: Go `slices.SortFunc` is pdqsort. It is not stable for more than
-    // 12 items, so libs with the same priority can change places there.
-    // `gostd::slices::sort_func` is the same pdqsort, so they move as in Go.
+    // Go: fileloader.go:362 (*fileLoader).sortLibs
+    // ts#64693: a stable sort, so libs with the same priority (a lib
+    // replacement and the libs it replaces) keep their order.
     pub fn sort_libs(&self, lib_files: &mut [Rc<ParsedSourceFile>]) {
-        // Go: fileloader.go:362 slices.SortFunc(libFiles, cmp.Compare on the priorities)
-        crate::gostd::slices::sort_func(lib_files, |f1, f2| {
+        // Go: fileloader.go:363 slices.SortStableFunc(libFiles, cmp.Compare on the priorities)
+        crate::gostd::slices::sort_stable_func(lib_files, |f1, f2| {
             self.get_default_lib_file_priority(f1)
                 .cmp(&self.get_default_lib_file_priority(f2)) as i32
         });
     }
 
-    // Go: fileloader.go:367 (*fileLoader).getDefaultLibFilePriority
+    // Go: fileloader.go:368 (*fileLoader).getDefaultLibFilePriority
     pub fn get_default_lib_file_priority(&self, a: &ParsedSourceFile) -> usize {
         // defaultLibraryPath and a.FileName() are absolute and normalized; a prefix check should suffice.
         let default_library_path = remove_trailing_directory_separator(&self.default_library_path);
@@ -1810,6 +1809,30 @@ impl FileLoader {
                     Some(&options_for_file),
                     &mut file_emit_mode,
                 );
+                // Go: fileloader.go:887 (ts#64491) We know moduleName resolves to an ambient
+                // module provided that moduleName:
+                // - is in the list of ambient modules locally declared in the current source file.
+                if file
+                    .ambient_module_names
+                    .iter()
+                    .any(|name| name == module_name)
+                {
+                    if options_for_file.trace_resolution.is_true() {
+                        resolutions_trace.push(DiagAndArgs {
+                            message:
+                                diag::Module_0_was_resolved_as_locally_declared_ambient_module_in_file_1,
+                            args: vec![module_name.to_string(), file.file_name().to_string()],
+                        });
+                    }
+                    resolutions_in_file.insert(
+                        ModeAwareCacheKey {
+                            name: module_name.to_string(),
+                            mode,
+                        },
+                        Arc::new(ResolvedModule::default()),
+                    );
+                    continue;
+                }
                 // The worker resolved name `index` with the mode of the
                 // usage it read (`FilePrep::names`), or with the mode of a
                 // plain import (`guess_import_mode`) for a synthetic import

@@ -302,7 +302,7 @@ fn raw_as_map_mut(raw: &mut CompilerOptionsValue) -> &mut IndexMap<String, Compi
 
 // parseConfig just extracts options/include/exclude/files out of a config file.
 // It does not resolve the included files.
-// Go: tsoptions/tsconfigparsing.go:961 parseConfig
+// Go: tsoptions/tsconfigparsing.go:976 parseConfig (ts#64755)
 // PORT: Go `json` is a nilable map pointer (`Option`, owned). Go
 // `sourceFile` is a nilable pointer that this function changes, so it is
 // `Option<&mut TsConfigSourceFile>`. The Go `applyExtendedConfig` closure
@@ -378,7 +378,7 @@ pub fn parse_config(
     if let Some(extended_config_paths) = own_config.extended_config_path.clone() {
         // copy the resolution stack so it is never reused between branches in potential diamond-problem scenarios.
         let mut resolution_stack = resolution_stack.to_vec();
-        resolution_stack.push(resolved_path);
+        resolution_stack.push(resolved_path.clone());
         let mut result = ExtendsResult::default();
         for extended_config_path in &extended_config_paths {
             // Go: applyExtendedConfig(result, extendedConfigPath)
@@ -503,6 +503,16 @@ pub fn parse_config(
         }
         if let Some(source_file) = source_file.as_deref_mut() {
             for extended_source_file in &result.extended_source_files {
+                // ts#64755: a config is not in its own extended source files
+                // (an `extends` cycle through it).
+                if to_path(
+                    extended_source_file,
+                    "",
+                    host.fs().use_case_sensitive_file_names(),
+                ) == resolved_path
+                {
+                    continue;
+                }
                 // Go: core.InsertSorted(..., cmp.Compare)
                 let i = match source_file
                     .extended_source_files
