@@ -279,6 +279,8 @@ pub trait OutputPathsHost {
     fn common_source_directory(&self) -> String;
     /// #4712: the file extensions of the configured content mappers.
     fn content_mapper_extensions(&self) -> Vec<String>;
+    /// ts#64581: the output extension rewrites of the content mappers.
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite>;
     fn get_current_directory(&self) -> String;
     fn use_case_sensitive_file_names(&self) -> bool;
 }
@@ -312,10 +314,19 @@ pub fn get_output_declaration_file_name_worker(
     )
 }
 
-// Go: outputpaths/outputpaths.go:150 ChangeToDeclarationExtension (#4712)
-/// A content mapper extension `.ext` becomes `.d.ext.ts`. Other paths get
-/// their declaration extension (Go `GetDeclarationEmitExtensionForPath`).
+// Go: outputpaths/outputpaths.go:186 ChangeToDeclarationExtension (#4712, ts#64581)
+/// A path whose extension a content mapper rewrites gets the declaration
+/// extension of its new extension. Another content mapper extension `.ext`
+/// becomes `.d.ext.ts`. Other paths get their declaration extension (Go
+/// `GetDeclarationEmitExtensionForPath`).
 pub fn change_to_declaration_extension(path: &str, host: &dyn OutputPathsHost) -> String {
+    if let Some(rewritten) = crate::frontend::tspath::rewrite_file_extension(
+        path,
+        &host.content_mapper_extension_rewrites(),
+        host.use_case_sensitive_file_names(),
+    ) {
+        return change_to_declaration_extension_unexported(&rewritten);
+    }
     let extension =
         tspath::get_longest_extension_from_path(path, &host.content_mapper_extensions(), false);
     if !extension.is_empty() {
@@ -325,6 +336,13 @@ pub fn change_to_declaration_extension(path: &str, host: &dyn OutputPathsHost) -
             extension
         );
     }
+    change_to_declaration_extension_unexported(path)
+}
+
+// Go: outputpaths/outputpaths.go:196 changeToDeclarationExtension (ts#64581)
+// PORT: Go's private `changeToDeclarationExtension` has the snake name of
+// the exported one, so it gets the `_unexported` suffix.
+fn change_to_declaration_extension_unexported(path: &str) -> String {
     let mut path_without_extension = tspath::remove_file_extension(path);
     if path_without_extension == path {
         let extension = tspath::get_any_extension_from_path(path, &[], false);

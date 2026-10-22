@@ -310,6 +310,11 @@ impl OutputPathsHost for ProgramHost {
     fn content_mapper_extensions(&self) -> Vec<String> {
         crate::program::content_mapper_extensions()
     }
+
+    // Go: compiler/program.go:552 ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite> {
+        crate::program::content_mapper_extension_rewrites()
+    }
 }
 
 impl ModuleSpecifierGenerationHost for ProgramHost {
@@ -333,7 +338,12 @@ impl ModuleSpecifierGenerationHost for ProgramHost {
         crate::program::content_mapper_extensions()
     }
 
-    // Go: compiler/program.go:163 GetGlobalTypingsCacheLocation
+    // Go: compiler/program.go:552 ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite> {
+        crate::program::content_mapper_extension_rewrites()
+    }
+
+    // Go: compiler/program.go:164 GetGlobalTypingsCacheLocation
     fn get_global_typings_cache_location(&self) -> String {
         typings_location().to_string()
     }

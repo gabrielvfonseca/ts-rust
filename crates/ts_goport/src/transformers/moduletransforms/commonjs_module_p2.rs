@@ -1189,11 +1189,19 @@ impl CommonJSModuleTransformer {
             external_module_name
         } else if first_argument.is_some() && rewrite_or_shim {
             if is_string_literal(first_argument) {
-                rewrite_module_specifier(&ec, first_argument, self.compiler_options)
+                rewrite_module_specifier(
+                    &ec,
+                    first_argument,
+                    self.compiler_options,
+                    &self.content_mapper_extension_rewrites,
+                    self.use_case_sensitive_file_names,
+                )
             } else {
                 f.new_rewrite_relative_import_extensions_helper(
                     first_argument,
                     self.compiler_options.jsx == JsxEmit::PRESERVE,
+                    &self.content_mapper_extension_rewrites,
+                    self.use_case_sensitive_file_names,
                 )
             }
         } else {
@@ -1299,14 +1307,21 @@ impl CommonJSModuleTransformer {
             let mut first_argument = self.visit_node_with(VisitorKind::Root, args[0]);
             let first_argument_changed;
             if is_string_literal_like(first_argument) {
-                let rewritten =
-                    rewrite_module_specifier(&ec, first_argument, self.compiler_options);
+                let rewritten = rewrite_module_specifier(
+                    &ec,
+                    first_argument,
+                    self.compiler_options,
+                    &self.content_mapper_extension_rewrites,
+                    self.use_case_sensitive_file_names,
+                );
                 first_argument_changed = rewritten != first_argument;
                 first_argument = rewritten;
             } else {
                 first_argument = f.new_rewrite_relative_import_extensions_helper(
                     first_argument,
                     self.compiler_options.jsx == JsxEmit::PRESERVE,
+                    &self.content_mapper_extension_rewrites,
+                    self.use_case_sensitive_file_names,
                 );
                 first_argument_changed = true;
             }

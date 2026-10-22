@@ -60,9 +60,13 @@ pub struct CommonJSModuleTransformer {
     pub(super) parent_node: Node,
     /// used for ancestor tracking via pushNode/popNode to detect expression identifiers
     pub(super) current_node: Node,
+    /// ts#64581: the output extension rewrites of the content mappers.
+    pub(super) content_mapper_extension_rewrites: Vec<crate::frontend::tspath::ExtensionRewrite>,
+    /// ts#64581: Go `caseSensitivity`.
+    pub(super) use_case_sensitive_file_names: bool,
 }
 
-// Go: transformers/moduletransforms/commonjsmodule.go:32 NewCommonJSModuleTransformer
+// Go: transformers/moduletransforms/commonjsmodule.go:34 NewCommonJSModuleTransformer
 pub fn new_commonjs_module_transformer(opts: &TransformOptions) -> TransformerBox {
     let compiler_options = opts.compiler_options;
     let emit_context = opts.context.clone();
@@ -77,6 +81,8 @@ pub fn new_commonjs_module_transformer(opts: &TransformOptions) -> TransformerBo
         current_module_info: None,
         parent_node: Node::NIL,
         current_node: Node::NIL,
+        content_mapper_extension_rewrites: opts.content_mapper_extension_rewrites.clone(),
+        use_case_sensitive_file_names: opts.use_case_sensitive_file_names,
     })
 }
 
@@ -978,6 +984,8 @@ impl CommonJSModuleTransformer {
                 ec,
                 module_name,
                 self.compiler_options,
+                &self.content_mapper_extension_rewrites,
+                self.use_case_sensitive_file_names,
             ));
         }
         f.new_call_expression(

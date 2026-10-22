@@ -27,6 +27,10 @@ pub struct ESModuleTransformer {
     #[allow(dead_code)]
     resolver: Rc<dyn TransformReferenceResolver>,
     get_emit_module_format_of_file: Rc<dyn Fn(Node) -> ModuleKind>,
+    /// ts#64581: the output extension rewrites of the content mappers.
+    content_mapper_extension_rewrites: Vec<crate::frontend::tspath::ExtensionRewrite>,
+    /// ts#64581: Go `caseSensitivity`.
+    use_case_sensitive_file_names: bool,
     current_source_file: Node,
     import_require_statements: Option<ImportRequireStatements>,
     #[allow(dead_code)]
@@ -47,6 +51,8 @@ pub fn new_es_module_transformer(opts: &TransformOptions) -> TransformerBox {
         compiler_options,
         resolver: opts.resolver.clone(),
         get_emit_module_format_of_file: opts.get_emit_module_format_of_file.clone(),
+        content_mapper_extension_rewrites: opts.content_mapper_extension_rewrites.clone(),
+        use_case_sensitive_file_names: opts.use_case_sensitive_file_names,
         current_source_file: Node::NIL,
         import_require_statements: None,
         helper_name_substitutions: FxHashMap::default(),
@@ -151,8 +157,13 @@ impl ESModuleTransformer {
             return node;
         }
         let ec = self.emit_context.clone();
-        let updated_module_specifier =
-            rewrite_module_specifier(&ec, node.module_specifier(), self.compiler_options);
+        let updated_module_specifier = rewrite_module_specifier(
+            &ec,
+            node.module_specifier(),
+            self.compiler_options,
+            &self.content_mapper_extension_rewrites,
+            self.use_case_sensitive_file_names,
+        );
         let import_clause = self.with_visitor(|v| v.visit_node(node.import_clause()));
         let attributes = self.with_visitor(|v| v.visit_node(node.attributes()));
         ec.factory().update_import_declaration(
@@ -258,8 +269,13 @@ impl ESModuleTransformer {
 
         let ec = self.emit_context.clone();
         let f = ec.factory();
-        let updated_module_specifier =
-            rewrite_module_specifier(&ec, node.module_specifier(), self.compiler_options);
+        let updated_module_specifier = rewrite_module_specifier(
+            &ec,
+            node.module_specifier(),
+            self.compiler_options,
+            &self.content_mapper_extension_rewrites,
+            self.use_case_sensitive_file_names,
+        );
         if self.compiler_options.module > ModuleKind::ES2015
             || node.export_clause().is_nil()
             || !is_namespace_export(node.export_clause())
@@ -327,11 +343,19 @@ impl ESModuleTransformer {
         let expression = self.with_visitor(|v| v.visit_node(node.expression()));
 
         let argument = if is_string_literal_like(args[0]) {
-            rewrite_module_specifier(&ec, args[0], self.compiler_options)
+            rewrite_module_specifier(
+                &ec,
+                args[0],
+                self.compiler_options,
+                &self.content_mapper_extension_rewrites,
+                self.use_case_sensitive_file_names,
+            )
         } else {
             f.new_rewrite_relative_import_extensions_helper(
                 args[0],
                 self.compiler_options.jsx == JsxEmit::PRESERVE,
+                &self.content_mapper_extension_rewrites,
+                self.use_case_sensitive_file_names,
             )
         };
 
@@ -372,6 +396,8 @@ impl ESModuleTransformer {
                 &ec,
                 module_name,
                 self.compiler_options,
+                &self.content_mapper_extension_rewrites,
+                self.use_case_sensitive_file_names,
             ));
         }
 

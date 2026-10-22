@@ -85,6 +85,9 @@ pub(super) struct GoSharedState {
     /// #4712: Go `Program.ContentMapperExtensions` (the extensions of the
     /// command line).
     content_mapper_extensions: Vec<String>,
+    /// ts#64581: Go `Program.ContentMapperExtensionRewrites` (the output
+    /// extension rewrites of the command line).
+    content_mapper_extension_rewrites: Vec<crate::frontend::tspath::ExtensionRewrite>,
     /// #4712: Go `Program.contentMapperOptionDiagnostics`.
     // PORT: `NewProgram` has no field for it, so the program version keeps
     // it (see `GoSharedState::new`).
@@ -1893,6 +1896,8 @@ impl GoSharedState {
             use_case_sensitive_file_names: p.use_case_sensitive_file_names(),
             // #4712
             content_mapper_extensions: p.command_line().content_mapper_extensions(),
+            // ts#64581
+            content_mapper_extension_rewrites: p.content_mapper_extension_rewrites().to_vec(),
             content_mapper_option_diagnostics,
             resolved_modules,
             jsx_runtime_import_specifiers,
@@ -1918,6 +1923,13 @@ impl GoSharedState {
     // Go: compiler/program.go:549 ContentMapperExtensions (#4712)
     pub(super) fn content_mapper_extensions(&self) -> &[String] {
         &self.content_mapper_extensions
+    }
+
+    // Go: compiler/program.go:552 ContentMapperExtensionRewrites (ts#64581)
+    pub(super) fn content_mapper_extension_rewrites(
+        &self,
+    ) -> &[crate::frontend::tspath::ExtensionRewrite] {
+        &self.content_mapper_extension_rewrites
     }
 
     /// Go `Program.contentMapperOptionDiagnostics` (#4712).

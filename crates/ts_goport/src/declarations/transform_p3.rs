@@ -131,7 +131,9 @@ impl DeclarationTransformer {
         result
     }
 
-    // Go: transformers/declarations/transform.go:1602 DeclarationTransformer.rewriteModuleSpecifier
+    // Go: transformers/declarations/transform.go:1603 DeclarationTransformer.rewriteModuleSpecifier (ts#64581)
+    /// ts#64581: with `rewriteRelativeImportExtensions`, a relative specifier
+    /// that a content mapper rewrite matches gets its output extension.
     pub(crate) fn rewrite_module_specifier(&mut self, parent: Node, input: Node) -> Node {
         if input.is_nil() {
             return Node::NIL;
@@ -139,6 +141,37 @@ impl DeclarationTransformer {
         self.result_has_external_module_indicator = self.result_has_external_module_indicator
             || (parent.kind() != SyntaxKind::ModuleDeclaration
                 && parent.kind() != SyntaxKind::ImportType);
+        if is_string_literal(input)
+            && self
+                .compiler_options
+                .rewrite_relative_import_extensions
+                .is_true()
+        {
+            let specifier = input.text();
+            let rewrites = self.host.content_mapper_extension_rewrites();
+            let use_case_sensitive_file_names = self.host.use_case_sensitive_file_names();
+            if !crate::frontend::tspath::should_rewrite_module_specifier_extension(
+                specifier,
+                &rewrites,
+                use_case_sensitive_file_names,
+            ) {
+                return input;
+            }
+            if let Some(rewritten) = crate::frontend::tspath::rewrite_module_specifier_extension(
+                specifier,
+                &rewrites,
+                use_case_sensitive_file_names,
+            ) {
+                let result = self
+                    .emit_context
+                    .factory()
+                    .new_string_literal(rewritten, input.token_flags());
+                self.emit_context.set_original(result, input);
+                self.emit_context
+                    .assign_comment_and_source_map_ranges(result, input);
+                return result;
+            }
+        }
         input
     }
 

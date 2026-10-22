@@ -1972,20 +1972,59 @@ impl NodeFactory {
         )
     }
 
-    // Go: printer/factory.go:1300 NewRewriteRelativeImportExtensionsHelper
+    // Go: printer/factory.go:1301 NewRewriteRelativeImportExtensionsHelper (ts#64581)
     /// Allocates a new Call expression to the `__rewriteRelativeImportExtension` helper.
+    /// ts#64581: with content mapper extension rewrites, the call also passes
+    /// `preserveJsx` as a boolean, the rewrites as an object literal and, for
+    /// a case-insensitive host, `true` for `ignoreCase`.
+    // PORT: Go `caseSensitivity` is `use_case_sensitive_file_names`.
     pub fn new_rewrite_relative_import_extensions_helper(
         &self,
         first_argument: Node,
         preserve_jsx: bool,
+        extra_extensions: &[crate::frontend::tspath::ExtensionRewrite],
+        use_case_sensitive_file_names: bool,
     ) -> Node {
+        if extra_extensions.is_empty() {
+            self.emit_context()
+                .request_emit_helper(&REWRITE_RELATIVE_IMPORT_EXTENSIONS_HELPER);
+            let arguments: Vec<Node> = if preserve_jsx {
+                vec![first_argument, self.new_token(SyntaxKind::TrueKeyword)]
+            } else {
+                vec![first_argument]
+            };
+            return self.new_call_expression(
+                self.new_unscoped_helper_name("__rewriteRelativeImportExtension"),
+                Node::NIL,     /*questionDotToken*/
+                NodeList::NIL, /*typeArguments*/
+                self.new_node_list(&arguments),
+                NodeFlags::NONE,
+            );
+        }
         self.emit_context()
             .request_emit_helper(&REWRITE_RELATIVE_IMPORT_EXTENSIONS_HELPER);
-        let arguments: Vec<Node> = if preserve_jsx {
-            vec![first_argument, self.new_token(SyntaxKind::TrueKeyword)]
+        let mut arguments = vec![first_argument];
+        arguments.push(self.new_token(if preserve_jsx {
+            SyntaxKind::TrueKeyword
         } else {
-            vec![first_argument]
-        };
+            SyntaxKind::FalseKeyword
+        }));
+        let properties: Vec<Node> = extra_extensions
+            .iter()
+            .map(|extension| {
+                self.new_property_assignment(
+                    ModifierList::NIL,
+                    self.new_string_literal(extension.source.as_str(), TokenFlags::NONE),
+                    Node::NIL,
+                    Node::NIL,
+                    self.new_string_literal(extension.target.as_str(), TokenFlags::NONE),
+                )
+            })
+            .collect();
+        arguments.push(self.new_object_literal_expression(self.new_node_list(&properties), false));
+        if !use_case_sensitive_file_names {
+            arguments.push(self.new_token(SyntaxKind::TrueKeyword));
+        }
         self.new_call_expression(
             self.new_unscoped_helper_name("__rewriteRelativeImportExtension"),
             Node::NIL,     /*questionDotToken*/

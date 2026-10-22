@@ -239,7 +239,9 @@ impl Emitter {
                 false,
             )
         });
-        for mut transformer in get_script_transformers(emit_resolver, source_file) {
+        for mut transformer in
+            get_script_transformers(emit_resolver, self.host.as_ref(), source_file)
+        {
             source_file = transformer.transform_source_file(source_file);
         }
         source_file
@@ -1064,8 +1066,11 @@ fn may_have_enum_declaration(source_file: Node) -> bool {
 // Go: compiler/emitter.go:114 getScriptTransformers
 // ts#64649: takes the emit resolver, and reads the emit context from it. Go
 // panics when the resolver or its context is nil; neither is nil here.
+// PORT: the options and the emit module format come from the program, as
+// Go's emit host returns the program's (emitHost.go:104, :59).
 pub fn get_script_transformers(
     emit_resolver: Rc<dyn EmitResolver>,
+    host: &dyn crate::printer::EmitHost,
     source_file: Node,
 ) -> Vec<TransformerBox> {
     use crate::transformers::{estransforms, inliners, jsxtransforms, tstransforms};
@@ -1095,6 +1100,9 @@ pub fn get_script_transformers(
         get_emit_module_format_of_file: Rc::new(|file| {
             get_emit_module_format_of_file(parsed_source_file(file))
         }),
+        // ts#64581
+        content_mapper_extension_rewrites: host.content_mapper_extension_rewrites(),
+        use_case_sensitive_file_names: host.use_case_sensitive_file_names(),
     };
 
     let mut push = |t: Option<TransformerBox>| {

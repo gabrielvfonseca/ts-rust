@@ -3180,6 +3180,21 @@ pub fn content_mapper_extensions() -> Vec<String> {
     })
 }
 
+// Go: compiler/program.go:552 ContentMapperExtensionRewrites (ts#64581)
+/// The output extension rewrites of the content mappers.
+// PORT: copied from the command line like `content_mapper_extensions`, so
+// checker and emit threads can read them. An alias resolver program has
+// none.
+pub fn content_mapper_extension_rewrites() -> Vec<crate::frontend::tspath::ExtensionRewrite> {
+    with_tables(|tables| {
+        tables
+            .go
+            .as_ref()
+            .map(|go| go.content_mapper_extension_rewrites().to_vec())
+            .unwrap_or_default()
+    })
+}
+
 /// Go `Program.contentMapperDiagnostics` (#4712): the program diagnostics
 /// that the loader reports when a content mapper fails for good (Go
 /// `processedFiles.contentMapperDiagnostics`). An alias resolver program
@@ -5144,6 +5159,11 @@ impl crate::frontend::outputpaths::OutputPathsHost for EmitHost {
         content_mapper_extensions()
     }
 
+    // Go: compiler/emitHost.go:118 emitHost.ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite> {
+        content_mapper_extension_rewrites()
+    }
+
     // Go: compiler/emitHost.go:109 emitHost.GetCurrentDirectory (at 673a5f17d713; ts#64159 makes it BaseDirectory, compiler/emitHost.go:106)
     fn get_current_directory(&self) -> String {
         get_current_directory().to_string()
@@ -5168,7 +5188,12 @@ impl crate::declarations::DeclarationEmitHost for EmitHost {
         get_current_directory().to_string()
     }
 
-    // Go: compiler/emitHost.go:116 emitHost.UseCaseSensitiveFileNames (at 673a5f17d713; ts#64159 makes it CaseSensitivity, compiler/emitHost.go:118)
+    // Go: compiler/emitHost.go:118 emitHost.ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite> {
+        content_mapper_extension_rewrites()
+    }
+
+    // Go: compiler/emitHost.go:116 emitHost.UseCaseSensitiveFileNames (at 673a5f17d713; ts#64159 makes it CaseSensitivity, compiler/emitHost.go:122)
     fn use_case_sensitive_file_names(&self) -> bool {
         use_case_sensitive_file_names()
     }
@@ -5214,7 +5239,12 @@ impl crate::printer::EmitHost for EmitHost {
         source_files()
     }
 
-    // Go: compiler/emitHost.go:116 emitHost.UseCaseSensitiveFileNames (at 673a5f17d713; ts#64159 makes it CaseSensitivity, compiler/emitHost.go:118)
+    // Go: compiler/emitHost.go:118 emitHost.ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite> {
+        content_mapper_extension_rewrites()
+    }
+
+    // Go: compiler/emitHost.go:116 emitHost.UseCaseSensitiveFileNames (at 673a5f17d713; ts#64159 makes it CaseSensitivity, compiler/emitHost.go:122)
     fn use_case_sensitive_file_names(&self) -> bool {
         use_case_sensitive_file_names()
     }
