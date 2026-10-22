@@ -34,7 +34,7 @@ fn import_attributes_list_p06(node: Node) -> Vec<Node> {
     result
 }
 
-// Go: checker/checker.go:5010 (struct) InheritanceInfo
+// Go: checker/checker.go:5136 (struct) InheritanceInfo
 #[derive(Clone, Copy, Debug, Default)]
 pub struct InheritanceInfo {
     pub prop: SymbolId,
@@ -42,7 +42,7 @@ pub struct InheritanceInfo {
 }
 
 impl Checker {
-    // Go: checker/checker.go:4920 checkIndexConstraintForProperty
+    // Go: checker/checker.go:4916 checkIndexConstraintForProperty
     pub fn check_index_constraint_for_property(
         &mut self,
         t: TypeId,
@@ -132,7 +132,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4966 checkIndexConstraintForIndexSignature
+    // Go: checker/checker.go:4962 checkIndexConstraintForIndexSignature
     pub fn check_index_constraint_for_index_signature(
         &mut self,
         t: TypeId,
@@ -210,7 +210,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5003 checkClassOrInterfaceForDuplicateIndexSignatures
+    // Go: checker/checker.go:4999 checkClassOrInterfaceForDuplicateIndexSignatures
     pub fn check_class_or_interface_for_duplicate_index_signatures(&mut self, node: Node) {
         // Only check the type once
         let symbol = self.get_symbol_of_declaration(node);
@@ -226,7 +226,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5011 checkTypeForDuplicateIndexSignatures
+    // Go: checker/checker.go:5007 checkTypeForDuplicateIndexSignatures
     pub fn check_type_for_duplicate_index_signatures(&mut self, node: Node) {
         // TypeScript 1.0 spec (April 2014)
         // 3.7.4: An object type can contain at most one string index signature and one numeric index signature.
@@ -265,7 +265,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5040 checkPropertyInitialization
+    // Go: checker/checker.go:5036 checkPropertyInitialization
     pub fn check_property_initialization(&mut self, node: Node) {
         if !self.strict_null_checks
             || !self.strict_property_initialization
@@ -308,7 +308,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5063 isPropertyWithoutInitializer
+    // Go: checker/checker.go:5059 isPropertyWithoutInitializer
     pub fn is_property_without_initializer(&self, node: Node) -> bool {
         is_property_declaration(node)
             && !has_abstract_modifier(node)
@@ -316,7 +316,7 @@ impl Checker {
             && node.initializer().is_nil()
     }
 
-    // Go: checker/checker.go:5067 isPropertyInitializedInStaticBlocks
+    // Go: checker/checker.go:5063 isPropertyInitializedInStaticBlocks
     pub fn is_property_initialized_in_static_blocks(
         &mut self,
         prop_name: Node,
@@ -354,7 +354,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:5084 isPropertyInitializedInConstructor
+    // Go: checker/checker.go:5080 isPropertyInitializedInConstructor
     pub fn is_property_initialized_in_constructor(
         &mut self,
         prop_name: Node,
@@ -392,7 +392,7 @@ impl Checker {
         !self.contains_undefined_type(flow_type)
     }
 
-    // Go: checker/checker.go:5098 checkInterfaceDeclaration
+    // Go: checker/checker.go:5094 checkInterfaceDeclaration
     pub fn check_interface_declaration(&mut self, node: Node) {
         if !self.check_grammar_modifiers(node) {
             self.check_grammar_interface_declaration(node);
@@ -450,7 +450,7 @@ impl Checker {
         self.register_for_unused_identifiers_check(node);
     }
 
-    // Go: checker/checker.go:5145 checkInheritedPropertiesAreIdentical
+    // Go: checker/checker.go:5141 checkInheritedPropertiesAreIdentical
     pub fn check_inherited_properties_are_identical(&mut self, t: TypeId, type_node: Node) -> bool {
         let base_types = self.get_base_types(t);
         if base_types.len() < 2 {
@@ -517,7 +517,7 @@ impl Checker {
         identical
     }
 
-    // Go: checker/checker.go:5177 isPropertyIdenticalTo
+    // Go: checker/checker.go:5173 isPropertyIdenticalTo
     pub fn is_property_identical_to(
         &mut self,
         source_prop: SymbolId,
@@ -530,7 +530,7 @@ impl Checker {
         ) != Ternary::FALSE
     }
 
-    // Go: checker/checker.go:5181 checkEnumDeclaration
+    // Go: checker/checker.go:5177 checkEnumDeclaration
     pub fn check_enum_declaration(&mut self, node: Node) {
         self.check_grammar_modifiers(node);
         self.check_collisions_for_declaration_name(node, node.name());
@@ -601,7 +601,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5233 checkEnumMember
+    // Go: checker/checker.go:5229 checkEnumMember
     pub fn check_enum_member(&mut self, node: Node) {
         if is_private_identifier(node.name()) {
             self.error(
@@ -620,7 +620,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5245 checkModuleDeclaration
+    // Go: checker/checker.go:5241 checkModuleDeclaration
     pub fn check_module_declaration(&mut self, node: Node) {
         let body = node.body();
         if body.is_some() {
@@ -796,7 +796,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5342 checkImportAttributesType
+    // Go: checker/checker.go:5338 checkImportAttributesType
     pub fn check_import_attributes_type(&mut self, attributes: Node) {
         self.check_grammar_import_attributes_type(attributes);
         self.check_source_element(attributes);
@@ -813,7 +813,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5352 getTypeOfModuleDeclarationImportAttributes
+    // Go: checker/checker.go:5348 getTypeOfModuleDeclarationImportAttributes
     pub fn get_type_of_module_declaration_import_attributes(&mut self, attributes: Node) -> TypeId {
         if attributes.is_nil() {
             return self.empty_object_type;
@@ -821,7 +821,7 @@ impl Checker {
         self.get_type_from_type_node(attributes)
     }
 
-    // Go: checker/checker.go:5359 getTypeOfModuleImportAttributes
+    // Go: checker/checker.go:5355 getTypeOfModuleImportAttributes
     pub fn get_type_of_module_import_attributes(&mut self, symbol: SymbolId) -> TypeId {
         if let Some(&t) = self.module_import_attributes_types.get(&symbol) {
             return t;
@@ -846,7 +846,7 @@ impl Checker {
 }
 
 impl Checker {
-    // Go: checker/checker.go:5379 getFirstNonAmbientClassOrFunctionDeclaration
+    // Go: checker/checker.go:5375 getFirstNonAmbientClassOrFunctionDeclaration
     // PORT: package-level Go function that reads symbol data, so it is a
     // `Checker` method per the contract.
     pub fn get_first_non_ambient_class_or_function_declaration(&self, symbol: SymbolId) -> Node {
@@ -861,7 +861,7 @@ impl Checker {
         Node::NIL
     }
 
-    // Go: checker/checker.go:5388 getIsolatedModulesLikeFlagName
+    // Go: checker/checker.go:5384 getIsolatedModulesLikeFlagName
     pub fn get_isolated_modules_like_flag_name(&self) -> String {
         if self.compiler_options.verbatim_module_syntax.is_true() {
             "verbatimModuleSyntax".to_string()
@@ -870,7 +870,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5392 checkModuleAugmentationElement
+    // Go: checker/checker.go:5388 checkModuleAugmentationElement
     pub fn check_module_augmentation_element(&mut self, node: Node) {
         match node.kind() {
             SyntaxKind::VariableStatement => {
@@ -915,7 +915,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5420 checkImportDeclaration
+    // Go: checker/checker.go:5416 checkImportDeclaration
     pub fn check_import_declaration(&mut self, node: Node) {
         // Grammar checking
         let diagnostic = if is_in_js_file(node) {
@@ -1032,7 +1032,7 @@ impl Checker {
         self.check_import_attributes(node);
     }
 
-    // Go: checker/checker.go:5489 checkExternalImportOrExportDeclaration
+    // Go: checker/checker.go:5485 checkExternalImportOrExportDeclaration
     pub fn check_external_import_or_export_declaration(&mut self, node: Node) -> bool {
         let module_name = get_external_module_name(node);
         if module_name.is_nil() || node_is_missing(module_name) {
@@ -1084,7 +1084,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/checker.go:5527 checkImportBinding
+    // Go: checker/checker.go:5523 checkImportBinding
     pub fn check_import_binding(&mut self, node: Node) {
         self.check_collisions_for_declaration_name(node, node.name());
         self.check_alias_symbol(node);
@@ -1099,7 +1099,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5539 checkModuleExportName
+    // Go: checker/checker.go:5535 checkModuleExportName
     pub fn check_module_export_name(&mut self, name: Node, allow_string_literal: bool) {
         if name.is_nil() || name.kind() != SyntaxKind::StringLiteral {
             return;
@@ -1120,7 +1120,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:5552 hasTypeJsonImportAttribute
+// Go: checker/checker.go:5548 hasTypeJsonImportAttribute
 pub fn has_type_json_import_attribute(node: Node) -> bool {
     // PORT: Go reads `node.AsImportDeclaration().Attributes`; for the
     // ImportDeclaration kinds this is exactly `ast.GetImportAttributes(node)`.
@@ -1136,7 +1136,7 @@ pub fn has_type_json_import_attribute(node: Node) -> bool {
 }
 
 impl Checker {
-    // Go: checker/checker.go:5559 checkImportAttributes
+    // Go: checker/checker.go:5555 checkImportAttributes
     pub fn check_import_attributes(&mut self, declaration: Node) {
         let node = get_import_attributes(declaration);
         if node.is_nil() {
@@ -1187,7 +1187,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5591 getTypeFromImportAttributes
+    // Go: checker/checker.go:5587 getTypeFromImportAttributes
     pub fn get_type_from_import_attributes(&mut self, node: Node) -> TypeId {
         if node.is_nil() {
             return TypeId::NIL;
@@ -1198,7 +1198,7 @@ impl Checker {
         self.check_expression_cached(node)
     }
 
-    // Go: checker/checker.go:5601 checkImportAttributesExpression
+    // Go: checker/checker.go:5597 checkImportAttributesExpression
     pub fn check_import_attributes_expression(&mut self, node: Node) -> TypeId {
         if self.type_node_links.get(node).resolved_type.is_nil() {
             let symbol = self.new_symbol(
@@ -1226,7 +1226,7 @@ impl Checker {
         self.type_node_links.get(node).resolved_type
     }
 
-    // Go: checker/checker.go:5618 getImportAttributesTypeForModuleSpecifier
+    // Go: checker/checker.go:5614 getImportAttributesTypeForModuleSpecifier
     pub fn get_import_attributes_type_for_module_specifier(
         &mut self,
         module_specifier: Node,
@@ -1246,7 +1246,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:5632 checkImportEqualsDeclaration
+    // Go: checker/checker.go:5628 checkImportEqualsDeclaration
     pub fn check_import_equals_declaration(&mut self, node: Node) {
         let diagnostic = if is_in_js_file(node) {
             diag::An_import_declaration_can_only_be_used_at_the_top_level_of_a_module
@@ -1330,7 +1330,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5675 checkExportDeclaration
+    // Go: checker/checker.go:5671 checkExportDeclaration
     pub fn check_export_declaration(&mut self, node: Node) {
         let diagnostic = if is_in_js_file(node) {
             diag::An_export_declaration_can_only_be_used_at_the_top_level_of_a_module
@@ -1415,7 +1415,7 @@ impl Checker {
         self.check_import_attributes(node);
     }
 
-    // Go: checker/checker.go:5724 checkExternalModuleNameInGlobalScope
+    // Go: checker/checker.go:5720 checkExternalModuleNameInGlobalScope
     pub fn check_external_module_name_in_global_scope(&mut self, node: Node) {
         if get_enclosing_container(node).kind() != SyntaxKind::SourceFile
             || (is_import_declaration_or_js_import_declaration(node)
@@ -1434,7 +1434,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:5738 checkExportSpecifier
+    // Go: checker/checker.go:5734 checkExportSpecifier
     pub fn check_export_specifier(&mut self, node: Node) {
         self.check_alias_symbol(node);
         let has_module_specifier = node.parent().parent().module_specifier().is_some();
@@ -1488,7 +1488,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:5762 isContainedByNamespace
+// Go: checker/checker.go:5758 isContainedByNamespace
 pub fn is_contained_by_namespace(node: Node) -> bool {
     let mut container = node.parent();
     if !is_source_file(container) {
@@ -1498,7 +1498,7 @@ pub fn is_contained_by_namespace(node: Node) -> bool {
 }
 
 impl Checker {
-    // Go: checker/checker.go:5770 checkExportAssignment
+    // Go: checker/checker.go:5766 checkExportAssignment
     pub fn check_export_assignment(&mut self, node: Node) {
         let is_export_equals = node.is_export_equals();
         // Always check the exported expression so its identifiers are resolved even when the
@@ -1717,7 +1717,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:5868 getVerbatimModuleSyntaxErrorMessage
+// Go: checker/checker.go:5864 getVerbatimModuleSyntaxErrorMessage
 pub fn get_verbatim_module_syntax_error_message(node: Node) -> &'static Message {
     let source_file = get_source_file_of_node(node);
     let file_name = source_file_file_name(source_file);
@@ -1731,7 +1731,7 @@ pub fn get_verbatim_module_syntax_error_message(node: Node) -> &'static Message 
 }
 
 impl Checker {
-    // Go: checker/checker.go:5880 checkExternalModuleExports
+    // Go: checker/checker.go:5876 checkExternalModuleExports
     pub fn check_external_module_exports(&mut self, node: Node) {
         let module_symbol = self.get_symbol_of_declaration(node);
         if !self.module_symbol_links.get(module_symbol).exports_checked {

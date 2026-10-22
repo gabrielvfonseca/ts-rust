@@ -15,7 +15,7 @@
 use crate::astdata::NodeData;
 use crate::prelude::*;
 
-// Go: binder/binder.go:45 ExpandoAssignmentInfo
+// Go: binder/binder.go:44 ExpandoAssignmentInfo
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ExpandoAssignmentInfo {
     pub node: Node,
@@ -23,7 +23,7 @@ pub struct ExpandoAssignmentInfo {
     pub block_scope_container: Node,
 }
 
-// Go: binder/binder.go:51 Binder
+// Go: binder/binder.go:50 Binder
 //
 // PORT: `bindFunc` (a cached closure over `b.bind`) is not stored; callers
 // use a closure over `self.bind` at the call site. `symbolArena` becomes
@@ -837,7 +837,7 @@ impl Binder {
         let kind = node.kind();
         // Go `ast.IsExportSpecifier(node)` (binder.go:153), inline. Its kind
         // at pin fed0bf24149f:
-        // Go: ast/ast_generated.go:2954 IsExportSpecifier
+        // Go: ast/ast_generated.go:3015 IsExportSpecifier
         let is_default_export = has_syntactic_modifier_in(node, data, ModifierFlags::DEFAULT)
             || kind == SyntaxKind::ExportSpecifier
                 && module_export_name_is_default(node.name_in(data));
@@ -1082,7 +1082,7 @@ impl Binder {
             // Go `ast.IsAmbientModule(node)` (binder.go:306), inline: the
             // name of a module declaration is `name`. Its kinds at pin
             // fed0bf24149f:
-            // Go: ast/utilities.go:1658 IsAmbientModule
+            // Go: ast/utilities.go:1707 IsAmbientModule
             if kind == SyntaxKind::ModuleDeclaration
                 && (name_kind == SyntaxKind::StringLiteral || is_global_scope_augmentation(node))
             {
@@ -1118,8 +1118,8 @@ impl Binder {
             }
             // Go `ast.IsPropertyNameLiteral(name) || ast.IsJsxNamespacedName(name)`
             // (binder.go:327), inline. Their kinds at pin fed0bf24149f:
-            // Go: ast/utilities.go:260 IsPropertyNameLiteral
-            // Go: ast/ast_generated.go:6468 IsJsxNamespacedName
+            // Go: ast/utilities.go:309 IsPropertyNameLiteral
+            // Go: ast/ast_generated.go:6539 IsJsxNamespacedName
             if matches!(
                 name_kind,
                 SyntaxKind::Identifier

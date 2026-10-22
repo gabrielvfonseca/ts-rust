@@ -39,7 +39,7 @@ fn nb_add_length(b: &Rc<RefCell<NodeBuilderImpl>>, n: i32) {
 pub type NodeBuilderTypeTransform = fn(&mut Checker, &Rc<RefCell<NodeBuilderImpl>>, TypeId) -> Node;
 
 impl Checker {
-    // Go: checker/nodebuilderimpl.go:3234 visitAndTransformType
+    // Go: checker/nodebuilderimpl.go:3247 visitAndTransformType
     pub fn visit_and_transform_type(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -256,7 +256,7 @@ impl Checker {
         // (Go keeps a commented-out deepCloneOrReuseNode sketch here.)
     }
 
-    // Go: checker/nodebuilderimpl.go:3358 typeToTypeNode
+    // Go: checker/nodebuilderimpl.go:3371 typeToTypeNode
     pub fn type_to_type_node(&mut self, b: &Rc<RefCell<NodeBuilderImpl>>, t: TypeId) -> Node {
         let ctx = nb_ctx(b);
         // PORT: Go uses two defers (typeStack pop after the push in the body,
@@ -795,13 +795,13 @@ impl Checker {
         panic!("Should be unreachable.");
     }
 
-    // Go: checker/nodebuilderimpl.go:3681 newStringLiteral
+    // Go: checker/nodebuilderimpl.go:3694 newStringLiteral
     // PORT: named `nb_new_string_literal` so it does not read like a factory call.
     pub fn nb_new_string_literal(&mut self, b: &Rc<RefCell<NodeBuilderImpl>>, text: &str) -> Node {
         self.nb_new_string_literal_ex(b, text, false /*isSingleQuote*/)
     }
 
-    // Go: checker/nodebuilderimpl.go:3685 newStringLiteralEx
+    // Go: checker/nodebuilderimpl.go:3698 newStringLiteralEx
     pub fn nb_new_string_literal_ex(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -820,7 +820,7 @@ impl Checker {
 
     // Direct serialization core functions for types, type aliases, and symbols
 
-    // Go: checker/nodebuilderimpl.go:3696 TypeAlias.ToTypeReferenceNode
+    // Go: checker/nodebuilderimpl.go:3709 TypeAlias.ToTypeReferenceNode
     // PORT: a method on TypeAlias in Go; here a Checker method that takes the alias.
     pub fn type_alias_to_type_reference_node(
         &mut self,
@@ -834,7 +834,7 @@ impl Checker {
         e.factory().new_type_reference_node(name, type_arguments)
     }
 
-    // Go: checker/nodebuilderimpl.go:3700 newIdentifier
+    // Go: checker/nodebuilderimpl.go:3713 newIdentifier
     // PORT: named `nb_new_identifier` so it does not read like a factory call.
     pub fn nb_new_identifier(
         &mut self,
@@ -850,7 +850,7 @@ impl Checker {
         id
     }
 
-    // Go: checker/nodebuilderimpl.go:3708 createAccessExpression
+    // Go: checker/nodebuilderimpl.go:3721 createAccessExpression
     pub fn create_access_expression(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -876,7 +876,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/nodebuilderimpl.go:3719 createExpressionWithTypeArguments
+    // Go: checker/nodebuilderimpl.go:3732 createExpressionWithTypeArguments
     pub fn create_expression_with_type_arguments(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -891,7 +891,7 @@ impl Checker {
             .new_expression_with_type_arguments(expr, type_arguments)
     }
 
-    // Go: checker/nodebuilderimpl.go:3726 lookupInstantiatedTypeArgumentNodes
+    // Go: checker/nodebuilderimpl.go:3739 lookupInstantiatedTypeArgumentNodes
     pub fn lookup_instantiated_type_argument_nodes(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -936,7 +936,7 @@ impl Checker {
         NodeList::NIL
     }
 
-    // Go: checker/nodebuilderimpl.go:3753 lookupExpressionChainTypeArgumentNodes
+    // Go: checker/nodebuilderimpl.go:3766 lookupExpressionChainTypeArgumentNodes
     pub fn lookup_expression_chain_type_argument_nodes(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -969,7 +969,7 @@ impl Checker {
         NodeList::NIL
     }
 
-    // Go: checker/nodebuilderimpl.go:3773 shouldWriteTypeParametersInQualifiedName
+    // Go: checker/nodebuilderimpl.go:3786 shouldWriteTypeParametersInQualifiedName
     pub fn should_write_type_parameters_in_qualified_name(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,

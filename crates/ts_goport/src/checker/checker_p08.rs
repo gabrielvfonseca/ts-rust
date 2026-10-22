@@ -10,7 +10,7 @@ impl Checker {
     // If we are unable to determine a *yield* or a *return* type, `noIterationTypes` is
     // returned to indicate to the caller that it should handle the error. Otherwise, an
     // `IterationTypes` record is returned.
-    // Go: checker/checker.go:6850 getIterationTypesOfIteratorResult
+    // Go: checker/checker.go:6846 getIterationTypesOfIteratorResult
     pub fn get_iteration_types_of_iterator_result(&mut self, t: TypeId) -> IterationTypes {
         if self.is_type_any(t) {
             return IterationTypes {
@@ -89,17 +89,17 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:6883 isYieldIteratorResult
+    // Go: checker/checker.go:6879 isYieldIteratorResult
     pub fn is_yield_iterator_result(&mut self, t: TypeId) -> bool {
         self.is_iterator_result(t, IterationTypeKind::YIELD)
     }
 
-    // Go: checker/checker.go:6887 isReturnIteratorResult
+    // Go: checker/checker.go:6883 isReturnIteratorResult
     pub fn is_return_iterator_result(&mut self, t: TypeId) -> bool {
         self.is_iterator_result(t, IterationTypeKind::RETURN)
     }
 
-    // Go: checker/checker.go:6891 isIteratorResult
+    // Go: checker/checker.go:6887 isIteratorResult
     pub fn is_iterator_result(&mut self, t: TypeId, kind: IterationTypeKind) -> bool {
         // From https://tc39.github.io/ecma262/#sec-iteratorresult-interface:
         // > [done] is the result status of an iterator `next` method call. If the end of the iterator was reached `done` is `true`.
@@ -119,7 +119,7 @@ impl Checker {
         self.is_type_assignable_to(source, done_type)
     }
 
-    // Go: checker/checker.go:6900 reportTypeNotIterableError
+    // Go: checker/checker.go:6896 reportTypeNotIterableError
     pub fn report_type_not_iterable_error(
         &mut self,
         error_node: Node,
@@ -153,7 +153,7 @@ impl Checker {
         self.error_and_maybe_suggest_await(error_node, suggest_await, message, args![type_string])
     }
 
-    // Go: checker/checker.go:6915 getIterationDiagnosticDetails
+    // Go: checker/checker.go:6911 getIterationDiagnosticDetails
     pub fn get_iteration_diagnostic_details(
         &mut self,
         use_: IterationUse,
@@ -180,7 +180,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:6929 isES2015OrLaterIterable
+// Go: checker/checker.go:6925 isES2015OrLaterIterable
 pub fn is_es2015_or_later_iterable(n: &str) -> bool {
     matches!(
         n,
@@ -198,7 +198,7 @@ pub fn is_es2015_or_later_iterable(n: &str) -> bool {
 }
 
 impl Checker {
-    // Go: checker/checker.go:6937 checkAliasSymbol
+    // Go: checker/checker.go:6933 checkAliasSymbol
     pub fn check_alias_symbol(&mut self, node: Node) {
         let mut symbol = self.get_symbol_of_declaration(node);
         let target = self.resolve_alias(symbol);
@@ -498,7 +498,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7067 areDeclarationFlagsIdentical
+    // Go: checker/checker.go:7063 areDeclarationFlagsIdentical
     pub fn are_declaration_flags_identical(&self, left: Node, right: Node) -> bool {
         if is_parameter_declaration(left) && is_variable_declaration(right)
             || is_variable_declaration(left) && is_parameter_declaration(right)
@@ -519,7 +519,7 @@ impl Checker {
             == get_selected_modifier_flags(right, interesting_flags)
     }
 
-    // Go: checker/checker.go:7079 checkTypeAliasDeclaration
+    // Go: checker/checker.go:7075 checkTypeAliasDeclaration
     pub fn check_type_alias_declaration(&mut self, node: Node) {
         // Grammar checking
         self.check_grammar_modifiers(node);
@@ -560,7 +560,7 @@ impl Checker {
         self.register_for_unused_identifiers_check(node);
     }
 
-    // Go: checker/checker.go:7104 checkTypeNameIsReserved
+    // Go: checker/checker.go:7100 checkTypeNameIsReserved
     pub fn check_type_name_is_reserved(
         &mut self,
         name: Node,
@@ -577,7 +577,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7113 checkExportsOnMergedDeclarations
+    // Go: checker/checker.go:7109 checkExportsOnMergedDeclarations
     pub fn check_exports_on_merged_declarations(&mut self, node: Node) {
         // If localSymbol is defined on node then node itself is exported - check is required.
         let mut symbol = node.local_symbol();
@@ -652,7 +652,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7163 getDeclarationSpaces
+    // Go: checker/checker.go:7159 getDeclarationSpaces
     pub fn get_declaration_spaces(&mut self, node: Node) -> DeclarationSpaces {
         // PORT: Go `fallthrough` from the export assignment case into the
         // alias case is modeled with `resolve_alias_spaces`.
@@ -728,7 +728,7 @@ impl Checker {
         panic!("Unhandled case in getDeclarationSpaces: {:?}", node.kind());
     }
 
-    // Go: checker/checker.go:7204 checkTypeParameters
+    // Go: checker/checker.go:7200 checkTypeParameters
     // PERF: takes the `NodeSlice` (program data), so callers do not copy the
     // list into a `Vec`.
     pub fn check_type_parameters(&mut self, type_parameter_declarations: NodeSlice) {
@@ -763,7 +763,7 @@ impl Checker {
     }
 
     // Check that type parameter defaults only reference previously declared type parameters */
-    // Go: checker/checker.go:7224 checkTypeParametersNotReferenced
+    // Go: checker/checker.go:7220 checkTypeParametersNotReferenced
     pub fn check_type_parameters_not_referenced(
         &mut self,
         root: Node,
@@ -791,14 +791,14 @@ impl Checker {
         visit(self, root, type_parameters, index);
     }
 
-    // Go: checker/checker.go:7242 registerForUnusedIdentifiersCheck
+    // Go: checker/checker.go:7238 registerForUnusedIdentifiersCheck
     pub fn register_for_unused_identifiers_check(&mut self, node: Node) {
         let source_file = get_source_file_of_node(node);
         let links = self.source_file_links.get(source_file);
         links.identifier_check_nodes.push(node);
     }
 
-    // Go: checker/checker.go:7248 checkUnusedIdentifiers
+    // Go: checker/checker.go:7244 checkUnusedIdentifiers
     pub fn check_unused_identifiers(&mut self, potentially_unused_identifiers: &[Node]) {
         for &node in potentially_unused_identifiers {
             match node.kind() {
@@ -847,7 +847,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7275 isReferenced
+    // Go: checker/checker.go:7271 isReferenced
     pub fn is_referenced(&mut self, symbol: SymbolId) -> bool {
         !self
             .symbol_reference_links
@@ -858,7 +858,7 @@ impl Checker {
 
     // PORT: Go `type UnusedKind` and its consts are generated in `crate::flags`.
 
-    // Go: checker/checker.go:7286 reportUnusedVariable
+    // Go: checker/checker.go:7282 reportUnusedVariable
     pub fn report_unused_variable(&mut self, mut location: Node, diagnostic: Diagnostic) {
         while is_binding_element(location) || is_binding_pattern(location) {
             location = location.parent();
@@ -871,7 +871,7 @@ impl Checker {
         self.report_unused(location, kind, diagnostic);
     }
 
-    // Go: checker/checker.go:7293 reportUnused
+    // Go: checker/checker.go:7289 reportUnused
     pub fn report_unused(&mut self, location: Node, kind: UnusedKind, diagnostic: Diagnostic) {
         if !location
             .flags()
@@ -888,7 +888,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7306 unusedIsError
+    // Go: checker/checker.go:7302 unusedIsError
     pub fn unused_is_error(&self, kind: UnusedKind) -> bool {
         if kind == UnusedKind::LOCAL {
             self.compiler_options.no_unused_locals.is_true()
@@ -899,7 +899,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7317 checkUnusedClassMembers
+    // Go: checker/checker.go:7313 checkUnusedClassMembers
     pub fn check_unused_class_members(&mut self, node: Node) {
         for member in node.members() {
             match member.kind() {
@@ -962,7 +962,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7342 checkUnusedLocalsAndParameters
+    // Go: checker/checker.go:7338 checkUnusedLocalsAndParameters
     pub fn check_unused_locals_and_parameters(&mut self, node: Node) {
         // PORT: Go iterates a set and maps in random order; insertion-ordered
         // collections keep this deterministic. Diagnostics are sorted later.
@@ -1020,7 +1020,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7383 reportUnusedLocal
+    // Go: checker/checker.go:7379 reportUnusedLocal
     pub fn report_unused_local(&mut self, node: Node, name: &str) {
         let message = if is_type_declaration(node) {
             diag::X_0_is_declared_but_never_used
@@ -1036,7 +1036,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:7388 reportUnusedVariables
+    // Go: checker/checker.go:7384 reportUnusedVariables
     pub fn report_unused_variables(&mut self, node: Node) {
         let declarations = node.declarations().nodes().to_vec();
         if declarations.len() > 1 && self.every_unreferenced_variable_declaration(&declarations) {
@@ -1059,13 +1059,13 @@ impl Checker {
         true
     }
 
-    // Go: checker/checker.go:7397 reportUnusedParameters
+    // Go: checker/checker.go:7393 reportUnusedParameters
     pub fn report_unused_parameters(&mut self, node: Node) {
         let parameters = node.parameters().to_vec();
         self.report_unused_variable_declarations(&parameters);
     }
 
-    // Go: checker/checker.go:7401 reportUnusedBindingElements
+    // Go: checker/checker.go:7397 reportUnusedBindingElements
     pub fn report_unused_binding_elements(&mut self, node: Node) {
         let declarations = node.elements().to_vec();
         if declarations.len() > 1 && self.every_unreferenced_variable_declaration(&declarations) {
@@ -1078,7 +1078,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7410 reportUnusedVariableDeclarations
+    // Go: checker/checker.go:7406 reportUnusedVariableDeclarations
     pub fn report_unused_variable_declarations(&mut self, declarations: &[Node]) {
         for &declaration in declarations {
             let name = declaration.name();
@@ -1102,7 +1102,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7423 isUnreferencedVariableDeclaration
+    // Go: checker/checker.go:7419 isUnreferencedVariableDeclaration
     pub fn is_unreferenced_variable_declaration(&mut self, node: Node) -> bool {
         let name = node.name();
         if name.is_nil() {
@@ -1148,7 +1148,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/checker.go:7450 reportUnusedImports
+    // Go: checker/checker.go:7446 reportUnusedImports
     pub fn report_unused_imports(&mut self, node: Node, unuseds: &[Node]) {
         let mut declaration_count: usize = if node.name().is_some() { 1 } else { 0 };
         let named_bindings = node.named_bindings();
@@ -1178,12 +1178,12 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:7469 isIdentifierThatStartsWithUnderscore
+// Go: checker/checker.go:7465 isIdentifierThatStartsWithUnderscore
 pub fn is_identifier_that_starts_with_underscore(node: Node) -> bool {
     is_identifier(node) && !node.text().is_empty() && node.text().as_bytes()[0] == b'_'
 }
 
-// Go: checker/checker.go:7473 importClauseFromImported
+// Go: checker/checker.go:7469 importClauseFromImported
 pub fn import_clause_from_imported(node: Node) -> Node {
     match node.kind() {
         SyntaxKind::ImportClause => node,
@@ -1193,7 +1193,7 @@ pub fn import_clause_from_imported(node: Node) -> Node {
 }
 
 impl Checker {
-    // Go: checker/checker.go:7484 checkUnusedInferTypeParameter
+    // Go: checker/checker.go:7480 checkUnusedInferTypeParameter
     pub fn check_unused_infer_type_parameter(&mut self, node: Node) {
         let type_parameter = node.type_parameter();
         if self.is_unreferenced_type_parameter(type_parameter) {
@@ -1210,7 +1210,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7491 checkUnusedTypeParameters
+    // Go: checker/checker.go:7487 checkUnusedTypeParameters
     pub fn check_unused_type_parameters(&mut self, node: Node) {
         let symbol = self.get_symbol_of_declaration(node);
         // PORT: Go package fn `allDeclarationsInSameSourceFile(symbol)` reads
@@ -1258,7 +1258,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7512 isUnreferencedTypeParameter
+    // Go: checker/checker.go:7508 isUnreferencedTypeParameter
     pub fn is_unreferenced_type_parameter(&mut self, type_parameter: Node) -> bool {
         let symbol = self.get_merged_symbol(type_parameter.symbol());
         !self
@@ -1269,7 +1269,7 @@ impl Checker {
             && !is_identifier_that_starts_with_underscore(type_parameter.name())
     }
 
-    // Go: checker/checker.go:7516 checkUnusedRenamedBindingElements
+    // Go: checker/checker.go:7512 checkUnusedRenamedBindingElements
     pub fn check_unused_renamed_binding_elements(&mut self) {
         let nodes = self.renamed_binding_elements_in_types.clone();
         for node in nodes {
@@ -1304,7 +1304,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7531 checkExpressionStatement
+    // Go: checker/checker.go:7527 checkExpressionStatement
     pub fn check_expression_statement(&mut self, node: Node) {
         // Grammar checking
         self.check_grammar_statement_in_ambient_context(node);
@@ -1313,7 +1313,7 @@ impl Checker {
 
     // Returns the type of an expression. Unlike checkExpression, this function is simply concerned
     // with computing the type and may not fully check all contained sub-expressions for errors.
-    // Go: checker/checker.go:7539 getTypeOfExpression
+    // Go: checker/checker.go:7535 getTypeOfExpression
     pub fn get_type_of_expression(&mut self, node: Node) -> TypeId {
         // Don't bother caching types that require no flow analysis and are quick to compute.
         let quick_type = self.get_quick_type_of_expression(node);
@@ -1338,7 +1338,7 @@ impl Checker {
 
     // Returns the type of an expression. Unlike checkExpression, this function is simply concerned
     // with computing the type and may not fully check all contained sub-expressions for errors.
-    // Go: checker/checker.go:7563 getQuickTypeOfExpression
+    // Go: checker/checker.go:7559 getQuickTypeOfExpression
     pub fn get_quick_type_of_expression(&mut self, node: Node) -> TypeId {
         let expr = skip_parentheses(node);
         if is_await_expression(expr) {
@@ -1379,7 +1379,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:7589 getReturnTypeOfSingleNonGenericSignature
+    // Go: checker/checker.go:7585 getReturnTypeOfSingleNonGenericSignature
     pub fn get_return_type_of_single_non_generic_signature(
         &mut self,
         func_type: TypeId,
@@ -1392,7 +1392,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:7597 getReturnTypeOfSingleNonGenericSignatureOfCallChain
+    // Go: checker/checker.go:7593 getReturnTypeOfSingleNonGenericSignatureOfCallChain
     pub fn get_return_type_of_single_non_generic_signature_of_call_chain(
         &mut self,
         expr: Node,
@@ -1411,13 +1411,13 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:7607 checkNonNullExpression
+    // Go: checker/checker.go:7603 checkNonNullExpression
     pub fn check_non_null_expression(&mut self, node: Node) -> TypeId {
         let t = self.check_expression(node);
         self.check_non_null_type(t, node)
     }
 
-    // Go: checker/checker.go:7611 checkNonNullType
+    // Go: checker/checker.go:7607 checkNonNullType
     pub fn check_non_null_type(&mut self, t: TypeId, node: Node) -> TypeId {
         self.check_non_null_type_with_reporter(
             t,
@@ -1428,7 +1428,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:7615 checkNonNullTypeWithReporter
+    // Go: checker/checker.go:7611 checkNonNullTypeWithReporter
     pub fn check_non_null_type_with_reporter(
         &mut self,
         t: TypeId,
@@ -1464,7 +1464,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:7639 checkNonNullNonVoidType
+    // Go: checker/checker.go:7635 checkNonNullNonVoidType
     pub fn check_non_null_non_void_type(&mut self, t: TypeId, node: Node) -> TypeId {
         let non_null_type = self.check_non_null_type(t, node);
         if self.ty(non_null_type).flags.intersects(TypeFlags::VOID) {
@@ -1489,7 +1489,7 @@ impl Checker {
         non_null_type
     }
 
-    // Go: checker/checker.go:7658 reportObjectPossiblyNullOrUndefinedError
+    // Go: checker/checker.go:7654 reportObjectPossiblyNullOrUndefinedError
     pub fn report_object_possibly_null_or_undefined_error(&mut self, node: Node, facts: TypeFacts) {
         let mut node_text = String::new();
         if is_entity_name_expression(node) {
@@ -1533,7 +1533,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7686 checkExpressionWithContextualType
+    // Go: checker/checker.go:7682 checkExpressionWithContextualType
     pub fn check_expression_with_contextual_type(
         &mut self,
         node: Node,
@@ -1579,7 +1579,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:7707 getContextNode
+    // Go: checker/checker.go:7703 getContextNode
     pub fn get_context_node(&self, node: Node) -> Node {
         if is_jsx_attributes(node) && !is_jsx_self_closing_element(node.parent()) {
             // Needs to be the root JsxElement, so it encompasses the attributes _and_ the children (which are essentially part of the attributes)
@@ -1588,12 +1588,12 @@ impl Checker {
         node
     }
 
-    // Go: checker/checker.go:7715 checkExpressionCached
+    // Go: checker/checker.go:7711 checkExpressionCached
     pub fn check_expression_cached(&mut self, node: Node) -> TypeId {
         self.check_expression_cached_ex(node, CheckMode::NORMAL)
     }
 
-    // Go: checker/checker.go:7719 checkExpressionCachedEx
+    // Go: checker/checker.go:7715 checkExpressionCachedEx
     pub fn check_expression_cached_ex(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         if check_mode != CheckMode::NORMAL {
             return self.check_expression_ex(node, check_mode);
@@ -1618,7 +1618,7 @@ impl Checker {
     // It is intended for uses where you know there is no contextual type,
     // and requesting the contextual type might cause a circularity or other bad behaviour.
     // It sets the contextual type of the node to any before calling getTypeOfExpression.
-    // Go: checker/checker.go:7744 getContextFreeTypeOfExpression
+    // Go: checker/checker.go:7740 getContextFreeTypeOfExpression
     pub fn get_context_free_type_of_expression(&mut self, node: Node) -> TypeId {
         if let Some(&cached) = self.context_free_types.get(&node) {
             if cached.is_some() {

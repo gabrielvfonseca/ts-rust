@@ -49,7 +49,7 @@ fn field_panic(n: Node, field: &str) -> ! {
 // ──────────────────────────────────────────────────────────────────────
 
 impl Node {
-    // Go: ast/ast_generated.go:159 FullSignature
+    // Go: ast/ast_generated.go:160 FullSignature
     /// Go `node.AsX().FullSignature` for: FunctionDeclaration, CallSignatureDeclaration, ConstructSignatureDeclaration, ConstructorDeclaration, GetAccessorDeclaration, SetAccessorDeclaration, IndexSignatureDeclaration, MethodSignatureDeclaration, MethodDeclaration, ArrowFunction, FunctionExpression, FunctionTypeNode, ConstructorTypeNode, JSDocSignature.
     #[must_use]
     pub fn full_signature(self) -> Node {
@@ -90,7 +90,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:182 HeritageClauses
+    // Go: ast/ast_generated.go:181 HeritageClauses
     /// Go `node.AsX().HeritageClauses` for: ClassDeclaration, ClassExpression, InterfaceDeclaration.
     #[must_use]
     pub fn heritage_clauses(self) -> NodeList {
@@ -104,7 +104,7 @@ impl Node {
         .unwrap_or_else(|| field_panic(self, "HeritageClauses"))
     }
 
-    // Go: ast/ast_generated.go:186 TokenFlags
+    // Go: ast/ast_generated.go:187 TokenFlags
     /// Go `node.AsX().TokenFlags` for: StringLiteral, NumericLiteral, BigIntLiteral, RegularExpressionLiteral, NoSubstitutionTemplateLiteral, TemplateHead, TemplateMiddle, TemplateTail, JsxText.
     #[must_use]
     pub fn token_flags(self) -> TokenFlags {
@@ -122,7 +122,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:197 TemplateFlags
+    // Go: ast/ast_generated.go:198 TemplateFlags
     /// Go `node.AsX().TemplateFlags` for: NoSubstitutionTemplateLiteral, TemplateHead, TemplateMiddle, TemplateTail.
     #[must_use]
     pub fn template_flags(self) -> TokenFlags {
@@ -135,7 +135,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:2321 Types
+    // Go: ast/ast_generated.go:2218 Types
     /// Go `node.AsX().Types` for: HeritageClause, UnionTypeNode, IntersectionTypeNode.
     #[must_use]
     pub fn types(self) -> NodeList {
@@ -148,7 +148,7 @@ impl Node {
         .unwrap_or_else(|| field_panic(self, "Types"))
     }
 
-    // Go: ast/ast_generated.go:7053 Comment
+    // Go: ast/ast_generated.go:6949 Comment
     /// Go `node.AsX().Comment` for: JSDoc, JSDocTypeTag, JSDocUnknownTag, JSDocTemplateTag, JSDocReturnTag, JSDocPublicTag, JSDocPrivateTag, JSDocProtectedTag, JSDocReadonlyTag, JSDocOverrideTag, JSDocDeprecatedTag, JSDocSeeTag, JSDocImplementsTag, JSDocAugmentsTag, JSDocSatisfiesTag, JSDocThrowsTag, JSDocThisTag, JSDocImportTag, JSDocCallbackTag, JSDocOverloadTag, JSDocTypedefTag, JSDocParameterOrPropertyTag.
     #[must_use]
     pub fn comment(self) -> NodeList {
@@ -181,7 +181,7 @@ impl Node {
         .unwrap_or_else(|| field_panic(self, "Comment"))
     }
 
-    // Go: ast/ast_generated.go:839 Left
+    // Go: ast/ast_generated.go:720 Left
     /// Go `node.AsX().Left` for: QualifiedName, BinaryExpression.
     #[must_use]
     pub fn left(self) -> Node {
@@ -192,7 +192,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:840 Right
+    // Go: ast/ast_generated.go:721 Right
     /// Go `node.AsX().Right` for: QualifiedName, BinaryExpression.
     #[must_use]
     pub fn right(self) -> Node {
@@ -203,7 +203,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:824 ThenStatement
+    // Go: ast/ast_generated.go:870 ThenStatement
     /// Go `node.AsX().ThenStatement` for: IfStatement.
     #[must_use]
     pub fn then_statement(self) -> Node {
@@ -213,7 +213,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:825 ElseStatement
+    // Go: ast/ast_generated.go:871 ElseStatement
     /// Go `node.AsX().ElseStatement` for: IfStatement.
     #[must_use]
     pub fn else_statement(self) -> Node {
@@ -223,7 +223,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1129 Condition
+    // Go: ast/ast_generated.go:1010 Condition
     /// Go `node.AsX().Condition` for: ForStatement, ConditionalExpression.
     #[must_use]
     pub fn condition(self) -> Node {
@@ -234,7 +234,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:965 Incrementor
+    // Go: ast/ast_generated.go:1011 Incrementor
     /// Go `node.AsX().Incrementor` for: ForStatement.
     #[must_use]
     pub fn incrementor(self) -> Node {
@@ -244,7 +244,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1018 AwaitModifier
+    // Go: ast/ast_generated.go:1064 AwaitModifier
     /// Go `node.AsX().AwaitModifier` for: ForInOrOfStatement.
     #[must_use]
     pub fn await_modifier(self) -> Node {
@@ -254,7 +254,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1232 CaseBlock
+    // Go: ast/ast_generated.go:1283 CaseBlock
     /// Go `node.AsX().CaseBlock` for: SwitchStatement.
     #[must_use]
     pub fn case_block(self) -> Node {
@@ -264,7 +264,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1278 Clauses
+    // Go: ast/ast_generated.go:1329 Clauses
     /// Go `node.AsX().Clauses` for: CaseBlock.
     #[must_use]
     pub fn clauses(self) -> NodeList {
@@ -275,7 +275,7 @@ impl Node {
         .unwrap_or_else(|| field_panic(self, "Clauses"))
     }
 
-    // Go: ast/ast_generated.go:1323 FallthroughFlowNode
+    // Go: ast/ast_generated.go:1374 FallthroughFlowNode
     /// Go `node.AsX().FallthroughFlowNode` for: CaseOrDefaultClause.
     /// PORT: the binder sets this field. `core::NodeBindData` has no
     /// separate slot, and case/default clauses have no Go `FlowNodeData`, so
@@ -289,7 +289,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1415 TryBlock
+    // Go: ast/ast_generated.go:1471 TryBlock
     /// Go `node.AsX().TryBlock` for: TryStatement.
     #[must_use]
     pub fn try_block(self) -> Node {
@@ -299,7 +299,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1416 CatchClause
+    // Go: ast/ast_generated.go:1472 CatchClause
     /// Go `node.AsX().CatchClause` for: TryStatement.
     #[must_use]
     pub fn catch_clause(self) -> Node {
@@ -309,7 +309,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1417 FinallyBlock
+    // Go: ast/ast_generated.go:1473 FinallyBlock
     /// Go `node.AsX().FinallyBlock` for: TryStatement.
     #[must_use]
     pub fn finally_block(self) -> Node {
@@ -319,7 +319,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1465 VariableDeclaration
+    // Go: ast/ast_generated.go:1521 VariableDeclaration
     /// Go `node.AsX().VariableDeclaration` for: CatchClause.
     #[must_use]
     pub fn variable_declaration(self) -> Node {
@@ -329,7 +329,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1466 Block
+    // Go: ast/ast_generated.go:1522 Block
     /// Go `node.AsX().Block` for: CatchClause.
     #[must_use]
     pub fn block(self) -> Node {
@@ -339,7 +339,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1781 MultiLine
+    // Go: ast/ast_generated.go:1672 MultiLine
     /// Go `node.AsX().MultiLine` for: Block, ArrayLiteralExpression, ObjectLiteralExpression, ImportAttributes.
     #[must_use]
     pub fn multi_line(self) -> bool {
@@ -352,7 +352,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1661 DeclarationList
+    // Go: ast/ast_generated.go:1717 DeclarationList
     /// Go `node.AsX().DeclarationList` for: VariableStatement.
     #[must_use]
     pub fn declaration_list(self) -> Node {
@@ -362,7 +362,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1704 ExclamationToken
+    // Go: ast/ast_generated.go:1760 ExclamationToken
     /// Go `node.AsX().ExclamationToken` for: VariableDeclaration.
     #[must_use]
     pub fn exclamation_token(self) -> Node {
@@ -372,7 +372,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:1755 Declarations
+    // Go: ast/ast_generated.go:1811 Declarations
     /// Go `node.AsX().Declarations` for: VariableDeclarationList.
     #[must_use]
     pub fn declarations(self) -> NodeList {
@@ -383,7 +383,7 @@ impl Node {
         .unwrap_or_else(|| field_panic(self, "Declarations"))
     }
 
-    // Go: ast/ast_generated.go:2006 DotDotDotToken
+    // Go: ast/ast_generated.go:1902 DotDotDotToken
     /// Go `node.AsX().DotDotDotToken` for: ParameterDeclaration, BindingElement, NamedTupleMember, JsxExpression.
     #[must_use]
     pub fn dot_dot_dot_token(self) -> Node {
@@ -400,7 +400,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:2320 Token
+    // Go: ast/ast_generated.go:2217 Token
     /// Go `node.AsX().Token` for: HeritageClause, ImportAttributes.
     #[must_use]
     pub fn token(self) -> SyntaxKind {
@@ -411,7 +411,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:2736 IsExportEquals
+    // Go: ast/ast_generated.go:2797 IsExportEquals
     /// Go `node.AsX().IsExportEquals` for: ExportAssignment.
     #[must_use]
     pub fn is_export_equals(self) -> bool {
@@ -421,7 +421,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:3726 OperatorToken
+    // Go: ast/ast_generated.go:3792 OperatorToken
     /// Go `node.AsX().OperatorToken` for: BinaryExpression.
     #[must_use]
     pub fn operator_token(self) -> Node {
@@ -431,7 +431,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:3936 Operator
+    // Go: ast/ast_generated.go:3839 Operator
     /// Go `node.AsX().Operator` for: PrefixUnaryExpression, PostfixUnaryExpression, TypeOperatorNode.
     #[must_use]
     pub fn operator(self) -> SyntaxKind {
@@ -443,7 +443,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:3937 Operand
+    // Go: ast/ast_generated.go:3840 Operand
     /// Go `node.AsX().Operand` for: PrefixUnaryExpression, PostfixUnaryExpression.
     #[must_use]
     pub fn operand(self) -> Node {
@@ -454,7 +454,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:3906 EqualsGreaterThanToken
+    // Go: ast/ast_generated.go:3972 EqualsGreaterThanToken
     /// Go `node.AsX().EqualsGreaterThanToken` for: ArrowFunction.
     #[must_use]
     pub fn equals_greater_than_token(self) -> Node {
@@ -464,7 +464,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4101 WhenTrue
+    // Go: ast/ast_generated.go:4167 WhenTrue
     /// Go `node.AsX().WhenTrue` for: ConditionalExpression.
     #[must_use]
     pub fn when_true(self) -> Node {
@@ -474,7 +474,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4102 ColonToken
+    // Go: ast/ast_generated.go:4168 ColonToken
     /// Go `node.AsX().ColonToken` for: ConditionalExpression.
     #[must_use]
     pub fn colon_token(self) -> Node {
@@ -484,7 +484,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4103 WhenFalse
+    // Go: ast/ast_generated.go:4169 WhenFalse
     /// Go `node.AsX().WhenFalse` for: ConditionalExpression.
     #[must_use]
     pub fn when_false(self) -> Node {
@@ -494,7 +494,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4211 ArgumentExpression
+    // Go: ast/ast_generated.go:4277 ArgumentExpression
     /// Go `node.AsX().ArgumentExpression` for: ElementAccessExpression.
     #[must_use]
     pub fn argument_expression(self) -> Node {
@@ -504,7 +504,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4355 KeywordToken
+    // Go: ast/ast_generated.go:4421 KeywordToken
     /// Go `node.AsX().KeywordToken` for: MetaProperty.
     #[must_use]
     pub fn keyword_token(self) -> SyntaxKind {
@@ -514,7 +514,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4641 Head
+    // Go: ast/ast_generated.go:4544 Head
     /// Go `node.AsX().Head` for: TemplateExpression, TemplateLiteralTypeNode.
     #[must_use]
     pub fn head(self) -> Node {
@@ -525,7 +525,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4642 TemplateSpans
+    // Go: ast/ast_generated.go:4545 TemplateSpans
     /// Go `node.AsX().TemplateSpans` for: TemplateExpression, TemplateLiteralTypeNode.
     #[must_use]
     pub fn template_spans(self) -> NodeList {
@@ -537,7 +537,7 @@ impl Node {
         .unwrap_or_else(|| field_panic(self, "TemplateSpans"))
     }
 
-    // Go: ast/ast_generated.go:4687 Literal
+    // Go: ast/ast_generated.go:4590 Literal
     /// Go `node.AsX().Literal` for: TemplateSpan, LiteralTypeNode, TemplateLiteralTypeSpan.
     #[must_use]
     pub fn literal(self) -> Node {
@@ -549,7 +549,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4569 Tag
+    // Go: ast/ast_generated.go:4635 Tag
     /// Go `node.AsX().Tag` for: TaggedTemplateExpression.
     #[must_use]
     pub fn tag(self) -> Node {
@@ -559,7 +559,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4572 Template
+    // Go: ast/ast_generated.go:4638 Template
     /// Go `node.AsX().Template` for: TaggedTemplateExpression.
     #[must_use]
     pub fn template(self) -> Node {
@@ -569,7 +569,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4851 EqualsToken
+    // Go: ast/ast_generated.go:4917 EqualsToken
     /// Go `node.AsX().EqualsToken` for: ShorthandPropertyAssignment.
     #[must_use]
     pub fn equals_token(self) -> Node {
@@ -579,7 +579,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:4852 ObjectAssignmentInitializer
+    // Go: ast/ast_generated.go:4918 ObjectAssignmentInitializer
     /// Go `node.AsX().ObjectAssignmentInitializer` for: ShorthandPropertyAssignment.
     #[must_use]
     pub fn object_assignment_initializer(self) -> Node {
@@ -591,7 +591,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5208 CheckType
+    // Go: ast/ast_generated.go:5279 CheckType
     /// Go `node.AsX().CheckType` for: ConditionalTypeNode.
     #[must_use]
     pub fn check_type(self) -> Node {
@@ -601,7 +601,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5209 ExtendsType
+    // Go: ast/ast_generated.go:5280 ExtendsType
     /// Go `node.AsX().ExtendsType` for: ConditionalTypeNode.
     #[must_use]
     pub fn extends_type(self) -> Node {
@@ -611,7 +611,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5210 TrueType
+    // Go: ast/ast_generated.go:5281 TrueType
     /// Go `node.AsX().TrueType` for: ConditionalTypeNode.
     #[must_use]
     pub fn true_type(self) -> Node {
@@ -621,7 +621,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5211 FalseType
+    // Go: ast/ast_generated.go:5282 FalseType
     /// Go `node.AsX().FalseType` for: ConditionalTypeNode.
     #[must_use]
     pub fn false_type(self) -> Node {
@@ -631,7 +631,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5469 TypeParameter
+    // Go: ast/ast_generated.go:5366 TypeParameter
     /// Go `node.AsX().TypeParameter` for: InferTypeNode, MappedTypeNode.
     #[must_use]
     pub fn type_parameter(self) -> Node {
@@ -642,7 +642,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5333 ElementType
+    // Go: ast/ast_generated.go:5404 ElementType
     /// Go `node.AsX().ElementType` for: ArrayTypeNode.
     #[must_use]
     pub fn element_type(self) -> Node {
@@ -652,7 +652,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5371 ObjectType
+    // Go: ast/ast_generated.go:5442 ObjectType
     /// Go `node.AsX().ObjectType` for: IndexedAccessTypeNode.
     #[must_use]
     pub fn object_type(self) -> Node {
@@ -662,7 +662,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5372 IndexType
+    // Go: ast/ast_generated.go:5443 IndexType
     /// Go `node.AsX().IndexType` for: IndexedAccessTypeNode.
     #[must_use]
     pub fn index_type(self) -> Node {
@@ -672,7 +672,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5411 TypeName
+    // Go: ast/ast_generated.go:5482 TypeName
     /// Go `node.AsX().TypeName` for: TypeReferenceNode.
     // PERF: C2 (a hand edit; keep it when this file is made again). A tier 0
     // store TypeReference reads the child from the store column
@@ -694,7 +694,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5550 AssertsModifier
+    // Go: ast/ast_generated.go:5621 AssertsModifier
     /// Go `node.AsX().AssertsModifier` for: TypePredicateNode.
     #[must_use]
     pub fn asserts_modifier(self) -> Node {
@@ -704,7 +704,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5551 ParameterName
+    // Go: ast/ast_generated.go:5622 ParameterName
     /// Go `node.AsX().ParameterName` for: TypePredicateNode.
     #[must_use]
     pub fn parameter_name(self) -> Node {
@@ -714,7 +714,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5594 Value
+    // Go: ast/ast_generated.go:5665 Value
     /// Go `node.AsX().Value` for: ImportAttribute.
     #[must_use]
     pub fn value(self) -> Node {
@@ -724,7 +724,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5689 ExprName
+    // Go: ast/ast_generated.go:5760 ExprName
     /// Go `node.AsX().ExprName` for: TypeQueryNode.
     #[must_use]
     pub fn expr_name(self) -> Node {
@@ -734,7 +734,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5730 ReadonlyToken
+    // Go: ast/ast_generated.go:5801 ReadonlyToken
     /// Go `node.AsX().ReadonlyToken` for: MappedTypeNode.
     #[must_use]
     pub fn readonly_token(self) -> Node {
@@ -744,7 +744,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:5732 NameType
+    // Go: ast/ast_generated.go:5803 NameType
     /// Go `node.AsX().NameType` for: MappedTypeNode.
     #[must_use]
     pub fn name_type(self) -> Node {
@@ -754,7 +754,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6267 IsSpread
+    // Go: ast/ast_generated.go:6338 IsSpread
     /// Go `node.AsX().IsSpread` for: SyntheticExpression.
     #[must_use]
     pub fn is_spread(self) -> bool {
@@ -764,7 +764,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6268 TupleNameSource
+    // Go: ast/ast_generated.go:6339 TupleNameSource
     /// Go `node.AsX().TupleNameSource` for: SyntheticExpression.
     #[must_use]
     pub fn tuple_name_source(self) -> Node {
@@ -774,7 +774,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6351 OpeningElement
+    // Go: ast/ast_generated.go:6422 OpeningElement
     /// Go `node.AsX().OpeningElement` for: JsxElement.
     #[must_use]
     pub fn opening_element(self) -> Node {
@@ -784,7 +784,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6353 ClosingElement
+    // Go: ast/ast_generated.go:6424 ClosingElement
     /// Go `node.AsX().ClosingElement` for: JsxElement.
     #[must_use]
     pub fn closing_element(self) -> Node {
@@ -794,7 +794,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6434 Namespace
+    // Go: ast/ast_generated.go:6505 Namespace
     /// Go `node.AsX().Namespace` for: JsxNamespacedName.
     #[must_use]
     pub fn namespace(self) -> Node {
@@ -804,7 +804,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6565 OpeningFragment
+    // Go: ast/ast_generated.go:6636 OpeningFragment
     /// Go `node.AsX().OpeningFragment` for: JsxFragment.
     #[must_use]
     pub fn opening_fragment(self) -> Node {
@@ -814,7 +814,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6567 ClosingFragment
+    // Go: ast/ast_generated.go:6638 ClosingFragment
     /// Go `node.AsX().ClosingFragment` for: JsxFragment.
     #[must_use]
     pub fn closing_fragment(self) -> Node {
@@ -824,7 +824,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6814 ContainsOnlyTriviaWhiteSpaces
+    // Go: ast/ast_generated.go:6885 ContainsOnlyTriviaWhiteSpaces
     /// Go `node.AsX().ContainsOnlyTriviaWhiteSpaces` for: JsxText.
     #[must_use]
     pub fn contains_only_trivia_white_spaces(self) -> bool {
@@ -834,7 +834,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:6879 Tags
+    // Go: ast/ast_generated.go:6950 Tags
     /// Go `node.AsX().Tags` for: JSDoc.
     #[must_use]
     pub fn tags(self) -> NodeList {
@@ -845,7 +845,7 @@ impl Node {
         .unwrap_or_else(|| field_panic(self, "Tags"))
     }
 
-    // Go: ast/ast_generated.go:7382 Constraint
+    // Go: ast/ast_generated.go:7278 Constraint
     /// Go `node.AsX().Constraint` for: JSDocTemplateTag, TypeParameterDeclaration.
     #[must_use]
     pub fn constraint(self) -> Node {
@@ -856,7 +856,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:7520 NameExpression
+    // Go: ast/ast_generated.go:7591 NameExpression
     /// Go `node.AsX().NameExpression` for: JSDocSeeTag.
     #[must_use]
     pub fn name_expression(self) -> Node {
@@ -866,7 +866,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8044 Keyword
+    // Go: ast/ast_generated.go:8115 Keyword
     /// Go `node.AsX().Keyword` for: ModuleDeclaration.
     #[must_use]
     pub fn keyword(self) -> SyntaxKind {
@@ -876,7 +876,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8101 ModuleReference
+    // Go: ast/ast_generated.go:8172 ModuleReference
     /// Go `node.AsX().ModuleReference` for: ImportEqualsDeclaration.
     #[must_use]
     pub fn module_reference(self) -> Node {
@@ -886,7 +886,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8150 ExportClause
+    // Go: ast/ast_generated.go:8221 ExportClause
     /// Go `node.AsX().ExportClause` for: ExportDeclaration.
     #[must_use]
     pub fn export_clause(self) -> Node {
@@ -896,7 +896,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8197 IsTypeOf
+    // Go: ast/ast_generated.go:8268 IsTypeOf
     /// Go `node.AsX().IsTypeOf` for: ImportTypeNode.
     #[must_use]
     pub fn is_type_of(self) -> bool {
@@ -906,7 +906,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8198 Argument
+    // Go: ast/ast_generated.go:8269 Argument
     /// Go `node.AsX().Argument` for: ImportTypeNode.
     #[must_use]
     pub fn argument(self) -> Node {
@@ -916,7 +916,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8200 Qualifier
+    // Go: ast/ast_generated.go:8271 Qualifier
     /// Go `node.AsX().Qualifier` for: ImportTypeNode.
     #[must_use]
     pub fn qualifier(self) -> Node {
@@ -926,7 +926,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8248 PhaseModifier
+    // Go: ast/ast_generated.go:8319 PhaseModifier
     /// Go `node.AsX().PhaseModifier` for: ImportClause.
     #[must_use]
     pub fn phase_modifier(self) -> SyntaxKind {
@@ -936,7 +936,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8250 NamedBindings
+    // Go: ast/ast_generated.go:8321 NamedBindings
     /// Go `node.AsX().NamedBindings` for: ImportClause.
     #[must_use]
     pub fn named_bindings(self) -> Node {
@@ -946,7 +946,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8504 DefaultType
+    // Go: ast/ast_generated.go:8575 DefaultType
     /// Go `node.AsX().DefaultType` for: TypeParameterDeclaration.
     #[must_use]
     pub fn default_type(self) -> Node {
@@ -956,7 +956,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8555 ThisArg
+    // Go: ast/ast_generated.go:8626 ThisArg
     /// Go `node.AsX().ThisArg` for: SyntheticReferenceExpression.
     #[must_use]
     pub fn this_arg(self) -> Node {
@@ -966,7 +966,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8600 JSDocPropertyTags
+    // Go: ast/ast_generated.go:8671 JSDocPropertyTags
     /// Go `node.AsX().JSDocPropertyTags` for: JSDocTypeLiteral.
     #[must_use]
     pub fn js_doc_property_tags(self) -> Vec<Node> {
@@ -981,7 +981,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8601 IsArrayType
+    // Go: ast/ast_generated.go:8672 IsArrayType
     /// Go `node.AsX().IsArrayType` for: JSDocTypeLiteral.
     #[must_use]
     pub fn is_array_type(self) -> bool {
@@ -991,7 +991,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8642 IsBracketed
+    // Go: ast/ast_generated.go:8713 IsBracketed
     /// Go `node.AsX().IsBracketed` for: JSDocParameterOrPropertyTag.
     #[must_use]
     pub fn is_bracketed(self) -> bool {
@@ -1001,7 +1001,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast_generated.go:8644 IsNameFirst
+    // Go: ast/ast_generated.go:8715 IsNameFirst
     /// Go `node.AsX().IsNameFirst` for: JSDocParameterOrPropertyTag.
     #[must_use]
     pub fn is_name_first(self) -> bool {
@@ -1011,7 +1011,7 @@ impl Node {
         })
     }
 
-    // Go: ast/ast.go:2458 EndOfFileToken
+    // Go: ast/ast.go:2383 EndOfFileToken
     /// Go `node.AsX().EndOfFileToken` for: SourceFile.
     #[must_use]
     pub fn end_of_file_token(self) -> Node {
@@ -1026,7 +1026,7 @@ impl Node {
 // Kind guards (Go IsX(node) and IsXKind(kind))
 // ──────────────────────────────────────────────────────────────────────
 
-// Go: ast/ast_generated.go:609 IsToken
+// Go: ast/ast_generated.go:655 IsToken
 // PORT: Go lists every kind from KindUnknown to KindSourceKeyword (ts#63915)
 // in one `case`. They are one range of the kind enum (astdata has the same
 // order), so this checks the range.
@@ -1036,497 +1036,497 @@ pub fn is_token(node: Node) -> bool {
     (SyntaxKind::Unknown as u16..=SyntaxKind::SourceKeyword as u16).contains(&(node.kind() as u16))
 }
 
-// Go: ast/ast_generated.go:638 IsIdentifier
+// Go: ast/ast_generated.go:684 IsIdentifier
 #[inline]
 #[must_use]
 pub fn is_identifier(node: Node) -> bool {
     node.kind() == SyntaxKind::Identifier
 }
 
-// Go: ast/ast_generated.go:662 IsPrivateIdentifier
+// Go: ast/ast_generated.go:708 IsPrivateIdentifier
 #[inline]
 #[must_use]
 pub fn is_private_identifier(node: Node) -> bool {
     node.kind() == SyntaxKind::PrivateIdentifier
 }
 
-// Go: ast/ast_generated.go:709 IsQualifiedName
+// Go: ast/ast_generated.go:755 IsQualifiedName
 #[inline]
 #[must_use]
 pub fn is_qualified_name(node: Node) -> bool {
     node.kind() == SyntaxKind::QualifiedName
 }
 
-// Go: ast/ast_generated.go:752 IsComputedPropertyName
+// Go: ast/ast_generated.go:798 IsComputedPropertyName
 #[inline]
 #[must_use]
 pub fn is_computed_property_name(node: Node) -> bool {
     node.kind() == SyntaxKind::ComputedPropertyName
 }
 
-// Go: ast/ast_generated.go:791 IsDecorator
+// Go: ast/ast_generated.go:837 IsDecorator
 #[inline]
 #[must_use]
 pub fn is_decorator(node: Node) -> bool {
     node.kind() == SyntaxKind::Decorator
 }
 
-// Go: ast/ast_generated.go:812 IsEmptyStatement
+// Go: ast/ast_generated.go:858 IsEmptyStatement
 #[inline]
 #[must_use]
 pub fn is_empty_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::EmptyStatement
 }
 
-// Go: ast/ast_generated.go:861 IsIfStatement
+// Go: ast/ast_generated.go:907 IsIfStatement
 #[inline]
 #[must_use]
 pub fn is_if_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::IfStatement
 }
 
-// Go: ast/ast_generated.go:906 IsDoStatement
+// Go: ast/ast_generated.go:952 IsDoStatement
 #[inline]
 #[must_use]
 pub fn is_do_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::DoStatement
 }
 
-// Go: ast/ast_generated.go:951 IsWhileStatement
+// Go: ast/ast_generated.go:997 IsWhileStatement
 #[inline]
 #[must_use]
 pub fn is_while_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::WhileStatement
 }
 
-// Go: ast/ast_generated.go:1006 IsForStatement
+// Go: ast/ast_generated.go:1052 IsForStatement
 #[inline]
 #[must_use]
 pub fn is_for_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::ForStatement
 }
 
-// Go: ast/ast_generated.go:1055 IsForInStatement
+// Go: ast/ast_generated.go:1106 IsForInStatement
 #[inline]
 #[must_use]
 pub fn is_for_in_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::ForInStatement
 }
 
-// Go: ast/ast_generated.go:1059 IsForOfStatement
+// Go: ast/ast_generated.go:1110 IsForOfStatement
 #[inline]
 #[must_use]
 pub fn is_for_of_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::ForOfStatement
 }
 
-// Go: ast/ast_generated.go:1097 IsBreakStatement
+// Go: ast/ast_generated.go:1148 IsBreakStatement
 #[inline]
 #[must_use]
 pub fn is_break_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::BreakStatement
 }
 
-// Go: ast/ast_generated.go:1135 IsContinueStatement
+// Go: ast/ast_generated.go:1186 IsContinueStatement
 #[inline]
 #[must_use]
 pub fn is_continue_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::ContinueStatement
 }
 
-// Go: ast/ast_generated.go:1174 IsReturnStatement
+// Go: ast/ast_generated.go:1225 IsReturnStatement
 #[inline]
 #[must_use]
 pub fn is_return_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::ReturnStatement
 }
 
-// Go: ast/ast_generated.go:1220 IsWithStatement
+// Go: ast/ast_generated.go:1271 IsWithStatement
 #[inline]
 #[must_use]
 pub fn is_with_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::WithStatement
 }
 
-// Go: ast/ast_generated.go:1266 IsSwitchStatement
+// Go: ast/ast_generated.go:1317 IsSwitchStatement
 #[inline]
 #[must_use]
 pub fn is_switch_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::SwitchStatement
 }
 
-// Go: ast/ast_generated.go:1310 IsCaseBlock
+// Go: ast/ast_generated.go:1361 IsCaseBlock
 #[inline]
 #[must_use]
 pub fn is_case_block(node: Node) -> bool {
     node.kind() == SyntaxKind::CaseBlock
 }
 
-// Go: ast/ast_generated.go:1357 IsCaseClause
+// Go: ast/ast_generated.go:1413 IsCaseClause
 #[inline]
 #[must_use]
 pub fn is_case_clause(node: Node) -> bool {
     node.kind() == SyntaxKind::CaseClause
 }
 
-// Go: ast/ast_generated.go:1361 IsDefaultClause
+// Go: ast/ast_generated.go:1417 IsDefaultClause
 #[inline]
 #[must_use]
 pub fn is_default_clause(node: Node) -> bool {
     node.kind() == SyntaxKind::DefaultClause
 }
 
-// Go: ast/ast_generated.go:1404 IsThrowStatement
+// Go: ast/ast_generated.go:1460 IsThrowStatement
 #[inline]
 #[must_use]
 pub fn is_throw_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::ThrowStatement
 }
 
-// Go: ast/ast_generated.go:1453 IsTryStatement
+// Go: ast/ast_generated.go:1509 IsTryStatement
 #[inline]
 #[must_use]
 pub fn is_try_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::TryStatement
 }
 
-// Go: ast/ast_generated.go:1495 IsCatchClause
+// Go: ast/ast_generated.go:1551 IsCatchClause
 #[inline]
 #[must_use]
 pub fn is_catch_clause(node: Node) -> bool {
     node.kind() == SyntaxKind::CatchClause
 }
 
-// Go: ast/ast_generated.go:1516 IsDebuggerStatement
+// Go: ast/ast_generated.go:1572 IsDebuggerStatement
 #[inline]
 #[must_use]
 pub fn is_debugger_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::DebuggerStatement
 }
 
-// Go: ast/ast_generated.go:1561 IsLabeledStatement
+// Go: ast/ast_generated.go:1617 IsLabeledStatement
 #[inline]
 #[must_use]
 pub fn is_labeled_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::LabeledStatement
 }
 
-// Go: ast/ast_generated.go:1603 IsExpressionStatement
+// Go: ast/ast_generated.go:1659 IsExpressionStatement
 #[inline]
 #[must_use]
 pub fn is_expression_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::ExpressionStatement
 }
 
-// Go: ast/ast_generated.go:1649 IsBlock
+// Go: ast/ast_generated.go:1705 IsBlock
 #[inline]
 #[must_use]
 pub fn is_block(node: Node) -> bool {
     node.kind() == SyntaxKind::Block
 }
 
-// Go: ast/ast_generated.go:1690 IsVariableStatement
+// Go: ast/ast_generated.go:1746 IsVariableStatement
 #[inline]
 #[must_use]
 pub fn is_variable_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::VariableStatement
 }
 
-// Go: ast/ast_generated.go:1744 IsVariableDeclaration
+// Go: ast/ast_generated.go:1800 IsVariableDeclaration
 #[inline]
 #[must_use]
 pub fn is_variable_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::VariableDeclaration
 }
 
-// Go: ast/ast_generated.go:1785 IsVariableDeclarationList
+// Go: ast/ast_generated.go:1841 IsVariableDeclarationList
 #[inline]
 #[must_use]
 pub fn is_variable_declaration_list(node: Node) -> bool {
     node.kind() == SyntaxKind::VariableDeclarationList
 }
 
-// Go: ast/ast_generated.go:1824 IsObjectBindingPattern
+// Go: ast/ast_generated.go:1885 IsObjectBindingPattern
 #[inline]
 #[must_use]
 pub fn is_object_binding_pattern(node: Node) -> bool {
     node.kind() == SyntaxKind::ObjectBindingPattern
 }
 
-// Go: ast/ast_generated.go:1828 IsArrayBindingPattern
+// Go: ast/ast_generated.go:1889 IsArrayBindingPattern
 #[inline]
 #[must_use]
 pub fn is_array_binding_pattern(node: Node) -> bool {
     node.kind() == SyntaxKind::ArrayBindingPattern
 }
 
-// Go: ast/ast_generated.go:1887 IsParameterDeclaration
+// Go: ast/ast_generated.go:1948 IsParameterDeclaration
 #[inline]
 #[must_use]
 pub fn is_parameter_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::Parameter
 }
 
-// Go: ast/ast_generated.go:1942 IsBindingElement
+// Go: ast/ast_generated.go:2003 IsBindingElement
 #[inline]
 #[must_use]
 pub fn is_binding_element(node: Node) -> bool {
     node.kind() == SyntaxKind::BindingElement
 }
 
-// Go: ast/ast_generated.go:1981 IsMissingDeclaration
+// Go: ast/ast_generated.go:2042 IsMissingDeclaration
 #[inline]
 #[must_use]
 pub fn is_missing_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::MissingDeclaration
 }
 
-// Go: ast/ast_generated.go:2043 IsFunctionDeclaration
+// Go: ast/ast_generated.go:2104 IsFunctionDeclaration
 #[inline]
 #[must_use]
 pub fn is_function_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::FunctionDeclaration
 }
 
-// Go: ast/ast_generated.go:2094 IsClassDeclaration
+// Go: ast/ast_generated.go:2155 IsClassDeclaration
 #[inline]
 #[must_use]
 pub fn is_class_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ClassDeclaration
 }
 
-// Go: ast/ast_generated.go:2145 IsClassExpression
+// Go: ast/ast_generated.go:2206 IsClassExpression
 #[inline]
 #[must_use]
 pub fn is_class_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::ClassExpression
 }
 
-// Go: ast/ast_generated.go:2186 IsHeritageClause
+// Go: ast/ast_generated.go:2247 IsHeritageClause
 #[inline]
 #[must_use]
 pub fn is_heritage_clause(node: Node) -> bool {
     node.kind() == SyntaxKind::HeritageClause
 }
 
-// Go: ast/ast_generated.go:2243 IsInterfaceDeclaration
+// Go: ast/ast_generated.go:2304 IsInterfaceDeclaration
 #[inline]
 #[must_use]
 pub fn is_interface_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::InterfaceDeclaration
 }
 
-// Go: ast/ast_generated.go:2321 IsTypeAliasDeclaration
+// Go: ast/ast_generated.go:2382 IsTypeAliasDeclaration
 #[inline]
 #[must_use]
 pub fn is_type_alias_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeAliasDeclaration
 }
 
-// Go: ast/ast_generated.go:2325 IsJSTypeAliasDeclaration
+// Go: ast/ast_generated.go:2386 IsJSTypeAliasDeclaration
 #[inline]
 #[must_use]
 pub fn is_js_type_alias_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::JsTypeAliasDeclaration
 }
 
-// Go: ast/ast_generated.go:2371 IsEnumMember
+// Go: ast/ast_generated.go:2432 IsEnumMember
 #[inline]
 #[must_use]
 pub fn is_enum_member(node: Node) -> bool {
     node.kind() == SyntaxKind::EnumMember
 }
 
-// Go: ast/ast_generated.go:2420 IsEnumDeclaration
+// Go: ast/ast_generated.go:2481 IsEnumDeclaration
 #[inline]
 #[must_use]
 pub fn is_enum_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::EnumDeclaration
 }
 
-// Go: ast/ast_generated.go:2463 IsModuleBlock
+// Go: ast/ast_generated.go:2524 IsModuleBlock
 #[inline]
 #[must_use]
 pub fn is_module_block(node: Node) -> bool {
     node.kind() == SyntaxKind::ModuleBlock
 }
 
-// Go: ast/ast_generated.go:2484 IsNotEmittedStatement
+// Go: ast/ast_generated.go:2545 IsNotEmittedStatement
 #[inline]
 #[must_use]
 pub fn is_not_emitted_statement(node: Node) -> bool {
     node.kind() == SyntaxKind::NotEmittedStatement
 }
 
-// Go: ast/ast_generated.go:2507 IsNotEmittedTypeElement
+// Go: ast/ast_generated.go:2568 IsNotEmittedTypeElement
 #[inline]
 #[must_use]
 pub fn is_not_emitted_type_element(node: Node) -> bool {
     node.kind() == SyntaxKind::NotEmittedTypeElement
 }
 
-// Go: ast/ast_generated.go:2586 IsImportDeclaration
+// Go: ast/ast_generated.go:2647 IsImportDeclaration
 #[inline]
 #[must_use]
 pub fn is_import_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportDeclaration
 }
 
-// Go: ast/ast_generated.go:2590 IsJSImportDeclaration
+// Go: ast/ast_generated.go:2651 IsJSImportDeclaration
 #[inline]
 #[must_use]
 pub fn is_js_import_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::JsImportDeclaration
 }
 
-// Go: ast/ast_generated.go:2632 IsExternalModuleReference
+// Go: ast/ast_generated.go:2693 IsExternalModuleReference
 #[inline]
 #[must_use]
 pub fn is_external_module_reference(node: Node) -> bool {
     node.kind() == SyntaxKind::ExternalModuleReference
 }
 
-// Go: ast/ast_generated.go:2680 IsNamespaceImport
+// Go: ast/ast_generated.go:2741 IsNamespaceImport
 #[inline]
 #[must_use]
 pub fn is_namespace_import(node: Node) -> bool {
     node.kind() == SyntaxKind::NamespaceImport
 }
 
-// Go: ast/ast_generated.go:2723 IsNamedImports
+// Go: ast/ast_generated.go:2784 IsNamedImports
 #[inline]
 #[must_use]
 pub fn is_named_imports(node: Node) -> bool {
     node.kind() == SyntaxKind::NamedImports
 }
 
-// Go: ast/ast_generated.go:2769 IsExportAssignment
+// Go: ast/ast_generated.go:2830 IsExportAssignment
 #[inline]
 #[must_use]
 pub fn is_export_assignment(node: Node) -> bool {
     node.kind() == SyntaxKind::ExportAssignment
 }
 
-// Go: ast/ast_generated.go:2815 IsNamespaceExportDeclaration
+// Go: ast/ast_generated.go:2876 IsNamespaceExportDeclaration
 #[inline]
 #[must_use]
 pub fn is_namespace_export_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::NamespaceExportDeclaration
 }
 
-// Go: ast/ast_generated.go:2862 IsNamespaceExport
+// Go: ast/ast_generated.go:2923 IsNamespaceExport
 #[inline]
 #[must_use]
 pub fn is_namespace_export(node: Node) -> bool {
     node.kind() == SyntaxKind::NamespaceExport
 }
 
-// Go: ast/ast_generated.go:2905 IsNamedExports
+// Go: ast/ast_generated.go:2966 IsNamedExports
 #[inline]
 #[must_use]
 pub fn is_named_exports(node: Node) -> bool {
     node.kind() == SyntaxKind::NamedExports
 }
 
-// Go: ast/ast_generated.go:2954 IsExportSpecifier
+// Go: ast/ast_generated.go:3015 IsExportSpecifier
 #[inline]
 #[must_use]
 pub fn is_export_specifier(node: Node) -> bool {
     node.kind() == SyntaxKind::ExportSpecifier
 }
 
-// Go: ast/ast_generated.go:2997 IsCallSignatureDeclaration
+// Go: ast/ast_generated.go:3058 IsCallSignatureDeclaration
 #[inline]
 #[must_use]
 pub fn is_call_signature_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::CallSignature
 }
 
-// Go: ast/ast_generated.go:3040 IsConstructSignatureDeclaration
+// Go: ast/ast_generated.go:3101 IsConstructSignatureDeclaration
 #[inline]
 #[must_use]
 pub fn is_construct_signature_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ConstructSignature
 }
 
-// Go: ast/ast_generated.go:3093 IsConstructorDeclaration
+// Go: ast/ast_generated.go:3154 IsConstructorDeclaration
 #[inline]
 #[must_use]
 pub fn is_constructor_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::Constructor
 }
 
-// Go: ast/ast_generated.go:3146 IsGetAccessorDeclaration
+// Go: ast/ast_generated.go:3207 IsGetAccessorDeclaration
 #[inline]
 #[must_use]
 pub fn is_get_accessor_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::GetAccessor
 }
 
-// Go: ast/ast_generated.go:3199 IsSetAccessorDeclaration
+// Go: ast/ast_generated.go:3260 IsSetAccessorDeclaration
 #[inline]
 #[must_use]
 pub fn is_set_accessor_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::SetAccessor
 }
 
-// Go: ast/ast_generated.go:3244 IsIndexSignatureDeclaration
+// Go: ast/ast_generated.go:3305 IsIndexSignatureDeclaration
 #[inline]
 #[must_use]
 pub fn is_index_signature_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::IndexSignature
 }
 
-// Go: ast/ast_generated.go:3300 IsMethodSignatureDeclaration
+// Go: ast/ast_generated.go:3361 IsMethodSignatureDeclaration
 #[inline]
 #[must_use]
 pub fn is_method_signature_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::MethodSignature
 }
 
-// Go: ast/ast_generated.go:3364 IsMethodDeclaration
+// Go: ast/ast_generated.go:3425 IsMethodDeclaration
 #[inline]
 #[must_use]
 pub fn is_method_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::MethodDeclaration
 }
 
-// Go: ast/ast_generated.go:3419 IsPropertySignatureDeclaration
+// Go: ast/ast_generated.go:3480 IsPropertySignatureDeclaration
 #[inline]
 #[must_use]
 pub fn is_property_signature_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::PropertySignature
 }
 
-// Go: ast/ast_generated.go:3474 IsPropertyDeclaration
+// Go: ast/ast_generated.go:3535 IsPropertyDeclaration
 #[inline]
 #[must_use]
 pub fn is_property_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::PropertyDeclaration
 }
 
-// Go: ast/ast_generated.go:3497 IsSemicolonClassElement
+// Go: ast/ast_generated.go:3558 IsSemicolonClassElement
 #[inline]
 #[must_use]
 pub fn is_semicolon_class_element(node: Node) -> bool {
     node.kind() == SyntaxKind::SemicolonClassElement
 }
 
-// Go: ast/ast_generated.go:3542 IsClassStaticBlockDeclaration
+// Go: ast/ast_generated.go:3603 IsClassStaticBlockDeclaration
 #[inline]
 #[must_use]
 pub fn is_class_static_block_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ClassStaticBlockDeclaration
 }
 
-// Go: ast/ast_generated.go:3563 IsOmittedExpression
+// Go: ast/ast_generated.go:3624 IsOmittedExpression
 #[inline]
 #[must_use]
 pub fn is_omitted_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::OmittedExpression
 }
 
-// Go: ast/ast_generated.go:3585 IsKeywordExpression
+// Go: ast/ast_generated.go:3651 IsKeywordExpression
 #[inline]
 #[must_use]
 pub fn is_keyword_expression(node: Node) -> bool {
@@ -1541,252 +1541,252 @@ pub fn is_keyword_expression(node: Node) -> bool {
     )
 }
 
-// Go: ast/ast_generated.go:3613 IsStringLiteral
+// Go: ast/ast_generated.go:3679 IsStringLiteral
 #[inline]
 #[must_use]
 pub fn is_string_literal(node: Node) -> bool {
     node.kind() == SyntaxKind::StringLiteral
 }
 
-// Go: ast/ast_generated.go:3637 IsNumericLiteral
+// Go: ast/ast_generated.go:3703 IsNumericLiteral
 #[inline]
 #[must_use]
 pub fn is_numeric_literal(node: Node) -> bool {
     node.kind() == SyntaxKind::NumericLiteral
 }
 
-// Go: ast/ast_generated.go:3661 IsBigIntLiteral
+// Go: ast/ast_generated.go:3727 IsBigIntLiteral
 #[inline]
 #[must_use]
 pub fn is_big_int_literal(node: Node) -> bool {
     node.kind() == SyntaxKind::BigIntLiteral
 }
 
-// Go: ast/ast_generated.go:3685 IsRegularExpressionLiteral
+// Go: ast/ast_generated.go:3751 IsRegularExpressionLiteral
 #[inline]
 #[must_use]
 pub fn is_regular_expression_literal(node: Node) -> bool {
     node.kind() == SyntaxKind::RegularExpressionLiteral
 }
 
-// Go: ast/ast_generated.go:3711 IsNoSubstitutionTemplateLiteral
+// Go: ast/ast_generated.go:3777 IsNoSubstitutionTemplateLiteral
 #[inline]
 #[must_use]
 pub fn is_no_substitution_template_literal(node: Node) -> bool {
     node.kind() == SyntaxKind::NoSubstitutionTemplateLiteral
 }
 
-// Go: ast/ast_generated.go:3763 IsBinaryExpression
+// Go: ast/ast_generated.go:3829 IsBinaryExpression
 #[inline]
 #[must_use]
 pub fn is_binary_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::BinaryExpression
 }
 
-// Go: ast/ast_generated.go:3807 IsPrefixUnaryExpression
+// Go: ast/ast_generated.go:3873 IsPrefixUnaryExpression
 #[inline]
 #[must_use]
 pub fn is_prefix_unary_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::PrefixUnaryExpression
 }
 
-// Go: ast/ast_generated.go:3851 IsPostfixUnaryExpression
+// Go: ast/ast_generated.go:3917 IsPostfixUnaryExpression
 #[inline]
 #[must_use]
 pub fn is_postfix_unary_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::PostfixUnaryExpression
 }
 
-// Go: ast/ast_generated.go:3891 IsYieldExpression
+// Go: ast/ast_generated.go:3957 IsYieldExpression
 #[inline]
 #[must_use]
 pub fn is_yield_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::YieldExpression
 }
 
-// Go: ast/ast_generated.go:3946 IsArrowFunction
+// Go: ast/ast_generated.go:4012 IsArrowFunction
 #[inline]
 #[must_use]
 pub fn is_arrow_function(node: Node) -> bool {
     node.kind() == SyntaxKind::ArrowFunction
 }
 
-// Go: ast/ast_generated.go:4008 IsFunctionExpression
+// Go: ast/ast_generated.go:4074 IsFunctionExpression
 #[inline]
 #[must_use]
 pub fn is_function_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::FunctionExpression
 }
 
-// Go: ast/ast_generated.go:4048 IsAsExpression
+// Go: ast/ast_generated.go:4114 IsAsExpression
 #[inline]
 #[must_use]
 pub fn is_as_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::AsExpression
 }
 
-// Go: ast/ast_generated.go:4088 IsSatisfiesExpression
+// Go: ast/ast_generated.go:4154 IsSatisfiesExpression
 #[inline]
 #[must_use]
 pub fn is_satisfies_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::SatisfiesExpression
 }
 
-// Go: ast/ast_generated.go:4147 IsConditionalExpression
+// Go: ast/ast_generated.go:4213 IsConditionalExpression
 #[inline]
 #[must_use]
 pub fn is_conditional_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::ConditionalExpression
 }
 
-// Go: ast/ast_generated.go:4197 IsPropertyAccessExpression
+// Go: ast/ast_generated.go:4263 IsPropertyAccessExpression
 #[inline]
 #[must_use]
 pub fn is_property_access_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::PropertyAccessExpression
 }
 
-// Go: ast/ast_generated.go:4249 IsElementAccessExpression
+// Go: ast/ast_generated.go:4315 IsElementAccessExpression
 #[inline]
 #[must_use]
 pub fn is_element_access_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::ElementAccessExpression
 }
 
-// Go: ast/ast_generated.go:4300 IsCallExpression
+// Go: ast/ast_generated.go:4366 IsCallExpression
 #[inline]
 #[must_use]
 pub fn is_call_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::CallExpression
 }
 
-// Go: ast/ast_generated.go:4343 IsNewExpression
+// Go: ast/ast_generated.go:4409 IsNewExpression
 #[inline]
 #[must_use]
 pub fn is_new_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::NewExpression
 }
 
-// Go: ast/ast_generated.go:4389 IsMetaProperty
+// Go: ast/ast_generated.go:4455 IsMetaProperty
 #[inline]
 #[must_use]
 pub fn is_meta_property(node: Node) -> bool {
     node.kind() == SyntaxKind::MetaProperty
 }
 
-// Go: ast/ast_generated.go:4429 IsNonNullExpression
+// Go: ast/ast_generated.go:4495 IsNonNullExpression
 #[inline]
 #[must_use]
 pub fn is_non_null_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::NonNullExpression
 }
 
-// Go: ast/ast_generated.go:4467 IsSpreadElement
+// Go: ast/ast_generated.go:4533 IsSpreadElement
 #[inline]
 #[must_use]
 pub fn is_spread_element(node: Node) -> bool {
     node.kind() == SyntaxKind::SpreadElement
 }
 
-// Go: ast/ast_generated.go:4513 IsTemplateExpression
+// Go: ast/ast_generated.go:4579 IsTemplateExpression
 #[inline]
 #[must_use]
 pub fn is_template_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::TemplateExpression
 }
 
-// Go: ast/ast_generated.go:4558 IsTemplateSpan
+// Go: ast/ast_generated.go:4624 IsTemplateSpan
 #[inline]
 #[must_use]
 pub fn is_template_span(node: Node) -> bool {
     node.kind() == SyntaxKind::TemplateSpan
 }
 
-// Go: ast/ast_generated.go:4608 IsTaggedTemplateExpression
+// Go: ast/ast_generated.go:4674 IsTaggedTemplateExpression
 #[inline]
 #[must_use]
 pub fn is_tagged_template_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::TaggedTemplateExpression
 }
 
-// Go: ast/ast_generated.go:4650 IsParenthesizedExpression
+// Go: ast/ast_generated.go:4716 IsParenthesizedExpression
 #[inline]
 #[must_use]
 pub fn is_parenthesized_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::ParenthesizedExpression
 }
 
-// Go: ast/ast_generated.go:4695 IsArrayLiteralExpression
+// Go: ast/ast_generated.go:4761 IsArrayLiteralExpression
 #[inline]
 #[must_use]
 pub fn is_array_literal_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::ArrayLiteralExpression
 }
 
-// Go: ast/ast_generated.go:4741 IsObjectLiteralExpression
+// Go: ast/ast_generated.go:4807 IsObjectLiteralExpression
 #[inline]
 #[must_use]
 pub fn is_object_literal_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::ObjectLiteralExpression
 }
 
-// Go: ast/ast_generated.go:4781 IsSpreadAssignment
+// Go: ast/ast_generated.go:4847 IsSpreadAssignment
 #[inline]
 #[must_use]
 pub fn is_spread_assignment(node: Node) -> bool {
     node.kind() == SyntaxKind::SpreadAssignment
 }
 
-// Go: ast/ast_generated.go:4836 IsPropertyAssignment
+// Go: ast/ast_generated.go:4902 IsPropertyAssignment
 #[inline]
 #[must_use]
 pub fn is_property_assignment(node: Node) -> bool {
     node.kind() == SyntaxKind::PropertyAssignment
 }
 
-// Go: ast/ast_generated.go:4894 IsShorthandPropertyAssignment
+// Go: ast/ast_generated.go:4960 IsShorthandPropertyAssignment
 #[inline]
 #[must_use]
 pub fn is_shorthand_property_assignment(node: Node) -> bool {
     node.kind() == SyntaxKind::ShorthandPropertyAssignment
 }
 
-// Go: ast/ast_generated.go:4936 IsDeleteExpression
+// Go: ast/ast_generated.go:5002 IsDeleteExpression
 #[inline]
 #[must_use]
 pub fn is_delete_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::DeleteExpression
 }
 
-// Go: ast/ast_generated.go:4978 IsTypeOfExpression
+// Go: ast/ast_generated.go:5044 IsTypeOfExpression
 #[inline]
 #[must_use]
 pub fn is_type_of_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeOfExpression
 }
 
-// Go: ast/ast_generated.go:5020 IsVoidExpression
+// Go: ast/ast_generated.go:5086 IsVoidExpression
 #[inline]
 #[must_use]
 pub fn is_void_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::VoidExpression
 }
 
-// Go: ast/ast_generated.go:5058 IsAwaitExpression
+// Go: ast/ast_generated.go:5124 IsAwaitExpression
 #[inline]
 #[must_use]
 pub fn is_await_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::AwaitExpression
 }
 
-// Go: ast/ast_generated.go:5098 IsTypeAssertion
+// Go: ast/ast_generated.go:5164 IsTypeAssertion
 #[inline]
 #[must_use]
 pub fn is_type_assertion(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeAssertionExpression
 }
 
-// Go: ast/ast_generated.go:5119 IsKeywordTypeNode
+// Go: ast/ast_generated.go:5190 IsKeywordTypeNode
 #[inline]
 #[must_use]
 pub fn is_keyword_type_node(node: Node) -> bool {
@@ -1807,637 +1807,637 @@ pub fn is_keyword_type_node(node: Node) -> bool {
     )
 }
 
-// Go: ast/ast_generated.go:5160 IsUnionTypeNode
+// Go: ast/ast_generated.go:5231 IsUnionTypeNode
 #[inline]
 #[must_use]
 pub fn is_union_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::UnionType
 }
 
-// Go: ast/ast_generated.go:5197 IsIntersectionTypeNode
+// Go: ast/ast_generated.go:5268 IsIntersectionTypeNode
 #[inline]
 #[must_use]
 pub fn is_intersection_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::IntersectionType
 }
 
-// Go: ast/ast_generated.go:5245 IsConditionalTypeNode
+// Go: ast/ast_generated.go:5316 IsConditionalTypeNode
 #[inline]
 #[must_use]
 pub fn is_conditional_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::ConditionalType
 }
 
-// Go: ast/ast_generated.go:5285 IsTypeOperatorNode
+// Go: ast/ast_generated.go:5356 IsTypeOperatorNode
 #[inline]
 #[must_use]
 pub fn is_type_operator_node(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeOperator
 }
 
-// Go: ast/ast_generated.go:5323 IsInferTypeNode
+// Go: ast/ast_generated.go:5394 IsInferTypeNode
 #[inline]
 #[must_use]
 pub fn is_infer_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::InferType
 }
 
-// Go: ast/ast_generated.go:5361 IsArrayTypeNode
+// Go: ast/ast_generated.go:5432 IsArrayTypeNode
 #[inline]
 #[must_use]
 pub fn is_array_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::ArrayType
 }
 
-// Go: ast/ast_generated.go:5401 IsIndexedAccessTypeNode
+// Go: ast/ast_generated.go:5472 IsIndexedAccessTypeNode
 #[inline]
 #[must_use]
 pub fn is_indexed_access_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::IndexedAccessType
 }
 
-// Go: ast/ast_generated.go:5440 IsTypeReferenceNode
+// Go: ast/ast_generated.go:5511 IsTypeReferenceNode
 #[inline]
 #[must_use]
 pub fn is_type_reference_node(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeReference
 }
 
-// Go: ast/ast_generated.go:5481 IsExpressionWithTypeArguments
+// Go: ast/ast_generated.go:5552 IsExpressionWithTypeArguments
 #[inline]
 #[must_use]
 pub fn is_expression_with_type_arguments(node: Node) -> bool {
     node.kind() == SyntaxKind::ExpressionWithTypeArguments
 }
 
-// Go: ast/ast_generated.go:5519 IsLiteralTypeNode
+// Go: ast/ast_generated.go:5590 IsLiteralTypeNode
 #[inline]
 #[must_use]
 pub fn is_literal_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::LiteralType
 }
 
-// Go: ast/ast_generated.go:5540 IsThisTypeNode
+// Go: ast/ast_generated.go:5611 IsThisTypeNode
 #[inline]
 #[must_use]
 pub fn is_this_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::ThisType
 }
 
-// Go: ast/ast_generated.go:5582 IsTypePredicateNode
+// Go: ast/ast_generated.go:5653 IsTypePredicateNode
 #[inline]
 #[must_use]
 pub fn is_type_predicate_node(node: Node) -> bool {
     node.kind() == SyntaxKind::TypePredicate
 }
 
-// Go: ast/ast_generated.go:5632 IsImportAttribute
+// Go: ast/ast_generated.go:5703 IsImportAttribute
 #[inline]
 #[must_use]
 pub fn is_import_attribute(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportAttribute
 }
 
-// Go: ast/ast_generated.go:5679 IsImportAttributes
+// Go: ast/ast_generated.go:5750 IsImportAttributes
 #[inline]
 #[must_use]
 pub fn is_import_attributes(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportAttributes
 }
 
-// Go: ast/ast_generated.go:5718 IsTypeQueryNode
+// Go: ast/ast_generated.go:5789 IsTypeQueryNode
 #[inline]
 #[must_use]
 pub fn is_type_query_node(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeQuery
 }
 
-// Go: ast/ast_generated.go:5773 IsMappedTypeNode
+// Go: ast/ast_generated.go:5844 IsMappedTypeNode
 #[inline]
 #[must_use]
 pub fn is_mapped_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::MappedType
 }
 
-// Go: ast/ast_generated.go:5812 IsTypeLiteralNode
+// Go: ast/ast_generated.go:5883 IsTypeLiteralNode
 #[inline]
 #[must_use]
 pub fn is_type_literal_node(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeLiteral
 }
 
-// Go: ast/ast_generated.go:5850 IsTupleTypeNode
+// Go: ast/ast_generated.go:5921 IsTupleTypeNode
 #[inline]
 #[must_use]
 pub fn is_tuple_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::TupleType
 }
 
-// Go: ast/ast_generated.go:5902 IsNamedTupleMember
+// Go: ast/ast_generated.go:5973 IsNamedTupleMember
 #[inline]
 #[must_use]
 pub fn is_named_tuple_member(node: Node) -> bool {
     node.kind() == SyntaxKind::NamedTupleMember
 }
 
-// Go: ast/ast_generated.go:5940 IsOptionalTypeNode
+// Go: ast/ast_generated.go:6011 IsOptionalTypeNode
 #[inline]
 #[must_use]
 pub fn is_optional_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::OptionalType
 }
 
-// Go: ast/ast_generated.go:5978 IsRestTypeNode
+// Go: ast/ast_generated.go:6049 IsRestTypeNode
 #[inline]
 #[must_use]
 pub fn is_rest_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::RestType
 }
 
-// Go: ast/ast_generated.go:6016 IsParenthesizedTypeNode
+// Go: ast/ast_generated.go:6087 IsParenthesizedTypeNode
 #[inline]
 #[must_use]
 pub fn is_parenthesized_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::ParenthesizedType
 }
 
-// Go: ast/ast_generated.go:6055 IsFunctionTypeNode
+// Go: ast/ast_generated.go:6126 IsFunctionTypeNode
 #[inline]
 #[must_use]
 pub fn is_function_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::FunctionType
 }
 
-// Go: ast/ast_generated.go:6098 IsConstructorTypeNode
+// Go: ast/ast_generated.go:6169 IsConstructorTypeNode
 #[inline]
 #[must_use]
 pub fn is_constructor_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::ConstructorType
 }
 
-// Go: ast/ast_generated.go:6124 IsTemplateHead
+// Go: ast/ast_generated.go:6195 IsTemplateHead
 #[inline]
 #[must_use]
 pub fn is_template_head(node: Node) -> bool {
     node.kind() == SyntaxKind::TemplateHead
 }
 
-// Go: ast/ast_generated.go:6150 IsTemplateMiddle
+// Go: ast/ast_generated.go:6221 IsTemplateMiddle
 #[inline]
 #[must_use]
 pub fn is_template_middle(node: Node) -> bool {
     node.kind() == SyntaxKind::TemplateMiddle
 }
 
-// Go: ast/ast_generated.go:6176 IsTemplateTail
+// Go: ast/ast_generated.go:6247 IsTemplateTail
 #[inline]
 #[must_use]
 pub fn is_template_tail(node: Node) -> bool {
     node.kind() == SyntaxKind::TemplateTail
 }
 
-// Go: ast/ast_generated.go:6216 IsTemplateLiteralTypeNode
+// Go: ast/ast_generated.go:6287 IsTemplateLiteralTypeNode
 #[inline]
 #[must_use]
 pub fn is_template_literal_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::TemplateLiteralType
 }
 
-// Go: ast/ast_generated.go:6256 IsTemplateLiteralTypeSpan
+// Go: ast/ast_generated.go:6327 IsTemplateLiteralTypeSpan
 #[inline]
 #[must_use]
 pub fn is_template_literal_type_span(node: Node) -> bool {
     node.kind() == SyntaxKind::TemplateLiteralTypeSpan
 }
 
-// Go: ast/ast_generated.go:6298 IsSyntheticExpression
+// Go: ast/ast_generated.go:6369 IsSyntheticExpression
 #[inline]
 #[must_use]
 pub fn is_synthetic_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::SyntheticExpression
 }
 
-// Go: ast/ast_generated.go:6340 IsPartiallyEmittedExpression
+// Go: ast/ast_generated.go:6411 IsPartiallyEmittedExpression
 #[inline]
 #[must_use]
 pub fn is_partially_emitted_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::PartiallyEmittedExpression
 }
 
-// Go: ast/ast_generated.go:6383 IsJsxElement
+// Go: ast/ast_generated.go:6454 IsJsxElement
 #[inline]
 #[must_use]
 pub fn is_jsx_element(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxElement
 }
 
-// Go: ast/ast_generated.go:6423 IsJsxAttributes
+// Go: ast/ast_generated.go:6494 IsJsxAttributes
 #[inline]
 #[must_use]
 pub fn is_jsx_attributes(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxAttributes
 }
 
-// Go: ast/ast_generated.go:6468 IsJsxNamespacedName
+// Go: ast/ast_generated.go:6539 IsJsxNamespacedName
 #[inline]
 #[must_use]
 pub fn is_jsx_namespaced_name(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxNamespacedName
 }
 
-// Go: ast/ast_generated.go:6511 IsJsxOpeningElement
+// Go: ast/ast_generated.go:6582 IsJsxOpeningElement
 #[inline]
 #[must_use]
 pub fn is_jsx_opening_element(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxOpeningElement
 }
 
-// Go: ast/ast_generated.go:6554 IsJsxSelfClosingElement
+// Go: ast/ast_generated.go:6625 IsJsxSelfClosingElement
 #[inline]
 #[must_use]
 pub fn is_jsx_self_closing_element(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxSelfClosingElement
 }
 
-// Go: ast/ast_generated.go:6597 IsJsxFragment
+// Go: ast/ast_generated.go:6668 IsJsxFragment
 #[inline]
 #[must_use]
 pub fn is_jsx_fragment(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxFragment
 }
 
-// Go: ast/ast_generated.go:6618 IsJsxOpeningFragment
+// Go: ast/ast_generated.go:6689 IsJsxOpeningFragment
 #[inline]
 #[must_use]
 pub fn is_jsx_opening_fragment(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxOpeningFragment
 }
 
-// Go: ast/ast_generated.go:6639 IsJsxClosingFragment
+// Go: ast/ast_generated.go:6710 IsJsxClosingFragment
 #[inline]
 #[must_use]
 pub fn is_jsx_closing_fragment(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxClosingFragment
 }
 
-// Go: ast/ast_generated.go:6685 IsJsxAttribute
+// Go: ast/ast_generated.go:6756 IsJsxAttribute
 #[inline]
 #[must_use]
 pub fn is_jsx_attribute(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxAttribute
 }
 
-// Go: ast/ast_generated.go:6725 IsJsxSpreadAttribute
+// Go: ast/ast_generated.go:6796 IsJsxSpreadAttribute
 #[inline]
 #[must_use]
 pub fn is_jsx_spread_attribute(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxSpreadAttribute
 }
 
-// Go: ast/ast_generated.go:6763 IsJsxClosingElement
+// Go: ast/ast_generated.go:6834 IsJsxClosingElement
 #[inline]
 #[must_use]
 pub fn is_jsx_closing_element(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxClosingElement
 }
 
-// Go: ast/ast_generated.go:6803 IsJsxExpression
+// Go: ast/ast_generated.go:6874 IsJsxExpression
 #[inline]
 #[must_use]
 pub fn is_jsx_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxExpression
 }
 
-// Go: ast/ast_generated.go:6829 IsJsxText
+// Go: ast/ast_generated.go:6900 IsJsxText
 #[inline]
 #[must_use]
 pub fn is_jsx_text(node: Node) -> bool {
     node.kind() == SyntaxKind::JsxText
 }
 
-// Go: ast/ast_generated.go:6868 IsSyntaxList
+// Go: ast/ast_generated.go:6939 IsSyntaxList
 #[inline]
 #[must_use]
 pub fn is_syntax_list(node: Node) -> bool {
     node.kind() == SyntaxKind::SyntaxList
 }
 
-// Go: ast/ast_generated.go:6908 IsJSDoc
+// Go: ast/ast_generated.go:6979 IsJSDoc
 #[inline]
 #[must_use]
 pub fn is_js_doc(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDoc
 }
 
-// Go: ast/ast_generated.go:6946 IsJSDocTypeExpression
+// Go: ast/ast_generated.go:7017 IsJSDocTypeExpression
 #[inline]
 #[must_use]
 pub fn is_js_doc_type_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocTypeExpression
 }
 
-// Go: ast/ast_generated.go:6984 IsJSDocNonNullableType
+// Go: ast/ast_generated.go:7055 IsJSDocNonNullableType
 #[inline]
 #[must_use]
 pub fn is_js_doc_non_nullable_type(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocNonNullableType
 }
 
-// Go: ast/ast_generated.go:7022 IsJSDocNullableType
+// Go: ast/ast_generated.go:7093 IsJSDocNullableType
 #[inline]
 #[must_use]
 pub fn is_js_doc_nullable_type(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocNullableType
 }
 
-// Go: ast/ast_generated.go:7043 IsJSDocAllType
+// Go: ast/ast_generated.go:7114 IsJSDocAllType
 #[inline]
 #[must_use]
 pub fn is_js_doc_all_type(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocAllType
 }
 
-// Go: ast/ast_generated.go:7081 IsJSDocVariadicType
+// Go: ast/ast_generated.go:7152 IsJSDocVariadicType
 #[inline]
 #[must_use]
 pub fn is_js_doc_variadic_type(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocVariadicType
 }
 
-// Go: ast/ast_generated.go:7119 IsJSDocOptionalType
+// Go: ast/ast_generated.go:7190 IsJSDocOptionalType
 #[inline]
 #[must_use]
 pub fn is_js_doc_optional_type(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocOptionalType
 }
 
-// Go: ast/ast_generated.go:7159 IsJSDocTypeTag
+// Go: ast/ast_generated.go:7230 IsJSDocTypeTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_type_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocTypeTag
 }
 
-// Go: ast/ast_generated.go:7197 IsJSDocUnknownTag
+// Go: ast/ast_generated.go:7268 IsJSDocUnknownTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_unknown_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocUnknownTag
 }
 
-// Go: ast/ast_generated.go:7242 IsJSDocTemplateTag
+// Go: ast/ast_generated.go:7313 IsJSDocTemplateTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_template_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocTemplateTag
 }
 
-// Go: ast/ast_generated.go:7282 IsJSDocReturnTag
+// Go: ast/ast_generated.go:7353 IsJSDocReturnTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_return_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocReturnTag
 }
 
-// Go: ast/ast_generated.go:7320 IsJSDocPublicTag
+// Go: ast/ast_generated.go:7391 IsJSDocPublicTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_public_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocPublicTag
 }
 
-// Go: ast/ast_generated.go:7358 IsJSDocPrivateTag
+// Go: ast/ast_generated.go:7429 IsJSDocPrivateTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_private_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocPrivateTag
 }
 
-// Go: ast/ast_generated.go:7396 IsJSDocProtectedTag
+// Go: ast/ast_generated.go:7467 IsJSDocProtectedTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_protected_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocProtectedTag
 }
 
-// Go: ast/ast_generated.go:7434 IsJSDocReadonlyTag
+// Go: ast/ast_generated.go:7505 IsJSDocReadonlyTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_readonly_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocReadonlyTag
 }
 
-// Go: ast/ast_generated.go:7472 IsJSDocOverrideTag
+// Go: ast/ast_generated.go:7543 IsJSDocOverrideTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_override_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocOverrideTag
 }
 
-// Go: ast/ast_generated.go:7510 IsJSDocDeprecatedTag
+// Go: ast/ast_generated.go:7581 IsJSDocDeprecatedTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_deprecated_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocDeprecatedTag
 }
 
-// Go: ast/ast_generated.go:7550 IsJSDocSeeTag
+// Go: ast/ast_generated.go:7621 IsJSDocSeeTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_see_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocSeeTag
 }
 
-// Go: ast/ast_generated.go:7590 IsJSDocImplementsTag
+// Go: ast/ast_generated.go:7661 IsJSDocImplementsTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_implements_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocImplementsTag
 }
 
-// Go: ast/ast_generated.go:7630 IsJSDocAugmentsTag
+// Go: ast/ast_generated.go:7701 IsJSDocAugmentsTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_augments_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocAugmentsTag
 }
 
-// Go: ast/ast_generated.go:7670 IsJSDocSatisfiesTag
+// Go: ast/ast_generated.go:7741 IsJSDocSatisfiesTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_satisfies_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocSatisfiesTag
 }
 
-// Go: ast/ast_generated.go:7710 IsJSDocThrowsTag
+// Go: ast/ast_generated.go:7781 IsJSDocThrowsTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_throws_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocThrowsTag
 }
 
-// Go: ast/ast_generated.go:7750 IsJSDocThisTag
+// Go: ast/ast_generated.go:7821 IsJSDocThisTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_this_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocThisTag
 }
 
-// Go: ast/ast_generated.go:7798 IsJSDocImportTag
+// Go: ast/ast_generated.go:7869 IsJSDocImportTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_import_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocImportTag
 }
 
-// Go: ast/ast_generated.go:7847 IsJSDocCallbackTag
+// Go: ast/ast_generated.go:7918 IsJSDocCallbackTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_callback_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocCallbackTag
 }
 
-// Go: ast/ast_generated.go:7887 IsJSDocOverloadTag
+// Go: ast/ast_generated.go:7958 IsJSDocOverloadTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_overload_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocOverloadTag
 }
 
-// Go: ast/ast_generated.go:7936 IsJSDocTypedefTag
+// Go: ast/ast_generated.go:8007 IsJSDocTypedefTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_typedef_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocTypedefTag
 }
 
-// Go: ast/ast_generated.go:7977 IsJSDocSignature
+// Go: ast/ast_generated.go:8048 IsJSDocSignature
 #[inline]
 #[must_use]
 pub fn is_js_doc_signature(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocSignature
 }
 
-// Go: ast/ast_generated.go:8019 IsJSDocNameReference
+// Go: ast/ast_generated.go:8090 IsJSDocNameReference
 #[inline]
 #[must_use]
 pub fn is_js_doc_name_reference(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocNameReference
 }
 
-// Go: ast/ast_generated.go:8027 IsSourceFile
+// Go: ast/ast_generated.go:8098 IsSourceFile
 #[inline]
 #[must_use]
 pub fn is_source_file(node: Node) -> bool {
     node.kind() == SyntaxKind::SourceFile
 }
 
-// Go: ast/ast_generated.go:8085 IsModuleDeclaration
+// Go: ast/ast_generated.go:8156 IsModuleDeclaration
 #[inline]
 #[must_use]
 pub fn is_module_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ModuleDeclaration
 }
 
-// Go: ast/ast_generated.go:8136 IsImportEqualsDeclaration
+// Go: ast/ast_generated.go:8207 IsImportEqualsDeclaration
 #[inline]
 #[must_use]
 pub fn is_import_equals_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportEqualsDeclaration
 }
 
-// Go: ast/ast_generated.go:8187 IsExportDeclaration
+// Go: ast/ast_generated.go:8258 IsExportDeclaration
 #[inline]
 #[must_use]
 pub fn is_export_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ExportDeclaration
 }
 
-// Go: ast/ast_generated.go:8235 IsImportTypeNode
+// Go: ast/ast_generated.go:8306 IsImportTypeNode
 #[inline]
 #[must_use]
 pub fn is_import_type_node(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportType
 }
 
-// Go: ast/ast_generated.go:8284 IsImportClause
+// Go: ast/ast_generated.go:8355 IsImportClause
 #[inline]
 #[must_use]
 pub fn is_import_clause(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportClause
 }
 
-// Go: ast/ast_generated.go:8333 IsImportSpecifier
+// Go: ast/ast_generated.go:8404 IsImportSpecifier
 #[inline]
 #[must_use]
 pub fn is_import_specifier(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportSpecifier
 }
 
-// Go: ast/ast_generated.go:8356 IsJSDocText
+// Go: ast/ast_generated.go:8427 IsJSDocText
 #[inline]
 #[must_use]
 pub fn is_js_doc_text(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocText
 }
 
-// Go: ast/ast_generated.go:8400 IsJSDocLink
+// Go: ast/ast_generated.go:8471 IsJSDocLink
 #[inline]
 #[must_use]
 pub fn is_js_doc_link(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocLink
 }
 
-// Go: ast/ast_generated.go:8444 IsJSDocLinkPlain
+// Go: ast/ast_generated.go:8515 IsJSDocLinkPlain
 #[inline]
 #[must_use]
 pub fn is_js_doc_link_plain(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocLinkPlain
 }
 
-// Go: ast/ast_generated.go:8488 IsJSDocLinkCode
+// Go: ast/ast_generated.go:8559 IsJSDocLinkCode
 #[inline]
 #[must_use]
 pub fn is_js_doc_link_code(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocLinkCode
 }
 
-// Go: ast/ast_generated.go:8544 IsTypeParameterDeclaration
+// Go: ast/ast_generated.go:8615 IsTypeParameterDeclaration
 #[inline]
 #[must_use]
 pub fn is_type_parameter_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeParameter
 }
 
-// Go: ast/ast_generated.go:8589 IsSyntheticReferenceExpression
+// Go: ast/ast_generated.go:8660 IsSyntheticReferenceExpression
 #[inline]
 #[must_use]
 pub fn is_synthetic_reference_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::SyntheticReferenceExpression
 }
 
-// Go: ast/ast_generated.go:8631 IsJSDocTypeLiteral
+// Go: ast/ast_generated.go:8702 IsJSDocTypeLiteral
 #[inline]
 #[must_use]
 pub fn is_js_doc_type_literal(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocTypeLiteral
 }
 
-// Go: ast/ast_generated.go:8681 IsJSDocParameterTag
+// Go: ast/ast_generated.go:8757 IsJSDocParameterTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_parameter_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocParameterTag
 }
 
-// Go: ast/ast_generated.go:8685 IsJSDocPropertyTag
+// Go: ast/ast_generated.go:8761 IsJSDocPropertyTag
 #[inline]
 #[must_use]
 pub fn is_js_doc_property_tag(node: Node) -> bool {
     node.kind() == SyntaxKind::JsDocPropertyTag
 }
 
-// Go: ast/ast_generated.go:9810 IsTriviaKind
+// Go: ast/ast_generated.go:13537 IsTriviaKind
 #[inline]
 #[must_use]
 pub fn is_trivia_kind(kind: SyntaxKind) -> bool {
@@ -2451,7 +2451,7 @@ pub fn is_trivia_kind(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9818 IsLiteralKind
+// Go: ast/ast_generated.go:13545 IsLiteralKind
 #[inline]
 #[must_use]
 pub fn is_literal_kind(kind: SyntaxKind) -> bool {
@@ -2459,7 +2459,7 @@ pub fn is_literal_kind(kind: SyntaxKind) -> bool {
         && (kind as u16) <= (SyntaxKind::LAST_LITERAL_TOKEN as u16)
 }
 
-// Go: ast/ast_generated.go:9822 IsPseudoLiteralKind
+// Go: ast/ast_generated.go:13549 IsPseudoLiteralKind
 #[inline]
 #[must_use]
 pub fn is_pseudo_literal_kind(kind: SyntaxKind) -> bool {
@@ -2469,7 +2469,7 @@ pub fn is_pseudo_literal_kind(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9830 IsPunctuationKind
+// Go: ast/ast_generated.go:13557 IsPunctuationKind
 #[inline]
 #[must_use]
 pub fn is_punctuation_kind(kind: SyntaxKind) -> bool {
@@ -2477,7 +2477,7 @@ pub fn is_punctuation_kind(kind: SyntaxKind) -> bool {
         && (kind as u16) <= (SyntaxKind::LAST_PUNCTUATION as u16)
 }
 
-// Go: ast/ast_generated.go:9834 IsKeywordKind
+// Go: ast/ast_generated.go:13561 IsKeywordKind
 #[inline]
 #[must_use]
 pub fn is_keyword_kind(kind: SyntaxKind) -> bool {
@@ -2485,7 +2485,7 @@ pub fn is_keyword_kind(kind: SyntaxKind) -> bool {
         && (kind as u16) <= (SyntaxKind::LAST_KEYWORD as u16)
 }
 
-// Go: ast/ast_generated.go:9838 IsModifierKind
+// Go: ast/ast_generated.go:13565 IsModifierKind
 #[inline]
 #[must_use]
 pub fn is_modifier_kind(kind: SyntaxKind) -> bool {
@@ -2509,7 +2509,7 @@ pub fn is_modifier_kind(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9846 IsKeywordTypeKind
+// Go: ast/ast_generated.go:13573 IsKeywordTypeKind
 #[inline]
 #[must_use]
 pub fn is_keyword_type_kind(kind: SyntaxKind) -> bool {
@@ -2530,7 +2530,7 @@ pub fn is_keyword_type_kind(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9854 IsKeywordExpressionKind
+// Go: ast/ast_generated.go:13581 IsKeywordExpressionKind
 #[inline]
 #[must_use]
 pub fn is_keyword_expression_kind(kind: SyntaxKind) -> bool {
@@ -2545,7 +2545,7 @@ pub fn is_keyword_expression_kind(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9862 IsTokenKind
+// Go: ast/ast_generated.go:13589 IsTokenKind
 #[inline]
 #[must_use]
 pub fn is_token_kind(kind: SyntaxKind) -> bool {
@@ -2553,7 +2553,7 @@ pub fn is_token_kind(kind: SyntaxKind) -> bool {
         && (kind as u16) <= (SyntaxKind::LAST_TOKEN as u16)
 }
 
-// Go: ast/ast_generated.go:9866 IsJsxTokenKind
+// Go: ast/ast_generated.go:13593 IsJsxTokenKind
 #[inline]
 #[must_use]
 pub fn is_jsx_token_kind(kind: SyntaxKind) -> bool {
@@ -2569,7 +2569,7 @@ pub fn is_jsx_token_kind(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9874 IsJSDocNodeKind
+// Go: ast/ast_generated.go:13601 IsJSDocNodeKind
 #[inline]
 #[must_use]
 pub fn is_js_doc_node_kind(kind: SyntaxKind) -> bool {
@@ -2577,7 +2577,7 @@ pub fn is_js_doc_node_kind(kind: SyntaxKind) -> bool {
         && (kind as u16) <= (SyntaxKind::LAST_JS_DOC_NODE as u16)
 }
 
-// Go: ast/ast_generated.go:9878 IsImportPhaseModifierKind
+// Go: ast/ast_generated.go:13605 IsImportPhaseModifierKind
 #[inline]
 #[must_use]
 pub fn is_import_phase_modifier_kind(kind: SyntaxKind) -> bool {
@@ -2588,7 +2588,7 @@ pub fn is_import_phase_modifier_kind(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9886 IsPostfixUnaryOperator
+// Go: ast/ast_generated.go:13613 IsPostfixUnaryOperator
 #[inline]
 #[must_use]
 pub fn is_postfix_unary_operator(kind: SyntaxKind) -> bool {
@@ -2598,7 +2598,7 @@ pub fn is_postfix_unary_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9894 IsPrefixUnaryOperator
+// Go: ast/ast_generated.go:13621 IsPrefixUnaryOperator
 #[inline]
 #[must_use]
 pub fn is_prefix_unary_operator(kind: SyntaxKind) -> bool {
@@ -2613,7 +2613,7 @@ pub fn is_prefix_unary_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9902 IsAssignmentOperator
+// Go: ast/ast_generated.go:13629 IsAssignmentOperator
 #[inline]
 #[must_use]
 pub fn is_assignment_operator(kind: SyntaxKind) -> bool {
@@ -2638,7 +2638,7 @@ pub fn is_assignment_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9910 IsBinaryOperator
+// Go: ast/ast_generated.go:13637 IsBinaryOperator
 #[inline]
 #[must_use]
 pub fn is_binary_operator(kind: SyntaxKind) -> bool {
@@ -2689,7 +2689,7 @@ pub fn is_binary_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9918 IsExponentiationOperator
+// Go: ast/ast_generated.go:13645 IsExponentiationOperator
 #[inline]
 #[must_use]
 pub fn is_exponentiation_operator(kind: SyntaxKind) -> bool {
@@ -2699,7 +2699,7 @@ pub fn is_exponentiation_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9926 IsMultiplicativeOperator
+// Go: ast/ast_generated.go:13653 IsMultiplicativeOperator
 #[inline]
 #[must_use]
 pub fn is_multiplicative_operator(kind: SyntaxKind) -> bool {
@@ -2709,7 +2709,7 @@ pub fn is_multiplicative_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9934 IsMultiplicativeOperatorOrHigher
+// Go: ast/ast_generated.go:13661 IsMultiplicativeOperatorOrHigher
 #[inline]
 #[must_use]
 pub fn is_multiplicative_operator_or_higher(kind: SyntaxKind) -> bool {
@@ -2722,7 +2722,7 @@ pub fn is_multiplicative_operator_or_higher(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9942 IsAdditiveOperator
+// Go: ast/ast_generated.go:13669 IsAdditiveOperator
 #[inline]
 #[must_use]
 pub fn is_additive_operator(kind: SyntaxKind) -> bool {
@@ -2732,7 +2732,7 @@ pub fn is_additive_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9950 IsAdditiveOperatorOrHigher
+// Go: ast/ast_generated.go:13677 IsAdditiveOperatorOrHigher
 #[inline]
 #[must_use]
 pub fn is_additive_operator_or_higher(kind: SyntaxKind) -> bool {
@@ -2747,7 +2747,7 @@ pub fn is_additive_operator_or_higher(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9958 IsShiftOperator
+// Go: ast/ast_generated.go:13685 IsShiftOperator
 #[inline]
 #[must_use]
 pub fn is_shift_operator(kind: SyntaxKind) -> bool {
@@ -2759,7 +2759,7 @@ pub fn is_shift_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9966 IsShiftOperatorOrHigher
+// Go: ast/ast_generated.go:13693 IsShiftOperatorOrHigher
 #[inline]
 #[must_use]
 pub fn is_shift_operator_or_higher(kind: SyntaxKind) -> bool {
@@ -2777,7 +2777,7 @@ pub fn is_shift_operator_or_higher(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9974 IsRelationalOperator
+// Go: ast/ast_generated.go:13701 IsRelationalOperator
 #[inline]
 #[must_use]
 pub fn is_relational_operator(kind: SyntaxKind) -> bool {
@@ -2792,7 +2792,7 @@ pub fn is_relational_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9982 IsRelationalOperatorOrHigher
+// Go: ast/ast_generated.go:13709 IsRelationalOperatorOrHigher
 #[inline]
 #[must_use]
 pub fn is_relational_operator_or_higher(kind: SyntaxKind) -> bool {
@@ -2816,7 +2816,7 @@ pub fn is_relational_operator_or_higher(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9990 IsEqualityOperator
+// Go: ast/ast_generated.go:13717 IsEqualityOperator
 #[inline]
 #[must_use]
 pub fn is_equality_operator(kind: SyntaxKind) -> bool {
@@ -2829,7 +2829,7 @@ pub fn is_equality_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:9998 IsEqualityOperatorOrHigher
+// Go: ast/ast_generated.go:13725 IsEqualityOperatorOrHigher
 #[inline]
 #[must_use]
 pub fn is_equality_operator_or_higher(kind: SyntaxKind) -> bool {
@@ -2857,7 +2857,7 @@ pub fn is_equality_operator_or_higher(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:10006 IsBitwiseOperator
+// Go: ast/ast_generated.go:13733 IsBitwiseOperator
 #[inline]
 #[must_use]
 pub fn is_bitwise_operator(kind: SyntaxKind) -> bool {
@@ -2867,7 +2867,7 @@ pub fn is_bitwise_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:10014 IsBitwiseOperatorOrHigher
+// Go: ast/ast_generated.go:13741 IsBitwiseOperatorOrHigher
 #[inline]
 #[must_use]
 pub fn is_bitwise_operator_or_higher(kind: SyntaxKind) -> bool {
@@ -2898,7 +2898,7 @@ pub fn is_bitwise_operator_or_higher(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:10022 IsLogicalOperator
+// Go: ast/ast_generated.go:13749 IsLogicalOperator
 #[inline]
 #[must_use]
 pub fn is_logical_operator(kind: SyntaxKind) -> bool {
@@ -2908,7 +2908,7 @@ pub fn is_logical_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:10030 IsLogicalOperatorOrHigher
+// Go: ast/ast_generated.go:13757 IsLogicalOperatorOrHigher
 #[inline]
 #[must_use]
 pub fn is_logical_operator_or_higher(kind: SyntaxKind) -> bool {
@@ -2941,7 +2941,7 @@ pub fn is_logical_operator_or_higher(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:10038 IsCompoundAssignmentOperator
+// Go: ast/ast_generated.go:13765 IsCompoundAssignmentOperator
 #[inline]
 #[must_use]
 pub fn is_compound_assignment_operator(kind: SyntaxKind) -> bool {
@@ -2965,7 +2965,7 @@ pub fn is_compound_assignment_operator(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:10046 IsAssignmentOperatorOrHigher
+// Go: ast/ast_generated.go:13773 IsAssignmentOperatorOrHigher
 #[inline]
 #[must_use]
 pub fn is_assignment_operator_or_higher(kind: SyntaxKind) -> bool {
@@ -3015,7 +3015,7 @@ pub fn is_assignment_operator_or_higher(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ast/ast_generated.go:10054 IsLogicalOrCoalescingAssignmentOperator
+// Go: ast/ast_generated.go:13781 IsLogicalOrCoalescingAssignmentOperator
 #[inline]
 #[must_use]
 pub fn is_logical_or_coalescing_assignment_operator(kind: SyntaxKind) -> bool {

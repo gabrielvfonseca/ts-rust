@@ -31,7 +31,7 @@ fn nb_tracker(b: &Rc<RefCell<NodeBuilderImpl>>) -> Rc<dyn SymbolTracker> {
 }
 
 impl Checker {
-    // Go: checker/nodecopy.go:12 reuseNode
+    // Go: checker/nodecopy.go:13 reuseNode
     pub fn reuse_node(&mut self, b: &Rc<RefCell<NodeBuilderImpl>>, node: Node) -> Node {
         if node.is_nil() {
             return node;
@@ -40,7 +40,7 @@ impl Checker {
         self.try_reuse_existing_node_helper(b, node)
     }
 
-    // Go: checker/nodecopy.go:20 tryJSTypeNodeToTypeNode
+    // Go: checker/nodecopy.go:21 tryJSTypeNodeToTypeNode
     pub fn try_js_type_node_to_type_node(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -49,7 +49,7 @@ impl Checker {
         self.reuse_node(b, node)
     }
 
-    // Go: checker/nodecopy.go:24 reuseName
+    // Go: checker/nodecopy.go:25 reuseName
     pub fn reuse_name(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -85,7 +85,7 @@ impl Checker {
         self.set_text_range(b, renamed, res)
     }
 
-    // Go: checker/nodecopy.go:56 reuseTypeNode
+    // Go: checker/nodecopy.go:57 reuseTypeNode
     pub fn reuse_type_node(&mut self, b: &Rc<RefCell<NodeBuilderImpl>>, node: Node) -> Node {
         if node.is_nil() {
             return node;
@@ -110,7 +110,7 @@ impl Checker {
         self.type_to_type_node(b, t)
     }
 
-    // Go: checker/nodecopy.go:78 walkNodeForExpandability
+    // Go: checker/nodecopy.go:79 walkNodeForExpandability
     //
     // walkNodeForExpandability walks a reused AST node tree, calling checkTypeExpandability
     // on each type reference, type predicate, or import type node.
@@ -141,7 +141,7 @@ impl Checker {
     }
 }
 
-// Go: checker/nodecopy.go:98 recoveryBoundary
+// Go: checker/nodecopy.go:99 recoveryBoundary
 pub struct RecoveryBoundary {
     pub ctx: Rc<RefCell<NodeBuilderContext>>,
     pub had_error: bool,
@@ -156,7 +156,7 @@ pub struct RecoveryBoundary {
 }
 
 impl RecoveryBoundary {
-    // Go: checker/nodecopy.go:109 recoveryBoundary.markError
+    // Go: checker/nodecopy.go:110 recoveryBoundary.markError
     pub fn mark_error(&mut self, f: Option<Box<dyn FnOnce(&mut Checker)>>) {
         self.had_error = true;
         if let Some(f) = f {
@@ -164,7 +164,7 @@ impl RecoveryBoundary {
         }
     }
 
-    // Go: checker/nodecopy.go:122 recoveryBoundary.startRecoveryScope
+    // Go: checker/nodecopy.go:123 recoveryBoundary.startRecoveryScope
     pub fn start_recovery_scope(&self) -> OriginalRecoveryScopeState {
         let tracked_symbols_top = self.ctx.borrow().tracked_symbols.len();
         let unreported_errors_top = self.deferred_reports.len();
@@ -175,7 +175,7 @@ impl RecoveryBoundary {
         }
     }
 
-    // Go: checker/nodecopy.go:128 recoveryBoundary.endRecoveryScope
+    // Go: checker/nodecopy.go:129 recoveryBoundary.endRecoveryScope
     pub fn end_recovery_scope(&mut self, state: OriginalRecoveryScopeState) {
         self.had_error = state.had_error;
         self.ctx
@@ -186,7 +186,7 @@ impl RecoveryBoundary {
     }
 }
 
-// Go: checker/nodecopy.go:116 originalRecoveryScopeState
+// Go: checker/nodecopy.go:117 originalRecoveryScopeState
 #[derive(Clone, Copy, Debug)]
 pub struct OriginalRecoveryScopeState {
     pub tracked_symbols_top: usize,
@@ -194,24 +194,24 @@ pub struct OriginalRecoveryScopeState {
     pub had_error: bool,
 }
 
-// Go: checker/nodecopy.go:134 wrappingTracker
+// Go: checker/nodecopy.go:135 wrappingTracker
 pub struct WrappingTracker {
     pub wrapped: Rc<dyn SymbolTracker>,
     pub bound: Rc<RefCell<RecoveryBoundary>>,
 }
 
 impl SymbolTracker for WrappingTracker {
-    // Go: checker/nodecopy.go:139 wrappingTracker.PopErrorFallbackNode
+    // Go: checker/nodecopy.go:140 wrappingTracker.PopErrorFallbackNode
     fn pop_error_fallback_node(&self, c: &mut Checker) {
         self.wrapped.pop_error_fallback_node(c);
     }
 
-    // Go: checker/nodecopy.go:143 wrappingTracker.PushErrorFallbackNode
+    // Go: checker/nodecopy.go:144 wrappingTracker.PushErrorFallbackNode
     fn push_error_fallback_node(&self, c: &mut Checker, node: Node) {
         self.wrapped.push_error_fallback_node(c, node);
     }
 
-    // Go: checker/nodecopy.go:147 wrappingTracker.ReportCyclicStructureError
+    // Go: checker/nodecopy.go:148 wrappingTracker.ReportCyclicStructureError
     fn report_cyclic_structure_error(&self, _c: &mut Checker) {
         let w = self.wrapped.clone();
         self.bound
@@ -221,7 +221,7 @@ impl SymbolTracker for WrappingTracker {
             })));
     }
 
-    // Go: checker/nodecopy.go:151 wrappingTracker.ReportInaccessibleThisError
+    // Go: checker/nodecopy.go:152 wrappingTracker.ReportInaccessibleThisError
     fn report_inaccessible_this_error(&self, _c: &mut Checker) {
         let w = self.wrapped.clone();
         self.bound
@@ -231,7 +231,7 @@ impl SymbolTracker for WrappingTracker {
             })));
     }
 
-    // Go: checker/nodecopy.go:155 wrappingTracker.ReportInaccessibleUniqueSymbolError
+    // Go: checker/nodecopy.go:156 wrappingTracker.ReportInaccessibleUniqueSymbolError
     fn report_inaccessible_unique_symbol_error(&self, _c: &mut Checker) {
         let w = self.wrapped.clone();
         self.bound
@@ -241,12 +241,12 @@ impl SymbolTracker for WrappingTracker {
             })));
     }
 
-    // Go: checker/nodecopy.go:159 wrappingTracker.ReportInferenceFallback
+    // Go: checker/nodecopy.go:160 wrappingTracker.ReportInferenceFallback
     fn report_inference_fallback(&self, c: &mut Checker, node: Node) {
         self.wrapped.report_inference_fallback(c, node); // Should this also be deferred?
     }
 
-    // Go: checker/nodecopy.go:163 wrappingTracker.ReportLikelyUnsafeImportRequiredError
+    // Go: checker/nodecopy.go:164 wrappingTracker.ReportLikelyUnsafeImportRequiredError
     fn report_likely_unsafe_import_required_error(
         &self,
         _c: &mut Checker,
@@ -263,7 +263,7 @@ impl SymbolTracker for WrappingTracker {
             })));
     }
 
-    // Go: checker/nodecopy.go:167 wrappingTracker.ReportNonSerializableProperty
+    // Go: checker/nodecopy.go:168 wrappingTracker.ReportNonSerializableProperty
     fn report_non_serializable_property(&self, _c: &mut Checker, property_name: &str) {
         let w = self.wrapped.clone();
         let property_name = property_name.to_string();
@@ -274,7 +274,7 @@ impl SymbolTracker for WrappingTracker {
             })));
     }
 
-    // Go: checker/nodecopy.go:171 wrappingTracker.ReportNonlocalAugmentation
+    // Go: checker/nodecopy.go:172 wrappingTracker.ReportNonlocalAugmentation
     fn report_nonlocal_augmentation(
         &self,
         c: &mut Checker,
@@ -290,7 +290,7 @@ impl SymbolTracker for WrappingTracker {
         ); // Should this also be deferred?
     }
 
-    // Go: checker/nodecopy.go:175 wrappingTracker.ReportPrivateInBaseOfClassExpression
+    // Go: checker/nodecopy.go:176 wrappingTracker.ReportPrivateInBaseOfClassExpression
     fn report_private_in_base_of_class_expression(&self, _c: &mut Checker, property_name: &str) {
         let w = self.wrapped.clone();
         let property_name = property_name.to_string();
@@ -301,12 +301,12 @@ impl SymbolTracker for WrappingTracker {
             })));
     }
 
-    // Go: checker/nodecopy.go:179 wrappingTracker.ReportTruncationError
+    // Go: checker/nodecopy.go:180 wrappingTracker.ReportTruncationError
     fn report_truncation_error(&self, c: &mut Checker) {
         self.wrapped.report_truncation_error(c); // Should this also be deferred?
     }
 
-    // Go: checker/nodecopy.go:183 wrappingTracker.TrackSymbol
+    // Go: checker/nodecopy.go:184 wrappingTracker.TrackSymbol
     fn track_symbol(
         &self,
         _c: &mut Checker,
@@ -326,7 +326,7 @@ impl SymbolTracker for WrappingTracker {
     }
 }
 
-// Go: checker/nodecopy.go:188 newWrappingTracker
+// Go: checker/nodecopy.go:189 newWrappingTracker
 pub fn new_wrapping_tracker(
     inner: Rc<dyn SymbolTracker>,
     bound: Rc<RefCell<RecoveryBoundary>>,
@@ -338,7 +338,7 @@ pub fn new_wrapping_tracker(
 }
 
 impl Checker {
-    // Go: checker/nodecopy.go:195 createRecoveryBoundary
+    // Go: checker/nodecopy.go:196 createRecoveryBoundary
     pub fn create_recovery_boundary(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -371,7 +371,7 @@ impl Checker {
         bound
     }
 
-    // Go: checker/nodecopy.go:204 finalizeBoundary
+    // Go: checker/nodecopy.go:205 finalizeBoundary
     pub fn finalize_boundary(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -406,7 +406,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/nodecopy.go:222 tryReuseExistingNodeHelper
+    // Go: checker/nodecopy.go:223 tryReuseExistingNodeHelper
     pub fn try_reuse_existing_node_helper(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -427,7 +427,7 @@ impl Checker {
         transformed
     }
 
-    // Go: checker/nodecopy.go:234 getModuleSpecifierOverride
+    // Go: checker/nodecopy.go:235 getModuleSpecifierOverride
     pub fn get_module_specifier_override(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -504,7 +504,7 @@ impl Checker {
         res
     }
 
-    // Go: checker/nodecopy.go:280 getEnclosingDeclarationIgnoringFakeScope
+    // Go: checker/nodecopy.go:284 getEnclosingDeclarationIgnoringFakeScope
     pub fn get_enclosing_declaration_ignoring_fake_scope(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
@@ -523,7 +523,7 @@ impl Checker {
     }
 }
 
-// Go: checker/emitresolver.go:311 getMeaningOfEntityNameReference
+// Go: checker/emitsupport.go:136 getMeaningOfEntityNameReference
 // PORT: no unit owns emitresolver.go yet, so the free function is ported here
 // as a private helper. Move it when emitresolver.go lands.
 fn get_meaning_of_entity_name_reference(entity_name: Node) -> SymbolFlags {
@@ -555,7 +555,7 @@ fn get_meaning_of_entity_name_reference(entity_name: Node) -> SymbolFlags {
     SymbolFlags::TYPE
 }
 
-// Go: checker/nodecopy.go:288 getExistingNodeTreeVisitor
+// Go: checker/nodecopy.go:292 getExistingNodeTreeVisitor
 // TODO: wrap all these closures into methods on an object so we can guarantee we reuse the same memory on each invocation by reusing/resetting the object
 // instead of re-closing-over all of these each time we need a visitor. In theory the compiler could handle this, but in practice closure inlining hasn't been reliable
 // PORT: Go's closures are the methods of `ExistingNodeTreeVisitor` below.
@@ -615,7 +615,7 @@ struct AttachSymbolState<'a> {
 /// Go `vis` inside attachSymbolToLeftmostIdentifier (no hooks).
 type AttachSymbolVisitor<'a> = NodeVisitor<'a, AttachSymbolState<'a>>;
 
-// Go: checker/nodecopy.go:295 visitorFunc (inside attachSymbolToLeftmostIdentifier)
+// Go: checker/nodecopy.go:299 visitorFunc (inside attachSymbolToLeftmostIdentifier)
 fn attach_symbol_visitor_func(node: Node, v: &mut AttachSymbolVisitor<'_>) -> Node {
     let st = &mut v.ctx;
     if node == st.leftmost {
@@ -643,7 +643,7 @@ fn attach_symbol_visitor_func(node: Node, v: &mut AttachSymbolVisitor<'_>) -> No
     st.c.set_text_range(st.b, visited, node)
 }
 
-// Go: checker/nodecopy.go:293 attachSymbolToLeftmostIdentifier
+// Go: checker/nodecopy.go:297 attachSymbolToLeftmostIdentifier
 // PORT: builds Go `vis` over a reborrow of the checker. See the method below.
 fn attach_symbol_to_leftmost_identifier_with<'x>(
     c: &'x mut Checker,
@@ -669,7 +669,7 @@ fn attach_symbol_to_leftmost_identifier_with<'x>(
 }
 
 impl<'a> ExistingNodeTreeVisitor<'a> {
-    // Go: checker/nodecopy.go:293 attachSymbolToLeftmostIdentifier
+    // Go: checker/nodecopy.go:297 attachSymbolToLeftmostIdentifier
     // note: also handles renaming type parameters renamed within the current context
     fn attach_symbol_to_leftmost_identifier(
         &mut self,
@@ -681,7 +681,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         attach_symbol_to_leftmost_identifier_with(&mut *self.ctx.c, b, e, leftmost, node, sym)
     }
 
-    // Go: checker/nodecopy.go:317 trackExistingEntityName
+    // Go: checker/nodecopy.go:321 trackExistingEntityName
     fn track_existing_entity_name(
         &mut self,
         node: Node,
@@ -841,7 +841,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         )
     }
 
-    // Go: checker/nodecopy.go:385 tryVisitIndexedAccess
+    // Go: checker/nodecopy.go:389 tryVisitIndexedAccess
     fn try_visit_indexed_access(&mut self, node: Node) -> Node {
         let result_object_type = self.try_visit_simple_type_node(node.object_type());
         if result_object_type.is_nil() {
@@ -855,7 +855,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         self.ctx.c.set_text_range(self.ctx.b, updated, node)
     }
 
-    // Go: checker/nodecopy.go:392 tryVisitKeyOf
+    // Go: checker/nodecopy.go:396 tryVisitKeyOf
     fn try_visit_key_of(&mut self, node: Node) -> Node {
         let t = self.try_visit_simple_type_node(node.type_());
         if t.is_nil() {
@@ -868,7 +868,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         self.ctx.c.set_text_range(self.ctx.b, updated, node)
     }
 
-    // Go: checker/nodecopy.go:400 tryVisitTypeQuery
+    // Go: checker/nodecopy.go:404 tryVisitTypeQuery
     fn try_visit_type_query(&mut self, node: Node) -> Node {
         let (introduces_error, expr_name, _) =
             self.track_existing_entity_name(node.expr_name(), Node::NIL);
@@ -895,7 +895,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         Node::NIL
     }
 
-    // Go: checker/nodecopy.go:416 tryVisitTypeReference
+    // Go: checker/nodecopy.go:420 tryVisitTypeReference
     fn try_visit_type_reference(&mut self, node: Node) -> Node {
         if is_const_type_reference(node) {
             return Node::NIL;
@@ -959,7 +959,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         }
     }
 
-    // Go: checker/nodecopy.go:452 tryVisitSimpleTypeNode
+    // Go: checker/nodecopy.go:456 tryVisitSimpleTypeNode
     fn try_visit_simple_type_node(&mut self, node: Node) -> Node {
         let inner_node = skip_parentheses(node);
         match inner_node.kind() {
@@ -976,7 +976,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         self.visit_node(node)
     }
 
-    // Go: checker/nodecopy.go:468 visitExistingNodeTreeSymbolsWorker
+    // Go: checker/nodecopy.go:472 visitExistingNodeTreeSymbolsWorker
     fn visit_existing_node_tree_symbols_worker(&mut self, mut node: Node) -> Node {
         let b = self.ctx.b;
         let e = self.ctx.e;
@@ -1423,7 +1423,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
 }
 
 impl<'a> ExistingNodeTreeVisitor<'a> {
-    // Go: checker/nodecopy.go:827 visitor Visit func (inside getExistingNodeTreeVisitor)
+    // Go: checker/nodecopy.go:831 visitor Visit func (inside getExistingNodeTreeVisitor)
     fn existing_node_tree_visit(&mut self, node: Node) -> Node {
         // If there was an error in a sibling node bail early, the result will be discarded anyway
         if self.ctx.bound.borrow().had_error {
@@ -1490,7 +1490,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         result
     }
 
-    // Go: checker/nodecopy.go:873 NodeVisitorHooks.VisitNodes (inside getExistingNodeTreeVisitor)
+    // Go: checker/nodecopy.go:883 NodeVisitorHooks.VisitNodes (inside getExistingNodeTreeVisitor)
     // PORT: Go gets the visitor as `v`; here it is `self`.
     fn hook_visit_nodes(&mut self, nodes: NodeList) -> NodeList {
         let mut res = self.visit_nodes(nodes);
@@ -1508,7 +1508,7 @@ impl<'a> ExistingNodeTreeVisitor<'a> {
         res
     }
 
-    // Go: checker/nodecopy.go:890 NodeVisitorHooks.VisitNode (inside getExistingNodeTreeVisitor)
+    // Go: checker/nodecopy.go:894 NodeVisitorHooks.VisitNode (inside getExistingNodeTreeVisitor)
     fn hook_visit_node(&mut self, node: Node) -> Node {
         // Capture if the current node is in the current file so node lists knoww if they can keep positions or not
         let old_non_local_node = self.ctx.non_local_node;

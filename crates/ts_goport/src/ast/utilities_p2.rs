@@ -3,12 +3,12 @@
 use crate::astdata::NodeData;
 use crate::prelude::*;
 
-// Go: ast/utilities.go:906 SetImportsOfSourceFile
+// Go: ast/utilities.go:955 SetImportsOfSourceFile
 // PORT: skipped. Go documents it as "should never be called outside the
 // parser". Parser data (`imports`) is fixed in `SourceFileInfo` when the
 // program is installed, so there is nothing to set here.
 
-// Go: ast/utilities.go:911 FindAncestor
+// Go: ast/utilities.go:960 FindAncestor
 /// Walks up the parents of a node to find the ancestor that matches the callback.
 pub fn find_ancestor(mut node: Node, mut callback: impl FnMut(Node) -> bool) -> Node {
     while node.is_some() {
@@ -37,7 +37,7 @@ pub fn find_ancestor_ref(node: Node, mut callback: impl FnMut(NodeRef) -> bool) 
     Node::NIL
 }
 
-// Go: ast/utilities.go:921 FindManyAncestors
+// Go: ast/utilities.go:970 FindManyAncestors
 /// Walks up the parents of `node` once. Slot `i` of the result is the nearest
 /// ancestor that `callbacks[i]` matches, or nil. A node fills at most one
 /// slot: the first callback that matches it and whose slot is still empty.
@@ -87,7 +87,7 @@ pub fn find_ancestor_with_kind(
     }
 }
 
-// Go: ast/utilities.go:941 FindAncestorKind
+// Go: ast/utilities.go:990 FindAncestorKind
 /// Walks up the parents of a node to find the ancestor that matches the kind.
 // PERF: noderef1 G2. Through views (`NodeRef`): no registry lookup for a
 // parent in the same store.
@@ -102,7 +102,7 @@ pub fn find_ancestor_kind(node: Node, kind: SyntaxKind) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:959 ToFindAncestorResult
+// Go: ast/utilities.go:1008 ToFindAncestorResult
 pub fn to_find_ancestor_result(b: bool) -> FindAncestorResult {
     if b {
         return FindAncestorResult::FIND_ANCESTOR_TRUE;
@@ -110,7 +110,7 @@ pub fn to_find_ancestor_result(b: bool) -> FindAncestorResult {
     FindAncestorResult::FIND_ANCESTOR_FALSE
 }
 
-// Go: ast/utilities.go:967 FindAncestorOrQuit
+// Go: ast/utilities.go:1016 FindAncestorOrQuit
 /// Walks up the parents of a node to find the ancestor that matches the callback.
 pub fn find_ancestor_or_quit(
     mut node: Node,
@@ -148,7 +148,7 @@ pub fn find_ancestor_or_quit_ref(
     Node::NIL
 }
 
-// Go: ast/utilities.go:980 IsNodeDescendantOf
+// Go: ast/utilities.go:1029 IsNodeDescendantOf
 // PERF: checkid1. Parent steps through views, as `find_ancestor_ref`.
 pub fn is_node_descendant_of(node: Node, ancestor: Node) -> bool {
     let mut node = NodeRef::new(node);
@@ -161,7 +161,7 @@ pub fn is_node_descendant_of(node: Node, ancestor: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:990 ModifierToFlag
+// Go: ast/utilities.go:1039 ModifierToFlag
 pub fn modifier_to_flag(token: SyntaxKind) -> ModifierFlags {
     match token {
         SyntaxKind::StaticKeyword => ModifierFlags::STATIC,
@@ -184,7 +184,7 @@ pub fn modifier_to_flag(token: SyntaxKind) -> ModifierFlags {
     }
 }
 
-// Go: ast/utilities.go:1028 ModifiersToFlags
+// Go: ast/utilities.go:1077 ModifiersToFlags
 pub fn modifiers_to_flags(modifiers: &[Node]) -> ModifierFlags {
     let mut flags = ModifierFlags::NONE;
     for modifier in modifiers {
@@ -193,7 +193,7 @@ pub fn modifiers_to_flags(modifiers: &[Node]) -> ModifierFlags {
     flags
 }
 
-// Go: ast/utilities.go:1036 HasSyntacticModifier
+// Go: ast/utilities.go:1085 HasSyntacticModifier
 pub fn has_syntactic_modifier(node: Node, flags: ModifierFlags) -> bool {
     node.modifier_flags().intersects(flags)
 }
@@ -211,23 +211,23 @@ pub fn has_syntactic_modifier_in(node: Node, d: LoadedData, flags: ModifierFlags
     node.modifiers_in(d).modifier_flags().intersects(flags)
 }
 
-// Go: ast/utilities.go:1040 HasAccessorModifier
+// Go: ast/utilities.go:1089 HasAccessorModifier
 pub fn has_accessor_modifier(node: Node) -> bool {
     has_syntactic_modifier(node, ModifierFlags::ACCESSOR)
 }
 
-// Go: ast/utilities.go:1044 HasStaticModifier
+// Go: ast/utilities.go:1093 HasStaticModifier
 pub fn has_static_modifier(node: Node) -> bool {
     has_syntactic_modifier(node, ModifierFlags::STATIC)
 }
 
-// Go: ast/utilities.go:1048 IsStatic
+// Go: ast/utilities.go:1097 IsStatic
 pub fn is_static(node: Node) -> bool {
     // https://tc39.es/ecma262/#sec-static-semantics-isstatic
     is_class_element(node) && has_static_modifier(node) || is_class_static_block_declaration(node)
 }
 
-// Go: ast/utilities.go:1053 CanHaveSymbol
+// Go: ast/utilities.go:1102 CanHaveSymbol
 pub fn can_have_symbol(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -290,7 +290,7 @@ pub fn can_have_symbol(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:1072 CanHaveIllegalDecorators
+// Go: ast/utilities.go:1121 CanHaveIllegalDecorators
 pub fn can_have_illegal_decorators(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -315,7 +315,7 @@ pub fn can_have_illegal_decorators(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:1088 CanHaveIllegalModifiers
+// Go: ast/utilities.go:1137 CanHaveIllegalModifiers
 pub fn can_have_illegal_modifiers(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -327,7 +327,7 @@ pub fn can_have_illegal_modifiers(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:1100 CanHaveModifiers
+// Go: ast/utilities.go:1149 CanHaveModifiers
 pub fn can_have_modifiers(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -360,7 +360,7 @@ pub fn can_have_modifiers(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:1133 CanHaveDecorators
+// Go: ast/utilities.go:1182 CanHaveDecorators
 pub fn can_have_decorators(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -374,19 +374,19 @@ pub fn can_have_decorators(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:1147 IsFunctionOrModuleBlock
+// Go: ast/utilities.go:1196 IsFunctionOrModuleBlock
 pub fn is_function_or_module_block(node: Node) -> bool {
     is_source_file(node)
         || is_module_block(node)
         || is_block(node) && is_function_like(node.parent())
 }
 
-// Go: ast/utilities.go:1151 IsFunctionExpressionOrArrowFunction
+// Go: ast/utilities.go:1200 IsFunctionExpressionOrArrowFunction
 pub fn is_function_expression_or_arrow_function(node: Node) -> bool {
     is_function_expression(node) || is_arrow_function(node)
 }
 
-// Go: ast/utilities.go:1157 ForEachReturnStatement
+// Go: ast/utilities.go:1206 ForEachReturnStatement
 /// Warning: This has the same semantics as the forEach family of functions in
 /// that traversal terminates in the event that 'visitor' returns true.
 pub fn for_each_return_statement(body: Node, mut visitor: impl FnMut(Node) -> bool) -> bool {
@@ -416,7 +416,7 @@ pub fn for_each_return_statement(body: Node, mut visitor: impl FnMut(Node) -> bo
     traverse(body, &mut visitor)
 }
 
-// Go: ast/utilities.go:1173 GetRootDeclaration
+// Go: ast/utilities.go:1222 GetRootDeclaration
 pub fn get_root_declaration(mut node: Node) -> Node {
     while node.kind() == SyntaxKind::BindingElement {
         node = node.parent().parent();
@@ -424,7 +424,7 @@ pub fn get_root_declaration(mut node: Node) -> Node {
     node
 }
 
-// Go: ast/utilities.go:1180 GetCombinedModifierFlags
+// Go: ast/utilities.go:1229 GetCombinedModifierFlags
 // PERF: `get_root_declaration` is inlined here and each node kind is read
 // once (it was read in `get_root_declaration` and again for the
 // VariableDeclaration test, each read with the store bounds checks). The
@@ -463,7 +463,7 @@ pub fn get_combined_modifier_flags(node: Node) -> ModifierFlags {
     flags
 }
 
-// Go: ast/utilities.go:1196 GetCombinedNodeFlags
+// Go: ast/utilities.go:1245 GetCombinedNodeFlags
 pub fn get_combined_node_flags(mut node: Node) -> NodeFlags {
     let mut kind = node.kind();
     while kind == SyntaxKind::BindingElement {
@@ -526,19 +526,19 @@ pub fn get_combined_parser_flags(node: Node, mask: NodeFlags) -> NodeFlags {
     flags
 }
 
-// Go: ast/utilities.go:1213 IsVarAwaitUsing
+// Go: ast/utilities.go:1262 IsVarAwaitUsing
 /// Gets whether a bound `VariableDeclaration` or `VariableDeclarationList` is part of an `await using` declaration.
 pub fn is_var_await_using(node: Node) -> bool {
     get_combined_parser_flags(node, NodeFlags::BLOCK_SCOPED) == NodeFlags::AWAIT_USING
 }
 
-// Go: ast/utilities.go:1218 IsVarUsing
+// Go: ast/utilities.go:1267 IsVarUsing
 /// Gets whether a bound `VariableDeclaration` or `VariableDeclarationList` is part of a `using` declaration.
 pub fn is_var_using(node: Node) -> bool {
     get_combined_parser_flags(node, NodeFlags::BLOCK_SCOPED) == NodeFlags::USING
 }
 
-// Go: ast/utilities.go:1223 GetJSDocDeprecatedTag
+// Go: ast/utilities.go:1272 GetJSDocDeprecatedTag
 /// Returns the first @deprecated JSDoc tag for the given node, or nil if none exists.
 pub fn get_js_doc_deprecated_tag(node: Node) -> Node {
     for jsdoc in node.js_doc(Node::NIL).to_vec() {
@@ -554,7 +554,7 @@ pub fn get_js_doc_deprecated_tag(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:1240 IsDeprecatedDeclaration
+// Go: ast/utilities.go:1289 IsDeprecatedDeclaration
 /// Reports whether the given declaration is marked as @deprecated.
 /// It checks NodeFlagsPossiblyContainsDeprecatedTag on combined node flags, then confirms
 /// by walking up to find the node with the flag and performing a JSDoc lookup.
@@ -574,7 +574,7 @@ pub fn is_deprecated_declaration(declaration: Node) -> bool {
     is_deprecated_declaration_with_cached_flags(declaration, combined)
 }
 
-// Go: ast/utilities.go:1246 IsDeprecatedDeclarationWithCachedFlags
+// Go: ast/utilities.go:1295 IsDeprecatedDeclarationWithCachedFlags
 /// The core logic for IsDeprecatedDeclaration, parameterized on pre-computed
 /// combined flags so the checker can supply cached flags.
 pub fn is_deprecated_declaration_with_cached_flags(
@@ -599,26 +599,26 @@ pub fn is_deprecated_declaration_with_cached_flags(
     false
 }
 
-// Go: ast/utilities.go:1261 IsVarConst
+// Go: ast/utilities.go:1310 IsVarConst
 /// Gets whether a bound `VariableDeclaration` or `VariableDeclarationList` is part of a `const` declaration.
 pub fn is_var_const(node: Node) -> bool {
     get_combined_parser_flags(node, NodeFlags::BLOCK_SCOPED) == NodeFlags::CONST
 }
 
-// Go: ast/utilities.go:1266 IsVarConstLike
+// Go: ast/utilities.go:1315 IsVarConstLike
 /// Gets whether a bound `VariableDeclaration` or `VariableDeclarationList` is part of a `const`, `using` or `await using` declaration.
 pub fn is_var_const_like(node: Node) -> bool {
     let flags = get_combined_parser_flags(node, NodeFlags::BLOCK_SCOPED);
     flags == NodeFlags::CONST || flags == NodeFlags::USING || flags == NodeFlags::AWAIT_USING
 }
 
-// Go: ast/utilities.go:1275 IsVarLet
+// Go: ast/utilities.go:1324 IsVarLet
 /// Gets whether a bound `VariableDeclaration` or `VariableDeclarationList` is part of a `let` declaration.
 pub fn is_var_let(node: Node) -> bool {
     get_combined_parser_flags(node, NodeFlags::BLOCK_SCOPED) == NodeFlags::LET
 }
 
-// Go: ast/utilities.go:1279 IsImportMeta
+// Go: ast/utilities.go:1328 IsImportMeta
 pub fn is_import_meta(node: Node) -> bool {
     if node.kind() == SyntaxKind::MetaProperty {
         return node.keyword_token() == SyntaxKind::ImportKeyword && node.name().text() == "meta";
@@ -626,7 +626,7 @@ pub fn is_import_meta(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:1286 WalkUpBindingElementsAndPatterns
+// Go: ast/utilities.go:1335 WalkUpBindingElementsAndPatterns
 pub fn walk_up_binding_elements_and_patterns(binding: Node) -> Node {
     let mut node = binding.parent();
     while is_binding_element(node.parent()) {
@@ -635,19 +635,19 @@ pub fn walk_up_binding_elements_and_patterns(binding: Node) -> Node {
     node.parent()
 }
 
-// Go: ast/utilities.go:1294 IsSourceFileJS
+// Go: ast/utilities.go:1343 IsSourceFileJS
 pub fn is_source_file_js(file: Node) -> bool {
     let script_kind = with_source_file_info(file, |info| info.script_kind);
     script_kind == ScriptKind::JS || script_kind == ScriptKind::JSX
 }
 
-// Go: ast/utilities.go:1298 IsInJSFile
+// Go: ast/utilities.go:1347 IsInJSFile
 // PERF: U4 (CH7). `JAVA_SCRIPT_FILE` is a parser bit (`Node::parser_flags`).
 pub fn is_in_js_file(node: Node) -> bool {
     node.is_some() && !node.parser_flags(NodeFlags::JAVA_SCRIPT_FILE).is_empty()
 }
 
-// Go: ast/utilities.go:1302 IsDeclaration
+// Go: ast/utilities.go:1351 IsDeclaration
 pub fn is_declaration(node: Node) -> bool {
     is_declaration_ref(NodeRef::new(node))
 }
@@ -664,7 +664,7 @@ pub fn is_declaration_ref(node: NodeRef) -> bool {
     is_declaration_node_ref(node)
 }
 
-// Go: ast/utilities.go:1310 IsDeclarationName
+// Go: ast/utilities.go:1359 IsDeclarationName
 /// True if `name` is the name of a declaration node.
 pub fn is_declaration_name(name: Node) -> bool {
     is_declaration_name_ref(NodeRef::new(name))
@@ -681,7 +681,7 @@ pub fn is_declaration_name_ref(name: NodeRef) -> bool {
     }
 }
 
-// Go: ast/utilities.go:1315 IsDeclarationNameOrImportPropertyName
+// Go: ast/utilities.go:1364 IsDeclarationNameOrImportPropertyName
 /// Like 'isDeclarationName', but returns true for LHS of `import { x as y }` or `export { x as y }`.
 pub fn is_declaration_name_or_import_property_name(name: Node) -> bool {
     is_declaration_name_or_import_property_name_ref(NodeRef::new(name))
@@ -700,7 +700,7 @@ pub fn is_declaration_name_or_import_property_name_ref(name: NodeRef) -> bool {
     }
 }
 
-// Go: ast/utilities.go:1324 IsLiteralComputedPropertyDeclarationName
+// Go: ast/utilities.go:1373 IsLiteralComputedPropertyDeclarationName
 pub fn is_literal_computed_property_declaration_name(node: Node) -> bool {
     is_literal_computed_property_declaration_name_ref(NodeRef::new(node))
 }
@@ -719,25 +719,25 @@ pub fn is_literal_computed_property_declaration_name_ref(node: NodeRef) -> bool 
     }
 }
 
-// Go: ast/utilities.go:1330 IsExternalModuleImportEqualsDeclaration
+// Go: ast/utilities.go:1379 IsExternalModuleImportEqualsDeclaration
 pub fn is_external_module_import_equals_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportEqualsDeclaration
         && node.module_reference().kind() == SyntaxKind::ExternalModuleReference
 }
 
-// Go: ast/utilities.go:1334 IsModuleOrEnumDeclaration
+// Go: ast/utilities.go:1383 IsModuleOrEnumDeclaration
 pub fn is_module_or_enum_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ModuleDeclaration || node.kind() == SyntaxKind::EnumDeclaration
 }
 
-// Go: ast/utilities.go:1338 IsLiteralImportTypeNode
+// Go: ast/utilities.go:1387 IsLiteralImportTypeNode
 pub fn is_literal_import_type_node(node: Node) -> bool {
     is_import_type_node(node)
         && is_literal_type_node(node.argument())
         && is_string_literal(node.argument().literal())
 }
 
-// Go: ast/utilities.go:1342 IsJsxTagName
+// Go: ast/utilities.go:1391 IsJsxTagName
 pub fn is_jsx_tag_name(node: Node) -> bool {
     is_jsx_tag_name_of(node, NodeRef::new(node).parent())
 }
@@ -754,12 +754,12 @@ pub fn is_jsx_tag_name_of(node: Node, parent: NodeRef) -> bool {
     }
 }
 
-// Go: ast/utilities.go:1351 IsImportOrExportSpecifier
+// Go: ast/utilities.go:1400 IsImportOrExportSpecifier
 pub fn is_import_or_export_specifier(node: Node) -> bool {
     is_import_specifier(node) || is_export_specifier(node)
 }
 
-// Go: ast/utilities.go:1355 IsVoidZero
+// Go: ast/utilities.go:1404 IsVoidZero
 pub fn is_void_zero(node: Node) -> bool {
     is_void_expression(node)
         && is_numeric_literal(node.expression())
@@ -771,13 +771,13 @@ pub fn is_void_zero(node: Node) -> bool {
 static EXPORTS_NAME: std::sync::LazyLock<Name> = std::sync::LazyLock::new(|| Name::from("exports"));
 static MODULE_NAME: std::sync::LazyLock<Name> = std::sync::LazyLock::new(|| Name::from("module"));
 
-// Go: ast/utilities.go:1359 IsExportsIdentifier
+// Go: ast/utilities.go:1408 IsExportsIdentifier
 // PERF: compares name ids (`Node::text_is`), with no text load.
 pub fn is_exports_identifier(node: Node) -> bool {
     is_identifier(node) && node.text_is(&EXPORTS_NAME)
 }
 
-// Go: ast/utilities.go:1363 IsModuleIdentifier
+// Go: ast/utilities.go:1412 IsModuleIdentifier
 // PERF: compares name ids (`Node::text_is`), with no text load.
 // `is_module_exports_access_expression` calls this first, also for TS
 // files (`check_testing_known_truthy_types`).
@@ -788,19 +788,19 @@ pub fn is_module_identifier(node: Node) -> bool {
 /// `this`, interned once for `is_this_identifier`.
 static THIS_NAME: std::sync::LazyLock<Name> = std::sync::LazyLock::new(|| Name::from("this"));
 
-// Go: ast/utilities.go:1367 IsThisIdentifier
+// Go: ast/utilities.go:1416 IsThisIdentifier
 // PERF: U1 (a). Compares name ids (`Node::text_is`), with no text load.
 // `is_this_in_type_query` calls this first.
 pub fn is_this_identifier(node: Node) -> bool {
     is_identifier(node) && node.text_is(&THIS_NAME)
 }
 
-// Go: ast/utilities.go:1371 IsThisParameter
+// Go: ast/utilities.go:1420 IsThisParameter
 pub fn is_this_parameter(node: Node) -> bool {
     is_parameter_declaration(node) && node.name().is_some() && is_this_identifier(node.name())
 }
 
-// Go: ast/utilities.go:1375 IsBindableStaticAccessExpression
+// Go: ast/utilities.go:1424 IsBindableStaticAccessExpression
 pub fn is_bindable_static_access_expression(node: Node, exclude_this_keyword: bool) -> bool {
     is_property_access_expression(node)
         && (!exclude_this_keyword && node.expression().kind() == SyntaxKind::ThisKeyword
@@ -812,7 +812,7 @@ pub fn is_bindable_static_access_expression(node: Node, exclude_this_keyword: bo
         || is_bindable_static_element_access_expression(node, exclude_this_keyword)
 }
 
-// Go: ast/utilities.go:1381 IsBindableStaticElementAccessExpression
+// Go: ast/utilities.go:1430 IsBindableStaticElementAccessExpression
 pub fn is_bindable_static_element_access_expression(
     node: Node,
     exclude_this_keyword: bool,
@@ -826,7 +826,7 @@ pub fn is_bindable_static_element_access_expression(
             ))
 }
 
-// Go: ast/utilities.go:1388 IsPrototypeAccess
+// Go: ast/utilities.go:1437 IsPrototypeAccess
 pub fn is_prototype_access(node: Node) -> bool {
     if is_bindable_static_access_expression(node, false /*excludeThisKeyword*/) {
         let name = get_element_or_property_access_name(node);
@@ -837,19 +837,19 @@ pub fn is_prototype_access(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:1397 IsLiteralLikeElementAccess
+// Go: ast/utilities.go:1446 IsLiteralLikeElementAccess
 pub fn is_literal_like_element_access(node: Node) -> bool {
     is_element_access_expression(node)
         && is_string_or_numeric_literal_like(node.argument_expression())
 }
 
-// Go: ast/utilities.go:1401 IsBindableStaticNameExpression
+// Go: ast/utilities.go:1450 IsBindableStaticNameExpression
 pub fn is_bindable_static_name_expression(node: Node, exclude_this_keyword: bool) -> bool {
     is_entity_name_expression(node)
         || is_bindable_static_access_expression(node, exclude_this_keyword)
 }
 
-// Go: ast/utilities.go:1407 GetElementOrPropertyAccessName
+// Go: ast/utilities.go:1456 GetElementOrPropertyAccessName
 /// Does not handle signed numeric names like `a[+0]` - handling those would require handling prefix unary expressions
 /// throughout late binding handling as well, which is awkward (but ultimately probably doable if there is demand)
 pub fn get_element_or_property_access_name(node: Node) -> Node {
@@ -872,7 +872,7 @@ pub fn get_element_or_property_access_name(node: Node) -> Node {
     panic!("Unhandled case in GetElementOrPropertyAccessName")
 }
 
-// Go: ast/utilities.go:1423 GetInitializerOfBinaryExpression
+// Go: ast/utilities.go:1472 GetInitializerOfBinaryExpression
 /// PORT: Go takes `*BinaryExpression`; this takes the BinaryExpression node.
 pub fn get_initializer_of_binary_expression(expr: Node) -> Node {
     let mut expr = expr;
@@ -882,12 +882,12 @@ pub fn get_initializer_of_binary_expression(expr: Node) -> Node {
     expr.right().expression()
 }
 
-// Go: ast/utilities.go:1430 IsExpressionWithTypeArgumentsInClassExtendsClause
+// Go: ast/utilities.go:1479 IsExpressionWithTypeArgumentsInClassExtendsClause
 pub fn is_expression_with_type_arguments_in_class_extends_clause(node: Node) -> bool {
     try_get_class_extending_expression_with_type_arguments(node).is_some()
 }
 
-// Go: ast/utilities.go:1434 TryGetClassExtendingExpressionWithTypeArguments
+// Go: ast/utilities.go:1483 TryGetClassExtendingExpressionWithTypeArguments
 pub fn try_get_class_extending_expression_with_type_arguments(node: Node) -> Node {
     if !is_expression_with_type_arguments(node) {
         return Node::NIL;
@@ -900,7 +900,7 @@ pub fn try_get_class_extending_expression_with_type_arguments(node: Node) -> Nod
     Node::NIL
 }
 
-// Go: ast/utilities.go:1445 TryGetClassImplementingOrExtendingHeritageClauseElement
+// Go: ast/utilities.go:1494 TryGetClassImplementingOrExtendingHeritageClauseElement
 /// Returns `(class, isImplements)`.
 pub fn try_get_class_implementing_or_extending_heritage_clause_element(node: Node) -> (Node, bool) {
     if (is_expression_with_type_arguments(node) || is_type_reference_node(node))
@@ -915,7 +915,7 @@ pub fn try_get_class_implementing_or_extending_heritage_clause_element(node: Nod
     (Node::NIL, false)
 }
 
-// Go: ast/utilities.go:1453 GetNameOfDeclaration
+// Go: ast/utilities.go:1502 GetNameOfDeclaration
 pub fn get_name_of_declaration(declaration: Node) -> Node {
     if declaration.is_nil() {
         return Node::NIL;
@@ -947,7 +947,7 @@ fn name_of_declaration(declaration: Node, read_name: impl FnOnce() -> Node) -> N
     Node::NIL
 }
 
-// Go: ast/utilities.go:1467 GetNonAssignedNameOfDeclaration
+// Go: ast/utilities.go:1516 GetNonAssignedNameOfDeclaration
 pub fn get_non_assigned_name_of_declaration(declaration: Node) -> Node {
     non_assigned_name_of_declaration(declaration, || declaration.name())
 }
@@ -988,7 +988,7 @@ fn non_assigned_name_of_declaration(declaration: Node, read_name: impl FnOnce() 
     read_name()
 }
 
-// Go: ast/utilities.go:1492 GetAssignedName
+// Go: ast/utilities.go:1541 GetAssignedName
 pub fn get_assigned_name(node: Node) -> Node {
     let parent = node.parent();
     if parent.is_some() {
@@ -1031,7 +1031,7 @@ pub fn get_assigned_name(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:1547 GetAssignmentDeclarationKind
+// Go: ast/utilities.go:1596 GetAssignmentDeclarationKind
 pub fn get_assignment_declaration_kind(node: Node) -> JSDeclarationKind {
     match node.kind() {
         SyntaxKind::BinaryExpression => {
@@ -1124,7 +1124,7 @@ fn is_exports_access_name(node: Node) -> bool {
     name.is_some() && name.text() == "exports"
 }
 
-// Go: ast/utilities.go:1581 IsBindableObjectDefinePropertyCall
+// Go: ast/utilities.go:1630 IsBindableObjectDefinePropertyCall
 pub fn is_bindable_object_define_property_call(node: Node) -> bool {
     let args = node.arguments();
     if args.len() == 3 {
@@ -1142,7 +1142,7 @@ pub fn is_bindable_object_define_property_call(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:1602 HasDynamicName
+// Go: ast/utilities.go:1651 HasDynamicName
 /// A declaration has a dynamic name if all of the following are true:
 ///   1. The declaration has a computed property name.
 ///   2. The computed name is *not* expressed as a StringLiteral.
@@ -1161,7 +1161,7 @@ pub fn has_dynamic_name_in(declaration: Node, d: LoadedData) -> bool {
     name.is_some() && is_dynamic_name(name)
 }
 
-// Go: ast/utilities.go:1607 IsDynamicName
+// Go: ast/utilities.go:1656 IsDynamicName
 pub fn is_dynamic_name(name: Node) -> bool {
     let expr = match name.kind() {
         SyntaxKind::ComputedPropertyName => name.expression(),
@@ -1171,12 +1171,12 @@ pub fn is_dynamic_name(name: Node) -> bool {
     !is_string_or_numeric_literal_like(expr) && !is_signed_numeric_literal(expr)
 }
 
-// Go: ast/utilities.go:1620 IsEntityNameExpression
+// Go: ast/utilities.go:1669 IsEntityNameExpression
 pub fn is_entity_name_expression(node: Node) -> bool {
     is_entity_name_expression_ex(node, false /*allowJS*/)
 }
 
-// Go: ast/utilities.go:1624 IsEntityNameExpressionEx
+// Go: ast/utilities.go:1673 IsEntityNameExpressionEx
 pub fn is_entity_name_expression_ex(node: Node, allow_js: bool) -> bool {
     is_identifier(node)
         || is_property_access_entity_name_expression(node, allow_js)
@@ -1185,21 +1185,21 @@ pub fn is_entity_name_expression_ex(node: Node, allow_js: bool) -> bool {
                 || is_element_access_entity_name_expression(node, allow_js))
 }
 
-// Go: ast/utilities.go:1630 IsPropertyAccessEntityNameExpression
+// Go: ast/utilities.go:1679 IsPropertyAccessEntityNameExpression
 pub fn is_property_access_entity_name_expression(node: Node, allow_js: bool) -> bool {
     is_property_access_expression(node)
         && is_identifier(node.name())
         && is_entity_name_expression_ex(node.expression(), allow_js)
 }
 
-// Go: ast/utilities.go:1634 isElementAccessEntityNameExpression
+// Go: ast/utilities.go:1683 isElementAccessEntityNameExpression
 pub fn is_element_access_entity_name_expression(node: Node, allow_js: bool) -> bool {
     is_element_access_expression(node)
         && is_string_or_numeric_literal_like(node.argument_expression())
         && is_entity_name_expression_ex(node.expression(), allow_js)
 }
 
-// Go: ast/utilities.go:1638 IsDottedName
+// Go: ast/utilities.go:1687 IsDottedName
 pub fn is_dotted_name(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::Identifier
@@ -1213,7 +1213,7 @@ pub fn is_dotted_name(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:1648 HasSamePropertyAccessName
+// Go: ast/utilities.go:1697 HasSamePropertyAccessName
 pub fn has_same_property_access_name(node1: Node, node2: Node) -> bool {
     if node1.kind() == SyntaxKind::Identifier && node2.kind() == SyntaxKind::Identifier {
         return node1.text() == node2.text();
@@ -1226,18 +1226,18 @@ pub fn has_same_property_access_name(node1: Node, node2: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:1658 IsAmbientModule
+// Go: ast/utilities.go:1707 IsAmbientModule
 pub fn is_ambient_module(node: Node) -> bool {
     is_module_declaration(node)
         && (node.name().kind() == SyntaxKind::StringLiteral || is_global_scope_augmentation(node))
 }
 
-// Go: ast/utilities.go:1662 IsAmbientModuleSymbolName
+// Go: ast/utilities.go:1711 IsAmbientModuleSymbolName
 pub fn is_ambient_module_symbol_name(s: &str) -> bool {
     try_get_ambient_module_name_from_symbol_name(s).is_some()
 }
 
-// Go: ast/utilities.go:1669 TryGetAmbientModuleNameFromSymbolName (ts#63931)
+// Go: ast/utilities.go:1718 TryGetAmbientModuleNameFromSymbolName (ts#63931)
 // Ambient module symbols are either of the form `"modulename"` or `InternalSymbolNamePrefix + "\"modulename\"pattern@nodeId"`;
 // see `getDeclarationName`.
 // PORT: `(string, bool)` returns `Option<&str>`. `s` is the port form of the
@@ -1259,20 +1259,20 @@ pub fn try_get_ambient_module_name_from_symbol_name(s: &str) -> Option<&str> {
     Some(&rest[..marker_index])
 }
 
-// Go: ast/utilities.go:1686 IsExternalModule
+// Go: ast/utilities.go:1735 IsExternalModule
 /// PORT: Go takes `*SourceFile`; this takes the SourceFile node.
 pub fn is_external_module(file: Node) -> bool {
     with_source_file_info(file, |info| info.external_module_indicator.is_some())
 }
 
-// Go: ast/utilities.go:1690 IsExternalOrCommonJSModule
+// Go: ast/utilities.go:1739 IsExternalOrCommonJSModule
 pub fn is_external_or_common_js_module(file: Node) -> bool {
     with_source_file_info(file, |info| {
         info.external_module_indicator.is_some() || info.common_js_module_indicator.is_some()
     })
 }
 
-// Go: ast/utilities.go:1695 IsEffectiveExternalModule
+// Go: ast/utilities.go:1744 IsEffectiveExternalModule
 // TODO(Go): Should we deprecate `IsExternalOrCommonJSModule` in favor of this function?
 pub fn is_effective_external_module(node: Node, compiler_options: &CompilerOptions) -> bool {
     is_external_module(node)
@@ -1280,12 +1280,12 @@ pub fn is_effective_external_module(node: Node, compiler_options: &CompilerOptio
             && with_source_file_info(node, |info| info.common_js_module_indicator.is_some()))
 }
 
-// Go: ast/utilities.go:1699 isCommonJSContainingModuleKind
+// Go: ast/utilities.go:1748 isCommonJSContainingModuleKind
 pub fn is_common_js_containing_module_kind(kind: ModuleKind) -> bool {
     kind == ModuleKind::COMMON_JS || ModuleKind::NODE16 <= kind && kind <= ModuleKind::NODE_NEXT
 }
 
-// Go: ast/utilities.go:1703 IsExternalModuleIndicator
+// Go: ast/utilities.go:1752 IsExternalModuleIndicator
 pub fn is_external_module_indicator(node: Node) -> bool {
     // Exported top-level member indicates moduleness
     is_any_import_or_re_export(node)
@@ -1293,7 +1293,7 @@ pub fn is_external_module_indicator(node: Node) -> bool {
         || has_syntactic_modifier(node, ModifierFlags::EXPORT)
 }
 
-// Go: ast/utilities.go:1708 IsExportNamespaceAsDefaultDeclaration
+// Go: ast/utilities.go:1757 IsExportNamespaceAsDefaultDeclaration
 pub fn is_export_namespace_as_default_declaration(node: Node) -> bool {
     if is_export_declaration(node) {
         let export_clause = node.export_clause();
@@ -1303,12 +1303,12 @@ pub fn is_export_namespace_as_default_declaration(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:1716 IsGlobalScopeAugmentation
+// Go: ast/utilities.go:1765 IsGlobalScopeAugmentation
 pub fn is_global_scope_augmentation(node: Node) -> bool {
     is_module_declaration(node) && node.keyword() == SyntaxKind::GlobalKeyword
 }
 
-// Go: ast/utilities.go:1720 IsModuleAugmentationExternal
+// Go: ast/utilities.go:1769 IsModuleAugmentationExternal
 pub fn is_module_augmentation_external(node: Node) -> bool {
     // external module augmentation is a ambient module declaration that is either:
     // - defined in the top level scope and source file is an external module
@@ -1325,27 +1325,27 @@ pub fn is_module_augmentation_external(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:1734 IsModuleWithStringLiteralName
+// Go: ast/utilities.go:1783 IsModuleWithStringLiteralName
 pub fn is_module_with_string_literal_name(node: Node) -> bool {
     is_module_declaration(node) && node.name().kind() == SyntaxKind::StringLiteral
 }
 
-// Go: ast/utilities.go:1738 GetContainingClass
+// Go: ast/utilities.go:1787 GetContainingClass
 pub fn get_containing_class(node: Node) -> Node {
     find_ancestor(node.parent(), is_class_like)
 }
 
-// Go: ast/utilities.go:1742 GetExtendsHeritageClauseElements
+// Go: ast/utilities.go:1791 GetExtendsHeritageClauseElements
 pub fn get_extends_heritage_clause_elements(node: Node) -> Vec<Node> {
     get_heritage_elements(node, SyntaxKind::ExtendsKeyword)
 }
 
-// Go: ast/utilities.go:1746 GetImplementsHeritageClauseElements
+// Go: ast/utilities.go:1795 GetImplementsHeritageClauseElements
 pub fn get_implements_heritage_clause_elements(node: Node) -> Vec<Node> {
     get_heritage_elements(node, SyntaxKind::ImplementsKeyword)
 }
 
-// Go: ast/utilities.go:1750 GetHeritageElements
+// Go: ast/utilities.go:1799 GetHeritageElements
 /// Go returns `[]*HeritageClauseElement`: ExpressionWithTypeArguments or
 /// TypeReference nodes (tsgo#4797).
 pub fn get_heritage_elements(node: Node, kind: SyntaxKind) -> Vec<Node> {
@@ -1356,7 +1356,7 @@ pub fn get_heritage_elements(node: Node, kind: SyntaxKind) -> Vec<Node> {
     Vec::new()
 }
 
-// Go: ast/utilities.go:1759 GetHeritageClauseElementName
+// Go: ast/utilities.go:1808 GetHeritageClauseElementName
 /// GetHeritageClauseElementName returns the expression or type name of a heritage clause element.
 pub fn get_heritage_clause_element_name(node: Node) -> Node {
     if is_type_reference_node(node) {
@@ -1365,7 +1365,7 @@ pub fn get_heritage_clause_element_name(node: Node) -> Node {
     node.expression()
 }
 
-// Go: ast/utilities.go:1766 IsNameOfHeritageClauseTypeReference
+// Go: ast/utilities.go:1815 IsNameOfHeritageClauseTypeReference
 pub fn is_name_of_heritage_clause_type_reference(node: Node) -> bool {
     is_name_of_heritage_clause_type_reference_ref(NodeRef::new(node))
 }
@@ -1382,7 +1382,7 @@ pub fn is_name_of_heritage_clause_type_reference_ref(mut node: NodeRef) -> bool 
         && parent.parent().kind() == SyntaxKind::HeritageClause
 }
 
-// Go: ast/utilities.go:1775 GetHeritageClause
+// Go: ast/utilities.go:1824 GetHeritageClause
 pub fn get_heritage_clause(node: Node, kind: SyntaxKind) -> Node {
     let clauses = get_heritage_clauses(node);
     if !clauses.is_nil() {
@@ -1395,7 +1395,7 @@ pub fn get_heritage_clause(node: Node, kind: SyntaxKind) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:1787 getHeritageClauses
+// Go: ast/utilities.go:1836 getHeritageClauses
 pub fn get_heritage_clauses(node: Node) -> NodeList {
     match node.kind() {
         SyntaxKind::ClassDeclaration
@@ -1405,7 +1405,7 @@ pub fn get_heritage_clauses(node: Node) -> NodeList {
     }
 }
 
-// Go: ast/utilities.go:1799 IsPartOfTypeQuery
+// Go: ast/utilities.go:1848 IsPartOfTypeQuery
 pub fn is_part_of_type_query(mut node: Node) -> bool {
     while node.kind() == SyntaxKind::QualifiedName || node.kind() == SyntaxKind::Identifier {
         node = node.parent();
@@ -1413,7 +1413,7 @@ pub fn is_part_of_type_query(mut node: Node) -> bool {
     node.kind() == SyntaxKind::TypeQuery
 }
 
-// Go: ast/utilities.go:1813 IsPartOfParameterDeclaration
+// Go: ast/utilities.go:1862 IsPartOfParameterDeclaration
 /// This function returns true if the this node's root declaration is a parameter.
 /// For example, passing a `ParameterDeclaration` will return true, as will passing a
 /// binding element that is a child of a `ParameterDeclaration`.
@@ -1423,7 +1423,7 @@ pub fn is_part_of_parameter_declaration(node: Node) -> bool {
     get_root_declaration(node).kind() == SyntaxKind::Parameter
 }
 
-// Go: ast/utilities.go:1817 IsInTopLevelContext
+// Go: ast/utilities.go:1866 IsInTopLevelContext
 pub fn is_in_top_level_context(mut node: Node) -> bool {
     // The name of a class or function declaration is a BindingIdentifier in its surrounding scope.
     if is_identifier(node) {
@@ -1441,7 +1441,7 @@ pub fn is_in_top_level_context(mut node: Node) -> bool {
     is_source_file(container)
 }
 
-// Go: ast/utilities.go:1829 GetThisContainer
+// Go: ast/utilities.go:1878 GetThisContainer
 pub fn get_this_container(
     mut node: Node,
     include_arrow_functions: bool,

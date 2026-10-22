@@ -76,7 +76,7 @@ const SAMPLE_INTERVAL: std::time::Duration = std::time::Duration::from_millis(10
 // Go: tracing/tracing.go:96 traceFileName
 const TRACE_FILE_NAME: &str = "trace.json";
 
-// Go: tracing/tracing.go:96
+// Go: tracing/tracing.go:99
 const MAIN_THREAD_ID: i64 = 1;
 const FIRST_SYNTHETIC_THREAD_ID: i64 = 2;
 const FIRST_FILE_THREAD_ID: i64 = 1_000_000;
@@ -142,7 +142,7 @@ pub enum Phase {
 }
 
 impl Phase {
-    // Go: tracing/tracing.go:136 (the Phase string values)
+    // Go: tracing/tracing.go:140 (the Phase string values)
     #[must_use]
     pub fn as_str(self) -> &'static str {
         match self {
@@ -351,7 +351,7 @@ pub fn start_tracing(
     Ok(TRACING.get().expect("tracing session set above"))
 }
 
-// Go: tracing/tracing.go:187 (*Tracing).timestamp
+// Go: tracing/tracing.go:193 (*Tracing).timestamp
 // timestamp returns the current timestamp in microseconds.
 // In deterministic mode it returns a monotonically increasing counter;
 // otherwise it returns the real elapsed wall-clock time since tracing started,
@@ -439,12 +439,12 @@ impl Tracing {
         timestamp(self.deterministic, self.start_time, state)
     }
 
-    // Go: tracing/tracing.go:205 (*Tracing).writeEvent
+    // Go: tracing/tracing.go:207 (*Tracing).writeEvent
     fn write_event_locked(state: &mut TracingState, event: &TraceEvent<'_>) {
         write_event(&mut state.trace_content, event);
     }
 
-    // Go: tracing/tracing.go:213 (*Tracing).maybeFlushLocked
+    // Go: tracing/tracing.go:215 (*Tracing).maybeFlushLocked
     // maybeFlushLocked appends the buffered trace content to disk if it has grown
     // past the flush threshold. Caller must hold tr.mu. If a previous flush failed,
     // or this flush fails, the error is recorded in tr.flushErr and subsequent
@@ -463,7 +463,7 @@ impl Tracing {
         state.trace_content.clear();
     }
 
-    // Go: tracing/tracing.go:229 (*Tracing).Instant
+    // Go: tracing/tracing.go:231 (*Tracing).Instant
     // Instant records an instant event in the trace.
     pub fn instant(&self, phase: Phase, name: &'static str, args: Args) {
         if !self.trace_started.load(Ordering::Acquire) {
@@ -499,7 +499,7 @@ impl Tracing {
         self.maybe_flush_locked(&mut state);
     }
 
-    // Go: tracing/tracing.go:266 (*Tracing).Push
+    // Go: tracing/tracing.go:267 (*Tracing).Push
     // Push starts a trace event block on the shared trace buffer.
     // Safe to call from multiple threads.
     //
@@ -574,7 +574,7 @@ impl Tracing {
         })))
     }
 
-    // Go: tracing/tracing.go:324 (*Tracing).threadIDLocked
+    // Go: tracing/tracing.go:325 (*Tracing).threadIDLocked
     fn thread_id_locked(&self, state: &mut TracingState, args: &[(&'static str, Arg)]) -> i64 {
         let Some(key) = trace_thread_key_from_args(args) else {
             return MAIN_THREAD_ID;
@@ -597,7 +597,7 @@ impl Tracing {
         tid
     }
 
-    // Go: tracing/tracing.go:346 (*Tracing).writeThreadNameEventLocked
+    // Go: tracing/tracing.go:348 (*Tracing).writeThreadNameEventLocked
     fn write_thread_name_event_locked(&self, state: &mut TracingState, tid: i64, name: String) {
         state.trace_content.push_str(",\n");
         let args: Args = vec![("name", name.into())];
@@ -617,7 +617,7 @@ impl Tracing {
         );
     }
 
-    // Go: tracing/tracing.go:411 (*Tracing).NewTypeTracer
+    // Go: tracing/tracing.go:415 (*Tracing).NewTypeTracer
     // NewTypeTracer creates a new tracer for a specific checker.
     // The checkerIndex is used to create unique filenames for each checker's output.
     // PORT: `goport` replaces a checker that panicked with a new checker of
@@ -648,7 +648,7 @@ impl Tracing {
         tracer
     }
 
-    // Go: tracing/tracing.go:434 (*Tracing).StopTracing
+    // Go: tracing/tracing.go:437 (*Tracing).StopTracing
     // StopTracing finalizes the tracing session and writes all output files.
     // PORT: Go dumps the types of every `tr.tracers` entry. Each checker
     // lives on its own worker thread here, so each dumps its own types there
@@ -733,8 +733,8 @@ impl Pop {
 }
 
 impl Drop for Pop {
-    // Go: tracing/tracing.go:289 (the closure that ends a separate event) and
-    // tracing/tracing.go:307 (the closure that ends a sampled event).
+    // Go: tracing/tracing.go:285 (the closure that ends a separate event) and
+    // tracing/tracing.go:306 (the closure that ends a sampled event).
     fn drop(&mut self) {
         let Some(pop) = self.0.take() else {
             return;
@@ -884,7 +884,7 @@ fn stable_trace_thread_id(key: &TraceThreadKey) -> i64 {
     FIRST_FILE_THREAD_ID + (hash % FILE_THREAD_ID_HASH_RANGE) as i64
 }
 
-// Go: tracing/tracing.go:434 json.MarshalIndent(tr.legend, "", "  ")
+// Go: tracing/tracing.go:473 json.MarshalIndent(tr.legend, "", "  ")
 // PORT: the Go v2 JSON indent output, written by hand.
 fn marshal_legend(legend: &[TraceRecord]) -> String {
     if legend.is_empty() {
@@ -932,7 +932,7 @@ pub struct TypeTracer {
 }
 
 impl TypeTracer {
-    // Go: tracing/tracing.go:495 (*typeTracer).RecordType
+    // Go: tracing/tracing.go:493 (*typeTracer).RecordType
     pub fn record_type(&self, t: TypeId) {
         self.types
             .lock()
@@ -940,7 +940,7 @@ impl TypeTracer {
             .push(t);
     }
 
-    // Go: tracing/tracing.go:501 (*typeTracer).DumpTypes
+    // Go: tracing/tracing.go:499 (*typeTracer).DumpTypes
     // PORT: Go reaches the checker through each type. Here the checker that
     // owns the types is passed in.
     pub fn dump_types(&self, checker: &mut Checker) -> Result<(), String> {
@@ -1168,7 +1168,7 @@ fn write_opt_location(out: &mut String, key: &str, location: Option<&Location>) 
     out.push('}');
 }
 
-// Go: tracing/tracing.go:585 (*typeTracer).buildTypeDescriptor
+// Go: tracing/tracing.go:581 (*typeTracer).buildTypeDescriptor
 // PORT: Go reads the type through the `TracedType` adapter
 // (checker/tracer.go). The adapter methods are inlined here, each marked
 // with its Go name.
@@ -1197,7 +1197,7 @@ fn build_type_descriptor(
 
     // Assign a unique integer token per recursion identity, matching TypeScript's behavior.
     // This lets trace analysis tools detect which types share the same recursion identity.
-    // Go: checker/tracer.go:326 RecursionIdentity
+    // Go: checker/tracer.go:325 RecursionIdentity
     // PORT: Go `getRecursionIdentity(t).value` is never nil, so every type
     // gets a token.
     let identity = checker.get_recursion_identity(t);
@@ -1221,19 +1221,19 @@ fn build_type_descriptor(
     }
 
     // Tuple flag
-    // Go: checker/tracer.go:315 IsTuple
+    // Go: checker/tracer.go:314 IsTuple
     if object_flags.intersects(ObjectFlags::TUPLE) {
         desc.is_tuple = true;
     }
 
     // Union types
-    // Go: checker/tracer.go:122 UnionTypes
+    // Go: checker/tracer.go:121 UnionTypes
     if flags.intersects(TypeFlags::UNION) {
         desc.union_types = map_type_ids(&checker.ty(t).as_union_type().union_or_intersection.types);
     }
 
     // Intersection types
-    // Go: checker/tracer.go:129 IntersectionTypes
+    // Go: checker/tracer.go:128 IntersectionTypes
     if flags.intersects(TypeFlags::INTERSECTION) {
         desc.intersection_types = map_type_ids(
             &checker
@@ -1251,13 +1251,13 @@ fn build_type_descriptor(
     }
 
     // Index type (keyof)
-    // Go: checker/tracer.go:136 IndexType
+    // Go: checker/tracer.go:135 IndexType
     if flags.intersects(TypeFlags::INDEX) {
         desc.keyof_type = opt_id(checker.ty(t).as_index_type().target);
     }
 
     // Indexed access type
-    // Go: checker/tracer.go:147 IndexedAccessObjectType and :158 IndexedAccessIndexType
+    // Go: checker/tracer.go:146 IndexedAccessObjectType and :158 IndexedAccessIndexType
     if flags.intersects(TypeFlags::INDEXED_ACCESS) {
         let data = checker.ty(t).as_indexed_access_type();
         desc.indexed_access_object_type = opt_id(data.object_type);
@@ -1283,7 +1283,7 @@ fn build_type_descriptor(
     }
 
     // Substitution type
-    // Go: checker/tracer.go:213 SubstitutionBaseType and :224 SubstitutionConstraintType
+    // Go: checker/tracer.go:212 SubstitutionBaseType and :224 SubstitutionConstraintType
     if flags.intersects(TypeFlags::SUBSTITUTION) {
         let data = checker.ty(t).as_substitution_type();
         desc.substitution_base_type = opt_id(data.base_type);
@@ -1291,7 +1291,7 @@ fn build_type_descriptor(
     }
 
     // Reference type
-    // Go: checker/tracer.go:235 ReferenceTarget, :246 ReferenceTypeArguments
+    // Go: checker/tracer.go:234 ReferenceTarget, :246 ReferenceTypeArguments
     // and :253 ReferenceNode
     let mut reference_node = Node::NIL;
     if flags.intersects(TypeFlags::OBJECT) && object_flags.intersects(ObjectFlags::REFERENCE) {
@@ -1305,7 +1305,7 @@ fn build_type_descriptor(
     }
 
     // Reverse mapped type
-    // Go: checker/tracer.go:260-:291 ReverseMapped*Type
+    // Go: checker/tracer.go:259-:290 ReverseMapped*Type
     if flags.intersects(TypeFlags::OBJECT) && object_flags.intersects(ObjectFlags::REVERSE_MAPPED) {
         let data = checker.ty(t).as_reverse_mapped_type();
         desc.reverse_mapped_source_type = opt_id(data.source);
@@ -1314,7 +1314,7 @@ fn build_type_descriptor(
     }
 
     // Evolving array type
-    // Go: checker/tracer.go:293 EvolvingArrayElementType and :304 EvolvingArrayFinalType
+    // Go: checker/tracer.go:292 EvolvingArrayElementType and :304 EvolvingArrayFinalType
     if flags.intersects(TypeFlags::OBJECT) && object_flags.intersects(ObjectFlags::EVOLVING_ARRAY) {
         let data = checker.ty(t).as_evolving_array_type();
         desc.evolving_array_element_type = opt_id(data.element_type);
@@ -1322,7 +1322,7 @@ fn build_type_descriptor(
     }
 
     // Pattern (destructuring)
-    // Go: checker/tracer.go:319 Pattern
+    // Go: checker/tracer.go:318 Pattern
     if let Some(&pattern) = checker.pattern_for_type.get(&t) {
         if pattern.is_some() {
             desc.destructuring_pattern = get_location(pattern);
@@ -1347,7 +1347,7 @@ fn build_type_descriptor(
     desc
 }
 
-// Go: checker/tracer.go:330 Display
+// Go: checker/tracer.go:329 Display
 // Compute display text for types where it's valuable for trace analysis.
 // TypeScript only does this for Anonymous|Literal types, but we extend to
 // unions, intersections, and template literals since they often lack
@@ -1553,7 +1553,7 @@ fn write_json_float(out: &mut String, value: f64) {
     let _ = write!(out, "{value}");
 }
 
-// Go: `tr.fs.WriteFile`, where `tr.fs` is `sys.FS()`: vfs/osvfs/os.go:174
+// Go: `tr.fs.WriteFile`, where `tr.fs` is `sys.FS()`: vfs/osvfs/os.go:206
 // WriteFile, or the test file system in a test process.
 // PORT: `osvfs_fs()` is the file system of the calling thread: the OS one,
 // or the test one when a test process installs an OS override
@@ -1564,7 +1564,7 @@ fn write_file(path: &str, content: &str) -> Result<(), String> {
         .map_err(|err| fs_error_text(&err))
 }
 
-// Go: `tr.fs.AppendFile` (vfs/osvfs/os.go:178 AppendFile); see
+// Go: `tr.fs.AppendFile` (vfs/osvfs/os.go:210 AppendFile); see
 // `write_file`.
 fn append_file(path: &str, content: &str) -> Result<(), String> {
     crate::frontend::vfs::osvfs_fs()

@@ -1811,7 +1811,7 @@ impl Checker {
 // Rust port, so this file keeps a private copy (like checker_p06/p17).
 fn file_extension_is_one_of_gc1(path: &str, extensions: &[&str]) -> bool {
     for ext in extensions {
-        // Go: tspath/path.go:1095 FileExtensionIs
+        // Go: tspath/path.go:1142 FileExtensionIs
         if path.len() > ext.len() && path.ends_with(ext) {
             return true;
         }
@@ -1820,7 +1820,7 @@ fn file_extension_is_one_of_gc1(path: &str, extensions: &[&str]) -> bool {
 }
 
 impl Checker {
-    // Go: checker/grammarchecks.go:2123 checkGrammarImportAttributeValues
+    // Go: checker/grammarchecks.go:2142 checkGrammarImportAttributeValues
     // PORT: in Go this follows checkGrammarImportClause (grammarchecks_p3.rs);
     // it is here because the checker lane owns this file. The children of an
     // ImportAttributes node are its `Attributes` list.
@@ -1848,7 +1848,7 @@ impl Checker {
         has_error
     }
 
-    // Go: checker/grammarchecks.go:2200 checkGrammarImportAttributesType
+    // Go: checker/grammarchecks.go:2229 checkGrammarImportAttributesType
     // PORT: the Go function is last in grammarchecks.go (grammarchecks_p3.rs);
     // it is here because the checker lane owns this file.
     pub fn check_grammar_import_attributes_type(&mut self, attributes: Node) -> bool {

@@ -970,7 +970,7 @@ mod debug_site_tests {
     use crate::frontend::tspath::Path;
     use crate::pseudochecker::new_pseudo_checker;
 
-    // Go: ls/findallreferences.go:2103 forEachDescendantOfKind (the ls copy is in
+    // Go: ls/findallreferences.go:2100 forEachDescendantOfKind (the ls copy is in
     // the upper crate).
     fn for_each_descendant_of_kind(node: Node, kind: SyntaxKind, action: &mut dyn FnMut(Node)) {
         node.for_each_child(|child| {

@@ -2,7 +2,7 @@
 
 use crate::prelude::*;
 
-// Go: ast/utilities.go:3724 IsNewExpressionTarget
+// Go: ast/utilities.go:3773 IsNewExpressionTarget
 pub fn is_new_expression_target(
     node: Node,
     include_element_access: bool,
@@ -17,7 +17,7 @@ pub fn is_new_expression_target(
     )
 }
 
-// Go: ast/utilities.go:3728 IsCallOrNewExpressionTarget
+// Go: ast/utilities.go:3777 IsCallOrNewExpressionTarget
 pub fn is_call_or_new_expression_target(
     node: Node,
     include_element_access: bool,
@@ -32,7 +32,7 @@ pub fn is_call_or_new_expression_target(
     )
 }
 
-// Go: ast/utilities.go:3732 IsTaggedTemplateTag
+// Go: ast/utilities.go:3781 IsTaggedTemplateTag
 pub fn is_tagged_template_tag(
     node: Node,
     include_element_access: bool,
@@ -47,7 +47,7 @@ pub fn is_tagged_template_tag(
     )
 }
 
-// Go: ast/utilities.go:3736 IsDecoratorTarget
+// Go: ast/utilities.go:3785 IsDecoratorTarget
 pub fn is_decorator_target(
     node: Node,
     include_element_access: bool,
@@ -62,7 +62,7 @@ pub fn is_decorator_target(
     )
 }
 
-// Go: ast/utilities.go:3740 IsJsxOpeningLikeElementTagName
+// Go: ast/utilities.go:3789 IsJsxOpeningLikeElementTagName
 pub fn is_jsx_opening_like_element_tag_name(
     node: Node,
     include_element_access: bool,
@@ -77,7 +77,7 @@ pub fn is_jsx_opening_like_element_tag_name(
     )
 }
 
-// Go: ast/utilities.go:3744 isCalleeWorker
+// Go: ast/utilities.go:3793 isCalleeWorker
 // PORT: Go func params become plain `fn` pointers; all callers pass package functions.
 pub fn is_callee_worker(
     node: Node,
@@ -112,7 +112,7 @@ pub fn is_callee_worker(
         && callee_selector(target.parent()) == target
 }
 
-// Go: ast/utilities.go:3766 IsRightSideOfQualifiedNameOrPropertyAccess
+// Go: ast/utilities.go:3815 IsRightSideOfQualifiedNameOrPropertyAccess
 // PERF: noderef1 G1. The parent and its kind and name are read through
 // one view (`NodeRef`).
 pub fn is_right_side_of_qualified_name_or_property_access(node: Node) -> bool {
@@ -132,7 +132,7 @@ pub fn is_right_side_of_qualified_name_or_property_access_of(node: Node, parent:
     false
 }
 
-// Go: ast/utilities.go:3779 ShouldTransformImportCall
+// Go: ast/utilities.go:3828 ShouldTransformImportCall
 pub fn should_transform_import_call(
     file_name: &str,
     options: &CompilerOptions,
@@ -147,17 +147,17 @@ pub fn should_transform_import_call(
     implied_node_format_for_emit < ModuleKind::ES2015
 }
 
-// Go: ast/utilities.go:3787 HasQuestionToken
+// Go: ast/utilities.go:3836 HasQuestionToken
 pub fn has_question_token(node: Node) -> bool {
     is_question_token(node.question_token())
 }
 
-// Go: ast/utilities.go:3791 IsJsxOpeningLikeElement
+// Go: ast/utilities.go:3840 IsJsxOpeningLikeElement
 pub fn is_jsx_opening_like_element(node: Node) -> bool {
     is_jsx_opening_element(node) || is_jsx_self_closing_element(node)
 }
 
-// Go: ast/utilities.go:3795 GetInvokedExpression
+// Go: ast/utilities.go:3844 GetInvokedExpression
 pub fn get_invoked_expression(node: Node) -> Node {
     match node.kind() {
         SyntaxKind::TaggedTemplateExpression => node.tag(),
@@ -168,12 +168,12 @@ pub fn get_invoked_expression(node: Node) -> Node {
     }
 }
 
-// Go: ast/utilities.go:3810 IsCallOrNewExpression
+// Go: ast/utilities.go:3859 IsCallOrNewExpression
 pub fn is_call_or_new_expression(node: Node) -> bool {
     is_call_expression(node) || is_new_expression(node)
 }
 
-// Go: ast/utilities.go:3814 IndexOfNode
+// Go: ast/utilities.go:3863 IndexOfNode
 pub fn index_of_node(nodes: NodeSlice, node: Node) -> i32 {
     // PORT: Go slices.BinarySearchFunc returns the first position whose element
     // compares >= target. This lower-bound search keeps that exact position
@@ -206,7 +206,7 @@ pub fn index_of_node(nodes: NodeSlice, node: Node) -> i32 {
     -1
 }
 
-// Go: ast/utilities.go:3822 CompareNodePositions
+// Go: ast/utilities.go:3871 CompareNodePositions
 pub fn compare_node_positions(n1: Node, n2: Node) -> i32 {
     // PORT: inlined Go core.CompareTextRanges(n1.Loc, n2.Loc).
     let (r1, r2) = (n1.loc(), n2.loc());
@@ -217,7 +217,7 @@ pub fn compare_node_positions(n1: Node, n2: Node) -> i32 {
     r1.end() - r2.end()
 }
 
-// Go: ast/utilities.go:3826 IsUnterminatedLiteral
+// Go: ast/utilities.go:3875 IsUnterminatedLiteral
 pub fn is_unterminated_literal(node: Node) -> bool {
     is_literal_kind(node.kind()) && node.token_flags().intersects(TokenFlags::UNTERMINATED)
         || is_template_literal_kind(node.kind())
@@ -225,18 +225,18 @@ pub fn is_unterminated_literal(node: Node) -> bool {
 }
 
 // Gets a value indicating whether a class element is either a static or an instance property declaration with an initializer.
-// Go: ast/utilities.go:3832 IsInitializedProperty
+// Go: ast/utilities.go:3881 IsInitializedProperty
 pub fn is_initialized_property(member: Node) -> bool {
     member.kind() == SyntaxKind::PropertyDeclaration && member.initializer().is_some()
 }
 
-// Go: ast/utilities.go:3837 IsTrivia
+// Go: ast/utilities.go:3886 IsTrivia
 pub fn is_trivia(token: SyntaxKind) -> bool {
     (SyntaxKind::FIRST_TRIVIA_TOKEN as u16) <= (token as u16)
         && (token as u16) <= (SyntaxKind::LAST_TRIVIA_TOKEN as u16)
 }
 
-// Go: ast/utilities.go:3841 HasDecorators
+// Go: ast/utilities.go:3890 HasDecorators
 pub fn has_decorators(node: Node) -> bool {
     has_syntactic_modifier(node, ModifierFlags::DECORATOR)
 }
@@ -249,7 +249,7 @@ pub struct HasFileNameImpl {
     pub path: String,
 }
 
-// Go: ast/utilities.go:3850 NewHasFileName
+// Go: ast/utilities.go:3899 NewHasFileName
 pub fn new_has_file_name(file_name: &str, path: &str) -> HasFileNameImpl {
     HasFileNameImpl {
         file_name: file_name.to_string(),
@@ -258,19 +258,19 @@ pub fn new_has_file_name(file_name: &str, path: &str) -> HasFileNameImpl {
 }
 
 impl HasFileNameImpl {
-    // Go: ast/utilities.go:3857 (*hasFileNameImpl).FileName
+    // Go: ast/utilities.go:3906 (*hasFileNameImpl).FileName
     pub fn file_name(&self) -> String {
         self.file_name.clone()
     }
 
-    // Go: ast/utilities.go:3861 (*hasFileNameImpl).PathKey (ts#64159 renamed
+    // Go: ast/utilities.go:3910 (*hasFileNameImpl).PathKey (ts#64159 renamed
     // Path to PathKey)
     pub fn path(&self) -> String {
         self.path.clone()
     }
 }
 
-// Go: ast/utilities.go:3865 GetSemanticJsxChildren
+// Go: ast/utilities.go:3914 GetSemanticJsxChildren
 pub fn get_semantic_jsx_children(children: &[Node]) -> Vec<Node> {
     children
         .iter()
@@ -284,7 +284,7 @@ pub fn get_semantic_jsx_children(children: &[Node]) -> Vec<Node> {
 }
 
 // Returns true if the node kind has a comment property.
-// Go: ast/utilities.go:3879 hasComment
+// Go: ast/utilities.go:3928 hasComment
 pub fn has_comment(kind: SyntaxKind) -> bool {
     matches!(
         kind,
@@ -314,13 +314,13 @@ pub fn has_comment(kind: SyntaxKind) -> bool {
     )
 }
 
-// Go: ast/utilities.go:3893 IsAssignmentPattern
+// Go: ast/utilities.go:3942 IsAssignmentPattern
 pub fn is_assignment_pattern(node: Node) -> bool {
     node.kind() == SyntaxKind::ArrayLiteralExpression
         || node.kind() == SyntaxKind::ObjectLiteralExpression
 }
 
-// Go: ast/utilities.go:3897 GetElementsOfBindingOrAssignmentPattern
+// Go: ast/utilities.go:3946 GetElementsOfBindingOrAssignmentPattern
 pub fn get_elements_of_binding_or_assignment_pattern(name: Node) -> Vec<Node> {
     match name.kind() {
         SyntaxKind::ObjectBindingPattern
@@ -338,7 +338,7 @@ pub fn get_elements_of_binding_or_assignment_pattern(name: Node) -> Vec<Node> {
     }
 }
 
-// Go: ast/utilities.go:3910 IsDeclarationBindingElement
+// Go: ast/utilities.go:3959 IsDeclarationBindingElement
 pub fn is_declaration_binding_element(binding_element: Node) -> bool {
     matches!(
         binding_element.kind(),
@@ -347,7 +347,7 @@ pub fn is_declaration_binding_element(binding_element: Node) -> bool {
 }
 
 /// Gets the name of an BindingOrAssignmentElement.
-// Go: ast/utilities.go:3922 GetTargetOfBindingOrAssignmentElement
+// Go: ast/utilities.go:3971 GetTargetOfBindingOrAssignmentElement
 pub fn get_target_of_binding_or_assignment_element(binding_element: Node) -> Node {
     if is_declaration_binding_element(binding_element) {
         // `a` in `let { a } = ...`
@@ -422,7 +422,7 @@ pub fn get_target_of_binding_or_assignment_element(binding_element: Node) -> Nod
     binding_element
 }
 
-// Go: ast/utilities.go:3992 TryGetPropertyNameOfBindingOrAssignmentElement
+// Go: ast/utilities.go:4041 TryGetPropertyNameOfBindingOrAssignmentElement
 pub fn try_get_property_name_of_binding_or_assignment_element(binding_element: Node) -> Node {
     match binding_element.kind() {
         SyntaxKind::BindingElement => {
@@ -473,7 +473,7 @@ pub fn try_get_property_name_of_binding_or_assignment_element(binding_element: N
 /// propagation of `TransformFlags.ContainsObjectRestOrSpread` since it isn't propagated by default in
 /// ObjectLiteralExpression and ArrayLiteralExpression since we do not know whether they belong to an
 /// AssignmentPattern at the time the nodes are parsed.
-// Go: ast/utilities.go:4045 ContainsObjectRestOrSpread
+// Go: ast/utilities.go:4094 ContainsObjectRestOrSpread
 pub fn contains_object_rest_or_spread(node: Node) -> bool {
     if node
         .subtree_facts()
@@ -510,17 +510,17 @@ pub fn contains_object_rest_or_spread(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:4069 IsEmptyObjectLiteral
+// Go: ast/utilities.go:4118 IsEmptyObjectLiteral
 pub fn is_empty_object_literal(expression: Node) -> bool {
     is_object_literal_expression(expression) && expression.properties().len() == 0
 }
 
-// Go: ast/utilities.go:4073 IsEmptyArrayLiteral
+// Go: ast/utilities.go:4122 IsEmptyArrayLiteral
 pub fn is_empty_array_literal(expression: Node) -> bool {
     is_array_literal_expression(expression) && expression.elements().len() == 0
 }
 
-// Go: ast/utilities.go:4077 GetRestIndicatorOfBindingOrAssignmentElement
+// Go: ast/utilities.go:4126 GetRestIndicatorOfBindingOrAssignmentElement
 pub fn get_rest_indicator_of_binding_or_assignment_element(binding_element: Node) -> Node {
     match binding_element.kind() {
         SyntaxKind::Parameter => binding_element.dot_dot_dot_token(),
@@ -530,7 +530,7 @@ pub fn get_rest_indicator_of_binding_or_assignment_element(binding_element: Node
     }
 }
 
-// Go: ast/utilities.go:4089 IsJSDocNameReferenceContext
+// Go: ast/utilities.go:4138 IsJSDocNameReferenceContext
 pub fn is_js_doc_name_reference_context(node: Node) -> bool {
     node.flags().intersects(NodeFlags::JS_DOC)
         && find_ancestor(node, &|node: Node| {
@@ -540,13 +540,13 @@ pub fn is_js_doc_name_reference_context(node: Node) -> bool {
 }
 
 // GetJSDocRoot returns the containing JSDoc node for a node inside a JSDoc comment.
-// Go: ast/utilities.go:4096 GetJSDocRoot
+// Go: ast/utilities.go:4145 GetJSDocRoot
 pub fn get_js_doc_root(node: Node) -> Node {
     find_ancestor(node.parent(), &|n: Node| n.kind() == SyntaxKind::JsDoc)
 }
 
 // GetJSDocHost returns the declaration that the JSDoc comment containing the given node is attached to.
-// Go: ast/utilities.go:4103 GetJSDocHost
+// Go: ast/utilities.go:4152 GetJSDocHost
 pub fn get_js_doc_host(node: Node) -> Node {
     let js_doc = get_js_doc_root(node);
     if js_doc.is_nil() {
@@ -557,7 +557,7 @@ pub fn get_js_doc_host(node: Node) -> Node {
 
 // GetHostSignatureFromJSDoc returns the function-like declaration that hosts the JSDoc comment
 // containing the given node. This is used to resolve @link references to parameters.
-// Go: ast/utilities.go:4113 GetHostSignatureFromJSDoc
+// Go: ast/utilities.go:4162 GetHostSignatureFromJSDoc
 pub fn get_host_signature_from_js_doc(node: Node) -> Node {
     let host = get_js_doc_host(node);
     if host.is_nil() {
@@ -579,7 +579,7 @@ pub fn get_host_signature_from_js_doc(node: Node) -> Node {
 // Finds the declaration that owns the JSDoc for a function-like node.
 // Keep these hosts aligned with JSDoc parameter reparsing so unmatched @param diagnostics use the same attachment rules.
 // Keep in sync with getNextJSDocCommentLocation in the API's src/ast/jsdoc.ts
-// Go: ast/utilities.go:4131 GetNextJSDocCommentLocation
+// Go: ast/utilities.go:4180 GetNextJSDocCommentLocation
 pub fn get_next_js_doc_comment_location(node: Node) -> Node {
     let parent = node.parent();
     if parent.is_some() {
@@ -603,12 +603,12 @@ pub fn get_next_js_doc_comment_location(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:4146 IsImportOrImportEqualsDeclaration
+// Go: ast/utilities.go:4195 IsImportOrImportEqualsDeclaration
 pub fn is_import_or_import_equals_declaration(node: Node) -> bool {
     is_import_declaration(node) || is_import_equals_declaration(node)
 }
 
-// Go: ast/utilities.go:4150 IsPrimitiveLiteralValue
+// Go: ast/utilities.go:4199 IsPrimitiveLiteralValue
 pub fn is_primitive_literal_value(node: Node, include_big_int: bool) -> bool {
     match node.kind() {
         SyntaxKind::TrueKeyword
@@ -631,7 +631,7 @@ pub fn is_primitive_literal_value(node: Node, include_big_int: bool) -> bool {
     }
 }
 
-// Go: ast/utilities.go:4173 HasInferredType
+// Go: ast/utilities.go:4222 HasInferredType
 pub fn has_inferred_type(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -652,23 +652,23 @@ pub fn has_inferred_type(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:4197 IsKeyword
+// Go: ast/utilities.go:4246 IsKeyword
 pub fn is_keyword(token: SyntaxKind) -> bool {
     (SyntaxKind::FIRST_KEYWORD as u16) <= (token as u16)
         && (token as u16) <= (SyntaxKind::LAST_KEYWORD as u16)
 }
 
-// Go: ast/utilities.go:4201 IsNonContextualKeyword
+// Go: ast/utilities.go:4250 IsNonContextualKeyword
 pub fn is_non_contextual_keyword(token: SyntaxKind) -> bool {
     is_keyword(token) && !is_contextual_keyword(token)
 }
 
-// Go: ast/utilities.go:4205 HasModifier
+// Go: ast/utilities.go:4254 HasModifier
 pub fn has_modifier(node: Node, flags: ModifierFlags) -> bool {
     node.modifier_flags().intersects(flags)
 }
 
-// Go: ast/utilities.go:4209 IsExpandoInitializer
+// Go: ast/utilities.go:4258 IsExpandoInitializer
 pub fn is_expando_initializer(declaration: Node, initializer: Node) -> bool {
     if initializer.is_nil() {
         return false;
@@ -685,12 +685,12 @@ pub fn is_expando_initializer(declaration: Node, initializer: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:4222 GetContainingFunction
+// Go: ast/utilities.go:4271 GetContainingFunction
 pub fn get_containing_function(node: Node) -> Node {
     find_ancestor(node.parent(), &is_function_like)
 }
 
-// Go: ast/utilities.go:4226 ImportFromModuleSpecifier
+// Go: ast/utilities.go:4275 ImportFromModuleSpecifier
 pub fn import_from_module_specifier(node: Node) -> Node {
     let result = try_get_import_from_module_specifier(node);
     if result.is_some() {
@@ -699,7 +699,7 @@ pub fn import_from_module_specifier(node: Node) -> Node {
     crate::gostd::debug::fail_bad_syntax_kind(node.parent().kind(), None)
 }
 
-// Go: ast/utilities.go:4234 TryGetImportFromModuleSpecifier
+// Go: ast/utilities.go:4283 TryGetImportFromModuleSpecifier
 pub fn try_get_import_from_module_specifier(node: Node) -> Node {
     match node.parent().kind() {
         SyntaxKind::ImportDeclaration
@@ -730,7 +730,7 @@ pub fn try_get_import_from_module_specifier(node: Node) -> Node {
     }
 }
 
-// Go: ast/utilities.go:4257 IsImplicitlyExportedJSDocDeclaration
+// Go: ast/utilities.go:4306 IsImplicitlyExportedJSDocDeclaration
 pub fn is_implicitly_exported_js_doc_declaration(node: Node) -> bool {
     if !is_source_file(node.parent()) || !is_external_or_common_js_module(node.parent()) {
         return false;
@@ -743,7 +743,7 @@ pub fn is_implicitly_exported_js_doc_declaration(node: Node) -> bool {
     is_module_declaration(node) && node.flags().intersects(NodeFlags::REPARSED)
 }
 
-// Go: ast/utilities.go:4269 HasContextSensitiveParameters
+// Go: ast/utilities.go:4318 HasContextSensitiveParameters
 pub fn has_context_sensitive_parameters(node: Node) -> bool {
     // Functions with type parameters are not context sensitive.
     // PORT: Go `node.TypeParameters() == nil`. The Go parser stores a nil Nodes
@@ -772,12 +772,12 @@ pub fn has_context_sensitive_parameters(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:4288 IsInfinityOrNaNString
+// Go: ast/utilities.go:4337 IsInfinityOrNaNString
 pub fn is_infinity_or_na_n_string(name: &str) -> bool {
     name == "Infinity" || name == "-Infinity" || name == "NaN"
 }
 
-// Go: ast/utilities.go:4292 GetFirstConstructorWithBody
+// Go: ast/utilities.go:4341 GetFirstConstructorWithBody
 pub fn get_first_constructor_with_body(node: Node) -> Node {
     for member in node.members().iter() {
         if is_constructor_declaration(member) && node_is_present(member.body()) {
@@ -788,7 +788,7 @@ pub fn get_first_constructor_with_body(node: Node) -> Node {
 }
 
 // Returns true for nodes that are considered executable for the purposes of unreachable code detection.
-// Go: ast/utilities.go:4302 IsPotentiallyExecutableNode
+// Go: ast/utilities.go:4351 IsPotentiallyExecutableNode
 pub fn is_potentially_executable_node(node: Node) -> bool {
     if (SyntaxKind::FIRST_STATEMENT as u16) <= (node.kind() as u16)
         && (node.kind() as u16) <= (SyntaxKind::LAST_STATEMENT as u16)
@@ -806,17 +806,17 @@ pub fn is_potentially_executable_node(node: Node) -> bool {
     is_class_declaration(node) || is_enum_declaration(node) || is_module_declaration(node)
 }
 
-// Go: ast/utilities.go:4319 HasAbstractModifier
+// Go: ast/utilities.go:4368 HasAbstractModifier
 pub fn has_abstract_modifier(node: Node) -> bool {
     has_syntactic_modifier(node, ModifierFlags::ABSTRACT)
 }
 
-// Go: ast/utilities.go:4323 HasAmbientModifier
+// Go: ast/utilities.go:4372 HasAmbientModifier
 pub fn has_ambient_modifier(node: Node) -> bool {
     has_syntactic_modifier(node, ModifierFlags::AMBIENT)
 }
 
-// Go: ast/utilities.go:4327 NodeCanBeDecorated
+// Go: ast/utilities.go:4376 NodeCanBeDecorated
 pub fn node_can_be_decorated(
     use_legacy_decorators: bool,
     node: Node,
@@ -873,7 +873,7 @@ pub fn node_can_be_decorated(
     false
 }
 
-// Go: ast/utilities.go:4361 ClassOrConstructorParameterIsDecorated
+// Go: ast/utilities.go:4410 ClassOrConstructorParameterIsDecorated
 pub fn class_or_constructor_parameter_is_decorated(
     use_legacy_decorators: bool,
     node: Node,
@@ -885,7 +885,7 @@ pub fn class_or_constructor_parameter_is_decorated(
     constructor.is_some() && child_is_decorated(use_legacy_decorators, constructor, node)
 }
 
-// Go: ast/utilities.go:4369 ClassElementOrClassElementParameterIsDecorated
+// Go: ast/utilities.go:4418 ClassElementOrClassElementParameterIsDecorated
 pub fn class_element_or_class_element_parameter_is_decorated(
     use_legacy_decorators: bool,
     node: Node,
@@ -925,7 +925,7 @@ pub fn class_element_or_class_element_parameter_is_decorated(
     false
 }
 
-// Go: ast/utilities.go:4404 NodeIsDecorated
+// Go: ast/utilities.go:4453 NodeIsDecorated
 pub fn node_is_decorated(
     use_legacy_decorators: bool,
     node: Node,
@@ -935,7 +935,7 @@ pub fn node_is_decorated(
     has_decorators(node) && node_can_be_decorated(use_legacy_decorators, node, parent, grandparent)
 }
 
-// Go: ast/utilities.go:4408 NodeOrChildIsDecorated
+// Go: ast/utilities.go:4457 NodeOrChildIsDecorated
 pub fn node_or_child_is_decorated(
     use_legacy_decorators: bool,
     node: Node,
@@ -946,7 +946,7 @@ pub fn node_or_child_is_decorated(
         || child_is_decorated(use_legacy_decorators, node, parent)
 }
 
-// Go: ast/utilities.go:4412 ChildIsDecorated
+// Go: ast/utilities.go:4461 ChildIsDecorated
 pub fn child_is_decorated(use_legacy_decorators: bool, node: Node, parent: Node) -> bool {
     match node.kind() {
         SyntaxKind::ClassDeclaration | SyntaxKind::ClassExpression => node
@@ -971,7 +971,7 @@ pub struct AllAccessorDeclarations {
     pub get_accessor: Node,
 }
 
-// Go: ast/utilities.go:4436 GetAllAccessorDeclarationsForDeclaration
+// Go: ast/utilities.go:4485 GetAllAccessorDeclarationsForDeclaration
 pub fn get_all_accessor_declarations_for_declaration(
     accessor: Node,
     declarations_of_symbol: &[Node],
@@ -1024,7 +1024,7 @@ pub fn get_all_accessor_declarations_for_declaration(
     }
 }
 
-// Go: ast/utilities.go:4486 GetAllAccessorDeclarations
+// Go: ast/utilities.go:4535 GetAllAccessorDeclarations
 pub fn get_all_accessor_declarations(
     parent_declarations: &[Node],
     accessor: Node,
@@ -1049,7 +1049,7 @@ pub fn get_all_accessor_declarations(
     get_all_accessor_declarations_for_declaration(accessor, &matches)
 }
 
-// Go: ast/utilities.go:4507 IsAsyncFunction
+// Go: ast/utilities.go:4556 IsAsyncFunction
 pub fn is_async_function(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::FunctionDeclaration
@@ -1069,7 +1069,7 @@ pub fn is_async_function(node: Node) -> bool {
 /// as it assumes a rest argument can only be an array type (either T[], or Array<T>).
 ///
 /// @param node The type node.
-// Go: ast/utilities.go:4524 GetRestParameterElementType
+// Go: ast/utilities.go:4573 GetRestParameterElementType
 pub fn get_rest_parameter_element_type(node: Node) -> Node {
     if node.is_nil() {
         return node;
@@ -1089,7 +1089,7 @@ pub fn get_rest_parameter_element_type(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:4537 TagNamesAreEquivalent
+// Go: ast/utilities.go:4586 TagNamesAreEquivalent
 pub fn tag_names_are_equivalent(lhs: Node, rhs: Node) -> bool {
     if lhs.kind() != rhs.kind() {
         return false;
@@ -1110,7 +1110,7 @@ pub fn tag_names_are_equivalent(lhs: Node, rhs: Node) -> bool {
     panic!("Unhandled case in TagNamesAreEquivalent");
 }
 
-// Go: ast/utilities.go:4556 IsTagName
+// Go: ast/utilities.go:4605 IsTagName
 pub fn is_tag_name(node: Node) -> bool {
     node.parent().is_some() && is_js_doc_tag(node.parent()) && node.parent().tag_name() == node
 }
@@ -1119,7 +1119,7 @@ pub fn is_tag_name(node: Node) -> bool {
 // related to a declaration.  So, if we have 'import x = require("something")'
 // then we want 'something' to be in the name table.  Similarly, if we have
 // "a['propname']" then we want to store "propname" in the name table.
-// Go: ast/utilities.go:4564 literalIsName
+// Go: ast/utilities.go:4613 literalIsName
 pub fn literal_is_name(node: Node) -> bool {
     is_declaration_name(node)
         || node.parent().kind() == SyntaxKind::ExternalModuleReference
@@ -1127,7 +1127,7 @@ pub fn literal_is_name(node: Node) -> bool {
         || is_literal_computed_property_declaration_name(node)
 }
 
-// Go: ast/utilities.go:4571 isArgumentOfElementAccessExpression
+// Go: ast/utilities.go:4620 isArgumentOfElementAccessExpression
 pub fn is_argument_of_element_access_expression(node: Node) -> bool {
     node.is_some()
         && node.parent().is_some()
@@ -1137,7 +1137,7 @@ pub fn is_argument_of_element_access_expression(node: Node) -> bool {
 
 // If the given node is part of a subtree of JSDoc nodes that have been cloned into a reparsed construct,
 // return the corresponding reparsed clone in the subtree. Otherwise, just return the node.
-// Go: ast/utilities.go:4579 GetReparsedNodeForNode
+// Go: ast/utilities.go:4628 GetReparsedNodeForNode
 pub fn get_reparsed_node_for_node(node: Node) -> Node {
     if node.is_some()
         && node.flags().intersects(NodeFlags::JS_DOC)
@@ -1174,7 +1174,7 @@ fn text_range_contained_by(t: TextRange, t2: TextRange) -> bool {
     t2.pos() <= t.pos() && t2.end() >= t.end()
 }
 
-// Go: ast/utilities.go:4597 findCloneInNode
+// Go: ast/utilities.go:4646 findCloneInNode
 fn find_clone_in_node(mut node: Node, original: Node) -> Node {
     loop {
         if node.kind() == original.kind()
@@ -1199,20 +1199,20 @@ fn find_clone_in_node(mut node: Node, original: Node) -> Node {
     }
 }
 
-// Go: ast/utilities.go:4615 IsExpandoPropertyDeclaration
+// Go: ast/utilities.go:4664 IsExpandoPropertyDeclaration
 pub fn is_expando_property_declaration(node: Node) -> bool {
     node.is_some() && is_binary_expression(node)
 }
 
 // IsSuperProperty checks if a node is super.x or super[x].
-// Go: ast/utilities.go:4620 IsSuperProperty
+// Go: ast/utilities.go:4669 IsSuperProperty
 pub fn is_super_property(node: Node) -> bool {
     (is_property_access_expression(node) || is_element_access_expression(node))
         && node.expression().kind() == SyntaxKind::SuperKeyword
 }
 
 // Indicates whether a node is a potential source of an assigned name for a class, function, or arrow function.
-// Go: ast/utilities.go:4626 IsNamedEvaluationSource
+// Go: ast/utilities.go:4675 IsNamedEvaluationSource
 pub fn is_named_evaluation_source(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::PropertyAssignment => return !is_proto_setter(node.name()),
@@ -1250,12 +1250,12 @@ pub fn is_named_evaluation_source(node: Node) -> bool {
 // Per the ECMA-262 spec, this only matters for property assignments whose name is
 // the Identifier `__proto__`, or the string literal `"__proto__"`, but not for
 // computed property names.
-// Go: ast/utilities.go:4655 IsProtoSetter
+// Go: ast/utilities.go:4704 IsProtoSetter
 pub fn is_proto_setter(node: Node) -> bool {
     (is_identifier(node) || is_string_literal(node)) && node.text() == "__proto__"
 }
 
-// Go: ast/utilities.go:4659 IsStringLiteralLikeType (ts#63931)
+// Go: ast/utilities.go:4708 IsStringLiteralLikeType (ts#63931)
 pub fn is_string_literal_like_type(node: Node) -> bool {
     node.kind() == SyntaxKind::LiteralType && is_string_literal_like(node.literal())
 }

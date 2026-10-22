@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 impl Checker {
-    // Go: checker/jsdoc.go:9 checkUnmatchedJSDocParameters
+    // Go: checker/jsdoc.go:10 checkUnmatchedJSDocParameters
     pub fn check_unmatched_js_doc_parameters(&mut self, node: Node) {
         // PERF: most JSDoc has no parameter tag. Skip the lazy JSDoc parse
         // when the source text shows that no tag can be one. With no
@@ -144,7 +144,7 @@ fn may_have_js_doc_parameter_tag(node: Node) -> bool {
     false
 }
 
-// Go: checker/jsdoc.go:86 getAllJSDocTags
+// Go: checker/jsdoc.go:87 getAllJSDocTags
 pub fn get_all_js_doc_tags(node: Node) -> Vec<Node> {
     if !node.flags().intersects(NodeFlags::JS_DOC) {
         let mut current = node;

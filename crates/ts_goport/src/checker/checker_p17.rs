@@ -31,7 +31,7 @@ fn is_resolved_p17(resolved_module: Option<&ResolvedModule>) -> bool {
 }
 
 impl Checker {
-    // Go: checker/checker.go:15203 reportNonExportedMember
+    // Go: checker/checker.go:15208 reportNonExportedMember
     pub fn report_non_exported_member(
         &mut self,
         name: Node,
@@ -114,7 +114,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:15235 reportInvalidImportEqualsExportMember
+    // Go: checker/checker.go:15240 reportInvalidImportEqualsExportMember
     pub fn report_invalid_import_equals_export_member(
         &mut self,
         name: Node,
@@ -142,7 +142,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:15245 getTargetOfExportSpecifier
+    // Go: checker/checker.go:15250 getTargetOfExportSpecifier
     pub fn get_target_of_export_specifier(
         &mut self,
         node: Node,
@@ -188,7 +188,7 @@ impl Checker {
         resolved
     }
 
-    // Go: checker/checker.go:15270 getTargetOfExportAssignment
+    // Go: checker/checker.go:15275 getTargetOfExportAssignment
     pub fn get_target_of_export_assignment(&mut self, node: Node) -> SymbolId {
         // An `export =` / `export default` inside a namespace/module block is a grammar error;
         // checkExportAssignment reports it and returns without resolving the expression. Mirror that
@@ -203,14 +203,14 @@ impl Checker {
         resolved
     }
 
-    // Go: checker/checker.go:15284 getTargetOfBinaryExpression
+    // Go: checker/checker.go:15289 getTargetOfBinaryExpression
     pub fn get_target_of_binary_expression(&mut self, node: Node) -> SymbolId {
         let resolved = self.get_target_of_alias_like_expression(node.right());
         self.mark_symbol_of_alias_declaration_if_type_only(node, Node::NIL);
         resolved
     }
 
-    // Go: checker/checker.go:15290 getTargetOfAliasLikeExpression
+    // Go: checker/checker.go:15295 getTargetOfAliasLikeExpression
     pub fn get_target_of_alias_like_expression(&mut self, expression: Node) -> SymbolId {
         if is_class_expression(expression) {
             let t = self.check_expression_cached(expression);
@@ -233,7 +233,7 @@ impl Checker {
         self.get_resolved_symbol_or_nil(expression)
     }
 
-    // Go: checker/checker.go:15305 getTargetOfNamespaceExportDeclaration
+    // Go: checker/checker.go:15310 getTargetOfNamespaceExportDeclaration
     pub fn get_target_of_namespace_export_declaration(&mut self, node: Node) -> SymbolId {
         if can_have_symbol(node.parent()) {
             let resolved = self.resolve_external_module_symbol(
@@ -246,7 +246,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:15314 getTargetOfAccessExpression
+    // Go: checker/checker.go:15319 getTargetOfAccessExpression
     pub fn get_target_of_access_expression(&mut self, node: Node) -> SymbolId {
         if is_binary_expression(node.parent()) {
             let expr = node.parent();
@@ -257,7 +257,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:15324 getModuleSpecifierForImportOrExport
+    // Go: checker/checker.go:15329 getModuleSpecifierForImportOrExport
     pub fn get_module_specifier_for_import_or_export(&mut self, node: Node) -> Node {
         match node.kind() {
             SyntaxKind::ImportClause => return get_module_specifier_from_node(node.parent()),
@@ -284,7 +284,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:15346 getModuleSpecifierFromNode
+// Go: checker/checker.go:15351 getModuleSpecifierFromNode
 pub fn get_module_specifier_from_node(node: Node) -> Node {
     match node.kind() {
         SyntaxKind::ImportDeclaration | SyntaxKind::JsImportDeclaration => {
@@ -300,7 +300,7 @@ pub fn get_module_specifier_from_node(node: Node) -> Node {
 }
 
 impl Checker {
-    // Go: checker/checker.go:15377 markSymbolOfAliasDeclarationIfTypeOnly
+    // Go: checker/checker.go:15382 markSymbolOfAliasDeclarationIfTypeOnly
     //
     // Marks a symbol as type-only if its declaration is syntactically type-only.
     // If it is not itself marked type-only, but resolves to a type-only alias
@@ -335,7 +335,7 @@ impl Checker {
         links.type_only_declaration.is_some()
     }
 
-    // Go: checker/checker.go:15395 resolveExternalModuleName
+    // Go: checker/checker.go:15400 resolveExternalModuleName
     pub fn resolve_external_module_name(
         &mut self,
         location: Node,
@@ -359,7 +359,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:15404 getCannotResolveModuleNameErrorForSpecificModule
+    // Go: checker/checker.go:15409 getCannotResolveModuleNameErrorForSpecificModule
     pub fn get_cannot_resolve_module_name_error_for_specific_module(
         &mut self,
         module_name: Node,
@@ -377,7 +377,7 @@ impl Checker {
         None
     }
 
-    // Go: checker/checker.go:15416 resolveExternalModuleNameWorker
+    // Go: checker/checker.go:15421 resolveExternalModuleNameWorker
     pub fn resolve_external_module_name_worker(
         &mut self,
         location: Node,
@@ -409,7 +409,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:15426 getExternalModuleFileFromDeclaration
+    // Go: checker/checker.go:15431 getExternalModuleFileFromDeclaration
     pub fn get_external_module_file_from_declaration(&mut self, declaration: Node) -> Node {
         let mut specifier = Node::NIL;
         if declaration.kind() == SyntaxKind::ModuleDeclaration {
@@ -998,7 +998,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:15759 tryResolvePatternAmbientModule
+    // Go: checker/checker.go:15781 tryResolvePatternAmbientModule
     // Resolves the module reference to a pattern ambient module, if one exists.
     // If a resolved symbol from regular module resolution exists and we have an empty import attributes type,
     // we prefer the resolved symbol.
@@ -1087,13 +1087,13 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:15811 resolutionExtensionIsTSOrJson
+// Go: checker/checker.go:15833 resolutionExtensionIsTSOrJson
 pub fn resolution_extension_is_ts_or_json(ext: &str) -> bool {
     tspath_p17::extension_is_ts(ext) || ext == tspath_p17::EXTENSION_JSON
 }
 
 impl Checker {
-    // Go: checker/checker.go:15815 getSuggestedImportSource
+    // Go: checker/checker.go:15837 getSuggestedImportSource
     pub fn get_suggested_import_source(
         &mut self,
         module_reference: &str,
@@ -1128,7 +1128,7 @@ impl Checker {
         import_source_without_extension.to_string()
     }
 
-    // Go: checker/checker.go:15838 getSuggestedImportExtension
+    // Go: checker/checker.go:15860 getSuggestedImportExtension
     pub fn get_suggested_import_extension(
         &mut self,
         extensionless_import_path: &str,
@@ -1168,7 +1168,7 @@ impl Checker {
         ""
     }
 
-    // Go: checker/checker.go:15862 errorOnImplicitAnyModule
+    // Go: checker/checker.go:15884 errorOnImplicitAnyModule
     // PORT: Go takes `*module.ResolvedModule` and dereferences it without a nil
     // check. Every caller passes a resolved module, so this takes a reference.
     pub fn error_on_implicit_any_module(
@@ -1206,7 +1206,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:15883 createModuleNotFoundChain
+    // Go: checker/checker.go:15905 createModuleNotFoundChain
     pub fn create_module_not_found_chain(
         &mut self,
         _resolved_module: &ResolvedModule,
@@ -1243,7 +1243,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:15901 createModeMismatchDetails
+    // Go: checker/checker.go:15923 createModeMismatchDetails
     pub fn create_mode_mismatch_details(
         &mut self,
         source_file: Node,
@@ -1258,7 +1258,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:15910 tryFindAmbientModule
+    // Go: checker/checker.go:15932 tryFindAmbientModule
     pub fn try_find_ambient_module(
         &mut self,
         module_name: &str,
@@ -1281,7 +1281,7 @@ impl Checker {
         symbol
     }
 
-    // Go: checker/checker.go:15922 GetAmbientModules
+    // Go: checker/checker.go:15944 GetAmbientModules
     // PORT: Go `sync.Once` becomes the `ambient_modules_once` flag.
     pub fn get_ambient_modules(&mut self) -> Vec<SymbolId> {
         if !self.ambient_modules_once {
@@ -1303,7 +1303,7 @@ impl Checker {
         self.ambient_modules.clone()
     }
 
-    // Go: checker/checker.go:15942 resolveExternalModuleSymbol
+    // Go: checker/checker.go:15964 resolveExternalModuleSymbol
     pub fn resolve_external_module_symbol(
         &mut self,
         module_symbol: SymbolId,
@@ -1321,7 +1321,7 @@ impl Checker {
         module_symbol
     }
 
-    // Go: checker/checker.go:15954 resolveESModuleSymbol
+    // Go: checker/checker.go:15976 resolveESModuleSymbol
     //
     // Resolves the given external module symbol, possibly removing call and construct signatures or creating a
     // wrapper module with a synthetic default.
@@ -1445,7 +1445,7 @@ impl Checker {
         symbol
     }
 
-    // Go: checker/checker.go:16010 hasSignatures
+    // Go: checker/checker.go:16032 hasSignatures
     pub fn has_signatures(&mut self, t: TypeId) -> bool {
         !self
             .get_signatures_of_structured_type(t, SignatureKind::CALL)
@@ -1456,7 +1456,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:16014 isESMFormatImportImportingCommonjsFormatFile
+// Go: checker/checker.go:16036 isESMFormatImportImportingCommonjsFormatFile
 pub fn is_esm_format_import_importing_commonjs_format_file(
     usage_mode: ResolutionMode,
     target_mode: ResolutionMode,
@@ -1465,7 +1465,7 @@ pub fn is_esm_format_import_importing_commonjs_format_file(
 }
 
 impl Checker {
-    // Go: checker/checker.go:16018 getTypeWithSyntheticDefaultOnly
+    // Go: checker/checker.go:16040 getTypeWithSyntheticDefaultOnly
     pub fn get_type_with_synthetic_default_only(
         &mut self,
         t: TypeId,
@@ -1500,7 +1500,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:16032 getTypeWithSyntheticDefaultImportType
+    // Go: checker/checker.go:16054 getTypeWithSyntheticDefaultImportType
     pub fn get_type_with_synthetic_default_import_type(
         &mut self,
         t: TypeId,
@@ -1565,7 +1565,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:16060 isCommonJSRequire
+    // Go: checker/checker.go:16082 isCommonJSRequire
     pub fn is_common_js_require(&mut self, node: Node) -> bool {
         if !is_require_call(node, true /*requireStringLiteralLikeArgument*/) {
             return false;
@@ -1612,7 +1612,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:16093 createDefaultPropertyWrapperForModule
+    // Go: checker/checker.go:16115 createDefaultPropertyWrapperForModule
     pub fn create_default_property_wrapper_for_module(
         &mut self,
         symbol: SymbolId,
@@ -1640,7 +1640,7 @@ impl Checker {
         self.new_anonymous_type(anonymous_symbol, member_table, &[], &[], &[])
     }
 
-    // Go: checker/checker.go:16107 cloneTypeAsModuleType
+    // Go: checker/checker.go:16129 cloneTypeAsModuleType
     pub fn clone_type_as_module_type(
         &mut self,
         symbol: SymbolId,
@@ -1682,7 +1682,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:16122 getTargetOfAliasDeclaration
+    // Go: checker/checker.go:16144 getTargetOfAliasDeclaration
     pub fn get_target_of_alias_declaration(&mut self, node: Node) -> SymbolId {
         if node.is_nil() {
             return SymbolId::NIL;
@@ -1732,7 +1732,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:16158 resolveEntityName
+    // Go: checker/checker.go:16180 resolveEntityName
     //
     // Resolves a qualified name and any involved aliases.
     pub fn resolve_entity_name(
@@ -2188,7 +2188,7 @@ mod module_p17 {
     use crate::diagnostics::Message;
     use crate::prelude::*;
 
-    // Go: module/util.go:125 GetResolutionDiagnostic
+    // Go: module/util.go:132 GetResolutionDiagnostic
     pub fn get_resolution_diagnostic(
         options: &CompilerOptions,
         resolved_module: &ResolvedModule,
