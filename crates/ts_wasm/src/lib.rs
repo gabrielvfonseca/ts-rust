@@ -211,8 +211,8 @@ mod exports {
     }
 }
 
-// Native only: the test runs over `host::test_host`. A wasm build has no
-// test host, because its file system is the JavaScript host's.
+// Native only: a process runs one request, and the wasm test binary makes
+// its one request in `wasm_tests`.
 #[cfg(all(test, not(target_family = "wasm")))]
 mod tests {
     use super::*;
@@ -243,5 +243,71 @@ mod tests {
             host::test_host::file("/p/out/a.js").as_deref(),
             Some("export const n = 'one';\n")
         );
+    }
+}
+
+// wasm only: `release_checker` is not in a native build, where each checker
+// lives on its own thread. An embedder that runs the checkers one after
+// another on wasm (tsgolint-rust, PR #82) drops each one when it is done.
+// CI runs these tests in Node (`scripts/wasm/test-runner.mjs`).
+#[cfg(all(test, target_family = "wasm"))]
+mod wasm_tests {
+    use super::*;
+    use std::alloc::{GlobalAlloc, Layout, System};
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    /// The bytes that the test binary holds: allocated and not yet freed.
+    static LIVE: AtomicUsize = AtomicUsize::new(0);
+
+    /// `System`, counting in `LIVE`.
+    struct Counting;
+
+    // SAFETY: each call goes to `System` with the caller's arguments.
+    #[allow(unsafe_code)]
+    unsafe impl GlobalAlloc for Counting {
+        unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+            // SAFETY: the caller keeps the `GlobalAlloc::alloc` contract.
+            let ptr = unsafe { System.alloc(layout) };
+            if !ptr.is_null() {
+                LIVE.fetch_add(layout.size(), Ordering::Relaxed);
+            }
+            ptr
+        }
+
+        unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+            LIVE.fetch_sub(layout.size(), Ordering::Relaxed);
+            // SAFETY: the caller keeps the `GlobalAlloc::dealloc` contract.
+            unsafe { System.dealloc(ptr, layout) }
+        }
+    }
+
+    #[global_allocator]
+    static ALLOCATOR: Counting = Counting;
+
+    /// A release frees the checker's tables at once. A second release, and
+    /// a release of a checker that the pool does not have, change nothing.
+    #[test]
+    fn release_checker_frees_the_checker() {
+        host::test_host::set_files([
+            (
+                "/p/tsconfig.json".to_string(),
+                r#"{"compilerOptions":{"noEmit":true,"types":[]},"files":["a.ts"]}"#.to_string(),
+            ),
+            (
+                "/p/a.ts".to_string(),
+                "export const n: number = 1;\n".to_string(),
+            ),
+        ]);
+        // No flags: diagnostics as text, on a case-sensitive host.
+        assert_eq!(run("/p\0\0-p\0."), (0, String::new()));
+        let held = LIVE.load(Ordering::Relaxed);
+        ts_goport::program::release_checker(0);
+        let released = LIVE.load(Ordering::Relaxed);
+        let freed = held - released;
+        // About 1.2 MB of 49 MB here; 0 when the checker is not dropped.
+        assert!(freed > 256 << 10, "the release freed {freed} bytes");
+        ts_goport::program::release_checker(0);
+        ts_goport::program::release_checker(usize::MAX);
+        assert_eq!(LIVE.load(Ordering::Relaxed), released);
     }
 }

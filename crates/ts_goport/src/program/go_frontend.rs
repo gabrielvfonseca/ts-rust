@@ -535,12 +535,15 @@ impl SymlinkSeed {
     /// files that the OS file system does not show), and a program that
     /// emits declarations, which uses the cache.
     ///
-    /// A load with no parse workers (as with `--singleThreaded`, whose one
-    /// checker has a thread of its own) leaves its lookups only in the
-    /// host's `CachedFs`, which only the loading thread reads. Its seed has
-    /// none, so the finish makes the lookups that it needs
-    /// (`HostStatCache::empty`): Go builds the cache on first use in every
-    /// mode (program.go:2330 `GetSymlinkCache`).
+    /// A load with no parse workers leaves its lookups only in the host's
+    /// `CachedFs`, which only the loading thread reads. These are
+    /// `--singleThreaded` (`FilesParser::parse` starts no workers; its one
+    /// checker has a thread of its own), and the loads where
+    /// `parse_workers_enabled` is false: a thread budget of 1 CPU,
+    /// `GOPORT_PARSE_THREADS=0` and a load inside another load's prefetch.
+    /// Its seed has none, so the finish makes the lookups that it needs
+    /// (`HostStatCache::empty`). This is nearer to Go, which builds the
+    /// cache on first use in every mode (program.go:2330 `GetSymlinkCache`).
     // PERF (followups66): the eager build of a `--singleThreaded` VS Code
     // `--noEmit` check made 61 more readlink calls than the default mode.
     fn of(frontend: &NewProgram) -> Option<Self> {
@@ -571,11 +574,22 @@ impl SymlinkSeed {
         })
     }
 
-    /// Lets go of a seed that no thread finishes. A seed with the host's
-    /// lookups goes to the free thread (`drop_in_background`, which the
-    /// load started), as `HostStatCache::free` does; one without them is
-    /// small and drops here, so a `--singleThreaded` run starts no thread
-    /// for it.
+    /// Lets go of a seed that no thread finishes (`SymlinkSeedSlot::discard`):
+    /// the loading thread built the cache itself, or the program's tables
+    /// dropped with the seed unused. A seed with lookups goes to the free
+    /// thread (`drop_in_background`). A load's lookups
+    /// (`HostStatCache::Load`) come only from a load with parse workers,
+    /// which started that thread. A seed with no lookups (a load with no
+    /// parse workers, see `of`) is small and drops here, so that run starts
+    /// no thread for it.
+    ///
+    /// In `tsc -b` the seed holds only a reference to the build host's
+    /// lookups (`HostStatCache::Build`), and the host keeps them for the
+    /// whole build. The seed goes to the free thread too, and only the seed
+    /// and that reference free there (`HostStatCache::free` drops a `Build`
+    /// in place). The orchestrator releases a task's program when the task
+    /// is built (`release_task_program`). The tables drop then, or when the
+    /// last checker thread that holds them ends.
     fn free(self) {
         if self.stats.is_some() {
             crate::execute::build::build_task::drop_in_background(self);
