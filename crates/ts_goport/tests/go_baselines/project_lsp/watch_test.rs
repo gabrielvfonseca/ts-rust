@@ -41,7 +41,7 @@ fn get_path_components_for_watching_test() {
     );
 }
 
-// Go: watch_test.go:25 TestNilWatchedFilesClone
+// Go: watch_test.go:26 TestNilWatchedFilesClone
 #[test]
 fn nil_watched_files_clone() {
     let result = WatchedFiles::<i32>::clone_(None, 42);
@@ -121,7 +121,7 @@ fn lookup_globs(
 const UPPER_DIRS: [&str; 3] = ["/Workspace", "/Lib", "/Project"];
 const LOWER_DIRS: [&str; 3] = ["/workspace", "/lib", "/current"];
 
-// Go: watch_test.go:33 TestResolutionLookupWatcherPreservesDirectorySpelling (ts#64159)
+// Go: watch_test.go:57 TestResolutionLookupWatcherPreservesDirectorySpelling (ts#64159)
 #[test]
 fn resolution_lookup_watcher_preserves_directory_spelling() {
     let result = lookup_globs(LOWER_DIRS, &["/External/Dir/file.ts"], false);
@@ -140,7 +140,7 @@ fn resolution_lookup_watcher_preserves_directory_spelling() {
     assert_eq!(base_uri.0, "file:///External/Dir");
 }
 
-// Go: watch_test.go:73 TestResolutionLookupWatcherPreservesIncludedDirectorySpelling (ts#64544)
+// Go: watch_test.go:97 TestResolutionLookupWatcherPreservesIncludedDirectorySpelling (ts#64544)
 #[test]
 fn resolution_lookup_watcher_preserves_included_directory_spelling() {
     let result = lookup_globs(
@@ -158,7 +158,7 @@ fn resolution_lookup_watcher_preserves_included_directory_spelling() {
     );
 }
 
-// Go: watch_test.go:55 TestResolutionLookupWatcherPreservesNodeModulesSpelling (ts#64544, ts#64159)
+// Go: watch_test.go:79 TestResolutionLookupWatcherPreservesNodeModulesSpelling (ts#64544, ts#64159)
 #[test]
 fn resolution_lookup_watcher_preserves_node_modules_spelling() {
     let result = lookup_globs(
@@ -172,7 +172,7 @@ fn resolution_lookup_watcher_preserves_node_modules_spelling() {
     );
 }
 
-// Go: watch_test.go:100 TestResolutionLookupWatcherAggregatesUsingHostCaseSensitivity (ts#64544)
+// Go: watch_test.go:124 TestResolutionLookupWatcherAggregatesUsingHostCaseSensitivity (ts#64544)
 #[test]
 fn resolution_lookup_watcher_aggregates_using_host_case_sensitivity() {
     for (name, use_case_sensitive_file_names) in

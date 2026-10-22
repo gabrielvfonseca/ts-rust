@@ -24,7 +24,7 @@ use std::collections::BTreeMap;
 use std::result::Result;
 use std::sync::LazyLock;
 
-// Go: contentmapper/contentmapper.go:28 ErrProjectUnavailable
+// Go: contentmapper/contentmapper.go:29 ErrProjectUnavailable
 pub static ERR_PROJECT_UNAVAILABLE: LazyLock<GoError> =
     LazyLock::new(|| errors::new("content mapper project is unavailable"));
 

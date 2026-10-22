@@ -4035,7 +4035,7 @@ impl WorkerResolver {
             if shared.is_closed() {
                 return None;
             }
-            // Go: fileloader.go:1021 getModeForTypeReferenceDirectiveInFile
+            // Go: fileloader.go:1038 getModeForTypeReferenceDirectiveInFile
             let mode = if reference.resolution_mode != RESOLUTION_MODE_NONE {
                 reference.resolution_mode
             } else {
@@ -4110,7 +4110,7 @@ impl WorkerResolver {
             // The worker's resolver is the default resolver, which never
             // fails (Go resolver.go:469 gives a nil error). So no answer
             // has an error for the loader to note (Go
-            // `moduleResolutionError`, fileloader.go:884).
+            // `moduleResolutionError`, fileloader.go:901).
             let (resolved, _, err) =
                 self.resolver
                     .resolve_module_name(specifier, containing_file, mode, redirect);

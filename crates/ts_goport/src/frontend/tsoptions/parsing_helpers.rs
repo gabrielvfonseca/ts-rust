@@ -231,7 +231,7 @@ pub fn parse_string_array_strict(value: &CompilerOptionsValue) -> Option<Vec<Str
     Some(result)
 }
 
-// Go: tsoptions/parsinghelpers.go:194 parseJsonToStringKey
+// Go: tsoptions/parsinghelpers.go:217 parseJsonToStringKey
 // PORT: Go returns a map pointer that is never nil. It is `Option` so it
 // can go straight to the nilable `json` argument of
 // `parseJsonConfigFileContentWorker`; it is always `Some`.
@@ -278,7 +278,7 @@ pub fn parse_json_to_string_key(
     Some(result)
 }
 
-// Go: tsoptions/parsinghelpers.go:231 optionParser
+// Go: tsoptions/parsinghelpers.go:254 optionParser
 // PORT: Go `*diagnostics.Message` results are never nil for the ported
 // parsers, so they are `&'static Message`.
 pub trait OptionParser {
@@ -287,56 +287,56 @@ pub trait OptionParser {
     fn unknown_did_you_mean_diagnostic(&self) -> &'static Message;
 }
 
-// Go: tsoptions/parsinghelpers.go:237 compilerOptionsParser
+// Go: tsoptions/parsinghelpers.go:260 compilerOptionsParser
 // PORT: the embedded Go `*core.CompilerOptions` is a mutable borrow.
 pub struct CompilerOptionsParser<'a> {
     pub compiler_options: &'a mut CompilerOptions,
 }
 
 impl OptionParser for CompilerOptionsParser<'_> {
-    // Go: tsoptions/parsinghelpers.go:242 (*compilerOptionsParser).ParseOption
+    // Go: tsoptions/parsinghelpers.go:265 (*compilerOptionsParser).ParseOption
     fn parse_option(&mut self, key: &str, value: CompilerOptionsValue) -> Vec<Diagnostic> {
         parse_compiler_options(key, value, self.compiler_options)
     }
 
-    // Go: tsoptions/parsinghelpers.go:275 (*compilerOptionsParser).UnknownOptionDiagnostic
+    // Go: tsoptions/parsinghelpers.go:298 (*compilerOptionsParser).UnknownOptionDiagnostic
     fn unknown_option_diagnostic(&self) -> &'static Message {
         extra_key_diagnostics("compilerOptions").expect("known key")
     }
 
-    // Go: tsoptions/parsinghelpers.go:279 (*compilerOptionsParser).UnknownDidYouMeanDiagnostic
+    // Go: tsoptions/parsinghelpers.go:302 (*compilerOptionsParser).UnknownDidYouMeanDiagnostic
     fn unknown_did_you_mean_diagnostic(&self) -> &'static Message {
         extra_key_did_you_mean_diagnostics("compilerOptions").expect("known key")
     }
 }
 
-// Go: tsoptions/parsinghelpers.go:283 typeAcquisitionParser
+// Go: tsoptions/parsinghelpers.go:306 typeAcquisitionParser
 // PORT: the embedded Go `*core.TypeAcquisition` is a mutable borrow.
 pub struct TypeAcquisitionParser<'a> {
     pub type_acquisition: &'a mut TypeAcquisition,
 }
 
 impl OptionParser for TypeAcquisitionParser<'_> {
-    // Go: tsoptions/parsinghelpers.go:287 (*typeAcquisitionParser).ParseOption
+    // Go: tsoptions/parsinghelpers.go:310 (*typeAcquisitionParser).ParseOption
     fn parse_option(&mut self, key: &str, value: CompilerOptionsValue) -> Vec<Diagnostic> {
         parse_type_acquisition(key, value, self.type_acquisition)
     }
 
-    // Go: tsoptions/parsinghelpers.go:291 (*typeAcquisitionParser).UnknownOptionDiagnostic
+    // Go: tsoptions/parsinghelpers.go:314 (*typeAcquisitionParser).UnknownOptionDiagnostic
     fn unknown_option_diagnostic(&self) -> &'static Message {
         extra_key_diagnostics("typeAcquisition").expect("known key")
     }
 
-    // Go: tsoptions/parsinghelpers.go:295 (*typeAcquisitionParser).UnknownDidYouMeanDiagnostic
+    // Go: tsoptions/parsinghelpers.go:318 (*typeAcquisitionParser).UnknownDidYouMeanDiagnostic
     fn unknown_did_you_mean_diagnostic(&self) -> &'static Message {
         extra_key_did_you_mean_diagnostics("typeAcquisition").expect("known key")
     }
 }
 
-// Go: tsoptions/parsinghelpers.go:299 buildOptionsParser
+// Go: tsoptions/parsinghelpers.go:322 buildOptionsParser
 // PORT: ported next to `core.BuildOptions` in execute/build/command_line.rs.
 
-// Go: tsoptions/parsinghelpers.go:315 ParseCompilerOptions
+// Go: tsoptions/parsinghelpers.go:338 ParseCompilerOptions
 // PORT: Go `allOptions` can be nil; every Rust caller has options, so the
 // nil check is dropped.
 pub fn parse_compiler_options(
@@ -641,7 +641,7 @@ fn as_new_line_kind(value: &CompilerOptionsValue) -> Option<NewLineKind> {
     }
 }
 
-// Go: tsoptions/parsinghelpers.go:325 floatOrInt32ToFlag
+// Go: tsoptions/parsinghelpers.go:348 floatOrInt32ToFlag
 // PORT: the Go type parameter `T ~int32` is the pair (`typed`, `from_i32`):
 // `typed` is Go `value.(T)` and `from_i32` is the Go conversion `T(...)`.
 // Go `value.(float64)` panics on another type; so does this port. A JSON
@@ -720,7 +720,7 @@ pub fn merge_compiler_options_with_paths<'a>(
     target_options
 }
 
-// Go: tsoptions/parsinghelpers.go:336 mergeCompilerOptions
+// Go: tsoptions/parsinghelpers.go:359 mergeCompilerOptions
 // mergeCompilerOptions merges the source compiler options into the target compiler options
 // with optional awareness of explicitly set null values in the raw JSON.
 // Fields in the source options will overwrite the corresponding fields in the target options,
@@ -914,7 +914,7 @@ pub fn merge_compiler_options<'a>(
     target_options
 }
 
-// Go: tsoptions/parsinghelpers.go:386 convertToOptionsWithAbsolutePaths
+// Go: tsoptions/parsinghelpers.go:409 convertToOptionsWithAbsolutePaths
 // PORT: Go changes the map through its pointer and returns it. The Rust
 // port takes the map by value and returns it.
 pub fn convert_to_options_with_absolute_paths(
@@ -934,7 +934,7 @@ pub fn convert_to_options_with_absolute_paths(
     Some(options_base)
 }
 
-// Go: tsoptions/parsinghelpers.go:401 ConvertOptionToAbsolutePath
+// Go: tsoptions/parsinghelpers.go:424 ConvertOptionToAbsolutePath
 pub fn convert_option_to_absolute_path(
     o: &str,
     v: &CompilerOptionsValue,

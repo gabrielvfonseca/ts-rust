@@ -60,7 +60,7 @@ pub static ERR_NETWORK_PATH: LazyLock<GoError> =
 pub static ERR_OVERFLOW: LazyLock<GoError> =
     LazyLock::new(|| errors::new("fswatch: event overflow; some changes were missed"));
 
-// Go: watcher.go:37 ErrWatchTerminated
+// Go: watcher.go:42 ErrWatchTerminated
 /// ErrWatchTerminated indicates that the watch was terminated due to
 /// an unrecoverable error (e.g. the watched directory was deleted or
 /// the watch descriptor was revoked). No further events will be
@@ -68,13 +68,13 @@ pub static ERR_OVERFLOW: LazyLock<GoError> =
 pub static ERR_WATCH_TERMINATED: LazyLock<GoError> =
     LazyLock::new(|| errors::new("fswatch: watch terminated"));
 
-// Go: watcher.go:41 ErrUnavailable
+// Go: watcher.go:46 ErrUnavailable
 /// ErrUnavailable indicates that a requested watcher is not
 /// available on the current platform.
 pub static ERR_UNAVAILABLE: LazyLock<GoError> =
     LazyLock::new(|| errors::new("fswatch: watcher not available on this platform"));
 
-// Go: watcher.go:50 ErrFilesystemUnsupported
+// Go: watcher.go:55 ErrFilesystemUnsupported
 /// ErrFilesystemUnsupported indicates that the active watcher backend cannot
 /// operate on the target filesystem, even though the backend is available on
 /// the current platform. This happens, for example, with the fanotify backend
@@ -85,7 +85,7 @@ pub static ERR_UNAVAILABLE: LazyLock<GoError> =
 pub static ERR_FILESYSTEM_UNSUPPORTED: LazyLock<GoError> =
     LazyLock::new(|| errors::new("fswatch: watcher backend unsupported on this filesystem"));
 
-// Go: watcher.go:58 Watcher
+// Go: watcher.go:63 Watcher
 /// Watcher represents a filesystem watching implementation.
 /// Use one of the constructor functions ([Inotify], [FSEvents], [Kqueue],
 /// [Windows]) to obtain a value, or [Default] for the platform default.
@@ -152,13 +152,13 @@ pub trait Watcher: Send + Sync {
     fn unexported(&self);
 }
 
-// Go: watcher.go:107 WatchOption
+// Go: watcher.go:112 WatchOption
 /// WatchOption configures a watch.
 pub trait WatchOption: Send + Sync {
     fn apply_watch_option(&self, opts: &mut WatchOptions);
 }
 
-// Go: watcher.go:113 WatchDirectoryRequest
+// Go: watcher.go:118 WatchDirectoryRequest
 /// WatchDirectoryRequest describes one directory subscription in a
 /// [Watcher.WatchDirectories] batch.
 ///
@@ -169,7 +169,7 @@ pub struct WatchDirectoryRequest<'a> {
     pub options: &'a [Box<dyn WatchOption>],
 }
 
-// Go: watcher.go:119 watchOptions
+// Go: watcher.go:124 watchOptions
 #[derive(Clone, Default)]
 pub struct WatchOptions {
     pub ignore: Option<Arc<dyn Fn(&str) -> bool + Send + Sync>>,
@@ -178,7 +178,7 @@ pub struct WatchOptions {
     pub file: String,
 }
 
-// Go: watcher.go:127 fileOption (ts#64210)
+// Go: watcher.go:132 fileOption (ts#64210)
 /// fileOption defers the file filter until the parent directory's comparer is
 /// available, so WatchFile does not need a second filesystem query.
 pub struct FileOption {
@@ -186,25 +186,25 @@ pub struct FileOption {
 }
 
 impl WatchOption for FileOption {
-    // Go: watcher.go:131 fileOption.applyWatchOption
+    // Go: watcher.go:136 fileOption.applyWatchOption
     fn apply_watch_option(&self, opts: &mut WatchOptions) {
         opts.file = self.path.clone();
     }
 }
 
-// Go: watcher.go:135 ignoreOption
+// Go: watcher.go:140 ignoreOption
 pub struct IgnoreOption {
     pub fn_: Arc<dyn Fn(&str) -> bool + Send + Sync>,
 }
 
 impl WatchOption for IgnoreOption {
-    // Go: watcher.go:139 ignoreOption.applyWatchOption
+    // Go: watcher.go:144 ignoreOption.applyWatchOption
     fn apply_watch_option(&self, opts: &mut WatchOptions) {
         opts.ignore = Some(self.fn_.clone());
     }
 }
 
-// Go: watcher.go:147 WithIgnore
+// Go: watcher.go:152 WithIgnore
 /// WithIgnore returns a [WatchOption] that filters events before delivery.
 /// If the function returns true for a path, events for that path are
 /// silently dropped. The filtering is per-subscriber; multiple watches
@@ -213,17 +213,17 @@ pub fn with_ignore(fn_: Arc<dyn Fn(&str) -> bool + Send + Sync>) -> Box<dyn Watc
     Box::new(IgnoreOption { fn_ })
 }
 
-// Go: watcher.go:151 recursiveOption
+// Go: watcher.go:156 recursiveOption
 pub struct RecursiveOption;
 
 impl WatchOption for RecursiveOption {
-    // Go: watcher.go:153 recursiveOption.applyWatchOption
+    // Go: watcher.go:158 recursiveOption.applyWatchOption
     fn apply_watch_option(&self, opts: &mut WatchOptions) {
         opts.recursive = true;
     }
 }
 
-// Go: watcher.go:166 WithRecursive
+// Go: watcher.go:171 WithRecursive
 /// WithRecursive returns a [WatchOption] that enables recursive watching
 /// of the entire directory tree. Without this option,
 /// [Watcher.WatchDirectory] watches only direct children of dir.
@@ -237,7 +237,7 @@ pub fn with_recursive() -> Box<dyn WatchOption> {
     Box::new(RecursiveOption)
 }
 
-// Go: watcher.go:172 Watch
+// Go: watcher.go:177 Watch
 /// Watch represents a live watch. Close stops watching
 /// and releases resources. It is idempotent.
 ///
@@ -252,7 +252,7 @@ pub trait Watch: Send + Sync {
 /// `GoError`; test sentinels with `errors::is(&err, &ERR_OVERFLOW)`.
 pub type WatchError = GoError;
 
-// Go: watcher.go:185 WatchCallback
+// Go: watcher.go:190 WatchCallback
 /// WatchCallback receives batched filesystem events. Rapid changes
 /// are coalesced before delivery.
 ///
@@ -268,7 +268,7 @@ pub type WatchCallback = Arc<dyn Fn(Vec<Event>, Option<WatchError>) + Send + Syn
 /// PORT: Go `func() watcherImpl` factory.
 pub type WatcherFactory = fn() -> Arc<dyn WatcherImpl>;
 
-// Go: watcher.go:188 package-level watcher instances
+// Go: watcher.go:193 package-level watcher instances
 // Package-level watcher instances. Platform init() functions set the factory.
 //
 // PORT: Go package vars set up by the platform `init()` functions. The
@@ -334,7 +334,7 @@ pub fn new_watcher(name: &str, init: impl FnOnce(&mut WatcherStruct)) -> Arc<Wat
     })
 }
 
-// Go: watcher.go:203 AllWatchers
+// Go: watcher.go:208 AllWatchers
 /// AllWatchers returns a fresh slice listing every watcher backend the package
 /// knows about. Use [Watcher.Available] to check which ones work on the current
 /// OS.
@@ -353,38 +353,38 @@ pub fn all_watchers() -> Vec<Arc<dyn Watcher>> {
     ]
 }
 
-// Go: watcher.go:214 Inotify
+// Go: watcher.go:219 Inotify
 /// Inotify returns the inotify watcher (Linux and Android).
 pub fn inotify() -> Arc<dyn Watcher> {
     INOTIFY_WATCHER.clone()
 }
 
-// Go: watcher.go:217 FSEvents
+// Go: watcher.go:222 FSEvents
 /// FSEvents returns the FSEvents watcher (macOS).
 pub fn fs_events() -> Arc<dyn Watcher> {
     FSEVENTS_WATCHER.clone()
 }
 
-// Go: watcher.go:220 Kqueue
+// Go: watcher.go:225 Kqueue
 /// Kqueue returns the kqueue watcher (macOS, FreeBSD, and other BSDs).
 pub fn kqueue() -> Arc<dyn Watcher> {
     KQUEUE_WATCHER.clone()
 }
 
-// Go: watcher.go:223 Windows
+// Go: watcher.go:228 Windows
 /// Windows returns the ReadDirectoryChangesW watcher (Windows).
 pub fn windows() -> Arc<dyn Watcher> {
     WINDOWS_WATCHER.clone()
 }
 
-// Go: watcher.go:227 Fanotify
+// Go: watcher.go:232 Fanotify
 /// Fanotify returns the fanotify watcher (Linux, kernel ≥ 5.13). Directories on
 /// filesystems that don't support fanotify watches automatically use inotify instead.
 pub fn fanotify() -> Arc<dyn Watcher> {
     FANOTIFY_FALLBACK_WATCHER.clone()
 }
 
-// Go: watcher.go:230 Default
+// Go: watcher.go:235 Default
 /// Default returns the recommended watcher for the current OS.
 ///
 /// PORT: Go `runtime.GOOS` is `std::env::consts::OS` ("macos" for Go
@@ -412,7 +412,7 @@ pub fn default() -> Arc<dyn Watcher> {
     }
 }
 
-// Go: watcher.go:255 fallbackWatcher
+// Go: watcher.go:260 fallbackWatcher
 /// fallbackWatcher keeps the primary backend for supported filesystems while
 /// routing individual unsupported watches to the secondary backend.
 pub struct FallbackWatcher {
@@ -421,22 +421,22 @@ pub struct FallbackWatcher {
 }
 
 impl Watcher for FallbackWatcher {
-    // Go: watcher.go:260 fallbackWatcher.Name
+    // Go: watcher.go:265 fallbackWatcher.Name
     fn name(&self) -> String {
         self.primary.name()
     }
 
-    // Go: watcher.go:261 fallbackWatcher.Available
+    // Go: watcher.go:266 fallbackWatcher.Available
     fn available(&self) -> bool {
         self.primary.available()
     }
 
-    // Go: watcher.go:262 fallbackWatcher.HasFastRecursiveBackend
+    // Go: watcher.go:267 fallbackWatcher.HasFastRecursiveBackend
     fn has_fast_recursive_backend(&self) -> bool {
         self.primary.has_fast_recursive_backend()
     }
 
-    // Go: watcher.go:264 fallbackWatcher.WatchDirectory
+    // Go: watcher.go:269 fallbackWatcher.WatchDirectory
     fn watch_directory(
         &self,
         dir: &str,
@@ -454,7 +454,7 @@ impl Watcher for FallbackWatcher {
             .expect("WatchDirectories returns one watch per request"))
     }
 
-    // Go: watcher.go:276 fallbackWatcher.WatchDirectories
+    // Go: watcher.go:281 fallbackWatcher.WatchDirectories
     fn watch_directories(
         &self,
         requests: &[WatchDirectoryRequest<'_>],
@@ -506,7 +506,7 @@ impl Watcher for FallbackWatcher {
         Ok(watches)
     }
 
-    // Go: watcher.go:302 fallbackWatcher.WatchFile
+    // Go: watcher.go:307 fallbackWatcher.WatchFile
     fn watch_file(&self, path: &str, fn_: WatchCallback) -> Result<Box<dyn Watch>, GoError> {
         let result = self.primary.watch_file(path, fn_.clone());
         if let Err(err) = &result {
@@ -517,11 +517,11 @@ impl Watcher for FallbackWatcher {
         result
     }
 
-    // Go: watcher.go:310 fallbackWatcher.unexported
+    // Go: watcher.go:315 fallbackWatcher.unexported
     fn unexported(&self) {}
 }
 
-// Go: watcher.go:315 watcher
+// Go: watcher.go:320 watcher
 /// watcher is the concrete implementation of [Watcher]. Each platform
 /// watcher is a package-level *watcher whose factory is set by the
 /// platform's init() function.
@@ -552,16 +552,16 @@ pub struct WatcherStructLocked {
     pub debounce: Option<Arc<Debounce>>,
 }
 
-// Go: watcher.go:325 recursiveConsolidateThreshold
+// Go: watcher.go:330 recursiveConsolidateThreshold
 pub const RECURSIVE_CONSOLIDATE_THRESHOLD: usize = 10;
 
 impl WatcherStruct {
-    // Go: watcher.go:328 watcher.String
+    // Go: watcher.go:333 watcher.String
     pub fn string(&self) -> String {
         self.name.clone()
     }
 
-    // Go: watcher.go:342 watcher.canShareRecursiveDirWatches
+    // Go: watcher.go:347 watcher.canShareRecursiveDirWatches
     pub fn can_share_recursive_dir_watches(&self) -> bool {
         // TODO: Re-enable this for Windows once coalesced recursive watches have
         // more real-world bake time.
@@ -574,7 +574,7 @@ impl WatcherStruct {
         self.self_.upgrade().expect("fswatch: watcher is alive")
     }
 
-    // Go: watcher.go:348 watcher.getImpl
+    // Go: watcher.go:353 watcher.getImpl
     pub fn get_impl(&self) -> Result<Arc<dyn WatcherImpl>, GoError> {
         let factory = {
             let w = self.mu.lock().unwrap();
@@ -604,7 +604,7 @@ impl WatcherStruct {
         Ok(impl_)
     }
 
-    // Go: watcher.go:378 watcher.keyForDirWatch
+    // Go: watcher.go:383 watcher.keyForDirWatch
     pub fn key_for_dir_watch(&self, dir: &str, recursive: bool) -> String {
         if recursive {
             return format!("{dir}\x00recursive");
@@ -612,7 +612,7 @@ impl WatcherStruct {
         dir.to_string()
     }
 
-    // Go: watcher.go:385 watcher.findCoveringRecursiveWatchLocked (ts#64210: takes the comparer)
+    // Go: watcher.go:390 watcher.findCoveringRecursiveWatchLocked (ts#64210: takes the comparer)
     // PORT: takes the data that `w.mu` guards.
     pub fn find_covering_recursive_watch_locked(
         &self,
@@ -637,7 +637,7 @@ impl WatcherStruct {
         best.cloned()
     }
 
-    // Go: watcher.go:398 watcher.findConsolidationDirLocked
+    // Go: watcher.go:403 watcher.findConsolidationDirLocked
     // PORT: takes the data that `w.mu` guards.
     pub fn find_consolidation_dir_locked(
         &self,
@@ -679,7 +679,7 @@ impl WatcherStruct {
         String::new()
     }
 
-    // Go: watcher.go:430 watcher.getOrCreateDirWatch (ts#64210: takes the comparer, returns an error)
+    // Go: watcher.go:435 watcher.getOrCreateDirWatch (ts#64210: takes the comparer, returns an error)
     pub fn get_or_create_dir_watch(
         &self,
         dir: &str,
@@ -740,7 +740,7 @@ impl WatcherStruct {
         Ok(dw)
     }
 
-    // Go: watcher.go:472 watcher.removeDirWatch
+    // Go: watcher.go:477 watcher.removeDirWatch
     pub fn remove_dir_watch(&self, dw: &DirWatch) {
         let mut w = self.mu.lock().unwrap();
         let key = self.key_for_dir_watch(&dw.dir, dw.recursive);
@@ -756,20 +756,20 @@ impl WatcherStruct {
 }
 
 impl Watcher for WatcherStruct {
-    // Go: watcher.go:327 watcher.Name
+    // Go: watcher.go:332 watcher.Name
     fn name(&self) -> String {
         self.name.clone()
     }
 
-    // Go: watcher.go:329 watcher.Available
+    // Go: watcher.go:334 watcher.Available
     fn available(&self) -> bool {
         self.factory.is_some()
     }
 
-    // Go: watcher.go:330 watcher.unexported
+    // Go: watcher.go:335 watcher.unexported
     fn unexported(&self) {}
 
-    // Go: watcher.go:333 watcher.HasFastRecursiveBackend
+    // Go: watcher.go:338 watcher.HasFastRecursiveBackend
     /// HasFastRecursiveBackend implements [Watcher.HasFastRecursiveBackend].
     fn has_fast_recursive_backend(&self) -> bool {
         match self.name.as_str() {
@@ -778,7 +778,7 @@ impl Watcher for WatcherStruct {
         }
     }
 
-    // Go: watcher.go:482 watcher.WatchDirectory
+    // Go: watcher.go:487 watcher.WatchDirectory
     fn watch_directory(
         &self,
         dir: &str,
@@ -942,7 +942,7 @@ impl Watcher for WatcherStruct {
     }
 }
 
-// Go: watcher.go:580 validateWatchDirectory
+// Go: watcher.go:589 validateWatchDirectory
 pub fn validate_watch_directory(dir: &str) -> Result<(), GoError> {
     let info = match std::fs::metadata(os_path(dir)) {
         Ok(info) => info,
@@ -1019,7 +1019,7 @@ fn filepath_dir(path: &str) -> String {
     format!("{vol}{dir}")
 }
 
-// Go: watcher.go:611 watch
+// Go: watcher.go:623 watch
 /// PORT: named `WatchStruct` because the Go interface `Watch` and the
 /// struct `watch` have the same Rust name. Go `mu` guards `cancelled`,
 /// which is the `bool` inside `mu`.
@@ -1032,7 +1032,7 @@ pub struct WatchStruct {
 }
 
 impl Watch for WatchStruct {
-    // Go: watcher.go:620 watch.Close
+    // Go: watcher.go:632 watch.Close
     fn close(&self) -> Result<(), GoError> {
         let mut cancelled = self.mu.lock().unwrap();
         if *cancelled {
@@ -1047,11 +1047,11 @@ impl Watch for WatchStruct {
         Ok(())
     }
 
-    // Go: watcher.go:635 watch.unexported
+    // Go: watcher.go:647 watch.unexported
     fn unexported(&self) {}
 }
 
-// Go: watcher.go:638 watcherImpl
+// Go: watcher.go:650 watcherImpl
 /// watcherImpl is the internal interface implemented by each platform watcher.
 ///
 /// PORT: Go backends embed `watcherBase`, whose methods are promoted. The
@@ -1150,7 +1150,7 @@ impl SignalChan {
     }
 }
 
-// Go: watcher.go:654 watcherBase
+// Go: watcher.go:666 watcherBase
 /// watcherBase provides shared watch-tracking and lifecycle logic.
 /// Concrete backends embed it and override subscribe/closeWatch/start.
 ///
@@ -1176,7 +1176,7 @@ pub struct WatcherBaseLocked {
 }
 
 impl WatcherBase {
-    // Go: watcher.go:663 watcherBase.init
+    // Go: watcher.go:675 watcherBase.init
     // PORT: `started` is made with the value (`Default`).
     pub fn init(&self, self_: Weak<dyn WatcherImpl>) {
         let _ = self.self_.set(self_);
@@ -1191,7 +1191,7 @@ impl WatcherBase {
             .expect("fswatch: watcherBase.init was called and the backend is alive")
     }
 
-    // Go: watcher.go:669 watcherBase.notifyStarted
+    // Go: watcher.go:681 watcherBase.notifyStarted
     pub fn notify_started(&self) {
         if self.started.is_closed() {
             // Do nothing; already started.
@@ -1200,10 +1200,10 @@ impl WatcherBase {
         }
     }
 
-    // Go: watcher.go:678 watcherBase.shutdown
+    // Go: watcher.go:690 watcherBase.shutdown
     pub fn shutdown(&self) {}
 
-    // Go: watcher.go:680 watcherBase.run
+    // Go: watcher.go:692 watcherBase.run
     // PORT: the goroutine is a `std::thread`; Go's `recover()` is
     // `catch_unwind`, so an `unported!` panic in `start` becomes the start
     // error, as a Go panic does. The thread gets the Go stack size: an
@@ -1241,7 +1241,7 @@ impl WatcherBase {
         }
     }
 
-    // Go: watcher.go:701 watcherBase.handleStartError
+    // Go: watcher.go:713 watcherBase.handleStartError
     pub fn handle_start_error(&self, err: GoError) {
         let subs: Vec<Arc<DirWatch>> = {
             let mut b = self.mu.lock().unwrap();
@@ -1258,12 +1258,12 @@ impl WatcherBase {
         self.notify_started();
     }
 
-    // Go: watcher.go:715 watcherBase.watchAdd
+    // Go: watcher.go:727 watcherBase.watchAdd
     pub fn watch_add(&self, w: &Arc<DirWatch>) -> Result<(), GoError> {
         self.watch_add_many(std::slice::from_ref(w))
     }
 
-    // Go: watcher.go:719 watcherBase.watchAddMany
+    // Go: watcher.go:731 watcherBase.watchAddMany
     pub fn watch_add_many(&self, watches: &[Arc<DirWatch>]) -> Result<(), GoError> {
         let mut b = self.mu.lock().unwrap();
         let mut to_add: Vec<&Arc<DirWatch>> = Vec::with_capacity(watches.len());
@@ -1301,7 +1301,7 @@ impl WatcherBase {
         Ok(())
     }
 
-    // Go: watcher.go:764 watcherBase.watchRemove
+    // Go: watcher.go:776 watcherBase.watchRemove
     pub fn watch_remove(&self, w: &Arc<DirWatch>) {
         let mut b = self.mu.lock().unwrap();
         let key = Arc::as_ptr(w) as usize;
@@ -1312,7 +1312,7 @@ impl WatcherBase {
         let _ = self.self_impl().close_watch(w);
     }
 
-    // Go: watcher.go:775 watcherBase.handleWatcherError
+    // Go: watcher.go:787 watcherBase.handleWatcherError
     pub fn handle_watcher_error(&self, werr: DirWatchError) {
         self.watch_remove(&werr.dir_watch);
         let dir_watch = werr.dir_watch.clone();
@@ -1326,7 +1326,7 @@ impl WatcherBase {
 
 // ----- dirWatch: per-directory watch state -------------------------
 
-// Go: watcher.go:782 callback
+// Go: watcher.go:794 callback
 #[derive(Clone)]
 pub struct Callback {
     pub id: u64,
@@ -1347,7 +1347,7 @@ pub struct Callback {
     pub file_comparison: ComparisonPath<'static>,
 }
 
-// Go: watcher.go:801 dirWatchError
+// Go: watcher.go:813 dirWatchError
 /// dirWatchError associates an error with a specific directory watch.
 #[derive(Clone)]
 pub struct DirWatchError {
@@ -1356,12 +1356,12 @@ pub struct DirWatchError {
 }
 
 impl DirWatchError {
-    // Go: watcher.go:806 dirWatchError.Error
+    // Go: watcher.go:818 dirWatchError.Error
     pub fn error(&self) -> String {
         self.err.error()
     }
 
-    // Go: watcher.go:807 dirWatchError.Unwrap
+    // Go: watcher.go:819 dirWatchError.Unwrap
     pub fn unwrap(&self) -> GoError {
         self.err.clone()
     }
@@ -1399,7 +1399,7 @@ impl PartialEq for DirWatchError {
     }
 }
 
-// Go: watcher.go:811 dirWatch
+// Go: watcher.go:823 dirWatch
 /// dirWatch holds per-directory state: pending events, registered callbacks,
 /// and a reference to the shared debouncer. Each watched directory has one.
 ///
@@ -1435,7 +1435,7 @@ pub struct DirWatchLocked {
     pub next_cbid: u64,
 }
 
-// Go: watcher.go:834 newDirWatch
+// Go: watcher.go:846 newDirWatch
 // PORT: `recursive` and `comparer` are parameters (see getOrCreateDirWatch):
 // Go sets them on the new dirWatch before it is shared, the comparer with
 // `setComparer`. The debounce key is the dirWatch pointer.
@@ -1446,7 +1446,7 @@ pub fn new_dir_watch(
     recursive: bool,
     comparer: PathComparer,
 ) -> Arc<DirWatch> {
-    // Go: watcher.go:841 dirWatch.setComparer (ts#64210)
+    // Go: watcher.go:853 dirWatch.setComparer (ts#64210)
     let dir_fold = comparer.prepare(dir).folded;
     let physical_dir_fold = if physical_dir == dir {
         dir_fold.clone()
@@ -1497,7 +1497,7 @@ fn is_path_separator(c: u8) -> bool {
     c == b'/' || c == std::path::MAIN_SEPARATOR as u8
 }
 
-// Go: watcher.go:879 rebasePath
+// Go: watcher.go:893 rebasePath
 /// rebasePath replaces the from root in path with to, preserving any child
 /// suffix. Prefix matches must end at a path separator so sibling paths like
 /// "/foo2" are not rebased from "/foo".
@@ -1520,7 +1520,7 @@ pub fn rebase_path(path: &str, from: &str, to: &str) -> String {
     join_path_suffix(to, suffix)
 }
 
-// Go: watcher.go:899 joinPathSuffix
+// Go: watcher.go:913 joinPathSuffix
 pub fn join_path_suffix(root: &str, suffix: &str) -> String {
     if suffix.is_empty() {
         return root.to_string();
@@ -1540,20 +1540,20 @@ pub fn join_path_suffix(root: &str, suffix: &str) -> String {
 }
 
 impl DirWatch {
-    // Go: watcher.go:867 dirWatch.displayPath
+    // Go: watcher.go:881 dirWatch.displayPath
     /// displayPath maps a physical event path back under the caller-visible
     /// watch root.
     pub fn display_path(&self, watch_path: &str) -> String {
         rebase_path(watch_path, &self.physical_dir, &self.dir)
     }
 
-    // Go: watcher.go:872 dirWatch.physicalPath
+    // Go: watcher.go:886 dirWatch.physicalPath
     /// physicalPath maps a caller-visible path to the physical watched root.
     pub fn physical_path(&self, display_path: &str) -> String {
         rebase_path(display_path, &self.dir, &self.physical_dir)
     }
 
-    // Go: watcher.go:915 dirWatch.destroyDebounce
+    // Go: watcher.go:929 dirWatch.destroyDebounce
     pub fn destroy_debounce(&self) {
         let db = {
             let mut dw = self.mu.lock().unwrap();
@@ -1564,7 +1564,7 @@ impl DirWatch {
         }
     }
 
-    // Go: watcher.go:925 dirWatch.notify
+    // Go: watcher.go:939 dirWatch.notify
     pub fn notify(&self) {
         let (has_pending_cbs, has_terminal, has_events, has_error, db) = {
             let dw = self.mu.lock().unwrap();
@@ -1591,7 +1591,7 @@ impl DirWatch {
         }
     }
 
-    // Go: watcher.go:943 dirWatch.notifyError
+    // Go: watcher.go:957 dirWatch.notifyError
     pub fn notify_error(&self, err: GoError) {
         let cbs = {
             let mut dw = self.mu.lock().unwrap();
@@ -1604,7 +1604,7 @@ impl DirWatch {
         }
     }
 
-    // Go: watcher.go:953 dirWatch.triggerCallbacks
+    // Go: watcher.go:967 dirWatch.triggerCallbacks
     pub fn trigger_callbacks(&self) {
         let (events_by_callback, err, cbs) = {
             let mut dw = self.mu.lock().unwrap();
@@ -1702,7 +1702,7 @@ impl DirWatch {
         }
     }
 
-    // Go: watcher.go:1063 dirWatch.terminateCallbacksForDeletedRoot
+    // Go: watcher.go:1077 dirWatch.terminateCallbacksForDeletedRoot
     pub fn terminate_callbacks_for_deleted_root(&self, path: &str, seq: u64, err: GoError) -> bool {
         let mut dw = self.mu.lock().unwrap();
         let mut changed = false;
@@ -1736,12 +1736,12 @@ impl DirWatch {
 }
 
 impl Callback {
-    // Go: watcher.go:1038 callback.mapEvent
+    // Go: watcher.go:1052 callback.mapEvent
     pub fn map_event(&self, e: Event) -> Event {
         self.map_event_cached(e, None)
     }
 
-    // Go: watcher.go:1042 callback.mapEventCached (ts#64210)
+    // Go: watcher.go:1056 callback.mapEventCached (ts#64210)
     pub fn map_event_cached(&self, mut e: Event, cache: Option<&Mutex<ComparisonCache>>) -> Event {
         if !self.physical_dir.is_empty()
             && (self.physical_dir != self.dir || self.comparer.ignore_case)
@@ -1765,7 +1765,7 @@ impl Callback {
         e
     }
 
-    // Go: watcher.go:1056 callback.eventPhysicalPath
+    // Go: watcher.go:1070 callback.eventPhysicalPath
     pub fn event_physical_path(&self, path: &str) -> String {
         if !self.watch_physical_dir.is_empty()
             && !self.watch_dir.is_empty()
@@ -1778,7 +1778,7 @@ impl Callback {
     }
 }
 
-// Go: watcher.go:1086 isInDirectoryOrSelf
+// Go: watcher.go:1100 isInDirectoryOrSelf
 pub fn is_in_directory_or_self(dir: &str, path: &str) -> bool {
     if dir.is_empty() {
         return false;
@@ -1798,7 +1798,7 @@ pub fn is_in_directory_or_self(dir: &str, path: &str) -> bool {
     is_path_separator(rest.as_bytes()[0])
 }
 
-// Go: watcher.go:1108 isDirectChild
+// Go: watcher.go:1122 isDirectChild
 /// isDirectChild reports whether path is an immediate child of dir.
 /// Both paths must be absolute. Returns false for path == dir.
 pub fn is_direct_child(dir: &str, path: &str) -> bool {
@@ -1818,7 +1818,7 @@ pub fn is_direct_child(dir: &str, path: &str) -> bool {
 }
 
 impl DirWatch {
-    // Go: watcher.go:1123 dirWatch.watch
+    // Go: watcher.go:1137 dirWatch.watch
     pub fn watch(
         &self,
         dir: &str,
@@ -1830,7 +1830,7 @@ impl DirWatch {
         self.add_callback(dir, physical_dir, recursive, fn_, ignore, "")
     }
 
-    // Go: watcher.go:1127 dirWatch.addCallback (ts#64210)
+    // Go: watcher.go:1141 dirWatch.addCallback (ts#64210)
     // PORT: Go reads `dw.sequence()` when it is set; it is always nil here
     // (see `WatcherStruct`).
     pub fn add_callback(
@@ -1866,7 +1866,7 @@ impl DirWatch {
         (id, true)
     }
 
-    // Go: watcher.go:1145 dirWatch.unwatch
+    // Go: watcher.go:1159 dirWatch.unwatch
     pub fn unwatch(&self, id: u64) -> bool {
         let mut dw = self.mu.lock().unwrap();
         for i in 0..dw.callbacks.len() {
@@ -1878,7 +1878,7 @@ impl DirWatch {
         false
     }
 
-    // Go: watcher.go:1157 dirWatch.unref
+    // Go: watcher.go:1171 dirWatch.unref
     pub fn unref(&self, w: &WatcherStruct) {
         let empty = {
             let dw = self.mu.lock().unwrap();

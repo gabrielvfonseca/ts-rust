@@ -309,7 +309,7 @@ pub fn get_output_extension(file_name: &str, jsx: JsxEmit) -> &'static str {
 }
 
 // Go: outputpaths/outputpaths.go:131 GetDeclarationEmitOutputFilePath (at 673a5f17d713;
-// ts#64159 renames it getDeclarationEmitOutputFilePathForFileName, outputpaths/outputpaths.go:128)
+// ts#64159 renames it getDeclarationEmitOutputFilePathForFileName, outputpaths/outputpaths.go:164)
 pub fn get_declaration_emit_output_file_path(
     file: &str,
     options: &CompilerOptions,
@@ -377,7 +377,7 @@ fn change_to_declaration_extension_unexported(path: &str) -> String {
 }
 
 // Go: outputpaths/outputpaths.go:161 GetSourceFilePathInNewDir (at 673a5f17d713;
-// ts#64159 renames it GetSourceFileNameInNewDir, outputpaths/outputpaths.go:178)
+// ts#64159 renames it GetSourceFileNameInNewDir, outputpaths/outputpaths.go:221)
 // tsgo#4900: the same as the worker.
 pub fn get_source_file_path_in_new_dir(
     file_name: &str,
@@ -396,7 +396,7 @@ pub fn get_source_file_path_in_new_dir(
 }
 
 // Go: outputpaths/outputpaths.go:165 getOutputPathWithoutChangingExtension (at 673a5f17d713;
-// ts#64159 renames it getOutputFileNameWithoutChangingExtension, outputpaths/outputpaths.go:163)
+// ts#64159 renames it getOutputFileNameWithoutChangingExtension, outputpaths/outputpaths.go:206)
 fn get_output_path_without_changing_extension(
     input_file_name: &str,
     output_directory: &str,
@@ -419,7 +419,7 @@ fn get_output_path_without_changing_extension(
 }
 
 // Go: outputpaths/outputpaths.go:175 GetSourceFilePathInNewDirWorker (at 673a5f17d713;
-// ts#64159 merges it into GetSourceFileNameInNewDir, outputpaths/outputpaths.go:178)
+// ts#64159 merges it into GetSourceFileNameInNewDir, outputpaths/outputpaths.go:221)
 // tsgo#4900: `TrimFilePathPrefix` cuts the common source directory by runes,
 // not by its byte length.
 pub fn get_source_file_path_in_new_dir_worker(
@@ -430,7 +430,7 @@ pub fn get_source_file_path_in_new_dir_worker(
     use_case_sensitive_file_names: bool,
 ) -> String {
     let source_file_path = get_normalized_absolute_path(file_name, current_directory);
-    // ts#64159 (outputpaths.go:179): a file name equal to the common source
+    // ts#64159 (outputpaths.go:222): a file name equal to the common source
     // directory stays as it is.
     if source_file_path == common_source_directory {
         return source_file_path;
@@ -446,7 +446,7 @@ pub fn get_source_file_path_in_new_dir_worker(
 }
 
 // Go: outputpaths/outputpaths.go:183 getOwnEmitOutputFilePath (at 673a5f17d713;
-// ts#64159 renames it getOwnEmitOutputFilePathForFileName, outputpaths/outputpaths.go:188)
+// ts#64159 renames it getOwnEmitOutputFilePathForFileName, outputpaths/outputpaths.go:231)
 fn get_own_emit_output_file_path(
     file_name: &str,
     options: &CompilerOptions,
@@ -469,7 +469,7 @@ fn get_own_emit_output_file_path(
     emit_output_file_path_without_extension + extension
 }
 
-// Go: outputpaths/outputpaths.go:203 GetSourceMapFilePath
+// Go: outputpaths/outputpaths.go:246 GetSourceMapFilePath
 pub fn get_source_map_file_path(js_file_path: &str, options: &CompilerOptions) -> String {
     if options.source_map.is_true() && !options.inline_source_map.is_true() {
         return format!("{js_file_path}.map");
@@ -477,7 +477,7 @@ pub fn get_source_map_file_path(js_file_path: &str, options: &CompilerOptions) -
     String::new()
 }
 
-// Go: outputpaths/outputpaths.go:210 GetBuildInfoFileName
+// Go: outputpaths/outputpaths.go:253 GetBuildInfoFileName
 // ts#64159: the output name comes from the config file name, and the
 // extension goes last, so an empty or dot stem ("c:/src/p/.json") keeps its
 // directory. A config file on another root than rootDir keeps its own name

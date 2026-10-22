@@ -111,7 +111,7 @@ pub fn begin_profiling(profile_dir: &str, log_writer: Writer) -> ProfileSession 
 }
 
 impl ProfileSession {
-    // Go: pprof/pprof.go:49 Stop
+    // Go: pprof/pprof.go:63 Stop
     // PORT: only `Drop` calls it (Go `defer profileSession.Stop()`).
     fn stop(&mut self) {
         // Go: pprof.StopCPUProfile()
@@ -159,7 +159,7 @@ fn os_create(name: &str) -> File {
     }
 }
 
-// Go: pprof/pprof.go:69 CPUProfiler
+// Go: pprof/pprof.go:83 CPUProfiler
 // CPUProfiler manages on-demand CPU profiling.
 // PORT: the session is `ManuallyDrop` because a Go session that nobody
 // stops stays open: a `CPUProfiler` that drops while profiling must not
@@ -211,7 +211,7 @@ impl CpuProfiler {
         Ok(())
     }
 
-    // Go: pprof/pprof.go:108 StopCPUProfile
+    // Go: pprof/pprof.go:122 StopCPUProfile
     // StopCPUProfile stops CPU profiling and returns the path to the profile file.
     pub fn stop_cpu_profile(&self) -> Result<String, GoError> {
         let mut session = lock(&self.mu);
@@ -275,7 +275,7 @@ pub fn save_alloc_profile(profile_dir: &str) -> Result<String, GoError> {
     Ok(alloc_profile_path)
 }
 
-// Go: pprof/pprof.go:167 RunGC
+// Go: pprof/pprof.go:181 RunGC
 // RunGC triggers garbage collection.
 // PORT: Go `runtime.GC()`. Rust has no garbage collector, so there is
 // nothing to do.

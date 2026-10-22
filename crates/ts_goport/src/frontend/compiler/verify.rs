@@ -62,7 +62,7 @@ fn marshal_json_string(value: &str) -> String {
 // methods that return the index of the new diagnostic in
 // `program_diagnostics`, so a caller can still add a message chain.
 impl NewProgram {
-    // Go: program.go:942 createOptionDiagnosticInObjectLiteralSyntax (closure)
+    // Go: program.go:947 createOptionDiagnosticInObjectLiteralSyntax (closure)
     #[allow(clippy::too_many_arguments)]
     fn create_option_diagnostic_in_object_literal_syntax(
         &mut self,
@@ -97,7 +97,7 @@ impl NewProgram {
         })
     }
 
-    // Go: program.go:952 createCompilerOptionsDiagnostic (closure)
+    // Go: program.go:957 createCompilerOptionsDiagnostic (closure)
     fn create_compiler_options_diagnostic(
         &mut self,
         syntax: &OptionsSyntax,
@@ -118,7 +118,7 @@ impl NewProgram {
         self.program_diagnostics.len() - 1
     }
 
-    // Go: program.go:964 createDiagnosticForOption (closure)
+    // Go: program.go:969 createDiagnosticForOption (closure)
     fn create_diagnostic_for_option(
         &mut self,
         syntax: &OptionsSyntax,
@@ -143,7 +143,7 @@ impl NewProgram {
         }
     }
 
-    // Go: program.go:972 createDiagnosticForOptionName (closure)
+    // Go: program.go:977 createDiagnosticForOptionName (closure)
     fn create_diagnostic_for_option_name(
         &mut self,
         syntax: &OptionsSyntax,
@@ -162,7 +162,7 @@ impl NewProgram {
         );
     }
 
-    // Go: program.go:979 createOptionValueDiagnostic (closure)
+    // Go: program.go:984 createOptionValueDiagnostic (closure)
     fn create_option_value_diagnostic(
         &mut self,
         syntax: &OptionsSyntax,
@@ -173,7 +173,7 @@ impl NewProgram {
         self.create_diagnostic_for_option(syntax, false /*onKey*/, option1, "", message, args);
     }
 
-    // Go: program.go:983 createRemovedOptionDiagnostic (closure)
+    // Go: program.go:988 createRemovedOptionDiagnostic (closure)
     fn create_removed_option_diagnostic(
         &mut self,
         syntax: &OptionsSyntax,
@@ -203,7 +203,7 @@ impl NewProgram {
         }
     }
 
-    // Go: program.go:1126 createDiagnosticForOptionPaths (closure)
+    // Go: program.go:1131 createDiagnosticForOptionPaths (closure)
     // PORT: Go `forEachOptionPathsSyntax` (program.go:1122) is inlined; it is
     // `ForEachPropertyAssignment(getCompilerOptionsObjectLiteralSyntax(), "paths", callback)`.
     fn create_diagnostic_for_option_paths(
@@ -239,7 +239,7 @@ impl NewProgram {
         }
     }
 
-    // Go: program.go:1139 createDiagnosticForOptionPathKeyValue (closure)
+    // Go: program.go:1144 createDiagnosticForOptionPathKeyValue (closure)
     fn create_diagnostic_for_option_path_key_value(
         &mut self,
         syntax: &OptionsSyntax,
@@ -1015,7 +1015,7 @@ impl NewProgram {
         }
     }
 
-    // Go: program.go:1375 verifyEmitFilePath (closure)
+    // Go: program.go:1382 verifyEmitFilePath (closure)
     // Verify that all the emit files are unique and don't overwrite input files
     fn verify_emit_file_path(
         &mut self,
@@ -1063,20 +1063,20 @@ impl NewProgram {
         }
     }
 
-    // Go: program.go:1409 (*Program).blockEmittingOfFile
+    // Go: program.go:1422 (*Program).blockEmittingOfFile
     pub fn block_emitting_of_file(&mut self, emit_file_name: &str, diag: Diagnostic) {
         let path = self.to_path(emit_file_name);
         self.has_emit_blocking_diagnostics.insert(path);
         self.program_diagnostics.push(diag);
     }
 
-    // Go: program.go:1414 (*Program).IsEmitBlocked
+    // Go: program.go:1427 (*Program).IsEmitBlocked
     pub fn is_emit_blocked(&self, emit_file_name: &str) -> bool {
         self.has_emit_blocking_diagnostics
             .contains(&self.to_path(emit_file_name))
     }
 
-    // Go: program.go:1418 (*Program).verifyProjectReferences
+    // Go: program.go:1431 (*Program).verifyProjectReferences
     pub fn verify_project_references(&mut self) {
         let build_info_file_name = if !self.options().suppress_output_path_check.is_true() {
             self.opts.config.get_build_info_file_name()
@@ -1088,7 +1088,7 @@ impl NewProgram {
         // after the range ends.
         let mut diagnostics: Vec<Diagnostic> = Vec::new();
         let mut blocked_paths: Vec<Path> = Vec::new();
-        // Go: program.go:1420 createDiagnosticForReference (closure)
+        // Go: program.go:1433 createDiagnosticForReference (closure)
         let create_diagnostic_for_reference =
             |diagnostics: &mut Vec<Diagnostic>,
              config: &ParsedCommandLine,
@@ -1162,7 +1162,7 @@ impl NewProgram {
     }
 }
 
-// Go: program.go:1455 hasZeroOrOneAsteriskCharacter
+// Go: program.go:1468 hasZeroOrOneAsteriskCharacter
 pub fn has_zero_or_one_asterisk_character(str: &str) -> bool {
     let mut seen_asterisk = false;
     for ch in str.chars() {
@@ -1178,7 +1178,7 @@ pub fn has_zero_or_one_asterisk_character(str: &str) -> bool {
     true
 }
 
-// Go: program.go:1470 moduleResolutionSupportsPackageJsonExportsAndImports
+// Go: program.go:1483 moduleResolutionSupportsPackageJsonExportsAndImports
 pub fn module_resolution_supports_package_json_exports_and_imports(
     module_resolution: ModuleResolutionKind,
 ) -> bool {
@@ -1187,7 +1187,7 @@ pub fn module_resolution_supports_package_json_exports_and_imports(
         || module_resolution == ModuleResolutionKind::BUNDLER
 }
 
-// Go: program.go:1475 emitModuleKindIsNonNodeESM
+// Go: program.go:1488 emitModuleKindIsNonNodeESM
 pub fn emit_module_kind_is_non_node_esm(module_kind: ModuleKind) -> bool {
     module_kind >= ModuleKind::ES2015 && module_kind <= ModuleKind::ES_NEXT
 }

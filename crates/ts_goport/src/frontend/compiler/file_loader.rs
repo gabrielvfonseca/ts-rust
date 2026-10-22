@@ -16,19 +16,19 @@ use crate::spanmap::{MappingError, MappingErrorKind};
 use std::cell::Cell;
 use std::sync::Arc;
 
-// Go: fileloader.go:35 maxContentMapperFailures (tsgo#4712)
+// Go: fileloader.go:36 maxContentMapperFailures (tsgo#4712)
 // maxContentMapperFailures is the number of transform failures a single content mapper may accumulate
 // before it is disabled for the rest of the program.
 const MAX_CONTENT_MAPPER_FAILURES: i32 = 5;
 
-// Go: fileloader.go:27 libResolution
+// Go: fileloader.go:28 libResolution
 pub struct LibResolution {
     pub library_name: String,
     pub resolution: Arc<ResolvedModule>,
     pub trace: Vec<DiagAndArgs>,
 }
 
-// Go: fileloader.go:37 LibFile
+// Go: fileloader.go:38 LibFile
 #[derive(Clone, Debug, Default)]
 pub struct LibFile {
     pub name: String,
@@ -38,18 +38,18 @@ pub struct LibFile {
     pub replaced: bool,
 }
 
-// Go: fileloader.go:44 sourceFileFromReferenceDiagnostic
+// Go: fileloader.go:45 sourceFileFromReferenceDiagnostic
 pub struct SourceFileFromReferenceDiagnostic {
     pub message: &'static Message,
     pub args: Vec<String>,
 }
 
-// Go: fileloader.go:49 fileLoader
+// Go: fileloader.go:50 fileLoader
 // PORT: the Go loader is shared by the parse work group. The port is single
 // threaded (contract 10), so the atomics and sync maps are `Cell` and
 // `RefCell`, and `factoryMu` is not needed. `resolver` is `None` only until
 // `process_all_program_files` sets it, as in Go.
-// Go: fileloader.go:49 fileLoader (ts#64519: `opts ProgramConfig`, `host`,
+// Go: fileloader.go:50 fileLoader (ts#64519: `opts ProgramConfig`, `host`,
 // `tracing`). PORT: `tracing` is the process session.
 pub struct FileLoader {
     pub opts: ProgramConfig,
@@ -119,7 +119,7 @@ pub struct FileLoader {
     pub module_resolution_error: RefCell<Option<GoError>>,
 }
 
-// Go: fileloader.go:84 redirectsFile
+// Go: fileloader.go:85 redirectsFile
 #[derive(Clone, Debug, Default)]
 pub struct RedirectsFile {
     // Index of file at which this redirect file needs to be iterated
@@ -129,7 +129,7 @@ pub struct RedirectsFile {
     pub target: Path,
 }
 
-// Go: fileloader.go:92 DuplicateSourceFile
+// Go: fileloader.go:93 DuplicateSourceFile
 // PORT: Go keeps `Hash xxh3.Uint128` for the language server parse cache.
 // Here `hash` is the hash that a parse cache set on the file
 // (`ParsedSourceFile::hash`), and `text` is kept so the language server can
@@ -164,7 +164,7 @@ impl DuplicateSourceFile {
 }
 
 impl RedirectsFile {
-    // Go: fileloader.go:108 (*redirectsFile).FileName
+    // Go: fileloader.go:109 (*redirectsFile).FileName
     pub fn file_name(&self) -> String {
         self.file_name.clone()
     }
@@ -175,7 +175,7 @@ impl RedirectsFile {
     }
 }
 
-// Go: fileloader.go:116 processedFiles
+// Go: fileloader.go:117 processedFiles
 // PORT: Go nil maps that stay nil until first use are `Option`. Go
 // `*includeProcessor` is owned by value. Go `UpdateProgram` copies this
 // struct and so shares its maps with the old program. The maps that stay
@@ -225,14 +225,14 @@ pub struct ProcessedFiles {
     pub load_stats: super::files_parser::LoadStatCache,
 }
 
-// Go: fileloader.go:161 jsxRuntimeImportSpecifier
+// Go: fileloader.go:162 jsxRuntimeImportSpecifier
 #[derive(Clone, Debug)]
 pub struct JsxRuntimeImportSpecifier {
     pub module_reference: String,
     pub specifier: Node,
 }
 
-// Go: fileloader.go:166 processAllProgramFiles
+// Go: fileloader.go:167 processAllProgramFiles
 // PORT: Go ts#64519 returns the processed files, the resolver's
 // `ResolutionData` and the module resolution error. The module part of
 // ts#64519 is not ported, so the processed files keep the resolver and
@@ -540,7 +540,7 @@ pub fn with_loader_state_forgotten<R>(f: impl FnOnce() -> R) -> R {
     f()
 }
 
-// Go: fileloader.go:465 contentMapperTransformDiagnostic (tsgo#4712)
+// Go: fileloader.go:466 contentMapperTransformDiagnostic (tsgo#4712)
 // PORT: Go `*ast.SourceFile` is the file's SourceFile node. Go
 // `errors.AsType` on a found `*TransformError` searches that error and the
 // errors it wraps (`TransformError::to_go_error`).
@@ -689,7 +689,7 @@ fn content_mapper_transform_diagnostic(file: Node, label: &str, err: &GoError) -
     )
 }
 
-// Go: fileloader.go:521 ContentMapperProjectErrorDiagnostic (tsgo#4712)
+// Go: fileloader.go:522 ContentMapperProjectErrorDiagnostic (tsgo#4712)
 // ContentMapperProjectErrorDiagnostic returns the localized diagnostic message for a project setup error.
 pub fn content_mapper_project_error_diagnostic(err: &GoError) -> &'static Message {
     if let Some(project_error) = errors::as_type::<ProjectError>(err) {
@@ -715,7 +715,7 @@ pub fn content_mapper_project_error_diagnostic(err: &GoError) -> &'static Messag
     diag::The_content_mapper_process_failed_while_handling_the_project_request
 }
 
-// Go: fileloader.go:539 contentMapperTransformDiagnosticChain (tsgo#4712)
+// Go: fileloader.go:540 contentMapperTransformDiagnosticChain (tsgo#4712)
 fn content_mapper_transform_diagnostic_chain(
     file: Node,
     label: &str,
@@ -729,7 +729,7 @@ fn content_mapper_transform_diagnostic_chain(
     )
 }
 
-// Go: fileloader.go:543 contentMapperTransformDiagnosticWithDetail (tsgo#4712)
+// Go: fileloader.go:544 contentMapperTransformDiagnosticWithDetail (tsgo#4712)
 fn content_mapper_transform_diagnostic_with_detail(
     file: Node,
     label: &str,
@@ -745,7 +745,7 @@ fn content_mapper_transform_diagnostic_with_detail(
     diagnostic
 }
 
-// Go: fileloader.go:554 contentMapperMappingDiagnostic (tsgo#4712)
+// Go: fileloader.go:555 contentMapperMappingDiagnostic (tsgo#4712)
 // contentMapperMappingDiagnostic builds the diagnostic reported against a mapper that produced an
 // invalid span map, including the offsets involved so the mapper's author can locate the problem.
 fn content_mapper_mapping_diagnostic(
@@ -794,7 +794,7 @@ fn content_mapper_mapping_diagnostic(
     }
 }
 
-// Go: fileloader.go:599 ContentMapperInitializationDiagnostic (tsgo#4712)
+// Go: fileloader.go:600 ContentMapperInitializationDiagnostic (tsgo#4712)
 // ContentMapperInitializationDiagnostic returns a fileless diagnostic for a mapper initialization failure.
 pub fn content_mapper_initialization_diagnostic(label: &str, err: &GoError) -> Diagnostic {
     let initialize_error = errors::as_type::<InitializeError>(err);
@@ -851,7 +851,7 @@ pub fn content_mapper_initialization_diagnostic(label: &str, err: &GoError) -> D
     diagnostic
 }
 
-// Go: fileloader.go:628 ContentMapperProjectDiagnostic (tsgo#4712)
+// Go: fileloader.go:629 ContentMapperProjectDiagnostic (tsgo#4712)
 // ContentMapperProjectDiagnostic returns a fileless diagnostic for project setup or mapper initialization.
 pub fn content_mapper_project_diagnostic(err: &GoError) -> Diagnostic {
     if errors::as_type::<InitializeError>(err).is_some() {
@@ -861,7 +861,7 @@ pub fn content_mapper_project_diagnostic(err: &GoError) -> Diagnostic {
 }
 
 impl FileLoader {
-    // Go: fileloader.go:238 (*fileLoader).toPath
+    // Go: fileloader.go:239 (*fileLoader).toPath
     pub fn to_path(&self, file: &str) -> Path {
         to_path(
             file,
@@ -882,7 +882,7 @@ impl FileLoader {
         &resolved.resolved_path
     }
 
-    // Go: fileloader.go:242 (*fileLoader).addRootTask
+    // Go: fileloader.go:243 (*fileLoader).addRootTask
     pub fn add_root_task(
         &mut self,
         file_name: &str,
@@ -907,7 +907,7 @@ impl FileLoader {
         }
     }
 
-    // Go: fileloader.go:253 (*fileLoader).addRootFileTask
+    // Go: fileloader.go:254 (*fileLoader).addRootFileTask
     // ts#64159: `reference_text` is the diagnostic text of the root file.
     pub fn add_root_file_task(
         &mut self,
@@ -938,7 +938,7 @@ impl FileLoader {
         self.root_tasks.push(Rc::new(RefCell::new(root_task)));
     }
 
-    // Go: fileloader.go:277 (*fileLoader).addAutomaticTypeDirectiveTasks
+    // Go: fileloader.go:278 (*fileLoader).addAutomaticTypeDirectiveTasks
     pub fn add_automatic_type_directive_tasks(&mut self) {
         let containing_directory;
         let compiler_options = self.opts.config.compiler_options();
@@ -956,7 +956,7 @@ impl FileLoader {
         })));
     }
 
-    // Go: fileloader.go:286 (*fileLoader).resolveAutomaticTypeDirectives
+    // Go: fileloader.go:287 (*fileLoader).resolveAutomaticTypeDirectives
     #[allow(clippy::type_complexity)]
     pub fn resolve_automatic_type_directives(
         &self,
@@ -1055,7 +1055,7 @@ impl FileLoader {
         )
     }
 
-    // Go: fileloader.go:340 (*fileLoader).addProjectReferenceTasks
+    // Go: fileloader.go:341 (*fileLoader).addProjectReferenceTasks
     // PORT: Go makes the project reference file mapper here. The port makes
     // it in `process_all_program_files`, because the loader struct needs a
     // value for the field. It is made from the same `opts` and host, so the
@@ -1110,7 +1110,7 @@ impl FileLoader {
         LIBS.len() + 2
     }
 
-    // Go: fileloader.go:382 (*fileLoader).loadSourceFileMetaData
+    // Go: fileloader.go:383 (*fileLoader).loadSourceFileMetaData
     pub fn load_source_file_meta_data(&self, file_name: &str) -> SourceFileMetaData {
         if self.opts.skip_module_resolution {
             return SourceFileMetaData {
@@ -1126,7 +1126,7 @@ impl FileLoader {
         )
     }
 
-    // Go: fileloader.go:412 (*fileLoader).parseSourceFile
+    // Go: fileloader.go:413 (*fileLoader).parseSourceFile
     pub fn parse_source_file(&self, t: &ParseTask) -> Option<Rc<ParsedSourceFile>> {
         let _trace = crate::tracing::get().map(|tr| {
             tr.push(
@@ -1168,7 +1168,7 @@ impl FileLoader {
         self.host.get_source_file(&parse_options)
     }
 
-    // Go: fileloader.go:436 (*fileLoader).parseContentMappedFile (tsgo#4712)
+    // Go: fileloader.go:437 (*fileLoader).parseContentMappedFile (tsgo#4712)
     // parseContentMappedFile produces a content-mapped virtual source file via the host's content
     // mapper, preserving the original file name and retaining the untransformed text on the
     // source file. Content mapper extensions only reach the parser when content mappers are configured.
@@ -1243,7 +1243,7 @@ impl FileLoader {
         }
     }
 
-    // Go: fileloader.go:576 (*fileLoader).getContentMapperTransformIdentity (tsgo#4712)
+    // Go: fileloader.go:577 (*fileLoader).getContentMapperTransformIdentity (tsgo#4712)
     // PORT: Go `fmt.Sprintf("%x", u.Bytes())` of the `xxh3.Uint128` is the
     // 32 hex digits of the `u128`.
     fn get_content_mapper_transform_identity(&self, mapper: &Rc<Mapper>) -> String {
@@ -1258,7 +1258,7 @@ impl FileLoader {
         )
     }
 
-    // Go: fileloader.go:585 (*fileLoader).emptyContentMappedFile (tsgo#4712)
+    // Go: fileloader.go:586 (*fileLoader).emptyContentMappedFile (tsgo#4712)
     // emptyContentMappedFile produces an empty TypeScript source file for a content-mapped file whose
     // transform could not be used, retaining the original content for diagnostics. Importers see it as an
     // empty module rather than triggering a "cannot find module" error. It is still marked as content-mapped
@@ -1347,7 +1347,7 @@ impl FileLoader {
         }
     }
 
-    // Go: fileloader.go:636 (*fileLoader).contentMapperUnavailable (tsgo#4712)
+    // Go: fileloader.go:637 (*fileLoader).contentMapperUnavailable (tsgo#4712)
     // contentMapperUnavailable reports whether mapper failed initialization or exceeded its failure budget.
     fn content_mapper_unavailable(&self, mapper: Option<&Rc<Mapper>>) -> bool {
         let Some(mapper) = mapper else {
@@ -1364,7 +1364,7 @@ impl FileLoader {
                 >= MAX_CONTENT_MAPPER_FAILURES
     }
 
-    // Go: fileloader.go:645 (*fileLoader).recordContentMapperInitializationFailure (tsgo#4712)
+    // Go: fileloader.go:646 (*fileLoader).recordContentMapperInitializationFailure (tsgo#4712)
     fn record_content_mapper_initialization_failure(
         &self,
         mapper: &Rc<Mapper>,
@@ -1384,7 +1384,7 @@ impl FileLoader {
         self.disable_concurrent_transform(mapper);
     }
 
-    // Go: fileloader.go:658 (*fileLoader).recordContentMapperFailure (tsgo#4712)
+    // Go: fileloader.go:659 (*fileLoader).recordContentMapperFailure (tsgo#4712)
     // recordContentMapperFailure counts a transform failure for mapper. It returns whether the failure
     // should be reported for this file (false once the mapper is already disabled). On the failure that
     // reaches maxContentMapperFailures it appends a single program diagnostic disabling the mapper.
@@ -1408,7 +1408,7 @@ impl FileLoader {
         true
     }
 
-    // Go: fileloader.go:678 (*fileLoader).isSupportedExtension
+    // Go: fileloader.go:679 (*fileLoader).isSupportedExtension
     pub fn is_supported_extension(&self, canonical_file_name: &str) -> bool {
         for group in &self.supported_extensions_with_json_if_resolve_json_module {
             let group: Vec<&str> = group.iter().map(String::as_str).collect();
@@ -1419,7 +1419,7 @@ impl FileLoader {
         false
     }
 
-    // Go: fileloader.go:682 (*fileLoader).getSourceFileFromReference
+    // Go: fileloader.go:683 (*fileLoader).getSourceFileFromReference
     // ts#64159: the "A file cannot have a reference to itself" check moved
     // to `resolve_tripleslash_path_reference`, after the extension lookup.
     pub fn get_source_file_from_reference(
@@ -1516,7 +1516,7 @@ impl FileLoader {
         )
     }
 
-    // Go: fileloader.go:723 (*fileLoader).resolveTripleslashPathReference
+    // Go: fileloader.go:728 (*fileLoader).resolveTripleslashPathReference
     pub fn resolve_tripleslash_path_reference(
         &self,
         module_name: &str,
@@ -1579,7 +1579,7 @@ impl FileLoader {
         )
     }
 
-    // Go: fileloader.go:765 (*fileLoader).resolveTypeReferenceDirectives
+    // Go: fileloader.go:770 (*fileLoader).resolveTypeReferenceDirectives
     pub fn resolve_type_reference_directives(&self, t: &mut ParseTask) {
         let file = t
             .file
@@ -1681,11 +1681,11 @@ impl FileLoader {
         t.type_resolutions_trace = type_resolutions_trace;
     }
 
-    // Go: fileloader.go:819 externalHelpersModuleNameText
+    // Go: fileloader.go:824 externalHelpersModuleNameText
     // PORT: the Go constant is `EXTERNAL_HELPERS_MODULE_NAME_TEXT` in
     // checker/types.rs. It is reused here.
 
-    // Go: fileloader.go:821 (*fileLoader).resolveImportsAndModuleAugmentations
+    // Go: fileloader.go:826 (*fileLoader).resolveImportsAndModuleAugmentations
     pub(crate) fn resolve_imports_and_module_augmentations(
         &self,
         t: &mut ParseTask,
@@ -1806,7 +1806,7 @@ impl FileLoader {
                         _ => (entry.text(), import_usage(entry), None, None),
                     };
                 // ts#63915: a source phase import is not resolved
-                // (fileloader.go:875).
+                // (fileloader.go:880).
                 if module_name.is_empty()
                     || source_phase.unwrap_or_else(|| is_source_phase_import(entry.parent()))
                 {
@@ -2016,7 +2016,7 @@ impl FileLoader {
         }
     }
 
-    // Go: fileloader.go:943 (*fileLoader).createSyntheticImport
+    // Go: fileloader.go:960 (*fileLoader).createSyntheticImport
     pub fn create_synthetic_import(&self, text: &str, file: &ParsedSourceFile) -> Node {
         let external_helpers_module_reference =
             self.factory.new_string_literal(text, TokenFlags::NONE);
@@ -2031,7 +2031,7 @@ impl FileLoader {
         external_helpers_module_reference
     }
 
-    // Go: fileloader.go:953 (*fileLoader).pathForLibFile
+    // Go: fileloader.go:970 (*fileLoader).pathForLibFile
     pub fn path_for_lib_file(&self, name: &str) -> Rc<LibFile> {
         if let Some(cached) = self.path_for_lib_file_cache.borrow().get(name) {
             return cached.clone();
@@ -2087,7 +2087,7 @@ impl FileLoader {
             .clone()
     }
 
-    // Go: fileloader.go:981 (*fileLoader).resolveLibrary
+    // Go: fileloader.go:998 (*fileLoader).resolveLibrary
     pub fn resolve_library(
         &self,
         library_name: &str,
@@ -2155,7 +2155,7 @@ pub fn package_json_type_applies(
 /// The body of Go `(*fileLoader).loadSourceFileMetaData` with the loader's
 /// resolver and options as parameters, so a parse worker can run it with
 /// its own resolver (`files_parser.rs`).
-// Go: fileloader.go:382 (*fileLoader).loadSourceFileMetaData
+// Go: fileloader.go:383 (*fileLoader).loadSourceFileMetaData
 // PORT: the scope is the parts of it that this function reads
 // (`PackageScope`). In a resolve-ahead load, the loader takes the scope that
 // the workers found, or the scope that it found for the directory before
@@ -2177,7 +2177,7 @@ pub(crate) fn source_file_meta_data(
 /// The metadata of `file_name` in the package scope `package_json_scope`
 /// (`source_file_meta_data` after its scope lookup). A parse worker finds
 /// the scope of a directory once for all its files (`FilePrep`).
-// Go: fileloader.go:382 (*fileLoader).loadSourceFileMetaData
+// Go: fileloader.go:383 (*fileLoader).loadSourceFileMetaData
 pub(crate) fn meta_of_package_scope(
     package_json_scope: Option<PackageScope>,
     options: &CompilerOptions,
@@ -2216,7 +2216,7 @@ pub(crate) fn workers_resolve_imports(options: &CompilerOptions) -> bool {
             || kind == ModuleResolutionKind::BUNDLER)
 }
 
-// Go: fileloader.go:994 getLibraryNameFromLibFileName
+// Go: fileloader.go:1011 getLibraryNameFromLibFileName
 pub fn get_library_name_from_lib_file_name(lib_file_name: &str) -> String {
     // Support resolving to lib.dom.d.ts -> @typescript/lib-dom, and
     //                      lib.dom.iterable.d.ts -> @typescript/lib-dom/iterable
@@ -2239,7 +2239,7 @@ pub fn get_library_name_from_lib_file_name(lib_file_name: &str) -> String {
     path
 }
 
-// Go: fileloader.go:1017 getInferredLibraryNameResolveFrom
+// Go: fileloader.go:1034 getInferredLibraryNameResolveFrom
 pub fn get_inferred_library_name_resolve_from(
     options: &CompilerOptions,
     current_directory: &str,
@@ -2256,7 +2256,7 @@ pub fn get_inferred_library_name_resolve_from(
     )
 }
 
-// Go: fileloader.go:1021 getModeForTypeReferenceDirectiveInFile
+// Go: fileloader.go:1038 getModeForTypeReferenceDirectiveInFile
 pub fn get_mode_for_type_reference_directive_in_file(
     ref_: &FileReference,
     file: &ParsedSourceFile,
@@ -2270,7 +2270,7 @@ pub fn get_mode_for_type_reference_directive_in_file(
     }
 }
 
-// Go: fileloader.go:1029 getDefaultResolutionModeForFile
+// Go: fileloader.go:1046 getDefaultResolutionModeForFile
 // PORT: private, because program.rs has a public
 // `get_default_resolution_mode_for_file` (Go program.go) with another shape.
 pub(crate) fn get_default_resolution_mode_for_file(
@@ -2285,7 +2285,7 @@ pub(crate) fn get_default_resolution_mode_for_file(
     }
 }
 
-// Go: fileloader.go:1037 getModeForUsageLocation
+// Go: fileloader.go:1054 getModeForUsageLocation
 // PORT: private, because program.rs has a public `get_mode_for_usage_location`
 // (Go program.go) with another shape. Go `options` can be nil (`None`). The
 // node reads are `import_usage`, and the rest is `mode_for_import_usage`,
@@ -2320,7 +2320,7 @@ pub(crate) enum ImportUsage {
 /// The node reads of Go `getModeForUsageLocation` for the module name
 /// `usage`, in their order, and those of
 /// `getEmitSyntaxForUsageLocationWorker` (`emit_usage`).
-// Go: fileloader.go:1037 getModeForUsageLocation
+// Go: fileloader.go:1054 getModeForUsageLocation
 fn import_usage(usage: Node) -> ImportUsage {
     let parent = usage.parent();
     if is_import_declaration(parent)
@@ -2361,7 +2361,7 @@ fn import_usage(usage: Node) -> ImportUsage {
 
 /// The node reads of Go `getEmitSyntaxForUsageLocationWorker` for a module
 /// name whose parent is `parent`.
-// Go: fileloader.go:1075 getEmitSyntaxForUsageLocationWorker
+// Go: fileloader.go:1092 getEmitSyntaxForUsageLocationWorker
 fn emit_usage(parent: Node) -> ImportUsage {
     if is_require_call(parent, false /*requireStringLiteralLikeArgument*/)
         || is_external_module_reference(parent) && is_import_equals_declaration(parent.parent())
@@ -2382,7 +2382,7 @@ fn emit_usage(parent: Node) -> ImportUsage {
 /// Go `getModeForUsageLocation` for a module name of `usage` in
 /// `file_name`. `file_emit_mode` keeps the file's emit format for the other
 /// names of the file (`emit_syntax_for_usage`).
-// Go: fileloader.go:1037 getModeForUsageLocation
+// Go: fileloader.go:1054 getModeForUsageLocation
 pub(crate) fn mode_for_import_usage(
     usage: ImportUsage,
     file_name: &str,
@@ -2509,7 +2509,7 @@ fn drop_dead_import_names() {
     });
 }
 
-// Go: fileloader.go:1069 importSyntaxAffectsModuleResolution
+// Go: fileloader.go:1086 importSyntaxAffectsModuleResolution
 fn import_syntax_affects_module_resolution(options: &CompilerOptions) -> bool {
     let module_resolution = options.get_module_resolution_kind();
     ModuleResolutionKind::NODE16 <= module_resolution
@@ -2518,7 +2518,7 @@ fn import_syntax_affects_module_resolution(options: &CompilerOptions) -> bool {
         || options.get_resolve_package_json_imports()
 }
 
-// Go: fileloader.go:1075 getEmitSyntaxForUsageLocationWorker
+// Go: fileloader.go:1092 getEmitSyntaxForUsageLocationWorker
 pub(crate) fn get_emit_syntax_for_usage_location_worker(
     file_name: &str,
     meta: &SourceFileMetaData,
@@ -2538,7 +2538,7 @@ pub(crate) fn get_emit_syntax_for_usage_location_worker(
 /// (`emit_usage`). `file_emit_mode` keeps Go `GetEmitModuleFormatOfFileWorker`
 /// of the file, which reads only the file name, the options and the
 /// metadata, for the other names of the file.
-// Go: fileloader.go:1075 getEmitSyntaxForUsageLocationWorker
+// Go: fileloader.go:1092 getEmitSyntaxForUsageLocationWorker
 fn emit_syntax_for_usage(
     usage: ImportUsage,
     file_name: &str,
@@ -2594,7 +2594,7 @@ pub(crate) fn guess_import_mode(
     if !import_syntax_affects_module_resolution(options) {
         return RESOLUTION_MODE_NONE;
     }
-    // Go: fileloader.go:1075 getEmitSyntaxForUsageLocationWorker, for a
+    // Go: fileloader.go:1092 getEmitSyntaxForUsageLocationWorker, for a
     // usage that is not a require or an import call.
     let file_emit_mode = get_emit_module_format_of_file_worker(file_name, options, meta);
     if file_emit_mode == ModuleKind::COMMON_JS {
@@ -2608,7 +2608,7 @@ pub(crate) fn guess_import_mode(
 /// The synthetic imports of a file (Go `resolveImportsAndModuleAugmentations`,
 /// before its imports): `tslib` for `importHelpers`, then the JSX runtime
 /// import. The parse worker of the file resolves them too (`FilePrep`).
-// Go: fileloader.go:826 to :844 (resolveImportsAndModuleAugmentations)
+// Go: fileloader.go:835 to :858 (resolveImportsAndModuleAugmentations)
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct SyntheticImports {
     /// The file gets the `tslib` import (`EXTERNAL_HELPERS_MODULE_NAME_TEXT`).

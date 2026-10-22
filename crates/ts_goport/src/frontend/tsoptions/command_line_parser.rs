@@ -450,7 +450,7 @@ impl CommandLineParser {
         i
     }
 
-    // Go: tsoptions/commandlineparser.go:338 (*commandLineParser).parseListTypeOption
+    // Go: tsoptions/commandlineparser.go:340 (*commandLineParser).parseListTypeOption
     pub fn parse_list_type_option(
         &self,
         opt: &'static CommandLineOption,
@@ -460,7 +460,7 @@ impl CommandLineParser {
     }
 }
 
-// Go: tsoptions/commandlineparser.go:342 ParseListTypeOption
+// Go: tsoptions/commandlineparser.go:344 ParseListTypeOption
 // PORT: Go returns `[]any`: a `List`, or a `NilList` when `core.MapFiltered`
 // keeps no element (for example `--types ,`), so the option stays unset.
 pub fn parse_list_type_option(
@@ -558,7 +558,7 @@ fn map_filtered_list(values: Vec<CompilerOptionsValue>) -> CompilerOptionsValue 
     }
 }
 
-// Go: tsoptions/commandlineparser.go:387 convertJsonOptionOfEnumType
+// Go: tsoptions/commandlineparser.go:389 convertJsonOptionOfEnumType
 pub fn convert_json_option_of_enum_type(
     opt: &CommandLineOption,
     value: &str,

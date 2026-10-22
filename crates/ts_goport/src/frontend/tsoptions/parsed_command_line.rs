@@ -476,7 +476,7 @@ pub struct ParsedCommandLine {
     pub locale: OnceCell<crate::locale::Locale>,
 }
 
-// Go: tsoptions/parsedcommandline.go:80 NewParsedCommandLine
+// Go: tsoptions/parsedcommandline.go:83 NewParsedCommandLine
 // PORT: Go returns a new pointer; this returns the value. A nil
 // `projectReferences` slice is `None`.
 pub fn new_parsed_command_line(
@@ -498,7 +498,7 @@ pub fn new_parsed_command_line(
 }
 
 impl ParsedCommandLine {
-    // Go: tsoptions/parsedcommandline.go:98 (*ParsedCommandLine).WithFileNames (tsgo#4712)
+    // Go: tsoptions/parsedcommandline.go:101 (*ParsedCommandLine).WithFileNames (tsgo#4712)
     // PORT: Go returns a new pointer; this returns the value. Go copies the
     // cached `wildcardDirectories` map and `includeGlobs` slice but not their
     // `sync.Once`; this clones both cache cells, as
@@ -524,7 +524,7 @@ impl ParsedCommandLine {
     }
 }
 
-// Go: tsoptions/parsedcommandline.go:127 SourceOutputAndProjectReference
+// Go: tsoptions/parsedcommandline.go:130 SourceOutputAndProjectReference
 // PORT: Go `Resolved *ParsedCommandLine` points back at the command line
 // that owns the map. An `Rc` would make a reference cycle, so this is a
 // `Weak`. `ParsedCommandLine::parse_input_output_names` takes `&Rc<Self>`.
@@ -540,7 +540,7 @@ pub struct SourceOutputAndProjectReference {
 // are satisfied by the methods below; there is no Rust trait to assert.
 
 impl ParsedCommandLine {
-    // Go: tsoptions/parsedcommandline.go:140 (*ParsedCommandLine).ConfigName
+    // Go: tsoptions/parsedcommandline.go:143 (*ParsedCommandLine).ConfigName
     pub fn config_name(&self) -> &'static str {
         let Some(config_file) = &self.config_file else {
             return "";
@@ -548,7 +548,7 @@ impl ParsedCommandLine {
         source_file_file_name(config_file.source_file)
     }
 
-    // Go: tsoptions/parsedcommandline.go:154 (*ParsedCommandLine).SourceToProjectReference
+    // Go: tsoptions/parsedcommandline.go:157 (*ParsedCommandLine).SourceToProjectReference
     // PORT: Go returns a nil map before `ParseInputOutputNames`; that is `None`.
     pub fn source_to_project_reference(
         &self,
@@ -558,7 +558,7 @@ impl ParsedCommandLine {
             .map(|m| &m.source_to_project_reference)
     }
 
-    // Go: tsoptions/parsedcommandline.go:158 (*ParsedCommandLine).OutputDtsToProjectReference
+    // Go: tsoptions/parsedcommandline.go:161 (*ParsedCommandLine).OutputDtsToProjectReference
     // PORT: Go returns a nil map before `ParseInputOutputNames`; that is `None`.
     pub fn output_dts_to_project_reference(
         &self,
@@ -568,7 +568,7 @@ impl ParsedCommandLine {
             .map(|m| &m.output_dts_to_project_reference)
     }
 
-    // Go: tsoptions/parsedcommandline.go:162 (*ParsedCommandLine).ParseInputOutputNames
+    // Go: tsoptions/parsedcommandline.go:165 (*ParsedCommandLine).ParseInputOutputNames
     pub fn parse_input_output_names(self: &Rc<Self>) {
         self.source_and_output_maps.get_or_init(|| {
             let mut source_to_output: FxHashMap<Path, Rc<SourceOutputAndProjectReference>> =
@@ -606,7 +606,7 @@ impl ParsedCommandLine {
         });
     }
 
-    // Go: tsoptions/parsedcommandline.go:185 (*ParsedCommandLine).CommonSourceDirectory
+    // Go: tsoptions/parsedcommandline.go:188 (*ParsedCommandLine).CommonSourceDirectory
     // PORT: Go passes `checkSourceFilesBelongToPath`, which appends to
     // `Errors`. This method takes `&self`, so those diagnostics go to
     // `common_source_directory_errors` instead, and the readers of Go
@@ -667,7 +667,7 @@ impl ParsedCommandLine {
             .collect()
     }
 
-    // Go: tsoptions/parsedcommandline.go:204 (*ParsedCommandLine).checkSourceFilesBelongToPath
+    // Go: tsoptions/parsedcommandline.go:207 (*ParsedCommandLine).checkSourceFilesBelongToPath
     pub fn check_source_files_belong_to_path(
         &self,
         source_files: &[String],
@@ -703,7 +703,7 @@ impl ParsedCommandLine {
         self.compare_paths_options.use_case_sensitive_file_names
     }
 
-    // Go: tsoptions/parsedcommandline.go:224 (*ParsedCommandLine).getOutputDeclarationAndSourceFileNames
+    // Go: tsoptions/parsedcommandline.go:227 (*ParsedCommandLine).getOutputDeclarationAndSourceFileNames
     // PORT: Go `iter.Seq2[dtsName, inputName]` is an eager `Vec` of pairs.
     pub fn get_output_declaration_and_source_file_names(&self) -> Vec<(String, String)> {
         let mut result = Vec::new();
@@ -722,7 +722,7 @@ impl ParsedCommandLine {
         result
     }
 
-    // Go: tsoptions/parsedcommandline.go:238 (*ParsedCommandLine).GetOutputFileNames
+    // Go: tsoptions/parsedcommandline.go:241 (*ParsedCommandLine).GetOutputFileNames
     // PORT: Go `iter.Seq[string]` is a lazy iterator, and so is this: each
     // name is made when the caller asks for it. A caller that stops early
     // (the `-b` up-to-date check, `FirstOrNilSeq`) makes no later name, so
@@ -767,7 +767,7 @@ impl ParsedCommandLine {
             })
     }
 
-    // Go: tsoptions/parsedcommandline.go:278 (*ParsedCommandLine).GetBuildInfoFileName
+    // Go: tsoptions/parsedcommandline.go:281 (*ParsedCommandLine).GetBuildInfoFileName
     pub fn get_build_info_file_name(&self) -> String {
         get_build_info_file_name(
             &self.parsed_config.compiler_options,
@@ -775,7 +775,7 @@ impl ParsedCommandLine {
         )
     }
 
-    // Go: tsoptions/parsedcommandline.go:283 (*ParsedCommandLine).WildcardDirectories
+    // Go: tsoptions/parsedcommandline.go:286 (*ParsedCommandLine).WildcardDirectories
     /// Returns the cached wildcard directories, initializing them if needed.
     /// PORT: Go dereferences `ConfigFile.configFileSpecs` and panics when
     /// either is nil; `expect` does the same.
@@ -794,7 +794,7 @@ impl ParsedCommandLine {
         })
     }
 
-    // Go: tsoptions/parsedcommandline.go:303 (*ParsedCommandLine).WildcardDirectoryGlobs
+    // Go: tsoptions/parsedcommandline.go:306 (*ParsedCommandLine).WildcardDirectoryGlobs
     // PORT: Go returns nil when `WildcardDirectories` is a nil map. The Rust
     // map is empty there, which gives an empty list; the caller only tests
     // the length and the members. Go builds the list in map order, which
@@ -819,7 +819,7 @@ impl ParsedCommandLine {
         })
     }
 
-    // Go: tsoptions/parsedcommandline.go:327 (*ParsedCommandLine).LiteralFileNames
+    // Go: tsoptions/parsedcommandline.go:330 (*ParsedCommandLine).LiteralFileNames
     /// Normalized file names explicitly specified in `files`
     /// PORT: Go returns nil without a config file; that is an empty slice.
     pub fn literal_file_names(&self) -> &[String] {
@@ -829,38 +829,38 @@ impl ParsedCommandLine {
         &[]
     }
 
-    // Go: tsoptions/parsedcommandline.go:334 (*ParsedCommandLine).SetParsedOptions
+    // Go: tsoptions/parsedcommandline.go:337 (*ParsedCommandLine).SetParsedOptions
     pub fn set_parsed_options(&mut self, o: ParsedOptions) {
         self.parsed_config = o;
     }
 
-    // Go: tsoptions/parsedcommandline.go:338 (*ParsedCommandLine).SetCompilerOptions
+    // Go: tsoptions/parsedcommandline.go:341 (*ParsedCommandLine).SetCompilerOptions
     pub fn set_compiler_options(&mut self, o: Rc<CompilerOptions>) {
         self.parsed_config.compiler_options = o;
     }
 
-    // Go: tsoptions/parsedcommandline.go:342 (*ParsedCommandLine).CompilerOptions
+    // Go: tsoptions/parsedcommandline.go:345 (*ParsedCommandLine).CompilerOptions
     pub fn compiler_options(&self) -> &Rc<CompilerOptions> {
         &self.parsed_config.compiler_options
     }
 
-    // Go: tsoptions/parsedcommandline.go:349 (*ParsedCommandLine).SetTypeAcquisition
+    // Go: tsoptions/parsedcommandline.go:352 (*ParsedCommandLine).SetTypeAcquisition
     pub fn set_type_acquisition(&mut self, o: Option<TypeAcquisition>) {
         self.parsed_config.type_acquisition = o;
     }
 
-    // Go: tsoptions/parsedcommandline.go:353 (*ParsedCommandLine).TypeAcquisition
+    // Go: tsoptions/parsedcommandline.go:356 (*ParsedCommandLine).TypeAcquisition
     pub fn type_acquisition(&self) -> Option<&TypeAcquisition> {
         self.parsed_config.type_acquisition.as_ref()
     }
 
-    // Go: tsoptions/parsedcommandline.go:358 (*ParsedCommandLine).FileNames
+    // Go: tsoptions/parsedcommandline.go:361 (*ParsedCommandLine).FileNames
     /// All file names matched by files, include, and exclude patterns
     pub fn file_names(&self) -> &[String] {
         &self.parsed_config.file_names
     }
 
-    // Go: tsoptions/parsedcommandline.go:362 (*ParsedCommandLine).RootFileNameForDiagnostic (ts#64159)
+    // Go: tsoptions/parsedcommandline.go:365 (*ParsedCommandLine).RootFileNameForDiagnostic (ts#64159)
     /// The text of root file `index` in the root file diagnostics: the name
     /// as the command line gave it, else the rooted file name.
     pub fn root_file_name_for_diagnostic(&self, index: usize) -> &str {
@@ -890,7 +890,7 @@ impl ParsedCommandLine {
         })
     }
 
-    // Go: tsoptions/parsedcommandline.go:380 (*ParsedCommandLine).ProjectReferences
+    // Go: tsoptions/parsedcommandline.go:383 (*ParsedCommandLine).ProjectReferences
     /// PORT: a nil Go slice is an empty slice here. Use
     /// `has_project_references` for Go `ProjectReferences() != nil`.
     pub fn project_references(&self) -> &[ProjectReference] {
@@ -906,12 +906,12 @@ impl ParsedCommandLine {
         self.parsed_config.project_references.is_some()
     }
 
-    // Go: tsoptions/parsedcommandline.go:384 (*ParsedCommandLine).ContentMappers (tsgo#4712)
+    // Go: tsoptions/parsedcommandline.go:387 (*ParsedCommandLine).ContentMappers (tsgo#4712)
     pub fn content_mappers(&self) -> &[Rc<Mapper>] {
         &self.parsed_config.content_mappers
     }
 
-    // Go: tsoptions/parsedcommandline.go:393 (*ParsedCommandLine).ContentMapperExtensions (tsgo#4712)
+    // Go: tsoptions/parsedcommandline.go:396 (*ParsedCommandLine).ContentMapperExtensions (tsgo#4712)
     // ContentMapperExtensions returns the flattened list of file extensions registered by the
     // config's content mappers.
     // PORT: Go builds a new slice on each call (`core.FlatMap`).
@@ -970,7 +970,7 @@ impl ParsedCommandLine {
         result
     }
 
-    // Go: tsoptions/parsedcommandline.go:401 (*ParsedCommandLine).GetContentMapperForFileName (tsgo#4712)
+    // Go: tsoptions/parsedcommandline.go:452 (*ParsedCommandLine).GetContentMapperForFileName (tsgo#4712)
     // GetContentMapperForFileName returns the configured content mapper whose extensions include fileName,
     // or nil if no content mapper is registered for the file's extension.
     // PORT: Go nil is `None`.
@@ -992,7 +992,7 @@ impl ParsedCommandLine {
         None
     }
 
-    // Go: tsoptions/parsedcommandline.go:414 (*ParsedCommandLine).ResolvedProjectReferencePaths
+    // Go: tsoptions/parsedcommandline.go:465 (*ParsedCommandLine).ResolvedProjectReferencePaths
     pub fn resolved_project_reference_paths(&self) -> &[String] {
         self.resolved_project_reference_paths.get_or_init(|| {
             self.project_references()
@@ -1002,7 +1002,7 @@ impl ParsedCommandLine {
         })
     }
 
-    // Go: tsoptions/parsedcommandline.go:421 (*ParsedCommandLine).ExtendedSourceFiles
+    // Go: tsoptions/parsedcommandline.go:472 (*ParsedCommandLine).ExtendedSourceFiles
     /// PORT: Go returns nil without a config file; that is an empty slice.
     pub fn extended_source_files(&self) -> &[String] {
         match &self.config_file {
@@ -1011,7 +1011,7 @@ impl ParsedCommandLine {
         }
     }
 
-    // Go: tsoptions/parsedcommandline.go:428 (*ParsedCommandLine).GetConfigFileParsingDiagnostics
+    // Go: tsoptions/parsedcommandline.go:479 (*ParsedCommandLine).GetConfigFileParsingDiagnostics
     // PORT: Go `p.Errors` is `errors_with_common_source_directory_errors`.
     pub fn get_config_file_parsing_diagnostics(&self) -> Vec<Diagnostic> {
         if let Some(config_file) = &self.config_file {
@@ -1038,7 +1038,7 @@ impl ParsedCommandLine {
         errors
     }
 
-    // Go: tsoptions/parsedcommandline.go:438 (*ParsedCommandLine).PossiblyMatchesFileName
+    // Go: tsoptions/parsedcommandline.go:489 (*ParsedCommandLine).PossiblyMatchesFileName
     /// A fast check to see if a file is currently included by a config
     /// or would be included if the file were to be created. It may return false positives.
     pub fn possibly_matches_file_name(&self, file_name: &str) -> bool {
@@ -1086,7 +1086,7 @@ impl ParsedCommandLine {
         false
     }
 
-    // Go: tsoptions/parsedcommandline.go:470 (*ParsedCommandLine).PossiblyMatchesDirectoryName
+    // Go: tsoptions/parsedcommandline.go:521 (*ParsedCommandLine).PossiblyMatchesDirectoryName
     pub fn possibly_matches_directory_name(&self, directory_path: &Path) -> bool {
         for (wildcard_dir, recursive) in self.wildcard_directories() {
             let wildcard_dir_path = to_path(
@@ -1105,13 +1105,13 @@ impl ParsedCommandLine {
         false
     }
 
-    // Go: tsoptions/parsedcommandline.go:486 (*ParsedCommandLine).GetMatchedFileSpec
+    // Go: tsoptions/parsedcommandline.go:537 (*ParsedCommandLine).GetMatchedFileSpec
     pub fn get_matched_file_spec(&self, file_name: &str) -> String {
         self.config_file_specs()
             .get_matched_file_spec(file_name, &self.compare_paths_options)
     }
 
-    // Go: tsoptions/parsedcommandline.go:490 (*ParsedCommandLine).GetMatchedIncludeSpec
+    // Go: tsoptions/parsedcommandline.go:541 (*ParsedCommandLine).GetMatchedIncludeSpec
     pub fn get_matched_include_spec(&self, file_name: &str) -> (String, bool) {
         let specs = self.config_file_specs();
         if specs.validated_include_specs.is_empty() {
@@ -1137,7 +1137,7 @@ impl ParsedCommandLine {
             .expect("nil pointer dereference: ConfigFile.configFileSpecs")
     }
 
-    // Go: tsoptions/parsedcommandline.go:503 (*ParsedCommandLine).ReloadFileNamesOfParsedCommandLine
+    // Go: tsoptions/parsedcommandline.go:554 (*ParsedCommandLine).ReloadFileNamesOfParsedCommandLine
     // PORT: Go copies the cached `wildcardDirectories` map pointer and the
     // `includeGlobs` slice; this clones both cache cells. Go `p.Errors`
     // holds the common source directory errors so far, so the copy's
@@ -1167,7 +1167,7 @@ impl ParsedCommandLine {
         }
     }
 
-    // Go: tsoptions/parsedcommandline.go:530 (*ParsedCommandLine).Locale
+    // Go: tsoptions/parsedcommandline.go:581 (*ParsedCommandLine).Locale
     // PORT: Go returns the `Locale` value; this returns a clone of the
     // cached value.
     pub fn locale(&self) -> crate::locale::Locale {
@@ -1313,7 +1313,7 @@ mod common_source_directory_tests {
             .collect()
     }
 
-    // Go: tsoptions/parsedcommandline.go:204 checkSourceFilesBelongToPath
+    // Go: tsoptions/parsedcommandline.go:207 checkSourceFilesBelongToPath
     // appends TS6059 to `p.Errors`, which GetConfigFileParsingDiagnostics
     // (:393) and WithFileNames (:93) read. GetOutputFileNames (:211) is
     // lazy: only a name under outDir or declarationDir reads

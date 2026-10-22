@@ -135,7 +135,7 @@ const PACKAGE_JSON_JQUERY: &str = r#"{
 			}"#;
 
 child_test! {
-    // Go: ata_test.go:58 TestATA/configured projects
+    // Go: ata_test.go:89 TestATA/configured projects
     fn configured_projects() {
         let files = files(&[
             (APP, ""),
@@ -160,7 +160,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:92 TestATA/inferred projects
+    // Go: ata_test.go:123 TestATA/inferred projects
     fn inferred_projects() {
         let files = files(&[(APP, ""), ("/user/username/projects/project/package.json", PACKAGE_JSON_JQUERY)]);
         let (session, utils) = open_app(files, ti(&[], &[("jquery", "declare const $: { x: number }")]));
@@ -219,7 +219,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:129 TestATA/type acquisition with disableFilenameBasedTypeAcquisition:true
+    // Go: ata_test.go:160 TestATA/type acquisition with disableFilenameBasedTypeAcquisition:true
     fn type_acquisition_with_disable_filename_based_type_acquisition_true() {
         let files = files(&[
             ("/user/username/projects/project/jquery.js", ""),
@@ -287,7 +287,7 @@ fn node_modules_ti() -> TypingsInstallerOptions {
 }
 
 child_test! {
-    // Go: ata_test.go:155 TestATA/discover from node_modules
+    // Go: ata_test.go:186 TestATA/discover from node_modules
     fn discover_from_node_modules() {
         let files = node_modules_files(
             "",
@@ -310,7 +310,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:192 TestATA/discover from node_modules empty types
+    // Go: ata_test.go:223 TestATA/discover from node_modules empty types
     fn discover_from_node_modules_empty_types() {
         let files = node_modules_files(
             "",
@@ -327,7 +327,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:222 TestATA/discover from node_modules explicit types
+    // Go: ata_test.go:253 TestATA/discover from node_modules explicit types
     fn discover_from_node_modules_explicit_types() {
         let files = node_modules_files(
             "",
@@ -344,7 +344,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:252 TestATA/discover from node_modules empty types has import
+    // Go: ata_test.go:283 TestATA/discover from node_modules empty types has import
     fn discover_from_node_modules_empty_types_has_import() {
         let files = node_modules_files(
             r#"import "jquery";"#,
@@ -379,7 +379,7 @@ fn two_calls_and_jquery_installed(session: &Rc<Session>, utils: &SessionUtils) {
 }
 
 child_test! {
-    // Go: ata_test.go:283 TestATA/discover from bower_components
+    // Go: ata_test.go:314 TestATA/discover from bower_components
     fn discover_from_bower_components() {
         let files = files(&[
             (APP, ""),
@@ -393,7 +393,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:317 TestATA/discover from bower.json
+    // Go: ata_test.go:348 TestATA/discover from bower.json
     fn discover_from_bower_json() {
         let files = files(&[
             (APP, ""),
@@ -413,7 +413,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:354 TestATA/Malformed package.json should be watched
+    // Go: ata_test.go:385 TestATA/Malformed package.json should be watched
     fn malformed_package_json_should_be_watched() {
         let files = files(&[
             (APP, ""),
@@ -596,7 +596,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:626 TestATA/ATA with WatchEnabled false should not panic
+    // Go: ata_test.go:657 TestATA/ATA with WatchEnabled false should not panic
     fn ata_with_watch_enabled_false_should_not_panic() {
         let files = files(&[(APP, ""), ("/user/username/projects/project/package.json", PACKAGE_JSON_JQUERY)]);
 
@@ -656,7 +656,7 @@ fn deprecated_ata_disabled() -> Vec<(&'static str, LspAny)> {
     )]
 }
 
-// Go: ata_test.go:694 TestATA/ATA disabled via <name>
+// Go: ata_test.go:725 TestATA/ATA disabled via <name>
 fn ata_disabled(config: Vec<(&str, LspAny)>, name: &str) {
     let files = files(&[
         (APP, ""),
@@ -682,21 +682,21 @@ fn ata_disabled(config: Vec<(&str, LspAny)>, name: &str) {
 }
 
 child_test! {
-    // Go: ata_test.go:694 TestATA/ATA disabled via unified setting
+    // Go: ata_test.go:725 TestATA/ATA disabled via unified setting
     fn ata_disabled_via_unified_setting() {
         ata_disabled(unified_ata_disabled(), "unified setting");
     }
 }
 
 child_test! {
-    // Go: ata_test.go:694 TestATA/ATA disabled via deprecated setting
+    // Go: ata_test.go:725 TestATA/ATA disabled via deprecated setting
     fn ata_disabled_via_deprecated_setting() {
         ata_disabled(deprecated_ata_disabled(), "deprecated setting");
     }
 }
 
 child_test! {
-    // Go: ata_test.go:722 TestATA/ATA re-enabled after being disabled triggers diagnostics refresh
+    // Go: ata_test.go:753 TestATA/ATA re-enabled after being disabled triggers diagnostics refresh
     fn ata_re_enabled_after_being_disabled_triggers_diagnostics_refresh() {
         let files = files(&[(APP, ""), ("/user/username/projects/project/package.json", PACKAGE_JSON_JQUERY)]);
         let (session, utils) = projecttestutil::setup_with_typings_installer(

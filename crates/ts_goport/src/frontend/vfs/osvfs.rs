@@ -163,10 +163,10 @@ pub fn os_override_installed() -> bool {
 }
 
 // PORT: the Go semaphores `blockingOpSema`, `readSema` and `writeSema`
-// (os.go:20) limit concurrent syscalls. The port is single-threaded, so they
+// (os.go:21) limit concurrent syscalls. The port is single-threaded, so they
 // are not ported.
 
-// Go: os.go:30 FS
+// Go: os.go:31 FS
 // FS creates a new FS from the OS file system.
 // PORT: the Go package function `osvfs.FS` is `osvfs_fs`. Go returns one
 // package-level value; this returns a clone of one per-thread value. With
@@ -174,7 +174,7 @@ pub fn os_override_installed() -> bool {
 // one that the override's `fs` makes on the first call on that thread.
 pub fn osvfs_fs() -> Rc<dyn Fs> {
     thread_local! {
-        // Go: os.go:34 osVFS
+        // Go: os.go:35 osVFS
         static OS_VFS: Rc<dyn Fs> = Rc::new(OsFs {
             common: Common {
                 root_for: os_dir_fs,
@@ -258,7 +258,7 @@ fn is_file_system_case_sensitive() -> bool {
     })
 }
 
-// Go: os.go:77 swapCase
+// Go: os.go:78 swapCase
 // Convert all lowercase chars to uppercase, and vice-versa
 fn swap_case(str: &str) -> String {
     str.chars()

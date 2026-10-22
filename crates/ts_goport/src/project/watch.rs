@@ -43,7 +43,7 @@ pub struct WatchRegistry {
     pub pending: RefCell<FxHashSet<WatcherID>>,
 }
 
-// Go: project/watch.go:43 newWatchRegistry
+// Go: project/watch.go:44 newWatchRegistry
 pub fn new_watch_registry() -> Rc<WatchRegistry> {
     Rc::new(WatchRegistry {
         entries: RefCell::new(FxHashMap::default()),
@@ -52,7 +52,7 @@ pub fn new_watch_registry() -> Rc<WatchRegistry> {
 }
 
 impl WatchRegistry {
-    // Go: project/watch.go:53 watchRegistry.Acquire
+    // Go: project/watch.go:54 watchRegistry.Acquire
     // Acquire increments the ref count for a watcher. If this is the first
     // reference (count goes from 0 to 1), it returns true so the caller knows
     // to register the watcher with the client.
@@ -66,7 +66,7 @@ impl WatchRegistry {
         value.count == 1
     }
 
-    // Go: project/watch.go:69 watchRegistry.Release
+    // Go: project/watch.go:70 watchRegistry.Release
     // Release decrements the ref count for a watcher. If no references remain,
     // the entry is removed and the function returns the WatcherID and true so
     // the caller knows to unregister the watcher from the client.
@@ -85,26 +85,26 @@ impl WatchRegistry {
         (WatcherID::default(), false)
     }
 
-    // Go: project/watch.go:86 watchRegistry.MarkPending
+    // Go: project/watch.go:87 watchRegistry.MarkPending
     // MarkPending records that a watcher's registration failed and needs retry.
     pub fn mark_pending(&self, id: WatcherID) {
         self.pending.borrow_mut().insert(id);
     }
 
-    // Go: project/watch.go:93 watchRegistry.ClearPending
+    // Go: project/watch.go:94 watchRegistry.ClearPending
     // ClearPending removes a watcher from the pending set after successful registration.
     pub fn clear_pending(&self, id: &WatcherID) {
         self.pending.borrow_mut().remove(id);
     }
 
-    // Go: project/watch.go:100 watchRegistry.IsPending
+    // Go: project/watch.go:101 watchRegistry.IsPending
     // IsPending returns true if the watcher needs retry due to a previous failure.
     pub fn is_pending(&self, id: &WatcherID) -> bool {
         self.pending.borrow().contains(id)
     }
 }
 
-// Go: project/watch.go:107 PatternsAndIgnored
+// Go: project/watch.go:108 PatternsAndIgnored
 #[derive(Clone, Debug, Default)]
 pub struct PatternsAndIgnored {
     pub directories_outside_workspace: Vec<String>,
@@ -112,7 +112,7 @@ pub struct PatternsAndIgnored {
     pub ignored: FxHashSet<String>,
 }
 
-// Go: project/watch.go:119 toFileSystemWatcherKey
+// Go: project/watch.go:120 toFileSystemWatcherKey
 // toFileSystemWatcherKey produces a deduplication key for a file system watcher.
 // Note: this key is a simple string concatenation of the base and pattern, so
 // structurally different watchers (Pattern vs RelativePattern, URI vs WorkspaceFolder)
@@ -145,7 +145,7 @@ pub fn to_file_system_watcher_key(w: &lsproto::FileSystemWatcher) -> FileSystemW
     FileSystemWatcherKey { pattern, kind }
 }
 
-// Go: project/watch.go:139 fileSystemWatcherGlobString
+// Go: project/watch.go:140 fileSystemWatcherGlobString
 pub fn file_system_watcher_glob_string(w: &lsproto::FileSystemWatcher) -> String {
     if let Some(pattern) = &w.glob_pattern.pattern {
         return pattern.clone();
@@ -164,7 +164,7 @@ pub fn file_system_watcher_glob_string(w: &lsproto::FileSystemWatcher) -> String
     String::new()
 }
 
-// Go: project/watch.go:155 WatcherID
+// Go: project/watch.go:156 WatcherID
 // PORT: Go `type WatcherID string`; the empty id is Go's "".
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct WatcherID(pub String);
@@ -176,7 +176,7 @@ impl std::fmt::Display for WatcherID {
     }
 }
 
-// Go: project/watch.go:157 watcherID
+// Go: project/watch.go:158 watcherID
 // PORT: Go `atomic.Uint64`: one process-wide counter that starts at 0. Ids
 // reach the client (registration ids), so every thread must share it.
 pub static WATCHER_ID: AtomicU64 = AtomicU64::new(0);
@@ -189,7 +189,7 @@ fn watcher_id_add(delta: u64) -> u64 {
         .wrapping_add(delta)
 }
 
-// Go: project/watch.go:159 WatchedFiles
+// Go: project/watch.go:160 WatchedFiles
 // PORT: Go `*WatchedFiles[T]` is `Rc<WatchedFiles<T>>` (nil is `None`).
 // `mu` is dropped; `computeWatchersOnce` is a `Cell<bool>` guard, and the
 // fields that `Watchers` writes are `Cell` / `RefCell`.
@@ -207,7 +207,7 @@ pub struct WatchedFiles<T> {
     pub id: Cell<u64>,
 }
 
-// Go: project/watch.go:174 NewWatchedFiles
+// Go: project/watch.go:175 NewWatchedFiles
 // PORT: Go leaves `input` at the zero value of T (`T::default()`).
 pub fn new_watched_files<T: Default>(
     name: &str,
@@ -229,7 +229,7 @@ pub fn new_watched_files<T: Default>(
     })
 }
 
-// Go: project/watch.go:186 NewWatchedFilesForPaths (tsgo#4712)
+// Go: project/watch.go:187 NewWatchedFilesForPaths (tsgo#4712)
 // NewWatchedFilesForPaths creates a watcher for exact file paths, routing files outside the workspace
 // through directory-based external watchers so clients can use URI-based RelativePatterns when supported.
 pub fn new_watched_files_for_paths(
@@ -265,7 +265,7 @@ pub fn new_watched_files_for_paths(
     )
 }
 
-// Go: project/watch.go:206 Watchers
+// Go: project/watch.go:207 Watchers
 #[derive(Clone, Debug, Default)]
 pub struct Watchers {
     pub watcher_id: WatcherID,
@@ -364,7 +364,7 @@ impl<T> WatchedFiles<T> {
         }
     }
 
-    // Go: project/watch.go:265 WatchedFiles.ID
+    // Go: project/watch.go:271 WatchedFiles.ID
     // PORT: Go allows a nil receiver; call as `WatchedFiles::id(w.as_deref())`.
     pub fn id(w: Option<&WatchedFiles<T>>) -> WatcherID {
         let Some(w) = w else {
@@ -373,17 +373,17 @@ impl<T> WatchedFiles<T> {
         w.watchers().watcher_id
     }
 
-    // Go: project/watch.go:272 WatchedFiles.Name
+    // Go: project/watch.go:278 WatchedFiles.Name
     pub fn name(&self) -> String {
         self.name.clone()
     }
 
-    // Go: project/watch.go:276 WatchedFiles.WatchKind
+    // Go: project/watch.go:282 WatchedFiles.WatchKind
     pub fn watch_kind(&self) -> lsproto::WatchKind {
         self.watch_kind
     }
 
-    // Go: project/watch.go:280 WatchedFiles.Clone
+    // Go: project/watch.go:286 WatchedFiles.Clone
     // PORT: Go allows a nil receiver; call as
     // `WatchedFiles::clone_(w.as_deref(), input)`. `clone_` keeps it apart
     // from `std::clone::Clone`. Go does not copy `id` (it stays 0) or
@@ -405,7 +405,7 @@ impl<T> WatchedFiles<T> {
     }
 }
 
-// Go: project/watch.go:297 createResolutionLookupGlobMapper
+// Go: project/watch.go:303 createResolutionLookupGlobMapper
 // PORT: the Go input `*collections.SyncMap[tspath.Path, string]` is
 // `Option<SeenFiles>` (the sourceFS seen files). Go ranges over the map
 // (random order); the result does not depend on the order (one file per
@@ -543,7 +543,7 @@ pub fn create_resolution_lookup_glob_mapper(
     })
 }
 
-// Go: project/watch.go:380 getTypingsLocationsGlobs
+// Go: project/watch.go:386 getTypingsLocationsGlobs
 // PORT: Go maps are `IndexMap`s (insertion order; Go map order is random).
 // The globs are sorted later (`WatchedFiles.Watchers`) and the external
 // directories go through `GetCommonParents` and a sort.
@@ -610,7 +610,7 @@ pub fn get_typings_locations_globs(
     }
 }
 
-// Go: project/watch.go:420 getPathComponentsForWatching
+// Go: project/watch.go:426 getPathComponentsForWatching
 pub fn get_path_components_for_watching(path: &str, current_directory: &str) -> Vec<String> {
     let components = tspath::get_path_components(path, current_directory);
     let root_length = perceived_os_root_length_for_watching(&components);
@@ -628,7 +628,7 @@ pub fn get_path_components_for_watching(path: &str, current_directory: &str) -> 
     result
 }
 
-// Go: project/watch.go:430 perceivedOsRootLengthForWatching
+// Go: project/watch.go:436 perceivedOsRootLengthForWatching
 pub fn perceived_os_root_length_for_watching(path_components: &[String]) -> i32 {
     let length = path_components.len() as i32;
     if length <= 1 {
@@ -656,7 +656,7 @@ pub fn perceived_os_root_length_for_watching(path_components: &[String]) -> i32 
     1
 }
 
-// Go: project/watch.go:454 getRecursiveGlobPattern
+// Go: project/watch.go:460 getRecursiveGlobPattern
 pub fn get_recursive_glob_pattern(directory: &str) -> String {
     format!(
         "{}/{}",
@@ -665,7 +665,7 @@ pub fn get_recursive_glob_pattern(directory: &str) -> String {
     )
 }
 
-// Go: project/watch.go:460 recursiveDirectoryGlobPattern
+// Go: project/watch.go:466 recursiveDirectoryGlobPattern
 // recursiveDirectoryGlobPattern returns the string form of a recursive watcher
 // for the given directory that would be produced by newRecursiveDirectoryWatcher.
 pub fn recursive_directory_glob_pattern(directory: &str, use_relative_pattern: bool) -> String {
@@ -675,7 +675,7 @@ pub fn recursive_directory_glob_pattern(directory: &str, use_relative_pattern: b
     get_recursive_glob_pattern(directory)
 }
 
-// Go: project/watch.go:470 newRecursiveDirectoryWatcher
+// Go: project/watch.go:476 newRecursiveDirectoryWatcher
 // newRecursiveDirectoryWatcher creates a FileSystemWatcher for recursively
 // watching a directory. When useRelativePattern is true, a RelativePattern with
 // a file:// base URI is used; otherwise a plain glob Pattern is used.
