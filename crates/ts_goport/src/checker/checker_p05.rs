@@ -726,7 +726,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4337 checkClassLikeDeclaration
+    // Go: checker/checker.go:4359 checkClassLikeDeclaration
     pub fn check_class_like_declaration(&mut self, node: Node) {
         self.check_grammar_class_like_declaration(node);
         self.check_decorators(node);
@@ -753,8 +753,8 @@ impl Checker {
             let base_types = self.get_base_types(class_type);
             if !base_types.is_empty() {
                 let base_type = base_types[0];
-                self.check_js_doc_augments_tag_matches_extends(node, base_type_node, base_type);
                 let base_constructor_type = self.get_base_constructor_type_of_class(class_type);
+                self.check_js_doc_augments_tag_matches_extends(node, base_type_node, base_type);
                 let static_base_type = self.get_apparent_type(base_constructor_type);
                 self.check_base_type_accessibility(static_base_type, base_type_node);
                 self.check_source_element(base_type_node.expression());
@@ -918,7 +918,8 @@ impl Checker {
         self.check_property_initialization(node);
     }
 
-    // Go: checker/checker.go:4440 checkJSDocAugmentsTagMatchesExtends
+    // Go: checker/jsdoc.go:103 checkJSDocAugmentsTagMatchesExtends
+    // PORT: Go moved it to jsdoc.go (#64072); the port keeps it beside its caller.
     pub fn check_js_doc_augments_tag_matches_extends(
         &mut self,
         node: Node,
@@ -940,21 +941,35 @@ impl Checker {
                 }
                 let source_type_node = tag.class_name();
                 let source_type = self.get_type_from_type_node(source_type_node);
-                if self.is_type_identical_to(source_type, base_type) {
-                    continue;
-                }
-                let target_name =
-                    get_identifier_from_entity_name_expression(base_type_node.expression());
                 let source_name =
                     get_identifier_from_entity_name_expression(source_type_node.expression());
-                if target_name.is_some() && source_name.is_some() {
+                if is_entity_name_expression(base_type_node.expression()) {
+                    if self.is_type_identical_to(source_type, base_type) {
+                        continue;
+                    }
+                    let target_name =
+                        get_identifier_from_entity_name_expression(base_type_node.expression());
+                    if target_name.is_some() && source_name.is_some() {
+                        self.error(
+                            source_name,
+                            diag::JSDoc_0_1_does_not_match_the_extends_2_clause,
+                            args![
+                                tag.tag_name().text(),
+                                source_name.text(),
+                                target_name.text()
+                            ],
+                        );
+                    }
+                } else if source_name.is_some()
+                    && !self.is_type_assignable_to(base_type, source_type)
+                {
                     self.error(
                         source_name,
                         diag::JSDoc_0_1_does_not_match_the_extends_2_clause,
                         args![
                             tag.tag_name().text(),
                             source_name.text(),
-                            target_name.text()
+                            get_text_of_node(base_type_node.expression())
                         ],
                     );
                 }

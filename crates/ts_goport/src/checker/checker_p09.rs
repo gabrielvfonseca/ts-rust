@@ -1125,7 +1125,7 @@ impl Checker {
             && self.get_index_info_of_type(t, self.number_type).is_some()
     }
 
-    // Go: checker/checker.go:8422 checkIndexedAccessIndexType
+    // Go: checker/checker.go:8418 checkIndexedAccessIndexType
     pub fn check_indexed_access_index_type(&mut self, t: TypeId, access_node: Node) -> TypeId {
         if !self.ty(t).flags.intersects(TypeFlags::INDEXED_ACCESS) {
             return t;
@@ -1133,19 +1133,11 @@ impl Checker {
         // Check if the index type is assignable to 'keyof T' for the object type.
         let object_type = self.ty(t).as_indexed_access_type().object_type;
         let index_type = self.ty(t).as_indexed_access_type().index_type;
-        // skip index type deferral on remapping mapped types
-        let object_index_type;
-        if self.is_generic_mapped_type(object_type)
-            && self.get_mapped_type_name_type_kind(object_type) == MappedTypeNameTypeKind::REMAPPING
-        {
-            object_index_type = self.get_index_type_for_mapped_type(object_type, IndexFlags::NONE);
-        } else {
-            object_index_type = self.get_index_type_ex(object_type, IndexFlags::NONE);
-        }
         let has_number_index_info = self
             .get_index_info_of_type(object_type, self.number_type)
             .is_some();
         if self.every_type(index_type, &mut |c: &mut Checker, t: TypeId| {
+            let object_index_type = c.get_index_type_ex(object_type, IndexFlags::NONE);
             c.is_type_assignable_to(t, object_index_type)
                 || has_number_index_info && c.is_applicable_index_type(t, c.number_type)
         }) {

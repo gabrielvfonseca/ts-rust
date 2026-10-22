@@ -572,7 +572,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:21157 instantiateSymbol
+    // Go: checker/checker.go:21198 instantiateSymbol
     pub fn instantiate_symbol(&mut self, symbol: SymbolId, m: MapperId) -> SymbolId {
         if symbol.is_nil() {
             return SymbolId::NIL;
@@ -604,6 +604,7 @@ impl Checker {
                 return symbol;
             }
         }
+        // Create a new transient symbol that shares the underlying data with the original symbol.
         // PERF (instfast1): the source symbol is read once for the test and
         // the copy when it is not an instantiation itself (99% of the calls).
         let source = self.sym(symbol);
@@ -668,24 +669,35 @@ impl Checker {
 }
 
 /// The new symbol of Go `instantiateSymbol` for source `s`: its flags with
-/// TRANSIENT, its name, declarations, parent and value declaration, and the
-/// check flags it keeps with INSTANTIATED. Go calls newSymbol and then sets
-/// the fields; the port builds the full symbol and pushes it once.
+/// TRANSIENT, the check flags it keeps with INSTANTIATED, and the data that
+/// Go `newSharedDataSymbol` (checker.go:14346, #64691) shares with `s`: name,
+/// declarations, value declaration, parent, members, exports and export
+/// symbol. Go calls newSharedDataSymbol and then sets the check flags; the
+/// port builds the full symbol and pushes it once.
+/// PORT: Go shares one `symbolData`, so a later set on either symbol writes
+/// both. Here the instance gets a copy (a `SymbolTable` is an id, so the
+/// tables themselves are shared). The copy reads the same as the shared data
+/// because no Go setter writes these fields of a symbol after it can be
+/// instantiated: every setter writes a symbol that its own function made,
+/// or a merge or late-bind target before its members are resolved (the
+/// #64691 setter audit, bump E lane L3 report).
 #[inline(always)]
-fn instantiated_symbol_of(s: &Symbol) -> Symbol {
+pub(crate) fn instantiated_symbol_of(s: &Symbol) -> Symbol {
     Symbol {
         flags: s.flags | SymbolFlags::TRANSIENT,
-        name: s.name.clone(),
         check_flags: CheckFlags::INSTANTIATED
             | s.check_flags
                 & (CheckFlags::READONLY
                     | CheckFlags::LATE
                     | CheckFlags::OPTIONAL_PARAMETER
                     | CheckFlags::REST_PARAMETER),
+        name: s.name.clone(),
         declarations: s.declarations.clone(),
-        parent: s.parent,
         value_declaration: s.value_declaration,
-        ..Symbol::default()
+        members: s.members,
+        exports: s.exports,
+        parent: s.parent,
+        export_symbol: s.export_symbol,
     }
 }
 

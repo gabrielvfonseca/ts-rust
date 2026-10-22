@@ -1634,13 +1634,27 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:28436 getSimplifiedType
+    // Go: checker/checker.go:28507 getSimplifiedType
     pub fn get_simplified_type(&mut self, t: TypeId, writing: bool) -> TypeId {
         let flags = self.ty(t).flags;
         if flags.intersects(TypeFlags::INDEXED_ACCESS) {
             return self.get_simplified_indexed_access_type(t, writing);
         } else if flags.intersects(TypeFlags::CONDITIONAL) {
             return self.get_simplified_conditional_type(t, writing);
+        } else if flags.intersects(TypeFlags::INDEX) {
+            return self.get_simplified_index_type(t);
+        }
+        t
+    }
+
+    // Go: checker/checker.go:28519 getSimplifiedIndexType
+    pub fn get_simplified_index_type(&mut self, t: TypeId) -> TypeId {
+        let target = self.ty(t).as_index_type().target;
+        if self.is_generic_mapped_type(target)
+            && self.get_name_type_from_mapped_type(target).is_some()
+            && !self.is_mapped_type_with_keyof_constraint_declaration(target)
+        {
+            return self.get_index_type_for_mapped_type(target, IndexFlags::NONE);
         }
         t
     }

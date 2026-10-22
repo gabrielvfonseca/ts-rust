@@ -837,7 +837,7 @@ impl FlatKey for TypeId {
 
 // Checker
 
-// Go: checker/checker.go:585 Checker
+// Go: checker/checker.go:588 Checker
 // PORT: Go fields keep their order and snake names. Differences:
 // - `program Program` is `&'static GoProgram` (the installed `prog()`).
 // - `symbolArena`, `signatureArena`, `indexInfoArena` are replaced by the
@@ -922,7 +922,7 @@ pub struct Checker {
     pub subtype_reduction_cache: CacheKeyMap<Vec<TypeId>>,
     pub cached_types: FxHashMap<CachedTypeKey, TypeId>,
     pub cached_signatures: FxHashMap<CachedSignatureKey, SignatureId>,
-    pub undefined_properties: FxHashMap<String, SymbolId>,
+    pub undefined_properties: FxHashMap<SymbolId, SymbolId>,
     pub narrowed_types: FxHashMap<NarrowedTypeKey, TypeId>,
     pub assignment_reduced_types: FxHashMap<AssignmentReducedKey, TypeId>,
     pub discriminated_contextual_types: FxHashMap<DiscriminatedContextualTypeKey, TypeId>,
@@ -1365,7 +1365,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:913 NewChecker
+// Go: checker/checker.go:936 NewChecker
 // PORT: Go `NewChecker(program) (*Checker, *sync.Mutex)` becomes
 // `Checker::new(checker_index)`. The program is the installed `prog()`; the
 // mutex is dropped, and the tracer comes from the process tracing session

@@ -60,8 +60,26 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:28540 getSimplifiedConditionalType
+    // Go: checker/checker.go:28621 getSimplifiedConditionalType
     pub fn get_simplified_conditional_type(&mut self, t: TypeId, writing: bool) -> TypeId {
+        let key = CachedTypeKey {
+            kind: if writing {
+                CachedTypeKind::SIMPLIFIED_CONDITIONAL_TYPE_FOR_WRITING
+            } else {
+                CachedTypeKind::SIMPLIFIED_CONDITIONAL_TYPE_FOR_READING
+            },
+            type_id: t,
+        };
+        if let Some(&cached) = self.cached_types.get(&key) {
+            return cached;
+        }
+        let result = self.get_simplified_conditional_type_worker(t, writing);
+        self.cached_types.insert(key, result);
+        result
+    }
+
+    // Go: checker/checker.go:28631 getSimplifiedConditionalTypeWorker
+    pub fn get_simplified_conditional_type_worker(&mut self, t: TypeId, writing: bool) -> TypeId {
         let check_type = self.ty(t).as_conditional_type().check_type;
         let extends_type = self.ty(t).as_conditional_type().extends_type;
         let true_type = self.get_true_type_from_conditional_type(t);
@@ -1565,4 +1583,13 @@ impl Checker {
         self.cached_types.insert(key, result);
         result
     }
+}
+
+// Go: checker/checker.go:143 const(CachedTypeKindSimplifiedConditionalTypeForReading)
+// PORT: the other kinds are in `src/flags.rs` (go_enum! CachedTypeKind). Go adds
+// these 2 at the end of the enum (#64648); bump E lane L3 does not own flags.rs,
+// so they are here with Go's values (after DECORATOR_CONTEXT_PRIVATE_STATIC = 21).
+impl CachedTypeKind {
+    pub const SIMPLIFIED_CONDITIONAL_TYPE_FOR_READING: Self = Self(22); // CachedTypeKindSimplifiedConditionalTypeForReading
+    pub const SIMPLIFIED_CONDITIONAL_TYPE_FOR_WRITING: Self = Self(23); // CachedTypeKindSimplifiedConditionalTypeForWriting
 }

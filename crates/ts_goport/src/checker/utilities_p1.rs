@@ -683,12 +683,12 @@ impl Checker {
                 return r;
             }
         }
-        let id1 = get_symbol_id(&self.symbols, k1.symbol) as i64;
-        let id2 = get_symbol_id(&self.symbols, k2.symbol) as i64;
-        clamp_compare(id1 - id2)
+        let id1 = get_symbol_id(&self.symbols, k1.symbol);
+        let id2 = get_symbol_id(&self.symbols, k2.symbol);
+        id1.cmp(&id2) as i32
     }
 
-    // Go: checker/utilities.go:365 compareSymbolsWorker
+    // Go: checker/utilities.go:366 compareSymbolsWorker
     pub fn compare_symbols_worker(&self, s1: SymbolId, s2: SymbolId) -> i32 {
         if s1 == s2 {
             return 0;
@@ -717,12 +717,12 @@ impl Checker {
         }
         // Fall back to symbol IDs. This is a last resort that should happen only when symbols have
         // no declaration and duplicate names.
-        let id1 = get_symbol_id(&self.symbols, s1) as i64;
-        let id2 = get_symbol_id(&self.symbols, s2) as i64;
-        clamp_compare(id1 - id2)
+        let id1 = get_symbol_id(&self.symbols, s1);
+        let id2 = get_symbol_id(&self.symbols, s2);
+        id1.cmp(&id2) as i32
     }
 
-    // Go: checker/utilities.go:392 compareNodes
+    // Go: checker/utilities.go:393 compareNodes
     pub fn compare_nodes(&self, n1: Node, n2: Node) -> i32 {
         if n1 == n2 {
             return 0;
@@ -732,6 +732,10 @@ impl Checker {
         }
         if n2.is_nil() {
             return -1;
+        }
+        let parent = n1.parent();
+        if parent.is_some() && parent == n2.parent() {
+            return n1.pos() - n2.pos();
         }
         let s1 = get_source_file_of_node(n1);
         let s2 = get_source_file_of_node(n2);
