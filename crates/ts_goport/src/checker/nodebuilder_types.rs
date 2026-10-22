@@ -103,6 +103,8 @@ go_flags!(InternalNodeBuilderFlags, i32 {
     NO_SYNTACTIC_PRINTER = 1 << 1;
     DO_NOT_INCLUDE_SYMBOL_CHAIN = 1 << 2;
     ALLOW_UNRESOLVED_NAMES = 1 << 3;
+    // ts#64581
+    REWRITE_MODULE_SPECIFIERS = 1 << 4;
 });
 
 /// Go `collections.CopyOnWriteMap[K, V]`: a map that shares its backing
