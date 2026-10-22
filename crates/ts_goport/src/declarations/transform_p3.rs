@@ -403,14 +403,19 @@ impl DeclarationTransformer {
         result
     }
 
-    // Go: transformers/declarations/transform.go:1792 DeclarationTransformer.transformTypeAliasDeclaration
+    // Go: transformers/declarations/transform.go:1807 DeclarationTransformer.transformTypeAliasDeclaration
     pub(crate) fn transform_type_alias_declaration(&mut self, input: Node) -> Node {
         self.needs_declare = false;
+        let ec = self.emit_context.clone();
+        // ts#64770: Go visits the type before the modifiers and type parameters.
+        let mut type_node = self.visit(input.type_());
+        if type_node.is_nil() {
+            // stripInternal can elide an @internal type RHS; fall back like index signatures
+            type_node = ec.factory().new_keyword_type_node(SyntaxKind::AnyKeyword);
+        }
         let modifiers = self.ensure_modifiers(input);
         let name = input.name();
         let type_parameters = root_visit_nodes(self, input.type_parameter_list());
-        let type_node = self.visit(input.type_());
-        let ec = self.emit_context.clone();
         ec.factory().update_type_alias_declaration(
             input,
             modifiers,
