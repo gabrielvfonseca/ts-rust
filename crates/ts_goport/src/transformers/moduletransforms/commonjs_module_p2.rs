@@ -16,7 +16,7 @@ use crate::transformers::utilities::{
 };
 
 impl CommonJSModuleTransformer {
-    // Go: transformers/moduletransforms/commonjsmodule.go:976 CommonJSModuleTransformer.visitTopLevelVariableStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:978 CommonJSModuleTransformer.visitTopLevelVariableStatement
     pub(super) fn visit_top_level_variable_statement(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
         let f = ec.factory();
@@ -175,7 +175,7 @@ impl CommonJSModuleTransformer {
         self.visit_top_level_nested_variable_statement(node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1110 CommonJSModuleTransformer.transformInitializedVariable
+    // Go: transformers/moduletransforms/commonjsmodule.go:1112 CommonJSModuleTransformer.transformInitializedVariable
     fn transform_initialized_variable(&mut self, node: Node) -> Node {
         if node.initializer().is_nil() {
             return Node::NIL;
@@ -207,7 +207,7 @@ impl CommonJSModuleTransformer {
         f.new_assignment_expression(property_access, node.initializer())
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1139 CommonJSModuleTransformer.visitTopLevelNestedVariableStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1141 CommonJSModuleTransformer.visitTopLevelNestedVariableStatement
     /// Visits a top-level nested variable statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     fn visit_top_level_nested_variable_statement(&mut self, node: Node) -> Node {
@@ -216,7 +216,7 @@ impl CommonJSModuleTransformer {
         single_or_many(Some(&statements), self.emit_context.factory())
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1148 CommonJSModuleTransformer.visitTopLevelNestedForStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1150 CommonJSModuleTransformer.visitTopLevelNestedForStatement
     /// Visits a top-level nested `for` statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_for_statement(&mut self, node: Node) -> Node {
@@ -270,7 +270,7 @@ impl CommonJSModuleTransformer {
         f.update_for_statement(node, initializer, condition, incrementor, body)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1190 CommonJSModuleTransformer.visitTopLevelNestedForInOrOfStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1192 CommonJSModuleTransformer.visitTopLevelNestedForInOrOfStatement
     /// Visits a top-level nested `for..in` or `for..of` statement as it may contain `var` declarations that are hoisted and
     /// may still be exported with `export {}`.
     pub(super) fn visit_top_level_nested_for_in_or_of_statement(&mut self, node: Node) -> Node {
@@ -328,7 +328,7 @@ impl CommonJSModuleTransformer {
         f.update_for_in_or_of_statement(node, node.await_modifier(), initializer, expression, body)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1232 CommonJSModuleTransformer.visitTopLevelNestedDoStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1234 CommonJSModuleTransformer.visitTopLevelNestedDoStatement
     /// Visits a top-level nested `do` statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_do_statement(&mut self, node: Node) -> Node {
@@ -340,7 +340,7 @@ impl CommonJSModuleTransformer {
             .update_do_statement(node, statement, expression)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1242 CommonJSModuleTransformer.visitTopLevelNestedWhileStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1244 CommonJSModuleTransformer.visitTopLevelNestedWhileStatement
     /// Visits a top-level nested `while` statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_while_statement(&mut self, node: Node) -> Node {
@@ -352,7 +352,7 @@ impl CommonJSModuleTransformer {
             .update_while_statement(node, expression, statement)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1252 CommonJSModuleTransformer.visitTopLevelNestedLabeledStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1254 CommonJSModuleTransformer.visitTopLevelNestedLabeledStatement
     /// Visits a top-level nested labeled statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_labeled_statement(&mut self, node: Node) -> Node {
@@ -366,7 +366,7 @@ impl CommonJSModuleTransformer {
         f.update_labeled_statement(node, node.label(), statement)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1262 CommonJSModuleTransformer.visitTopLevelNestedWithStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1264 CommonJSModuleTransformer.visitTopLevelNestedWithStatement
     /// Visits a top-level nested `with` statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_with_statement(&mut self, node: Node) -> Node {
@@ -382,7 +382,7 @@ impl CommonJSModuleTransformer {
         f.update_with_statement(node, expression, statement)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1272 CommonJSModuleTransformer.visitTopLevelNestedIfStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1278 CommonJSModuleTransformer.visitTopLevelNestedIfStatement
     /// Visits a top-level nested `if` statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_if_statement(&mut self, node: Node) -> Node {
@@ -399,7 +399,7 @@ impl CommonJSModuleTransformer {
         f.update_if_statement(node, expression, then_statement, else_statement)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1284 CommonJSModuleTransformer.visitTopLevelNestedSwitchStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1290 CommonJSModuleTransformer.visitTopLevelNestedSwitchStatement
     /// Visits a top-level nested `switch` statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_switch_statement(&mut self, node: Node) -> Node {
@@ -410,14 +410,14 @@ impl CommonJSModuleTransformer {
             .update_switch_statement(node, expression, case_block)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1294 CommonJSModuleTransformer.visitTopLevelNestedCaseBlock
+    // Go: transformers/moduletransforms/commonjsmodule.go:1300 CommonJSModuleTransformer.visitTopLevelNestedCaseBlock
     /// Visits a top-level nested case block as it may contain `var` declarations that are hoisted and may still be exported
     /// with `export {}`.
     pub(super) fn visit_top_level_nested_case_block(&mut self, node: Node) -> Node {
         self.visit_each_child_with(VisitorKind::TopLevelNested, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1300 CommonJSModuleTransformer.visitTopLevelNestedCaseOrDefaultClause
+    // Go: transformers/moduletransforms/commonjsmodule.go:1306 CommonJSModuleTransformer.visitTopLevelNestedCaseOrDefaultClause
     /// Visits a top-level nested `case` or `default` clause as it may contain `var` declarations that are hoisted and may
     /// still be exported with `export {}`.
     pub(super) fn visit_top_level_nested_case_or_default_clause(&mut self, node: Node) -> Node {
@@ -428,14 +428,14 @@ impl CommonJSModuleTransformer {
             .update_case_or_default_clause(node, expression, statements)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1310 CommonJSModuleTransformer.visitTopLevelNestedTryStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1316 CommonJSModuleTransformer.visitTopLevelNestedTryStatement
     /// Visits a top-level nested `try` statement as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_try_statement(&mut self, node: Node) -> Node {
         self.visit_each_child_with(VisitorKind::TopLevelNested, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1316 CommonJSModuleTransformer.visitTopLevelNestedCatchClause
+    // Go: transformers/moduletransforms/commonjsmodule.go:1322 CommonJSModuleTransformer.visitTopLevelNestedCatchClause
     /// Visits a top-level nested `catch` clause as it may contain `var` declarations that are hoisted and may still be
     /// exported with `export {}`.
     pub(super) fn visit_top_level_nested_catch_clause(&mut self, node: Node) -> Node {
@@ -445,14 +445,14 @@ impl CommonJSModuleTransformer {
             .update_catch_clause(node, node.variable_declaration(), block)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1326 CommonJSModuleTransformer.visitTopLevelNestedBlock
+    // Go: transformers/moduletransforms/commonjsmodule.go:1332 CommonJSModuleTransformer.visitTopLevelNestedBlock
     /// Visits a top-level nested block as it may contain `var` declarations that are hoisted and may still be exported with
     /// `export {}`.
     pub(super) fn visit_top_level_nested_block(&mut self, node: Node) -> Node {
         self.visit_each_child_with(VisitorKind::TopLevelNested, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1334 CommonJSModuleTransformer.visitForStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1336 CommonJSModuleTransformer.visitForStatement
     pub(super) fn visit_for_statement(&mut self, node: Node) -> Node {
         let initializer = self.visit_node_with(VisitorKind::DiscardedValue, node.initializer());
         let condition = self.visit_node_with(VisitorKind::Root, node.condition());
@@ -467,7 +467,7 @@ impl CommonJSModuleTransformer {
         )
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1344 CommonJSModuleTransformer.visitForInOrOfStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1346 CommonJSModuleTransformer.visitForInOrOfStatement
     pub(super) fn visit_for_in_or_of_statement(&mut self, node: Node) -> Node {
         let initializer = self.visit_node_with(VisitorKind::DiscardedValue, node.initializer());
         let expression = self.visit_node_with(VisitorKind::Root, node.expression());
@@ -481,19 +481,19 @@ impl CommonJSModuleTransformer {
         )
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1351 CommonJSModuleTransformer.visitExpressionStatement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1357 CommonJSModuleTransformer.visitExpressionStatement
     /// Visits an expression statement whose value will be discarded at runtime.
     pub(super) fn visit_expression_statement(&mut self, node: Node) -> Node {
         self.visit_each_child_with(VisitorKind::DiscardedValue, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1356 CommonJSModuleTransformer.visitVoidExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1362 CommonJSModuleTransformer.visitVoidExpression
     /// Visits a `void` expression whose value will be discarded at runtime.
     pub(super) fn visit_void_expression(&mut self, node: Node) -> Node {
         self.visit_each_child_with(VisitorKind::DiscardedValue, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1361 CommonJSModuleTransformer.visitParenthesizedExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1367 CommonJSModuleTransformer.visitParenthesizedExpression
     /// Visits a parenthesized expression whose value may be discarded at runtime.
     pub(super) fn visit_parenthesized_expression(
         &mut self,
@@ -511,7 +511,7 @@ impl CommonJSModuleTransformer {
             .update_parenthesized_expression(node, expression)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1367 CommonJSModuleTransformer.visitPartiallyEmittedExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1373 CommonJSModuleTransformer.visitPartiallyEmittedExpression
     /// Visits a partially emitted expression whose value may be discarded at runtime.
     pub(super) fn visit_partially_emitted_expression(
         &mut self,
@@ -529,7 +529,7 @@ impl CommonJSModuleTransformer {
             .update_partially_emitted_expression(node, expression)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1374 CommonJSModuleTransformer.visitBinaryExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1380 CommonJSModuleTransformer.visitBinaryExpression
     /// Visits a binary expression whose value may be discarded, or which might contain an assignment to an exported
     /// identifier.
     pub(super) fn visit_binary_expression(
@@ -552,7 +552,7 @@ impl CommonJSModuleTransformer {
         self.visit_each_child_with(VisitorKind::Root, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1390 CommonJSModuleTransformer.visitAssignmentExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1396 CommonJSModuleTransformer.visitAssignmentExpression
     fn visit_assignment_expression(&mut self, node: Node) -> Node {
         // When we see an assignment expression whose left-hand side is an exported symbol,
         // we should ensure all exports of that symbol are updated with the correct value.
@@ -586,7 +586,7 @@ impl CommonJSModuleTransformer {
         self.visit_each_child_with(VisitorKind::Root, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1415 CommonJSModuleTransformer.visitDestructuringAssignment
+    // Go: transformers/moduletransforms/commonjsmodule.go:1421 CommonJSModuleTransformer.visitDestructuringAssignment
     /// Visits a destructuring assignment which might target an exported identifier.
     fn visit_destructuring_assignment(&mut self, node: Node, value_is_discarded: bool) -> Node {
         if self.destructuring_needs_flattening(node.left()) {
@@ -611,7 +611,7 @@ impl CommonJSModuleTransformer {
         self.visit_each_child_with(VisitorKind::Root, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1430 CommonJSModuleTransformer.destructuringNeedsFlattening
+    // Go: transformers/moduletransforms/commonjsmodule.go:1436 CommonJSModuleTransformer.destructuringNeedsFlattening
     /// destructuringNeedsFlattening checks whether a destructuring assignment target contains any
     /// exported identifiers that need to be flattened into individual export assignments.
     fn destructuring_needs_flattening(&mut self, node: Node) -> bool {
@@ -676,7 +676,7 @@ impl CommonJSModuleTransformer {
         false
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1484 CommonJSModuleTransformer.createAllExportExpressions
+    // Go: transformers/moduletransforms/commonjsmodule.go:1490 CommonJSModuleTransformer.createAllExportExpressions
     /// createAllExportExpressions is the callback used during destructuring flattening to create
     /// export expressions for each exported identifier binding.
     fn create_all_export_expressions(
@@ -744,7 +744,7 @@ impl CommonJSModuleTransformer {
         f.new_assignment_expression(name, value)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1534 CommonJSModuleTransformer.isDirectExport
+    // Go: transformers/moduletransforms/commonjsmodule.go:1540 CommonJSModuleTransformer.isDirectExport
     /// isDirectExport checks whether the identifier is directly exported from the source file
     /// (e.g., `export let x` or `export function f()`), as opposed to being re-exported via
     /// `export { x }` for a locally-declared variable.
@@ -756,7 +756,7 @@ impl CommonJSModuleTransformer {
         export_container.is_some() && is_source_file(export_container)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1539 CommonJSModuleTransformer.visitAssignmentProperty
+    // Go: transformers/moduletransforms/commonjsmodule.go:1545 CommonJSModuleTransformer.visitAssignmentProperty
     pub(super) fn visit_assignment_property(&mut self, node: Node) -> Node {
         let name = self.visit_node_with(VisitorKind::Root, node.name());
         let initializer = self.visit_node_with(VisitorKind::AssignmentPattern, node.initializer());
@@ -770,7 +770,7 @@ impl CommonJSModuleTransformer {
         )
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1550 CommonJSModuleTransformer.visitShorthandAssignmentProperty
+    // Go: transformers/moduletransforms/commonjsmodule.go:1556 CommonJSModuleTransformer.visitShorthandAssignmentProperty
     pub(super) fn visit_shorthand_assignment_property(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
         let f = ec.factory();
@@ -815,7 +815,7 @@ impl CommonJSModuleTransformer {
         updated
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1588 CommonJSModuleTransformer.visitAssignmentRestProperty
+    // Go: transformers/moduletransforms/commonjsmodule.go:1594 CommonJSModuleTransformer.visitAssignmentRestProperty
     pub(super) fn visit_assignment_rest_property(&mut self, node: Node) -> Node {
         let expression = self.visit_destructuring_assignment_target(node.expression());
         self.emit_context
@@ -823,7 +823,7 @@ impl CommonJSModuleTransformer {
             .update_spread_assignment(node, expression)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1595 CommonJSModuleTransformer.visitAssignmentRestElement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1601 CommonJSModuleTransformer.visitAssignmentRestElement
     pub(super) fn visit_assignment_rest_element(&mut self, node: Node) -> Node {
         let expression = self.visit_destructuring_assignment_target(node.expression());
         self.emit_context
@@ -831,7 +831,7 @@ impl CommonJSModuleTransformer {
             .update_spread_element(node, expression)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1602 CommonJSModuleTransformer.visitAssignmentElement
+    // Go: transformers/moduletransforms/commonjsmodule.go:1608 CommonJSModuleTransformer.visitAssignmentElement
     pub(super) fn visit_assignment_element(&mut self, node: Node) -> Node {
         if is_binary_expression(node) {
             let n = node;
@@ -852,7 +852,7 @@ impl CommonJSModuleTransformer {
         self.visit_destructuring_assignment_target_no_stack(node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1620 CommonJSModuleTransformer.visitDestructuringAssignmentTarget
+    // Go: transformers/moduletransforms/commonjsmodule.go:1626 CommonJSModuleTransformer.visitDestructuringAssignmentTarget
     fn visit_destructuring_assignment_target(&mut self, node: Node) -> Node {
         let grandparent_node = self.push_node(node);
 
@@ -866,7 +866,7 @@ impl CommonJSModuleTransformer {
         result
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1633 CommonJSModuleTransformer.visitDestructuringAssignmentTargetNoStack
+    // Go: transformers/moduletransforms/commonjsmodule.go:1639 CommonJSModuleTransformer.visitDestructuringAssignmentTargetNoStack
     fn visit_destructuring_assignment_target_no_stack(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
         if is_identifier(node)
@@ -938,7 +938,7 @@ impl CommonJSModuleTransformer {
         self.visit_no_stack(node, false /*resultIsDiscarded*/)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1686 CommonJSModuleTransformer.visitCommaExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1692 CommonJSModuleTransformer.visitCommaExpression
     /// Visits a comma expression whose left-hand value is always discard, and whose right-hand value may be discarded at runtime.
     fn visit_comma_expression(&mut self, node: Node, result_is_discarded: bool) -> Node {
         let left = self.visit_node_with(VisitorKind::DiscardedValue, node.left());
@@ -958,7 +958,7 @@ impl CommonJSModuleTransformer {
         )
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1693 CommonJSModuleTransformer.visitPrefixUnaryExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1699 CommonJSModuleTransformer.visitPrefixUnaryExpression
     /// Visits a prefix unary expression that might modify an exported identifier.
     pub(super) fn visit_prefix_unary_expression(
         &mut self,
@@ -1015,7 +1015,7 @@ impl CommonJSModuleTransformer {
         self.visit_each_child_with(VisitorKind::Root, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1731 CommonJSModuleTransformer.visitPostfixUnaryExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1737 CommonJSModuleTransformer.visitPostfixUnaryExpression
     /// Visits a postfix unary expression that might modify an exported identifier.
     pub(super) fn visit_postfix_unary_expression(
         &mut self,
@@ -1102,7 +1102,7 @@ impl CommonJSModuleTransformer {
         self.visit_each_child_with(VisitorKind::Root, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1806 CommonJSModuleTransformer.visitCallExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1808 CommonJSModuleTransformer.visitCallExpression
     /// Visits a call expression that might reference an imported symbol and thus require an indirect call, or that might
     /// be an `import()` or `require()` call that may need to be rewritten.
     pub(super) fn visit_call_expression(&mut self, node: Node) -> Node {
@@ -1153,7 +1153,7 @@ impl CommonJSModuleTransformer {
         self.visit_each_child_with(VisitorKind::Root, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1842 CommonJSModuleTransformer.shouldTransformImportCall
+    // Go: transformers/moduletransforms/commonjsmodule.go:1848 CommonJSModuleTransformer.shouldTransformImportCall
     fn should_transform_import_call(&self) -> bool {
         should_transform_import_call(
             source_file_file_name(self.current_source_file),
@@ -1162,7 +1162,7 @@ impl CommonJSModuleTransformer {
         )
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1846 CommonJSModuleTransformer.visitImportCallExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:1852 CommonJSModuleTransformer.visitImportCallExpression
     fn visit_import_call_expression(&mut self, node: Node, rewrite_or_shim: bool) -> Node {
         if self.module_kind == ModuleKind::NONE && self.language_version >= ScriptTarget::ES2020 {
             return self.visit_each_child_with(VisitorKind::Root, node);
@@ -1210,7 +1210,7 @@ impl CommonJSModuleTransformer {
         self.create_import_call_expression_common_js(argument)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1870 CommonJSModuleTransformer.createImportCallExpressionCommonJS
+    // Go: transformers/moduletransforms/commonjsmodule.go:1876 CommonJSModuleTransformer.createImportCallExpressionCommonJS
     fn create_import_call_expression_common_js(&self, arg: Node) -> Node {
         // import(x)
         // emit as
@@ -1296,7 +1296,7 @@ impl CommonJSModuleTransformer {
         )
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1963 CommonJSModuleTransformer.shimOrRewriteImportOrRequireCall
+    // Go: transformers/moduletransforms/commonjsmodule.go:1969 CommonJSModuleTransformer.shimOrRewriteImportOrRequireCall
     fn shim_or_rewrite_import_or_require_call(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
         let f = ec.factory();
@@ -1344,7 +1344,7 @@ impl CommonJSModuleTransformer {
         )
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:1997 CommonJSModuleTransformer.visitTaggedTemplateExpression
+    // Go: transformers/moduletransforms/commonjsmodule.go:2003 CommonJSModuleTransformer.visitTaggedTemplateExpression
     /// Visits a tagged template expression that might reference an imported symbol and thus require an indirect call.
     pub(super) fn visit_tagged_template_expression(&mut self, node: Node) -> Node {
         if is_identifier(node.tag()) {
@@ -1376,7 +1376,7 @@ impl CommonJSModuleTransformer {
         self.visit_each_child_with(VisitorKind::Root, node)
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:2026 CommonJSModuleTransformer.visitShorthandPropertyAssignment
+    // Go: transformers/moduletransforms/commonjsmodule.go:2032 CommonJSModuleTransformer.visitShorthandPropertyAssignment
     /// Visits a shorthand property assignment that might reference an imported or exported symbol.
     pub(super) fn visit_shorthand_property_assignment(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
@@ -1416,7 +1416,7 @@ impl CommonJSModuleTransformer {
         )
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:2056 CommonJSModuleTransformer.visitIdentifier
+    // Go: transformers/moduletransforms/commonjsmodule.go:2062 CommonJSModuleTransformer.visitIdentifier
     /// Visits an identifier that, if it is in an expression position, might reference an imported or exported symbol.
     pub(super) fn visit_identifier(&mut self, node: Node) -> Node {
         if is_identifier_reference(node, self.parent_node) {
@@ -1425,7 +1425,7 @@ impl CommonJSModuleTransformer {
         node
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:2064 CommonJSModuleTransformer.visitExpressionIdentifier
+    // Go: transformers/moduletransforms/commonjsmodule.go:2070 CommonJSModuleTransformer.visitExpressionIdentifier
     /// Visits an identifier in an expression position that might reference an imported or exported symbol.
     pub(super) fn visit_expression_identifier(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
@@ -1505,7 +1505,7 @@ impl CommonJSModuleTransformer {
         node
     }
 
-    // Go: transformers/moduletransforms/commonjsmodule.go:2127 CommonJSModuleTransformer.getExports
+    // Go: transformers/moduletransforms/commonjsmodule.go:2133 CommonJSModuleTransformer.getExports
     /// Gets the exported names of an identifier, if it is exported.
     pub(super) fn get_exports(&self, name: Node) -> Vec<Node> {
         let ec = &self.emit_context;

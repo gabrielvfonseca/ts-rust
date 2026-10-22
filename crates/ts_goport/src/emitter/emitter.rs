@@ -278,7 +278,7 @@ impl Emitter {
         (source_file, diags)
     }
 
-    // Go: compiler/emitter.go:185 emitter.emitJSFile
+    // Go: compiler/emitter.go:187 emitter.emitJSFile
     fn emit_js_file(
         &mut self,
         emit_resolver: Rc<dyn EmitResolver>,
@@ -328,7 +328,7 @@ impl Emitter {
         source_file: Node,
         js_file_path: &str,
     ) -> Option<JsPrint> {
-        // Go: compiler/emitter.go:186 (ts#64649)
+        // Go: compiler/emitter.go:188 (ts#64649)
         let emit_context = emit_resolver.emit_context().clone();
         let options = options();
 
@@ -462,7 +462,7 @@ impl Emitter {
         self.emit_result.diagnostics = self.emitter_diagnostics.get_diagnostics();
     }
 
-    // Go: compiler/emitter.go:223 emitter.emitDeclarationFile
+    // Go: compiler/emitter.go:225 emitter.emitDeclarationFile
     fn emit_declaration_file(
         &mut self,
         emit_resolver: Rc<dyn EmitResolver>,
@@ -489,7 +489,7 @@ impl Emitter {
         declaration_file_path: &str,
         declaration_map_path: &str,
     ) -> Option<DeclarationPrint> {
-        // Go: compiler/emitter.go:224 (ts#64649)
+        // Go: compiler/emitter.go:226 (ts#64649)
         let emit_context = emit_resolver.emit_context().clone();
         let options = options();
 
@@ -645,7 +645,7 @@ impl Emitter {
         );
     }
 
-    // Go: compiler/emitter.go:315 emitter.printSourceFile
+    // Go: compiler/emitter.go:317 emitter.printSourceFile
     fn print_source_file(
         &mut self,
         js_file_path: &str,
@@ -678,7 +678,7 @@ impl Emitter {
             source_map_generator.clone(),
         );
         // PORT: Go N' (ts#64649) calls `emitContext.Factory.ReleaseArenas()`
-        // here (emitter.go:329), after each file, on the file's own emit
+        // here (emitter.go:331), after each file, on the file's own emit
         // context. It only lets the GC take nodes that nothing reaches. Here
         // the transform and declaration emit nodes stay with their thread or
         // program version (`ast::synthetic` owners); only the checker's
@@ -815,7 +815,7 @@ impl Emitter {
         diagnostics.get_diagnostics()
     }
 
-    // Go: compiler/emitter.go:394 emitter.writeText
+    // Go: compiler/emitter.go:396 emitter.writeText
     fn write_text(
         &self,
         file_name: &str,
@@ -828,7 +828,7 @@ impl Emitter {
         crate::printer::EmitHost::write_file(self.host.as_ref(), file_name, text)
     }
 
-    // Go: compiler/emitter.go:432 emitter.getSourceMapDirectory
+    // Go: compiler/emitter.go:434 emitter.getSourceMapDirectory
     fn get_source_map_directory(
         &self,
         map_options: &CompilerOptions,
@@ -860,7 +860,7 @@ impl Emitter {
         get_directory_path(&normalize_path(file_path))
     }
 
-    // Go: compiler/emitter.go:442 emitter.getSourceMappingURL
+    // Go: compiler/emitter.go:444 emitter.getSourceMappingURL
     fn get_source_mapping_url(
         &self,
         map_options: &CompilerOptions,
@@ -908,14 +908,14 @@ impl Emitter {
     }
 }
 
-// Go: compiler/emitter.go:296 declarationMapSource
+// Go: compiler/emitter.go:298 declarationMapSource
 struct DeclarationMapSource {
     file_name: &'static str,
     text: FileText,
     line_map: Vec<i32>,
 }
 
-// Go: compiler/emitter.go:302 newDeclarationMapSource
+// Go: compiler/emitter.go:304 newDeclarationMapSource
 fn new_declaration_map_source(source_file: Node) -> DeclarationMapSource {
     let text = source_file_original_text(source_file);
     DeclarationMapSource {
@@ -925,7 +925,7 @@ fn new_declaration_map_source(source_file: Node) -> DeclarationMapSource {
     }
 }
 
-// Go: compiler/emitter.go:311 declarationMapSource.FileName, Text, ECMALineMap
+// Go: compiler/emitter.go:313 declarationMapSource.FileName, Text, ECMALineMap
 impl crate::sourcemap::source::Source for DeclarationMapSource {
     fn text(&self) -> &str {
         &self.text
@@ -1182,13 +1182,13 @@ pub fn parsed_source_file(file: Node) -> Node {
     file
 }
 
-// Go: compiler/emitter.go:401 shouldEmitSourceMaps
+// Go: compiler/emitter.go:403 shouldEmitSourceMaps
 fn should_emit_source_maps(map_options: &CompilerOptions, source_file: Node) -> bool {
     (map_options.source_map.is_true() || map_options.inline_source_map.is_true())
         && !file_extension_is(source_file_file_name(source_file), ".json")
 }
 
-// Go: compiler/emitter.go:406 getSourceRoot
+// Go: compiler/emitter.go:408 getSourceRoot
 fn get_source_root(map_options: &CompilerOptions) -> String {
     // Normalize source root and make sure it has trailing "/" so that it can be used to combine paths with the
     // relative paths of the sources list in the sourcemap

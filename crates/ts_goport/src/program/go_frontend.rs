@@ -1920,7 +1920,7 @@ impl GoSharedState {
         }
     }
 
-    // Go: compiler/program.go:549 ContentMapperExtensions (#4712)
+    // Go: compiler/program.go:550 ContentMapperExtensions (#4712)
     pub(super) fn content_mapper_extensions(&self) -> &[String] {
         &self.content_mapper_extensions
     }

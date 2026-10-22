@@ -285,7 +285,7 @@ pub trait OutputPathsHost {
     fn use_case_sensitive_file_names(&self) -> bool;
 }
 
-// Go: outputpaths/outputpaths.go:95 GetOutputJSFileNameWorker
+// Go: outputpaths/outputpaths.go:122 GetOutputJSFileNameWorker
 pub fn get_output_js_file_name_worker(
     input_file_name: &str,
     options: &CompilerOptions,
@@ -297,7 +297,7 @@ pub fn get_output_js_file_name_worker(
     )
 }
 
-// Go: outputpaths/outputpaths.go:100 GetOutputDeclarationFileNameWorker
+// Go: outputpaths/outputpaths.go:127 GetOutputDeclarationFileNameWorker
 pub fn get_output_declaration_file_name_worker(
     input_file_name: &str,
     options: &CompilerOptions,
@@ -357,7 +357,7 @@ fn change_to_declaration_extension_unexported(path: &str) -> String {
     )
 }
 
-// Go: outputpaths/outputpaths.go:109 GetOutputExtension
+// Go: outputpaths/outputpaths.go:145 GetOutputExtension
 pub fn get_output_extension(file_name: &str, jsx: JsxEmit) -> &'static str {
     if tspath::file_extension_is(file_name, tspath::EXTENSION_JSON) {
         tspath::EXTENSION_JSON
@@ -384,7 +384,7 @@ pub fn get_output_extension(file_name: &str, jsx: JsxEmit) -> &'static str {
 }
 
 // Go: outputpaths/outputpaths.go:165 getOutputPathWithoutChangingExtension (at 673a5f17d713;
-// ts#64159 renames it getOutputFileNameWithoutChangingExtension, outputpaths/outputpaths.go:163)
+// ts#64159 renames it getOutputFileNameWithoutChangingExtension, outputpaths/outputpaths.go:206)
 fn get_output_path_without_changing_extension(
     input_file_name: &str,
     output_directory: &str,

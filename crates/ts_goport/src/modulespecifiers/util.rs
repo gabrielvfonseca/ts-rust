@@ -514,7 +514,7 @@ pub fn get_package_name_from_directory(file_or_directory_path: &str) -> String {
 mod tests {
     use super::*;
 
-    // Go: modulespecifiers/specifiers_test.go:432 TestIsPathRelativeToParent (ts#64159)
+    // Go: modulespecifiers/specifiers_test.go:436 TestIsPathRelativeToParent (ts#64159)
     #[test]
     fn is_path_relative_to_parent_needs_a_parent_segment() {
         for (path, expected) in [

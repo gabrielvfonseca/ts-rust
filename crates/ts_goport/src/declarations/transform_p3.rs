@@ -63,7 +63,7 @@ fn emit_tracker(tx: &DeclarationTransformer) -> EmitSymbolTracker {
 }
 
 impl DeclarationTransformer {
-    // Go: transformers/declarations/transform.go:1537 DeclarationTransformer.wrapInCJSExportNamespace
+    // Go: transformers/declarations/transform.go:1538 DeclarationTransformer.wrapInCJSExportNamespace
     pub(crate) fn wrap_in_cjs_export_namespace(&mut self, content: Node) -> Node {
         if self.cjs_export_assignment_name.is_nil() {
             return content;
@@ -94,7 +94,7 @@ impl DeclarationTransformer {
         )
     }
 
-    // Go: transformers/declarations/transform.go:1575 DeclarationTransformer.transformClassExpressionToDeclaration
+    // Go: transformers/declarations/transform.go:1576 DeclarationTransformer.transformClassExpressionToDeclaration
     // transformClassExpressionToDeclaration converts a class expression into a class declaration
     // for use in CJS export declarations (e.g., exports.K = class K {} or module.exports = class Thing {}).
     // This delegates to the shared buildClassMembers helper to stay in sync with transformClassDeclaration.
@@ -175,13 +175,13 @@ impl DeclarationTransformer {
         input
     }
 
-    // Go: transformers/declarations/transform.go:1610 DeclarationTransformer.preserveJsDoc
+    // Go: transformers/declarations/transform.go:1625 DeclarationTransformer.preserveJsDoc
     pub(crate) fn preserve_js_doc(&mut self, updated: Node, original: Node) {
         // Copy comment range from original to updated node so JSDoc comments are preserved
         self.emit_context.assign_comment_range(updated, original);
     }
 
-    // Go: transformers/declarations/transform.go:1615 DeclarationTransformer.preservePartialJsDoc
+    // Go: transformers/declarations/transform.go:1630 DeclarationTransformer.preservePartialJsDoc
     pub(crate) fn preserve_partial_js_doc(&mut self, updated: Node, original: Node) {
         if !original.flags().intersects(NodeFlags::REPARSED) {
             return;
@@ -206,7 +206,7 @@ impl DeclarationTransformer {
         );
     }
 
-    // Go: transformers/declarations/transform.go:1631 DeclarationTransformer.removeAllComments
+    // Go: transformers/declarations/transform.go:1646 DeclarationTransformer.removeAllComments
     pub(crate) fn remove_all_comments(&mut self, node: Node) {
         self.emit_context
             .add_emit_flags(node, EmitFlags::NO_COMMENTS);
@@ -215,7 +215,7 @@ impl DeclarationTransformer {
         // emitNode.trailingComments = undefined;
     }
 
-    // Go: transformers/declarations/transform.go:1638 DeclarationTransformer.ensureType
+    // Go: transformers/declarations/transform.go:1653 DeclarationTransformer.ensureType
     pub(crate) fn ensure_type(&mut self, node: Node, ignore_private: bool) -> Node {
         let ec = self.emit_context.clone();
         if !ignore_private
@@ -319,7 +319,7 @@ impl DeclarationTransformer {
         type_node
     }
 
-    // Go: transformers/declarations/transform.go:1702 DeclarationTransformer.shouldPrintWithInitializer
+    // Go: transformers/declarations/transform.go:1717 DeclarationTransformer.shouldPrintWithInitializer
     pub(crate) fn should_print_with_initializer(&mut self, node: Node) -> bool {
         can_have_literal_initializer(&*self.resolver, node)
             && node.initializer().is_some()
@@ -328,7 +328,7 @@ impl DeclarationTransformer {
                 .is_literal_const_declaration(self.emit_context.most_original(node))
     }
 
-    // Go: transformers/declarations/transform.go:1706 DeclarationTransformer.checkEntityNameVisibility
+    // Go: transformers/declarations/transform.go:1721 DeclarationTransformer.checkEntityNameVisibility
     pub(crate) fn check_entity_name_visibility(
         &mut self,
         entity_name: Node,
@@ -341,7 +341,7 @@ impl DeclarationTransformer {
             .handle_symbol_accessibility_error(visibility_result);
     }
 
-    // Go: transformers/declarations/transform.go:1712 DeclarationTransformer.transformTopLevelDeclaration
+    // Go: transformers/declarations/transform.go:1727 DeclarationTransformer.transformTopLevelDeclaration
     // Transforms the direct child of a source file into zero or more replacement statements
     pub(crate) fn transform_top_level_declaration(&mut self, input: Node) -> Node {
         {
@@ -458,7 +458,7 @@ impl DeclarationTransformer {
         )
     }
 
-    // Go: transformers/declarations/transform.go:1803 DeclarationTransformer.transformInterfaceDeclaration
+    // Go: transformers/declarations/transform.go:1823 DeclarationTransformer.transformInterfaceDeclaration
     pub(crate) fn transform_interface_declaration(&mut self, input: Node) -> Node {
         let modifiers = self.ensure_modifiers(input);
         let name = input.name();
@@ -476,7 +476,7 @@ impl DeclarationTransformer {
         )
     }
 
-    // Go: transformers/declarations/transform.go:1814 DeclarationTransformer.transformFunctionDeclaration
+    // Go: transformers/declarations/transform.go:1834 DeclarationTransformer.transformFunctionDeclaration
     pub(crate) fn transform_function_declaration(&mut self, input: Node) -> Node {
         if self.resolver.is_expando_function_declaration(input) {
             // PORT: Go `p.ValueDeclaration` goes through the resolver, which
@@ -513,7 +513,7 @@ impl DeclarationTransformer {
         )
     }
 
-    // Go: transformers/declarations/transform.go:1831 DeclarationTransformer.transformModuleDeclaration
+    // Go: transformers/declarations/transform.go:1851 DeclarationTransformer.transformModuleDeclaration
     pub(crate) fn transform_module_declaration(&mut self, input: Node) -> Node {
         // !!! TODO: module declarations are now parsed into nested module objects with export modifiers
         // It'd be good to collapse those back in the declaration output, but the AST can't represent the
@@ -614,7 +614,7 @@ impl DeclarationTransformer {
         )
     }
 
-    // Go: transformers/declarations/transform.go:1908 DeclarationTransformer.stripExportModifiers
+    // Go: transformers/declarations/transform.go:1928 DeclarationTransformer.stripExportModifiers
     pub(crate) fn strip_export_modifiers(&mut self, statement: Node) -> Node {
         if statement.is_nil() {
             return Node::NIL;
@@ -649,7 +649,7 @@ impl DeclarationTransformer {
         )
     }
 
-    // Go: transformers/declarations/transform.go:1931 DeclarationTransformer.buildClassMembers
+    // Go: transformers/declarations/transform.go:1951 DeclarationTransformer.buildClassMembers
     // buildClassMembers builds the member list for a class-like node (ClassDeclaration or ClassExpression).
     // It handles parameter properties, private identifiers, late-bound index signatures, and visited members.
     // Extra members (e.g., this-property assignments from JS files) can be passed via extraMembers.
@@ -955,7 +955,7 @@ impl DeclarationTransformer {
         )
     }
 
-    // Go: transformers/declarations/transform.go:2171 DeclarationTransformer.collectThisPropertyAssignments
+    // Go: transformers/declarations/transform.go:2195 DeclarationTransformer.collectThisPropertyAssignments
     // collectThisPropertyAssignments finds `this.x = expr` assignments in constructors, methods, and static blocks
     // of JS classes and synthesizes PropertyDeclaration nodes for each unique property name.
     pub(crate) fn collect_this_property_assignments(&mut self, class_node: Node) -> Vec<Node> {
@@ -1002,7 +1002,7 @@ pub(crate) fn is_common_js_alias_export(node: Node) -> bool {
     false
 }
 
-// Go: transformers/declarations/transform.go:2153 isClassExtendingNull
+// Go: transformers/declarations/transform.go:2177 isClassExtendingNull
 pub(crate) fn is_class_extending_null(node: Node) -> bool {
     if node.is_nil() {
         return false;

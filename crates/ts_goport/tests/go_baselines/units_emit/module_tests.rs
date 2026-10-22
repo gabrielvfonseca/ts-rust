@@ -1801,7 +1801,7 @@ impl ModuleSpecifierGenerationHost for MockModuleSpecifierGenerationHost {
     fn common_source_directory(&self) -> String {
         self.current_dir.clone()
     }
-    // Go: specifiers_test.go:47 ContentMapperExtensions (tsgo#4712)
+    // Go: specifiers_test.go:131 ContentMapperExtensions (tsgo#4712)
     fn content_mapper_extensions(&self) -> Vec<String> {
         self.content_mapper_extensions.clone()
     }

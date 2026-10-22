@@ -90,7 +90,7 @@ pub trait Transformer {
 /// A constructed transformer (Go `*transformers.Transformer`).
 pub type TransformerBox = Box<dyn Transformer>;
 
-// Go: transformers/chain.go:34 TransformerFactory
+// Go: transformers/chain.go:37 TransformerFactory
 /// Go `TransformerFactory`. `None` is Go nil.
 pub type TransformerFactory = dyn Fn(&TransformOptions) -> Option<TransformerBox>;
 

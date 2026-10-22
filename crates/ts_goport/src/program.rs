@@ -3166,7 +3166,7 @@ pub fn options() -> &'static CompilerOptions {
     &prog().options
 }
 
-// Go: compiler/program.go:549 ContentMapperExtensions (#4712)
+// Go: compiler/program.go:550 ContentMapperExtensions (#4712)
 // PORT: the Go frontend program copies the extensions of its command line
 // (`GoSharedState`), so checker threads can read them. An alias resolver
 // program has none.
@@ -3638,8 +3638,8 @@ pub fn get_source_file_from_reference(origin: Node, r: &FileReference) -> Node {
     with_go(|go| go.get_source_file_from_reference(origin, r))
 }
 
-// Go: outputpaths/outputpaths.go:46 GetOutputPathsFor, called by
-// compiler/emitHost.go:94 emitHost.GetOutputPathsFor and Program.Emit with
+// Go: outputpaths/outputpaths.go:53 GetOutputPathsFor, called by
+// compiler/emitHost.go:91 emitHost.GetOutputPathsFor and Program.Emit with
 // the program options.
 // PORT: Go reads three fields of the source file (#4712: the content
 // mapper). It is named for the emit host method so it does not clash with
@@ -5083,7 +5083,7 @@ fn get_declaration_diagnostics_worker(host: Rc<EmitHost>, file: Node) -> Vec<Dia
         return Vec::new();
     }
     // PORT: Go calls host.Options(), which returns host.program.Options()
-    // (emitHost.go:107). The trait method borrows `host`, but the transformer
+    // (emitHost.go:104). The trait method borrows `host`, but the transformer
     // needs `&'static`, so read the program options directly.
     let options = options();
     // ts#64649 (emitter.go:558): a new emit resolver for a new emit context.
@@ -5138,7 +5138,7 @@ pub fn new_emit_host_with(
 }
 
 impl EmitHost {
-    // Go: compiler/emitHost.go:130 emitHost.NewEmitResolver (ts#64649)
+    // Go: compiler/emitHost.go:134 emitHost.NewEmitResolver (ts#64649)
     #[must_use]
     pub fn new_emit_resolver(
         &self,
@@ -5169,7 +5169,7 @@ impl crate::frontend::outputpaths::OutputPathsHost for EmitHost {
         get_current_directory().to_string()
     }
 
-    // Go: compiler/emitHost.go:116 emitHost.UseCaseSensitiveFileNames (at 673a5f17d713; ts#64159 makes it CaseSensitivity, compiler/emitHost.go:118)
+    // Go: compiler/emitHost.go:116 emitHost.UseCaseSensitiveFileNames (at 673a5f17d713; ts#64159 makes it CaseSensitivity, compiler/emitHost.go:122)
     fn use_case_sensitive_file_names(&self) -> bool {
         use_case_sensitive_file_names()
     }
@@ -5259,12 +5259,12 @@ impl crate::printer::EmitHost for EmitHost {
         common_source_directory().to_string()
     }
 
-    // Go: compiler/emitHost.go:122 emitHost.IsEmitBlocked
+    // Go: compiler/emitHost.go:126 emitHost.IsEmitBlocked
     fn is_emit_blocked(&self, file: &str) -> bool {
         is_emit_blocked(file)
     }
 
-    // Go: compiler/emitHost.go:126 emitHost.WriteFile
+    // Go: compiler/emitHost.go:130 emitHost.WriteFile
     // PORT: Go writes through the program host file system. Here the emit
     // caller always passes `EmitOptions.write_file`; without one the
     // write fails instead of touching the disk.
@@ -5277,7 +5277,7 @@ impl crate::printer::EmitHost for EmitHost {
         get_emit_module_format_of_file(crate::emitter::emitter::parsed_source_file(file))
     }
 
-    // Go: compiler/emitHost.go:130 emitHost.NewEmitResolver (ts#64649)
+    // Go: compiler/emitHost.go:134 emitHost.NewEmitResolver (ts#64649)
     fn new_emit_resolver(
         &self,
         emit_context: Rc<EmitContext>,
@@ -5285,7 +5285,7 @@ impl crate::printer::EmitHost for EmitHost {
         EmitHost::new_emit_resolver(self, emit_context)
     }
 
-    // Go: compiler/emitHost.go:134 emitHost.IsSourceFileFromExternalLibrary
+    // Go: compiler/emitHost.go:138 emitHost.IsSourceFileFromExternalLibrary
     fn is_source_file_from_external_library(&self, file: Node) -> bool {
         is_source_file_from_external_library(file)
     }

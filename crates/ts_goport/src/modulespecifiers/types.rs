@@ -109,7 +109,7 @@ pub trait ModuleSpecifierGenerationHost {
     fn get_global_typings_cache_location(&self) -> String;
     fn use_case_sensitive_file_names(&self) -> bool;
     fn get_current_directory(&self) -> String;
-    // Go: modulespecifiers/types.go:56 BaseDirectory (ts#64159, rule R1): the
+    // Go: modulespecifiers/types.go:57 BaseDirectory (ts#64159, rule R1): the
     // program's base directory, that is the config file's directory, or the
     // current directory without a config. It is the base of "paths"
     // (specifiers.go:524) and the project directory without a config file
@@ -145,7 +145,7 @@ pub trait ModuleSpecifierGenerationHost {
     fn as_output_paths_host(&self) -> &dyn super::deps::OutputPathsHost;
 }
 
-// Go: modulespecifiers/types.go:71 ImportModuleSpecifierPreference
+// Go: modulespecifiers/types.go:72 ImportModuleSpecifierPreference
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ImportModuleSpecifierPreference {
     #[default]
@@ -156,7 +156,7 @@ pub enum ImportModuleSpecifierPreference {
     NonRelative,     // "non-relative"
 }
 
-// Go: modulespecifiers/types.go:81 ImportModuleSpecifierEndingPreference
+// Go: modulespecifiers/types.go:82 ImportModuleSpecifierEndingPreference
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum ImportModuleSpecifierEndingPreference {
     #[default]
@@ -167,7 +167,7 @@ pub enum ImportModuleSpecifierEndingPreference {
     Js,      // "js"
 }
 
-// Go: modulespecifiers/types.go:91 UserPreferences
+// Go: modulespecifiers/types.go:92 UserPreferences
 #[derive(Clone, Debug, Default)]
 pub struct UserPreferences {
     pub import_module_specifier_preference: ImportModuleSpecifierPreference,
@@ -175,13 +175,13 @@ pub struct UserPreferences {
     pub auto_import_specifier_exclude_regexes: Vec<String>,
 }
 
-// Go: modulespecifiers/types.go:97 ModuleSpecifierOptions
+// Go: modulespecifiers/types.go:98 ModuleSpecifierOptions
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ModuleSpecifierOptions {
     pub override_import_mode: ResolutionMode,
 }
 
-// Go: modulespecifiers/types.go:101 RelativePreferenceKind
+// Go: modulespecifiers/types.go:102 RelativePreferenceKind
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RelativePreferenceKind {
     Relative,
@@ -190,7 +190,7 @@ pub enum RelativePreferenceKind {
     ExternalNonRelative,
 }
 
-// Go: modulespecifiers/types.go:110 ModuleSpecifierEnding
+// Go: modulespecifiers/types.go:111 ModuleSpecifierEnding
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ModuleSpecifierEnding {
     Minimal,
@@ -199,7 +199,7 @@ pub enum ModuleSpecifierEnding {
     TsExtension,
 }
 
-// Go: modulespecifiers/types.go:119 MatchingMode
+// Go: modulespecifiers/types.go:120 MatchingMode
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MatchingMode {
     Exact,
