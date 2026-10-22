@@ -134,8 +134,9 @@ pub static LIB_MAP: LazyLock<CommandLineOptionEnumMap> = LazyLock::new(|| {
         ("esnext.array", "lib.es2026.array.d.ts"),
         ("esnext.collection", "lib.es2026.collection.d.ts"),
         ("esnext.error", "lib.es2026.error.d.ts"),
-        ("esnext.iterator", "lib.es2026.iterator.d.ts"),
         ("esnext.typedarrays", "lib.es2026.typedarrays.d.ts"),
+        // ts#64095
+        ("esnext.iterator", "lib.esnext.iterator.d.ts"),
         // ts#64093
         ("esnext.promise", "lib.esnext.promise.d.ts"),
         // ESNext By-feature options

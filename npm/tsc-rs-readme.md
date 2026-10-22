@@ -15,7 +15,7 @@ npx tsc-rs -p tsconfig.json
 ```
 
 `tsc-rs` takes the same options as `tsc`. `tsc-rs --version` prints the TypeScript version that it
-ports (7.1.0-dev), not the npm version.
+ports (7.1.0-beta), not the npm version.
 
 ## Effect diagnostics
 

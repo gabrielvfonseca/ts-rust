@@ -4906,7 +4906,7 @@ pub fn prog() -> &'static GoProgram {
 // Without it the value is Go's default, as in the pinned reference build.
 pub(crate) const VERSION: &str = match option_env!("GOPORT_BUILD_VERSION") {
     Some(version) => version,
-    None => "7.1.0-dev",
+    None => "7.1.0-beta",
 };
 
 // Go: core/version.go:10 Version
