@@ -1,11 +1,13 @@
 //! Port-only test of `handle_file_delete` (Go
-//! `incremental/programtosnapshot.go:162-179 handleFileDelete`).
+//! `incremental/programtosnapshot.go:170 handleFileDelete`).
 //!
-//! PORT: Go stops at the first gone file of a random-order `SyncMap`, so
-//! Go takes the global branch with chance (gone global files) / (gone
-//! files) and has no stable test for it. The port takes Go's more likely
-//! answer, and the global branch on a tie (the PORT comment of
-//! `handle_file_delete`). These tests fix those answers.
+//! PORT: before ts#64845 Go stopped at the first gone file of a
+//! random-order `SyncMap`, so Go took the global branch with chance (gone
+//! global files) / (gone files), and the port took Go's more likely answer.
+//! Since ts#64845 (pin 3e9236361fa9) Go visits every gone file and takes the
+//! global branch when any of them affects global scope. These tests fix that
+//! answer. Two test names are the names of the old answer (protected names);
+//! their comments give the answer at 3e9236361fa9 and the Go runs.
 
 use ts_goport::execute::tsc::ExitStatus;
 
@@ -99,10 +101,13 @@ fn lib_change_rechecks_when_a_later_gone_file_affects_global_scope() {
 
 // realworld3 docusaurus (incremental rebuild after a dependency change):
 // three files leave the program and only `g.d.ts` affects global scope.
-// Go meets a module file first in 2 of 3 runs (pin 673a5f17d713: 134 of
-// 200), takes the branch that only rewrites the build info, and does not
-// emit the unchanged `a.ts` again. The global branch re-emits every file
-// (docusaurus: 855 unchanged JS files where Go writes 3).
+// Before ts#64845 Go met a module file first in 2 of 3 runs (pin
+// 673a5f17d713: 134 of 200), took the branch that only rewrites the build
+// info, and did not emit the unchanged `a.ts` again; the port did the same.
+// Since ts#64845 one gone global file is enough: every file changes, and the
+// unchanged `a.ts` is emitted again (Go 3e9236361fa9: 12 of 12 runs; Go
+// fed0bf24149f: 2 of 12; bump E w2/l6 `tools/go-file-delete.sh`). The test
+// keeps its old name.
 #[test]
 fn gone_files_mostly_modules_do_not_change_all_files() {
     let source = |name: &str| format!("{PROJECT}/src/{name}");
@@ -142,7 +147,7 @@ fn gone_files_mostly_modules_do_not_change_all_files() {
     let output = sys.output_text();
     assert_eq!(status, ExitStatus::Success, "{output}");
     assert!(
-        !output.contains(&format!("TSFILE: {PROJECT}/out/a.js")),
+        output.contains(&format!("TSFILE: {PROJECT}/out/a.js")),
         "{output}"
     );
     assert!(
@@ -152,9 +157,9 @@ fn gone_files_mostly_modules_do_not_change_all_files() {
 }
 
 // Three files leave the program and two of them, `g1.d.ts` and `g2.d.ts`,
-// affect global scope: a strict global majority. Go meets a global file
-// first in 2 of 3 runs and adds every file to the change set, so the
-// unchanged `a.ts` is emitted again. The port takes that branch.
+// affect global scope. Go adds every file to the change set, so the
+// unchanged `a.ts` is emitted again (before ts#64845 Go did so in 2 of 3
+// runs, when it met a global file first).
 #[test]
 fn gone_files_mostly_global_change_all_files() {
     let source = |name: &str| format!("{PROJECT}/src/{name}");
@@ -204,11 +209,10 @@ fn gone_files_mostly_global_change_all_files() {
 }
 
 // Two files leave the program and one of them, `g.d.ts`, affects global
-// scope: a tie. Go meets the global file first in about half of the runs
-// (pin 673a5f17d713, `followups23/tools/tie_go.sh`: 22 of 40 runs, and 105
-// of 200 in a later count), and the port takes the global branch on a
-// tie, so the unchanged `a.ts` is emitted again. With a strict majority
-// rule (`>` in place of `>=`), it would not be.
+// scope, so the unchanged `a.ts` is emitted again. Before ts#64845 Go met
+// the global file first in about half of the runs (pin 673a5f17d713,
+// `followups23/tools/tie_go.sh`: 22 of 40 runs, and 105 of 200 in a later
+// count), and the port took the global branch on this tie.
 #[test]
 fn gone_files_half_global_change_all_files() {
     let source = |name: &str| format!("{PROJECT}/src/{name}");
@@ -262,15 +266,17 @@ fn gone_files_half_global_change_all_files() {
 // 673a5f17d713 `lib.dom.iterable.d.ts` and `lib.dom.asynciterable.d.ts`
 // hold only comments (the bundled texts below). `lib` does not affect
 // semantic diagnostics, so only a gone global file makes the program check
-// `a.ts` again. 1 gone lib of 3 is global, so the port only writes the build
-// info again and keeps the old diagnostics of `a.ts` (none).
-// Go gives one of two answers (pin 673a5f17d713):
+// `a.ts` again. Before ts#64845 Go gave one of two answers (pin
+// 673a5f17d713), and the port took the first, as 1 gone lib of 3 is global:
 // - Go meets a lib with no statements first (tsc -p 43 of 60 runs, tsc -b 30
-//   of 40): the port's answer. Exit 0, only `tsconfig.tsbuildinfo` written.
+//   of 40). Exit 0, only `tsconfig.tsbuildinfo` written.
 // - Go meets `lib.dom.d.ts` first (tsc -p 17 of 60, tsc -b 10 of 40): every
 //   file is checked and emitted again. `a.ts` gets TS2584 (Cannot find name
 //   'document'), exit 2, and `out/a.js`, `out/b.js` and the build info are
 //   written.
+// Since ts#64845 the gone `lib.dom.d.ts` always gives the second answer (Go
+// 3e9236361fa9 with its bundled libs: 12 of 12 runs; Go fed0bf24149f: 5 of
+// 12; bump E w2/l6 `tools/go-file-delete.sh`). The test keeps its old name.
 #[test]
 fn lib_dom_removal_does_not_recheck_when_most_gone_libs_have_no_statements() {
     let lib = |name: &str| format!("{TSC_LIB_PATH}/{name}");
@@ -321,11 +327,19 @@ fn lib_dom_removal_does_not_recheck_when_most_gone_libs_have_no_statements() {
     sys.clear_output();
     let status = build_with(&sys, &["--listEmittedFiles"]);
     let output = sys.output_text();
-    assert_eq!(status, ExitStatus::Success, "{output}");
-    assert!(!output.contains("TS2584"), "{output}");
-    assert!(!output.contains(&format!("{PROJECT}/out/")), "{output}");
-    assert!(
-        output.contains(&format!("TSFILE: {PROJECT}/tsconfig.tsbuildinfo")),
+    assert_eq!(
+        status,
+        ExitStatus::DiagnosticsPresentOutputsGenerated,
         "{output}"
     );
+    assert!(
+        output.contains("error TS2584: Cannot find name 'document'."),
+        "{output}"
+    );
+    for emitted in ["out/a.js", "out/b.js", "tsconfig.tsbuildinfo"] {
+        assert!(
+            output.contains(&format!("TSFILE: {PROJECT}/{emitted}")),
+            "{output}"
+        );
+    }
 }
