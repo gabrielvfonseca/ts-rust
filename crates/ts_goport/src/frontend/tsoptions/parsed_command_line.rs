@@ -470,6 +470,9 @@ pub struct ParsedCommandLine {
     /// maps file names to their paths, used for quick lookups
     pub file_names_by_path: OnceCell<FxHashMap<Path, String>>,
 
+    /// ts#64581: the cache of `content_mapper_extension_rewrites`.
+    pub content_mapper_extension_rewrites: OnceCell<Vec<ExtensionRewrite>>,
+
     pub locale: OnceCell<crate::locale::Locale>,
 }
 
@@ -919,6 +922,54 @@ impl ParsedCommandLine {
             .collect()
     }
 
+    // Go: tsoptions/parsedcommandline.go:402 (*ParsedCommandLine).ContentMapperExtensionRewrites (ts#64581)
+    /// The output extension rewrites of the content mappers, longest source
+    /// first. Empty (Go nil) when every mapping is an identity.
+    // PORT: a single-threaded `OnceCell` (see the file header); each copy of
+    // the command line computes it again, as Go's new `sync.Once` does.
+    pub fn content_mapper_extension_rewrites(&self) -> &[ExtensionRewrite] {
+        self.content_mapper_extension_rewrites
+            .get_or_init(|| self.compute_content_mapper_extension_rewrites())
+    }
+
+    // Go: tsoptions/parsedcommandline.go:409 (*ParsedCommandLine).computeContentMapperExtensionRewrites (ts#64581)
+    fn compute_content_mapper_extension_rewrites(&self) -> Vec<ExtensionRewrite> {
+        let mut result: Vec<ExtensionRewrite> = Vec::new();
+        let mut has_non_identity_mapping = false;
+        let ignore_case = !self.use_case_sensitive_file_names();
+        for mapper in self.content_mappers() {
+            let output_extensions = mapper.definition.output_extensions.as_ref();
+            for source in &mapper.definition.extensions {
+                let target = match get_content_mapper_output_extension(
+                    output_extensions,
+                    source,
+                    ignore_case,
+                ) {
+                    Some(target)
+                        if !(target == source
+                            || ignore_case && equate_string_case_insensitive(target, source)) =>
+                    {
+                        has_non_identity_mapping = true;
+                        target
+                    }
+                    _ => source,
+                };
+                result.push(ExtensionRewrite {
+                    source: source.clone(),
+                    target: target.to_string(),
+                });
+            }
+        }
+        if !has_non_identity_mapping {
+            return Vec::new();
+        }
+        // Identity entries prevent shorter mappings from claiming a longer registered extension.
+        // The runtime helper uses the first match, so emit the longest extensions first.
+        // PORT: `sort_by` is stable, as Go `slices.SortStableFunc`.
+        result.sort_by(|a, b| b.source.len().cmp(&a.source.len()));
+        result
+    }
+
     // Go: tsoptions/parsedcommandline.go:401 (*ParsedCommandLine).GetContentMapperForFileName (tsgo#4712)
     // GetContentMapperForFileName returns the configured content mapper whose extensions include fileName,
     // or nil if no content mapper is registered for the file's extension.
@@ -1139,6 +1190,31 @@ impl ModuleResolvedProjectReference for ParsedCommandLine {
     }
 }
 
+// Go: tsoptions/parsedcommandline.go:436 getContentMapperOutputExtension (ts#64581)
+/// The output extension that `output_extensions` maps `source_extension` to:
+/// an exact key first, then, when the case is ignored, a key that is equal
+/// without case.
+// PORT: Go ranges over the map in random order for the case-insensitive
+// match; the `BTreeMap` gives the first key in sorted order.
+pub(crate) fn get_content_mapper_output_extension<'a>(
+    output_extensions: Option<&'a std::collections::BTreeMap<String, String>>,
+    source_extension: &str,
+    ignore_case: bool,
+) -> Option<&'a str> {
+    let output_extensions = output_extensions?;
+    if let Some(output) = output_extensions.get(source_extension) {
+        return Some(output);
+    }
+    if ignore_case {
+        for (source, output) in output_extensions {
+            if equate_string_case_insensitive(source, source_extension) {
+                return Some(output);
+            }
+        }
+    }
+    None
+}
+
 // Go: `*ParsedCommandLine` implements `outputpaths.OutputPathsHost`.
 impl OutputPathsHost for ParsedCommandLine {
     fn common_source_directory(&self) -> String {
@@ -1153,6 +1229,10 @@ impl OutputPathsHost for ParsedCommandLine {
     // tsgo#4712
     fn content_mapper_extensions(&self) -> Vec<String> {
         ParsedCommandLine::content_mapper_extensions(self)
+    }
+    // ts#64581
+    fn content_mapper_extension_rewrites(&self) -> Vec<ExtensionRewrite> {
+        ParsedCommandLine::content_mapper_extension_rewrites(self).to_vec()
     }
 }
 

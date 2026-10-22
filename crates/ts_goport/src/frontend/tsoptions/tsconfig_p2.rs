@@ -679,7 +679,7 @@ pub(crate) fn stringify_json(value: &CompilerOptionsValue, out: &mut String) {
 // host: Instance of ParseConfigHost used to enumerate files in folder.
 // basePath: A root directory to resolve relative path entries in the config file to. e.g. outDir
 // resolutionStack: Only present for backwards-compatibility. Should be empty.
-// Go: tsoptions/tsconfigparsing.go:1118 parseJsonConfigFileContentWorker
+// Go: tsoptions/tsconfigparsing.go:1135 parseJsonConfigFileContentWorker (ts#64581: content mapper output extensions)
 // PORT: Go `sourceFile` is a pointer that the result keeps, so it moves in
 // and into `ParsedCommandLine.config_file`. The Go `getFileNames` and
 // `getProjectReferences` closures run inline, in Go order. When `parseConfig`
@@ -956,10 +956,6 @@ pub fn parse_json_config_file_content_worker(
         FxHashSet::with_capacity_and_hasher(total_content_mapper_extensions, Default::default());
     let mut content_mapper_extensions: Vec<String> =
         Vec::with_capacity(total_content_mapper_extensions);
-    let native_extensions: Vec<&str> = ALL_SUPPORTED_EXTENSIONS_WITH_JSON
-        .iter()
-        .flat_map(|group| group.iter().copied())
-        .collect();
     let canonical_extension = |extension: &str| -> String {
         get_canonical_file_name(extension, host.fs().use_case_sensitive_file_names())
     };
@@ -982,12 +978,16 @@ pub fn parse_json_config_file_content_worker(
                     content_mapper_source_file,
                     ext_node,
                 ));
-            } else if native_extensions.iter().any(|native_extension| {
-                crate::frontend::vfs::vfsmatch::equal_fold(
-                    native_extension.as_bytes(),
-                    ext.as_bytes(),
-                )
-            }) {
+            } else if ext.contains(['/', '\\']) {
+                errors.push(set_content_mapper_diagnostic_location(
+                    new_compiler_diagnostic(
+                        diag::Content_mapper_extension_0_must_not_contain_path_separators,
+                        args![ext],
+                    ),
+                    content_mapper_source_file,
+                    ext_node,
+                ));
+            } else if crate::contentmapper::has_reserved_source_extension(ext) {
                 errors.push(set_content_mapper_diagnostic_location(
                     new_compiler_diagnostic(
                         diag::Content_mapper_file_extension_0_is_a_built_in_extension_and_cannot_be_registered_by_a_content_mapper,
@@ -1012,6 +1012,66 @@ pub fn parse_json_config_file_content_worker(
             }
         }
         mapper.definition.extensions = valid_extensions;
+        // PORT: the `BTreeMap` iterates in Go's `slices.Sorted(maps.Keys(...))` order.
+        for (source_extension, output_extension) in
+            mapper.definition.output_extensions.iter().flatten()
+        {
+            let output_extensions_node = get_content_mapper_syntax(
+                content_mapper_source_file,
+                content_mapper_indices[j],
+                "outputExtensions",
+            );
+            if source_extension.contains(['/', '\\']) {
+                errors.push(set_content_mapper_diagnostic_location(
+                    new_compiler_diagnostic(
+                        diag::Content_mapper_extension_0_must_not_contain_path_separators,
+                        args![source_extension],
+                    ),
+                    content_mapper_source_file,
+                    output_extensions_node,
+                ));
+            } else if !crate::contentmapper::is_valid_extension(source_extension) {
+                errors.push(set_content_mapper_diagnostic_location(
+                    new_compiler_diagnostic(
+                        diag::Content_mapper_output_extension_0_must_be_non_empty_and_begin_with_a,
+                        args![source_extension],
+                    ),
+                    content_mapper_source_file,
+                    output_extensions_node,
+                ));
+            }
+            if output_extension.contains(['/', '\\']) {
+                errors.push(set_content_mapper_diagnostic_location(
+                    new_compiler_diagnostic(
+                        diag::Content_mapper_extension_0_must_not_contain_path_separators,
+                        args![output_extension],
+                    ),
+                    content_mapper_source_file,
+                    output_extensions_node,
+                ));
+            } else if !crate::contentmapper::is_valid_extension(output_extension) {
+                errors.push(set_content_mapper_diagnostic_location(
+                    new_compiler_diagnostic(
+                        diag::Content_mapper_output_extension_0_must_be_non_empty_and_begin_with_a,
+                        args![output_extension],
+                    ),
+                    content_mapper_source_file,
+                    output_extensions_node,
+                ));
+            }
+            if !mapper.definition.extensions.iter().any(|extension| {
+                canonical_extension(extension) == canonical_extension(source_extension)
+            }) {
+                errors.push(set_content_mapper_diagnostic_location(
+                    new_compiler_diagnostic(
+                        diag::Content_mapper_output_extension_mapping_source_0_is_not_registered_by_this_content_mapper,
+                        args![source_extension],
+                    ),
+                    content_mapper_source_file,
+                    output_extensions_node,
+                ));
+            }
+        }
     }
     if !content_mappers.is_empty()
         && !parsed_config
@@ -1057,6 +1117,56 @@ pub fn parse_json_config_file_content_worker(
                 continue;
             }
             mapper.manifest = manifest;
+            // ts#64581: a mapper without its own `outputExtensions` member
+            // (a null one counts as present) takes the manifest default.
+            let raw_has_output_extensions = matches!(
+                content_mappers_of_raw
+                    .slice_value
+                    .as_ref()
+                    .and_then(|values| values.get(content_mapper_indices[j] as usize)),
+                Some(CompilerOptionsValue::Map(raw_mapper)) if raw_mapper.contains_key("outputExtensions")
+            );
+            if !raw_has_output_extensions {
+                mapper.definition.output_extensions =
+                    mapper.manifest.default_output_extensions.clone();
+            }
+            let ignore_case = !host.fs().use_case_sensitive_file_names();
+            for source_extension in &mapper.definition.extensions {
+                let output_extension =
+                    super::parsed_command_line::get_content_mapper_output_extension(
+                        mapper.definition.output_extensions.as_ref(),
+                        source_extension,
+                        ignore_case,
+                    );
+                let Some(output_extension) = output_extension else {
+                    continue;
+                };
+                let identity = source_extension == output_extension
+                    || ignore_case
+                        && crate::frontend::stringutil_ls::equate_string_case_insensitive(
+                            source_extension,
+                            output_extension,
+                        );
+                if !identity
+                    && !parsed_config
+                        .options
+                        .as_ref()
+                        .is_some_and(|options| options.rewrite_relative_import_extensions.is_true())
+                {
+                    errors.push(set_content_mapper_diagnostic_location(
+                        new_compiler_diagnostic(
+                            diag::Content_mapper_output_extension_mapping_from_0_to_1_requires_rewriteRelativeImportExtensions_to_be_enabled,
+                            args![source_extension, output_extension],
+                        ),
+                        content_mapper_source_file,
+                        get_content_mapper_syntax(
+                            content_mapper_source_file,
+                            content_mapper_indices[j],
+                            "",
+                        ),
+                    ));
+                }
+            }
             resolved_content_mappers.push(mapper);
         }
         content_mappers = resolved_content_mappers;

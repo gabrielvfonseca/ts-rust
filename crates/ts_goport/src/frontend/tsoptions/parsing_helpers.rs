@@ -117,7 +117,7 @@ pub fn parse_project_reference(json: &CompilerOptionsValue) -> Option<ProjectRef
     None
 }
 
-// Go: tsoptions/parsinghelpers.go:138 parseContentMapper (tsgo#4712)
+// Go: tsoptions/parsinghelpers.go:138 parseContentMapper (tsgo#4712, ts#64581)
 // PORT: Go returns a nilable `*contentmapper.Mapper`; that is an owned
 // `Option<Mapper>`, which the caller changes and then puts in an `Rc`.
 pub fn parse_content_mapper(value: &CompilerOptionsValue) -> (Option<Mapper>, Vec<Diagnostic>) {
@@ -157,6 +157,21 @@ pub fn parse_content_mapper(value: &CompilerOptionsValue) -> (Option<Mapper>, Ve
             args!["contentMapper.extensions", "string[]"],
         ));
     }
+    // A null `outputExtensions` leaves the map nil, and the caller then does
+    // not apply the manifest default (ts#64581).
+    if let Some(output_extensions) = v
+        .get("outputExtensions")
+        .filter(|value| !matches!(value, CompilerOptionsValue::Nil))
+    {
+        if let Some(values) = parse_string_string_map_strict(output_extensions) {
+            mapper.definition.output_extensions = Some(values);
+        } else {
+            errors.push(new_compiler_diagnostic(
+                diag::Compiler_option_0_requires_a_value_of_type_1,
+                args!["contentMapper.outputExtensions", "object or null"],
+            ));
+        }
+    }
     if let Some(options) = v.get("options") {
         if !matches!(options, CompilerOptionsValue::Map(_)) {
             errors.push(new_compiler_diagnostic(
@@ -179,7 +194,26 @@ pub fn parse_content_mapper(value: &CompilerOptionsValue) -> (Option<Mapper>, Ve
     (Some(mapper), errors)
 }
 
-// Go: tsoptions/parsinghelpers.go:178 parseStringArrayStrict (tsgo#4712)
+// Go: tsoptions/parsinghelpers.go:183 parseStringStringMapStrict (ts#64581)
+// PORT: Go `(map[string]string, bool)` is an `Option`; the Go map is a
+// `BTreeMap` (see `contentmapper::Definition`).
+pub fn parse_string_string_map_strict(
+    value: &CompilerOptionsValue,
+) -> Option<std::collections::BTreeMap<String, String>> {
+    let CompilerOptionsValue::Map(object) = value else {
+        return None;
+    };
+    let mut result = std::collections::BTreeMap::new();
+    for (key, value) in object {
+        let CompilerOptionsValue::String(str) = value else {
+            return None;
+        };
+        result.insert(key.clone(), str.clone());
+    }
+    Some(result)
+}
+
+// Go: tsoptions/parsinghelpers.go:201 parseStringArrayStrict (tsgo#4712)
 // parseStringArrayStrict returns the string slice and true only if value is an array whose
 // elements are all strings. A missing element or wrong element type yields false.
 // PORT: Go `([]string, bool)` is `Option<Vec<String>>`.

@@ -551,6 +551,110 @@ fn run_external_code_options() -> Option<CompilerOptions> {
     })
 }
 
+// Go: tsconfigparsing_test.go:1187 TestContentMapperOutputExtensionsReset (ts#64581)
+#[test]
+fn content_mapper_output_extensions_reset() {
+    struct ResetTest {
+        name: &'static str,
+        override_: &'static str,
+        rewrite: bool,
+        declaration: &'static str,
+        output_extensions: Option<&'static [(&'static str, &'static str)]>,
+    }
+    let tests = [
+        ResetTest {
+            name: "omitted",
+            override_: "",
+            rewrite: true,
+            declaration: "/dist/Card.d.ts",
+            output_extensions: Some(&[(".astro", ".js")]),
+        },
+        ResetTest {
+            name: "null",
+            override_: r#", "outputExtensions": null"#,
+            rewrite: false,
+            declaration: "/dist/Card.d.astro.ts",
+            output_extensions: None,
+        },
+        ResetTest {
+            name: "empty object",
+            override_: r#", "outputExtensions": {}"#,
+            rewrite: false,
+            declaration: "/dist/Card.d.astro.ts",
+            output_extensions: Some(&[]),
+        },
+        ResetTest {
+            name: "replacement",
+            override_: r#", "outputExtensions": {".astro": ".mjs"}"#,
+            rewrite: true,
+            declaration: "/dist/Card.d.mts",
+            output_extensions: Some(&[(".astro", ".mjs")]),
+        },
+    ];
+    let mut t = Subtests::new("TestContentMapperOutputExtensionsReset");
+    for test in &tests {
+        for (name, get_parsed) in CONFIG_APIS {
+            t.run(&format!("{}/{name}", test.name), || {
+                // PORT: the parser keeps `&'static str` text, so the config text is leaked.
+                let json_text: &'static str = Box::leak(
+                    format!(
+                        "{{\n\t\t\t\t\t\t\"compilerOptions\": {{\n\t\t\t\t\t\t\t\"declaration\": true, \"rootDir\": \"/src\", \"outDir\": \"/dist\",\n\t\t\t\t\t\t\t\"rewriteRelativeImportExtensions\": {}\n\t\t\t\t\t\t}},\n\t\t\t\t\t\t\"contentMappers\": [{{ \"package\": \"mapper\", \"extensions\": [\".astro\"]{} }}],\n\t\t\t\t\t\t\"files\": [\"/src/Card.astro\"]\n\t\t\t\t\t}}",
+                        test.rewrite, test.override_
+                    )
+                    .into_boxed_str(),
+                );
+                let files = file_map(&[
+                    ("/tsconfig.json", json_text),
+                    ("/src/Card.astro", "export {};"),
+                    (
+                        "/node_modules/mapper/package.json",
+                        "{\n\t\t\t\t\t\t\"name\": \"mapper\",\n\t\t\t\t\t\t\"typescript\": { \"contentMapper\": {\n\t\t\t\t\t\t\t\"exec\": [\"mapper\"], \"outputExtensions\": {\".astro\": \".js\"}\n\t\t\t\t\t\t} }\n\t\t\t\t\t}",
+                    ),
+                ]);
+                let config = TestConfig {
+                    json_text,
+                    config_file_name: "tsconfig.json",
+                    base_path: "/",
+                    all_file_list: files.clone(),
+                    existing_options: run_external_code_options(),
+                };
+                let host = new_vfs_parse_config_host(
+                    &files,
+                    config.base_path,
+                    true, /*useCaseSensitiveFileNames*/
+                );
+                let parsed = get_parsed(&config, &host, config.base_path);
+                if !parsed.errors.is_empty() {
+                    return Err(format!("unexpected errors: {:?}", parsed.errors));
+                }
+                assert_eq!(parsed.content_mappers().len(), 1);
+                let mapper = &parsed.content_mappers()[0];
+                let want: Option<BTreeMap<String, String>> = test.output_extensions.map(|entries| {
+                    entries
+                        .iter()
+                        .map(|(source, target)| ((*source).to_string(), (*target).to_string()))
+                        .collect()
+                });
+                assert_eq!(mapper.definition.output_extensions, want);
+                assert_eq!(
+                    !parsed.content_mapper_extension_rewrites().is_empty(),
+                    test.rewrite
+                );
+                assert_eq!(
+                    parsed.get_output_file_names().collect::<Vec<_>>(),
+                    vec![test.declaration.to_string()]
+                );
+                // PORT: Go then writes into the manifest map and checks that
+                // the definition map did not change (it is a clone). A Rust
+                // clone is always a separate map, and the mapper is in an
+                // `Rc`, so that step has no port.
+                Ok(())
+            });
+        }
+    }
+    t.finish();
+}
+
 // Go: tsconfigparsing_test.go:1136 TestContentMappers (tsgo#4712)
 #[test]
 fn content_mappers() {
@@ -783,7 +887,7 @@ fn unresolved_content_mapper_does_not_register_extensions() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1306 TestContentMappersValidation (tsgo#4712)
+// Go: tsconfigparsing_test.go:1415 TestContentMappersValidation (tsgo#4712, ts#64581)
 #[test]
 fn content_mappers_validation() {
     struct ValidationTest {
@@ -792,11 +896,44 @@ fn content_mappers_validation() {
         expected_code: i32,
     }
     let requires_type = diag::Compiler_option_0_requires_a_value_of_type_1.code() as i32;
+    let separators =
+        diag::Content_mapper_extension_0_must_not_contain_path_separators.code() as i32;
     let tests = [
         ValidationTest {
             name: "extension without leading dot",
             content_mappers: r#"[{ "package": "vue-mapper", "extensions": ["vue"] }]"#,
             expected_code: diag::Content_mapper_file_extension_0_must_begin_with_a.code() as i32,
+        },
+        // ts#64581
+        ValidationTest {
+            name: "source extension contains slash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue/foo"] }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "source extension contains backslash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue\\foo"] }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "output extension key contains slash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue"], "outputExtensions": {".vue/foo": ".js"} }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "output extension key contains backslash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue"], "outputExtensions": {".vue\\foo": ".js"} }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "output extension value contains slash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue"], "outputExtensions": {".vue": ".js/foo"} }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "output extension value contains backslash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue"], "outputExtensions": {".vue": ".js\\foo"} }]"#,
+            expected_code: separators,
         },
         ValidationTest {
             name: "built-in extension",
@@ -928,7 +1065,7 @@ fn content_mappers_validation() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1413 TestContentMapperExtensionValidationUsesHostCaseSensitivity (ts#63936)
+// Go: tsconfigparsing_test.go:1552 TestContentMapperExtensionValidationUsesHostCaseSensitivity (ts#63936)
 #[test]
 fn content_mapper_extension_validation_uses_host_case_sensitivity() {
     struct CaseTest {
@@ -1011,6 +1148,66 @@ fn content_mapper_extension_validation_uses_host_case_sensitivity() {
             }
             Ok(())
         });
+    }
+    t.finish();
+}
+
+// Go: tsconfigparsing_test.go:1617 TestContentMapperCompoundExtensionValidation (ts#64581)
+#[test]
+fn content_mapper_compound_extension_validation() {
+    let built_in = diag::Content_mapper_file_extension_0_is_a_built_in_extension_and_cannot_be_registered_by_a_content_mapper.code() as i32;
+    let mut t = Subtests::new("TestContentMapperCompoundExtensionValidation");
+    for use_case_sensitive_file_names in [false, true] {
+        let mut extensions: Vec<String> =
+            vec![".y.z".to_string(), ".component.tsx.vue".to_string()];
+        for extension in ALL_SUPPORTED_EXTENSIONS_WITH_JSON
+            .iter()
+            .flat_map(|group| group.iter())
+        {
+            extensions.push(format!(".component{extension}"));
+            extensions.push(format!(".component{}", extension.to_uppercase()));
+        }
+        for extension in &extensions {
+            t.run(
+                &format!("{extension}/caseSensitive={use_case_sensitive_file_names}"),
+                || {
+                    // PORT: the parser keeps `&'static str` text, so the config text is leaked.
+                    let json_text: &'static str = Box::leak(
+                        format!(
+                            r#"{{ "contentMappers": [{{ "package": "mapper", "extensions": ["{extension}"] }}] }}"#
+                        )
+                        .into_boxed_str(),
+                    );
+                    let files = file_map(&[
+                        ("/tsconfig.json", json_text),
+                        ("/app.ts", "export {};"),
+                        (
+                            "/node_modules/mapper/package.json",
+                            "{\n\t\t\t\t\t\t\"name\": \"mapper\",\n\t\t\t\t\t\t\"typescript\": { \"contentMapper\": { \"exec\": [\"mapper\"] } }\n\t\t\t\t\t}",
+                        ),
+                    ]);
+                    let host = new_vfs_parse_config_host(&files, "/", use_case_sensitive_file_names);
+                    let config = TestConfig {
+                        json_text,
+                        config_file_name: "tsconfig.json",
+                        base_path: "/",
+                        all_file_list: files.clone(),
+                        existing_options: run_external_code_options(),
+                    };
+                    let parsed =
+                        get_parsed_with_json_source_file_api(&config, &host, config.base_path);
+                    if extension == ".y.z" || extension == ".component.tsx.vue" {
+                        assert_eq!(parsed.errors.len(), 0, "{:?}", parsed.errors);
+                        assert_eq!(parsed.content_mapper_extensions(), vec![extension.clone()]);
+                    } else {
+                        assert_eq!(parsed.errors.len(), 1, "{:?}", parsed.errors);
+                        assert_eq!(parsed.errors[0].code, built_in);
+                        assert_eq!(parsed.content_mapper_extensions().len(), 0);
+                    }
+                    Ok(())
+                },
+            );
+        }
     }
     t.finish();
 }

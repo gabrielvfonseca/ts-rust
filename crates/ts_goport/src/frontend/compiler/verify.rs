@@ -286,7 +286,7 @@ impl NewProgram {
         }
     }
 
-    // Go: program.go:909 (*Program).verifyCompilerOptions
+    // Go: program.go:914 (*Program).verifyCompilerOptions (ts#64581: external outputs)
     pub fn verify_compiler_options(&mut self) {
         // PORT: Go holds a `*core.CompilerOptions`. The `Rc` is cloned so
         // `self` can be borrowed mutably.
@@ -953,6 +953,20 @@ impl NewProgram {
             // `ForEachEmittedFile` callback. The callback only reads, so the
             // names are collected first and then checked in the same order.
             let mut emit_file_names: Vec<String> = Vec::new();
+            // ts#64581: the content-mapped files of this project whose mapper
+            // writes a runtime output.
+            let external_output_source_files: Vec<Rc<ParsedSourceFile>> = self
+                .source_files()
+                .iter()
+                .filter(|source_file| {
+                    !source_file.content_mapper().is_empty()
+                        && !self.is_source_file_from_external_library(source_file)
+                        && self
+                            .get_project_reference_from_source(source_file.path())
+                            .is_none()
+                })
+                .cloned()
+                .collect();
             // #4699: Go `p.getSourceFilesToEmit(nil, false, false)`.
             let source_files_to_emit = self.get_source_files_to_emit(None, false, false);
             for_each_emitted_file(
@@ -967,9 +981,15 @@ impl NewProgram {
                         .push(emit_file_names_of_file.declaration_file_path().to_string());
                     emit_file_names
                         .push(emit_file_names_of_file.declaration_map_path().to_string());
+                    emit_file_names.push(
+                        emit_file_names_of_file
+                            .external_output_file_path()
+                            .to_string(),
+                    );
                     false
                 },
                 &source_files_to_emit,
+                &external_output_source_files,
                 false,
             );
             emit_file_names.push(self.opts.config.get_build_info_file_name());

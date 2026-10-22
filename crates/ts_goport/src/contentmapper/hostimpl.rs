@@ -4622,6 +4622,7 @@ mod tests {
                 exec: vec!["mapper".to_string()],
                 compiler_options: compiler_options.iter().map(|s| (*s).to_string()).collect(),
                 dynamic_config: true,
+                ..Default::default()
             },
             ..Default::default()
         })

@@ -5,6 +5,8 @@
 //! (`resolve_content_mapper_manifest`, the `ParsedCommandLine` fields) are
 //! `pub`. Go compares mapper pointers; here `Rc::ptr_eq`.
 
+use std::collections::BTreeMap;
+
 use ts_goport::contentmapper::{Definition, Mapper};
 use ts_goport::frontend::prelude::*;
 use ts_goport::frontend::tsoptions;
@@ -113,6 +115,160 @@ fn get_output_file_names_excludes_mapper_owned_outputs() {
     );
 }
 
+/// Go `map[string]string{...}` of output extensions.
+fn output_extensions(entries: &[(&str, &str)]) -> Option<BTreeMap<String, String>> {
+    Some(
+        entries
+            .iter()
+            .map(|(source, target)| ((*source).to_string(), (*target).to_string()))
+            .collect(),
+    )
+}
+
+/// Go `&contentmapper.Mapper{Extensions: extensions, OutputExtensions: outputExtensions}`.
+fn mapper_with_output_extensions(extensions: &[&str], outputs: &[(&str, &str)]) -> Rc<Mapper> {
+    Rc::new(Mapper {
+        definition: Definition {
+            extensions: extensions.iter().map(|ext| (*ext).to_string()).collect(),
+            output_extensions: output_extensions(outputs),
+            ..Default::default()
+        },
+        ..Default::default()
+    })
+}
+
+// Go: contentmappers_test.go:62 TestContentMapperExtensionRewritesPreserveLongestExtension (ts#64581)
+#[test]
+fn content_mapper_extension_rewrites_preserve_longest_extension() {
+    let mapper = mapper_with_output_extensions(
+        &[".z", ".y.z", ".identity.y.z", ".unmapped.y.z"],
+        &[
+            (".z", ".js"),
+            (".y.z", ".mjs"),
+            (".identity.y.z", ".identity.y.z"),
+        ],
+    );
+    let mut command_line = new_parsed_command_line(
+        Rc::new(CompilerOptions {
+            declaration: Tristate::True,
+            out_dir: "/dist".to_string(),
+            ..Default::default()
+        }),
+        vec![
+            "/src/Widget.y.z".to_string(),
+            "/src/Widget.identity.y.z".to_string(),
+            "/src/Widget.unmapped.y.z".to_string(),
+        ],
+        None,
+        ComparePathsOptions {
+            current_directory: "/".to_string(),
+            use_case_sensitive_file_names: true,
+        },
+    );
+    command_line.parsed_config.content_mappers = vec![mapper];
+    let rewrites = command_line.content_mapper_extension_rewrites();
+    // Go `slices.IsSortedFunc` with `len(b.Source) - len(a.Source)`.
+    assert!(
+        rewrites
+            .windows(2)
+            .all(|pair| pair[0].source.len() >= pair[1].source.len())
+    );
+    for file in ["./Widget.identity.y.z", "./Widget.unmapped.y.z"] {
+        assert_eq!(
+            rewrite_module_specifier_extension(file, rewrites, true),
+            None,
+            "{file}"
+        );
+    }
+    assert_eq!(
+        command_line.get_output_file_names().collect::<Vec<_>>(),
+        vec![
+            "/dist/Widget.d.mts".to_string(),
+            "/dist/Widget.d.identity.y.z.ts".to_string(),
+            "/dist/Widget.d.unmapped.y.z.ts".to_string(),
+        ]
+    );
+}
+
+// Go: contentmappers_test.go:94 TestContentMapperExtensionRewritesAreCached (ts#64581)
+// PORT: Go also counts allocations (`testing.AllocsPerRun`) and runs the
+// copy's reads in parallel subtests. The port has no allocation counter, and
+// its command line is single-threaded (`OnceCell`); the same slice pointer
+// on each read is the cache test.
+#[test]
+fn content_mapper_extension_rewrites_are_cached() {
+    let mapper =
+        mapper_with_output_extensions(&[".astro", ".y.z"], &[(".astro", ".js"), (".y.z", ".mjs")]);
+    let mut command_line = new_parsed_command_line(
+        Rc::new(CompilerOptions::default()),
+        Vec::new(),
+        None,
+        ComparePathsOptions {
+            current_directory: "/".to_string(),
+            use_case_sensitive_file_names: true,
+        },
+    );
+    command_line.parsed_config.content_mappers = vec![mapper];
+    let rewrites = command_line.content_mapper_extension_rewrites().to_vec();
+    let first = command_line.content_mapper_extension_rewrites().as_ptr();
+    assert!(!rewrites.is_empty());
+    for _ in 0..10 {
+        assert_eq!(
+            command_line.content_mapper_extension_rewrites().as_ptr(),
+            first
+        );
+    }
+    let with_file_names = command_line.with_file_names(vec!["/src/Card.astro".to_string()]);
+    for _ in 0..10 {
+        assert_eq!(
+            command_line.content_mapper_extension_rewrites().as_ptr(),
+            first
+        );
+        assert_eq!(
+            with_file_names.content_mapper_extension_rewrites(),
+            rewrites.as_slice()
+        );
+    }
+}
+
+// Go: contentmappers_test.go:121 TestResolveContentMapperManifestRejectsMalformedOutputExtensions (ts#64581)
+#[test]
+fn resolve_content_mapper_manifest_rejects_malformed_output_extensions() {
+    for value in [
+        r#""invalid""#,
+        "null",
+        "[]",
+        r#"{".vue": 1}"#,
+        r#"{".vue": null}"#,
+        r#"{".vue/foo": ".js"}"#,
+        r#"{".vue\\foo": ".js"}"#,
+        r#"{".vue": ".js/foo"}"#,
+        r#"{".vue": ".js\\foo"}"#,
+    ] {
+        let package_json = format!(
+            "{{\n\t\t\t\t\t\"name\": \"mapper\",\n\t\t\t\t\t\"typescript\": {{ \"contentMapper\": {{ \"exec\": [\"run\"], \"outputExtensions\": {value} }} }}\n\t\t\t\t}}"
+        );
+        let host = ResolveContentMapperHost {
+            fs: vfs_from_map(
+                &file_map(&[(
+                    "/home/project/node_modules/mapper/package.json",
+                    &package_json,
+                )]),
+                true, /*useCaseSensitiveFileNames*/
+            ),
+        };
+        let (_, _, diagnostic) = tsoptions::resolve_content_mapper_manifest(
+            &host,
+            "/home/project/tsconfig.json",
+            "mapper",
+        );
+        assert!(
+            diagnostic.is_some(),
+            "{value}: expected malformed outputExtensions to be rejected"
+        );
+    }
+}
+
 // Go: contentmappers_test.go:16 resolveContentMapperHost
 struct ResolveContentMapperHost {
     fs: Rc<dyn Fs>,
@@ -130,7 +286,7 @@ impl ParseConfigHost for ResolveContentMapperHost {
     }
 }
 
-// Go: contentmappers_test.go:67 TestResolveContentMapperManifest
+// Go: contentmappers_test.go:138 TestResolveContentMapperManifest (ts#64581)
 #[test]
 fn resolve_content_mapper_manifest() {
     let host = ResolveContentMapperHost {
@@ -138,7 +294,7 @@ fn resolve_content_mapper_manifest() {
             &file_map(&[
                 (
                     "/home/project/node_modules/vue-ts-mapper/package.json",
-                    "{\n\t\t\t\"name\": \"vue-ts-mapper\",\n\t\t\t\"version\": \"1.2.3\",\n\t\t\t\"typescript\": { \"contentMapper\": { \"exec\": [\"node\", \"./dist/mapper.js\"], \"compilerOptions\": [\"target\", \"jsx\"] } }\n\t\t}",
+                    "{\n\t\t\t\"name\": \"vue-ts-mapper\",\n\t\t\t\"version\": \"1.2.3\",\n\t\t\t\"typescript\": { \"contentMapper\": { \"exec\": [\"node\", \"./dist/mapper.js\"], \"compilerOptions\": [\"target\", \"jsx\"], \"outputExtensions\": { \".vue\": \".js\" } } }\n\t\t}",
                 ),
                 (
                     "/home/node_modules/@scope/noversion/package.json",
@@ -159,6 +315,10 @@ fn resolve_content_mapper_manifest() {
                 (
                     "/home/project/node_modules/bad-exec/package.json",
                     "{\n\t\t\t\"name\": \"bad-exec\",\n\t\t\t\"typescript\": { \"contentMapper\": { \"exec\": \"node ./mapper.js\" } }\n\t\t}",
+                ),
+                (
+                    "/home/project/node_modules/bad-output-extension/package.json",
+                    "{\n\t\t\t\"name\": \"bad-output-extension\",\n\t\t\t\"typescript\": { \"contentMapper\": { \"exec\": [\"run\"], \"outputExtensions\": { \".vue\": \"js\" } } }\n\t\t}",
                 ),
             ]),
             true, /*useCaseSensitiveFileNames*/
@@ -186,6 +346,10 @@ fn resolve_content_mapper_manifest() {
     assert_eq!(
         manifest.compiler_options,
         vec!["target".to_string(), "jsx".to_string()]
+    );
+    assert_eq!(
+        manifest.default_output_extensions,
+        output_extensions(&[(".vue", ".js")])
     );
 
     // Resolution walks up node_modules; a package with no version resolves to a name and empty version.
@@ -246,4 +410,16 @@ fn resolve_content_mapper_manifest() {
             )
         );
     }
+
+    let (_, _, diagnostic) = tsoptions::resolve_content_mapper_manifest(
+        &host,
+        "/home/project/tsconfig.json",
+        "bad-output-extension",
+    );
+    assert_eq!(
+        diagnostic.map(|diagnostic| diagnostic.code),
+        Some(code(
+            diag::The_typescript_contentMapper_outputExtensions_of_the_content_mapper_package_0_contains_an_invalid_mapping_from_1_to_2_Extensions_must_be_non_empty_and_begin_with_a
+        ))
+    );
 }

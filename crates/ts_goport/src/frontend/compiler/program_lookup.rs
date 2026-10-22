@@ -1083,6 +1083,10 @@ impl OutputPathsHost for NewProgram {
     fn content_mapper_extensions(&self) -> Vec<String> {
         NewProgram::content_mapper_extensions(self)
     }
+    // ts#64581
+    fn content_mapper_extension_rewrites(&self) -> Vec<ExtensionRewrite> {
+        NewProgram::content_mapper_extension_rewrites(self).to_vec()
+    }
 }
 
 impl NewProgram {

@@ -673,16 +673,17 @@ pub struct Fields {
     pub content_mapper: Expected<ContentMapperFields>,
 }
 
-// Go: packagejson.go:117 ContentMapperFields (tsgo#4712)
+// Go: packagejson.go:117 ContentMapperFields (tsgo#4712, ts#64581)
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ContentMapperFields {
     pub exec: Expected<Vec<String>>,
     pub compiler_options: Expected<Vec<String>>,
     pub dynamic_config: Expected<bool>,
+    pub output_extensions: Expected<FxHashMap<String, String>>,
 }
 
 // PORT: the JSON v2 struct arshaler for `ContentMapperFields` (tags `exec`,
-// `compilerOptions`, `dynamicConfig`).
+// `compilerOptions`, `dynamicConfig`, `outputExtensions`).
 impl UnmarshalerFrom for ContentMapperFields {
     fn unmarshal_json_from(&mut self, dec: &mut JsonDecoder<'_>) -> Result<(), JsonError> {
         let is_object =
@@ -691,6 +692,9 @@ impl UnmarshalerFrom for ContentMapperFields {
                     "exec" => json_unmarshal_decode(dec, &mut self.exec)?,
                     "compilerOptions" => json_unmarshal_decode(dec, &mut self.compiler_options)?,
                     "dynamicConfig" => json_unmarshal_decode(dec, &mut self.dynamic_config)?,
+                    "outputExtensions" => {
+                        json_unmarshal_decode(dec, &mut self.output_extensions)?;
+                    }
                     _ => return Ok(false),
                 }
                 Ok(true)
@@ -707,7 +711,7 @@ impl ExpectedJsonKind for ContentMapperFields {
     const JSON_TYPE: &'static str = "unknown";
 }
 
-// Go: packagejson.go:123 typeScriptFields (tsgo#4712)
+// Go: packagejson.go:124 typeScriptFields (tsgo#4712)
 #[derive(Clone, Debug, Default)]
 struct TypeScriptFields {
     content_mapper: Expected<ContentMapperFields>,
@@ -849,7 +853,7 @@ impl UnmarshalerFrom for Fields {
     }
 }
 
-// Go: packagejson.go:127 Parse
+// Go: packagejson.go:128 Parse
 // PORT: Go returns `(Fields{}, err)` on error. The `Result` carries the same
 // information; callers use `unwrap_or_default()` for the zero `Fields`.
 // tsgo#4712: Go decodes into an anonymous struct that embeds the three field

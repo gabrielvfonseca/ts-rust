@@ -962,6 +962,11 @@ impl NewProgram {
         self.opts.config.content_mapper_extensions()
     }
 
+    // Go: program.go:552 (*Program).ContentMapperExtensionRewrites (ts#64581)
+    pub fn content_mapper_extension_rewrites(&self) -> &[ExtensionRewrite] {
+        self.opts.config.content_mapper_extension_rewrites()
+    }
+
     // Go: program.go:550 (*Program).CommandLine
     pub fn command_line(&self) -> &Rc<ParsedCommandLine> {
         &self.opts.config
