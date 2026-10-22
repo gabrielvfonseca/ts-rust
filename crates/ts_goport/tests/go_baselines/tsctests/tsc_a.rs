@@ -1,5 +1,8 @@
 //! Port of typescript-go `internal/execute/tsctests/tsc_test.go` lines 1-2379
-//! (`TestTscCommandline` through `TestTscListFilesOnly`), pinned at dc37b5249.
+//! (`TestTscCommandline` through `TestTscListFilesOnly`), pinned at dc37b5249,
+//! with the later Go additions that cite their PR (bump E: the
+//! `TestTscCommandline` rows of ts#64850 and `TestTscIncrementalDeletion` of
+//! ts#64845, at 3e9236361fa9).
 //!
 //! Each Go `TestX` becomes `x_inputs()`, with the same inputs in the same order, and a
 //! `#[test] fn x()` that runs the non-watch inputs. When a test has watch inputs,
@@ -65,7 +68,7 @@ fn tsc_commandline_inputs() -> Vec<TscInput> {
         output_is_tty: Some(output_is_tty),
         ..Default::default()
     };
-    vec![
+    let mut test_cases = vec![
         // ts#64452
         TscInput {
             sub_scenario: "global diagnostics produced during ordinary semantic checking".into(),
@@ -361,7 +364,61 @@ fn tsc_commandline_inputs() -> Vec<TscInput> {
             command_line_args: args!["--locale", "whoops", "--version"],
             ..Default::default()
         },
-    ]
+    ];
+    // Go: tsc_test.go:328-364 (ts#64850)
+    for value in ["false", "true", "omitted"] {
+        let option = if value == "omitted" {
+            String::new()
+        } else {
+            format!(r#", "alwaysStrict": {value}"#)
+        };
+        test_cases.push(TscInput {
+            sub_scenario: format!("alwaysStrict {value} in configuration"),
+            files: file_map! {
+                "/home/src/workspaces/project/tsconfig.json" => format!(r#"{{"compilerOptions": {{"target": "es2015"{option}}}}}"#),
+                "/home/src/workspaces/project/index.ts" => "export {};",
+            },
+            command_line_args: args!["--noEmit"],
+            ..Default::default()
+        });
+    }
+    for (name, config, base) in [
+        (
+            "relative",
+            r#"{"compilerOptions": {"target": "es2015", "baseUrl": "."}}"#,
+            "",
+        ),
+        (
+            "empty",
+            r#"{"compilerOptions": {"target": "es2015", "baseUrl": ""}}"#,
+            "",
+        ),
+        (
+            "inherited",
+            r#"{"extends": "./base.json"}"#,
+            r#"{"compilerOptions": {"target": "es2015", "baseUrl": "."}}"#,
+        ),
+        (
+            "omitted",
+            r#"{"compilerOptions": {"target": "es2015"}}"#,
+            "",
+        ),
+    ] {
+        let mut files = file_map! {
+            "/home/src/workspaces/project/tsconfig.json" => config,
+            "/home/src/workspaces/project/index.ts" => "export {};",
+        };
+        if !base.is_empty() {
+            files.insert("/home/src/workspaces/project/base.json".into(), base.into());
+        }
+        test_cases.push(TscInput {
+            sub_scenario: format!("baseUrl {name} in configuration"),
+            files,
+            command_line_args: args!["--noEmit"],
+            ..Default::default()
+        });
+    }
+    test_cases
 }
 
 #[test]
@@ -2890,6 +2947,217 @@ fn tsc_incremental() {
     run_tsc_inputs(
         "incremental",
         tsc_incremental_inputs(),
+        WatchFilter::NonWatch,
+    );
+}
+
+// Go: tsc_test.go:2609 TestTscIncrementalDeletion (ts#64845)
+fn tsc_incremental_deletion_inputs() -> Vec<TscInput> {
+    let mut inputs = Vec::new();
+    for (mode_name, mode_args) in [
+        ("", &[][..]),
+        (" with single threaded", &["--singleThreaded"][..]),
+        (" with one checker", &["--checkers", "1"][..]),
+    ] {
+        let mode_args: Vec<String> = mode_args.iter().map(|arg| arg.to_string()).collect();
+        let config = |options: &str| {
+            format!(
+                r#"{{"compilerOptions":{{"incremental":true,"noEmit":true,"types":[]{options}}},"files":["a.ts"]}}"#
+            )
+        };
+        let write_config = |options: &'static str| {
+            let text = config(options);
+            edit(move |sys: &TestSys| {
+                sys.write_file_no_error("/home/src/workspaces/project/tsconfig.json", &text);
+            })
+        };
+        inputs.push(TscInput {
+            sub_scenario: format!("lib and target changes delete mixed library files{mode_name}"),
+            command_line_args: mode_args.clone(),
+            files: file_map! {
+                "/home/src/workspaces/project/tsconfig.json" => config(r#","target":"esnext""#),
+                "/home/src/workspaces/project/a.ts" => "export const values = [3, 1, 2].toSorted();",
+                get_test_lib_path_for("es5") => tsc_default_lib_content(),
+                get_test_lib_path_for("esnext.array") => dedent(r#"
+					/// <reference no-default-lib="true"/>
+					interface Array<T> {
+						toSorted(): T[];
+					}
+				"#),
+                get_test_lib_path_for("decorators") => dedent(r#"
+					/// <reference no-default-lib="true"/>
+					export {};
+				"#),
+                get_test_lib_path_for("esnext.full") => dedent(r#"
+					/// <reference no-default-lib="true"/>
+					/// <reference lib="es5"/>
+					/// <reference lib="esnext.array"/>
+					/// <reference lib="decorators"/>
+				"#),
+                get_test_lib_path_for("es2020") => dedent(r#"
+					/// <reference no-default-lib="true"/>
+					/// <reference lib="es5"/>
+				"#),
+                get_test_lib_path_for("es2020.full") => dedent(r#"
+					/// <reference no-default-lib="true"/>
+					/// <reference lib="es5"/>
+				"#),
+            },
+            edits: vec![
+                TscEdit {
+                    caption: "narrow lib".into(),
+                    edit: write_config(r#","target":"esnext","lib":["es2020"]"#),
+                    ..Default::default()
+                },
+                no_change(),
+                TscEdit {
+                    caption: "restore lib".into(),
+                    edit: write_config(r#","target":"esnext""#),
+                    ..Default::default()
+                },
+                TscEdit {
+                    caption: "narrow target".into(),
+                    edit: write_config(r#","target":"es2020""#),
+                    ..Default::default()
+                },
+                no_change(),
+                TscEdit {
+                    caption: "restore target".into(),
+                    edit: write_config(r#","target":"esnext""#),
+                    ..Default::default()
+                },
+                no_change(),
+            ],
+            ..Default::default()
+        });
+        inputs.push(TscInput {
+            sub_scenario: format!("mixed file deletion with add and change{mode_name}"),
+            command_line_args: mode_args.clone(),
+            files: file_map! {
+                "/home/src/workspaces/project/tsconfig.json" => r#"{"compilerOptions":{"incremental":true,"noEmit":true,"types":[]}}"#,
+                "/home/src/workspaces/project/consumer.ts" => "declare const value: RemovedGlobal; value.property;",
+                "/home/src/workspaces/project/global.d.ts" => "interface RemovedGlobal { property: string; }",
+                "/home/src/workspaces/project/module.d.ts" => "export interface ModuleOnly { property: string; }",
+                "/home/src/workspaces/project/changed.ts" => "export const changed = 1;",
+            },
+            edits: vec![
+                TscEdit {
+                    caption: "delete global and non-global files while adding and changing sources".into(),
+                    edit: edit(|sys: &TestSys| {
+                        sys.remove_no_error("/home/src/workspaces/project/global.d.ts");
+                        sys.remove_no_error("/home/src/workspaces/project/module.d.ts");
+                        sys.replace_file_text("/home/src/workspaces/project/changed.ts", "1", "2");
+                        sys.write_file_no_error("/home/src/workspaces/project/added.ts", "export const added = 1;");
+                    }),
+                    ..Default::default()
+                },
+                no_change(),
+                TscEdit {
+                    caption: "restore global file".into(),
+                    edit: edit(|sys: &TestSys| {
+                        sys.write_file_no_error("/home/src/workspaces/project/global.d.ts", "interface RemovedGlobal { property: number; }");
+                    }),
+                    ..Default::default()
+                },
+                TscEdit {
+                    caption: "delete ordinary source file".into(),
+                    edit: edit(|sys: &TestSys| {
+                        sys.remove_no_error("/home/src/workspaces/project/added.ts");
+                    }),
+                    ..Default::default()
+                },
+                no_change(),
+            ],
+            ..Default::default()
+        });
+        for cleared in [false, true] {
+            let mut library = format!(
+                "{}\ninterface LibraryConsumer {{ property: RemovedGlobal; }}",
+                tsc_default_lib_content()
+            );
+            let mut global = "interface RemovedGlobal {}";
+            if cleared {
+                library = format!("{}\ninterface Shared<T> {{}}", tsc_default_lib_content());
+                global = "interface Shared<T, U> {}";
+            }
+            inputs.push(TscInput {
+                sub_scenario: format!("retained library diagnostics after global deletion cleared {cleared}{mode_name}"),
+                command_line_args: mode_args.clone(),
+                files: file_map! {
+                    "/home/src/workspaces/project/tsconfig.json" => r#"{"compilerOptions":{"incremental":true,"noEmit":true,"types":[],"lib":["es5"]}}"#,
+                    "/home/src/workspaces/project/consumer.ts" => "export const unchanged = 1;",
+                    "/home/src/workspaces/project/global.d.ts" => global,
+                    "/home/src/workspaces/project/module.d.ts" => "export interface Unrelated {}",
+                    get_test_lib_path_for("es5") => library,
+                },
+                edits: vec![
+                    TscEdit {
+                        caption: "delete global and module declarations".into(),
+                        edit: edit(|sys: &TestSys| {
+                            sys.remove_no_error("/home/src/workspaces/project/global.d.ts");
+                            sys.remove_no_error("/home/src/workspaces/project/module.d.ts");
+                        }),
+                        ..Default::default()
+                    },
+                    no_change(),
+                    TscEdit {
+                        caption: "restore global declaration".into(),
+                        edit: edit(move |sys: &TestSys| {
+                            sys.write_file_no_error("/home/src/workspaces/project/global.d.ts", global);
+                        }),
+                        ..Default::default()
+                    },
+                    no_change(),
+                ],
+                ..Default::default()
+            });
+        }
+    }
+    for composite in [false, true] {
+        inputs.push(TscInput {
+            sub_scenario: format!("unchecked deleted paths with no emit composite {composite}"),
+            files: file_map! {
+                "/home/src/workspaces/project/tsconfig.json" => format!(r#"{{"compilerOptions":{{"incremental":true,"noCheck":true,"noEmit":true,"composite":{composite},"types":[]}}}}"#),
+                "/home/src/workspaces/project/stable.ts" => "export const stable = 1;",
+            },
+            edits: vec![
+                TscEdit {
+                    caption: "add unchecked sources".into(),
+                    edit: edit(|sys: &TestSys| {
+                        sys.write_file_no_error("/home/src/workspaces/project/first.ts", "export const first = 1;");
+                        sys.write_file_no_error("/home/src/workspaces/project/second.ts", "export const second = 1;");
+                    }),
+                    ..Default::default()
+                },
+                TscEdit {
+                    caption: "delete unchecked sources".into(),
+                    edit: edit(|sys: &TestSys| {
+                        sys.remove_no_error("/home/src/workspaces/project/first.ts");
+                        sys.remove_no_error("/home/src/workspaces/project/second.ts");
+                    }),
+                    ..Default::default()
+                },
+                no_change(),
+                TscEdit {
+                    caption: "enable checking and emit".into(),
+                    edit: edit(|sys: &TestSys| {
+                        sys.replace_file_text("/home/src/workspaces/project/tsconfig.json", r#""noCheck":true,"noEmit":true"#, r#""noCheck":false,"noEmit":false"#);
+                    }),
+                    ..Default::default()
+                },
+                no_change(),
+            ],
+            ..Default::default()
+        });
+    }
+    inputs
+}
+
+#[test]
+fn tsc_incremental_deletion() {
+    run_tsc_inputs(
+        "incremental",
+        tsc_incremental_deletion_inputs(),
         WatchFilter::NonWatch,
     );
 }
