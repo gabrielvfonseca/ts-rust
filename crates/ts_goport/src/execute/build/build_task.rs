@@ -2326,7 +2326,7 @@ fn is_content_mapper_supplemental_build_info_path<'a>(
 /// taken at the write.
 type WrittenBuildInfo = Arc<Mutex<Option<(String, Arc<BuildInfo>, SystemTime)>>>;
 
-// Go: build/buildtask.go:914 (*BuildTask).writeFile
+// Go: build/buildtask.go:913 (*BuildTask).writeFile
 // PORT: emit writes the source outputs on the checker threads, so the
 // callback is `Send` and cannot hold the task, the `Rc` system or the `Rc`
 // file system. Go writes through `orchestrator.host.FS()` (cachedvfs over

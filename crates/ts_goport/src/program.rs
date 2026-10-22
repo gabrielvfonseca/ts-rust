@@ -2500,7 +2500,7 @@ fn bind_files_parallel(lineage: &mut Lineage) {
         // thread builds it while they bind, not before they start. A later
         // seed (the checker pool) finds it built. It took 3.6 to 5.7 ms of
         // this thread before the first bind thread started (colyseus,
-        // outline, umami). Go builds it on first use (program.go:2300).
+        // outline, umami). Go builds it on first use (program.go:2330).
         go_frontend::build_lazy_shared_state();
         // Join the files in order as they arrive.
         let mut pending = FxHashMap::default();
