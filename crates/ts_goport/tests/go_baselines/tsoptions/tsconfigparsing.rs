@@ -545,6 +545,67 @@ fn parse_json_source_file_config_file_content_with_empty_extended_config() {
     );
 }
 
+// PORT: no Go test. Go tests ts#64755 through the API
+// (TestOpenProjectsWithCircularExtendsReportCircularity, ported in
+// `project_lsp/api_session_apistate_test.rs`): without the fix Go deadlocks
+// there, and the port has no such lock, so that test passes without it. This
+// test checks the parse result on the same files: a config in an `extends`
+// cycle is not in its own extended source files (tsconfigparsing.go:1106,
+// with the file system's case sensitivity). The expected values are the Go N'
+// (3e9236361fa9) output of the same calls (a `go test -overlay` probe, bump E
+// L1 round 2). Go N' without the fix gives p2 its own path first.
+#[test]
+fn circular_extends_leave_config_out_of_its_extended_source_files() {
+    const P1: &str = "/home/projects/p1/tsconfig.json";
+    const P2: &str = "/home/projects/p2/tsconfig.json";
+    const BASE: &str = "/home/projects/shared/base.json";
+    // (useCaseSensitiveFileNames, base.json `extends`, p2 as p1 sees it)
+    let cases = [
+        (true, "../p2/tsconfig.json", P2),
+        (
+            false,
+            "../P2/TSCONFIG.json",
+            "/home/projects/P2/TSCONFIG.json",
+        ),
+    ];
+    for (case_sensitive, base_extends, p2_extended) in cases {
+        let base_text = format!("{{ \"extends\": \"{base_extends}\" }}");
+        let files = file_map(&[
+            (P1, r#"{ "extends": "../shared/base.json" }"#),
+            (P2, r#"{ "extends": "../shared/base.json" }"#),
+            (BASE, base_text.as_str()),
+            ("/home/projects/p1/a.ts", "export const a = 1;"),
+            ("/home/projects/p2/b.ts", "export const b = 1;"),
+        ]);
+        let host = new_vfs_parse_config_host(&files, "/", case_sensitive);
+        for (config_file_name, extended, file_name) in [
+            (P1, vec![p2_extended, BASE], "/home/projects/p1/a.ts"),
+            (P2, vec![BASE], "/home/projects/p2/b.ts"),
+        ] {
+            let config_file = new_tsconfig_source_file_from_file_path(
+                config_file_name,
+                to_path(config_file_name, "", case_sensitive),
+                &files[config_file_name],
+            );
+            let parsed = tsoptions::parse_json_source_file_config_file_content(
+                config_file,
+                &host,
+                &get_directory_path(config_file_name),
+                None,
+                None,
+                config_file_name,
+                &[],
+                None,
+            );
+            let context = format!("{config_file_name}, case sensitive {case_sensitive}");
+            assert_eq!(parsed.extended_source_files(), extended, "{context}");
+            let codes: Vec<_> = parsed.errors.iter().map(|d| d.code).collect();
+            assert_eq!(codes, [18000], "{context}");
+            assert_eq!(parsed.parsed_config.file_names, [file_name], "{context}");
+        }
+    }
+}
+
 // Go: tsconfigparsing_test.go:924 TestParseJsonSourceFileConfigFileContentDoesNotDuplicateUnquotedKeyDiagnostics
 #[test]
 fn parse_json_source_file_config_file_content_does_not_duplicate_unquoted_key_diagnostics() {
