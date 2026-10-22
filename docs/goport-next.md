@@ -8,8 +8,9 @@ Each item: one line of goal, the files or worktree it owns, and what it waits fo
 
 Theo restarted the work (state note `goal-2026-10-22`): maintain and build ts-rust, handle public issues as before. The wind-down below is over.
 
-- **Running:** int89 (main + followups68 + followups69 + #100) -> R221 with a new auditor and reviewer; bumpE-w0 (tools branch goport-bumpE-tools, recordings at N prime 3e9236361fa9 = typescript@7.1.0-beta, R220 base at N prime, wave 1 gen on goport-bumpE-gen).
-- **Next:** R221 open, np-suite, verdicts, accept; bump E wave 2a lanes from survey2.md section 11.3 after wave 1 builds; the bump E pin-bump batch after R221 (N prime base re-measured on R221).
+- **R221 accepted** (batch 102; int89 = followups68, followups69, #100 and the light-path merges since R220); main e2af1c0a5.
+- **Running:** bump E wave 2a (bumpE-w2a-A: L1 config chain, L2 emit, L3 checker; bumpE-w2a-B: L4 ls, L5 api-ipc, L6 build, EFF Effect expectations at N prime) on goport-bumpE-base 64fd50ab1 (main + tools + gen); after-r221 (followups70: WASI probe test, wasm32 clippy, robust early_emit bounds).
+- **Next:** bump E integration of wave 2a, then wave 2b (L2b, L3b, L4b after L1a) and 2c (markers M1 to M4), then the pin-bump batch with the N prime base re-measured on R221.
 - **After bump E wave 2:** #99 option C (binder and checker loops for long binary chains, Go visit order; design oct22/stack99/go-note.md and its check; full path with timing; CI test at 5,000 terms). Option D (transforms, facts, flow) only if a user needs emit at that depth.
 - **Waits for Theo:** PR #81 (TypeScript JS API library), honorec1 (batch.latestHono constants), gatecounts1, PRs #93 and #95 (lust; his own sessions).
 - **Waits for authors:** PR #85 (changes requested: content-hash parse key, memory growth, case flag).
