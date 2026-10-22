@@ -5,7 +5,8 @@
 //! TestParseDynamicSourcePhaseImport, TestParseEscapedDynamicImportPhase,
 //! TestJSDocImportTypeParentChain,
 //! TestJSDocTypeSourceSurvivesReparse,
-//! TestJSDocTypeSourcePropagatesToConstructedReparse and
+//! TestJSDocTypeSourcePropagatesToConstructedReparse,
+//! TestJSDocAugmentsHeritage and
 //! TestSourceFilePositionMapWithNonASCIIStringLiteral; the Go benchmark and
 //! fuzz target are not ported). TestNormalizeJSDocTypeSourceText,
 //! TestIsJSDocTypeExpressionOrChild and
@@ -569,6 +570,92 @@ function foo(options) {}"#;
         get_token_pos_of_node(type_node, file.root, false /*includeJSDoc*/),
         (source_text.find("{{").unwrap() + 1) as i32
     );
+}
+
+// Go: parser/parser_test.go:490 TestJSDocAugmentsHeritage (ts#64072)
+// PORT: `GetTextOfNode` reads the source file of the node, which exists once
+// its node store is published, so the test runs in a child process (see
+// `test_js_doc_import_type_parent_chain`). Go runs the cases in parallel;
+// here they run in turn, each with a file of its own.
+#[test]
+fn test_js_doc_augments_heritage() {
+    in_child(
+        module_path!(),
+        "test_js_doc_augments_heritage",
+        js_doc_augments_heritage,
+    );
+}
+
+fn js_doc_augments_heritage() {
+    // (name, expression, tag name, augments)
+    let tests = [
+        ("identifier", "A", "A", true),
+        ("dotted name", "ns.A", "ns.A", true),
+        ("call", "A.extend()", "A", true),
+        ("mixin", "mixin(A)", "A", true),
+        ("element access", r#"ns["A"]"#, "A", true),
+        ("conditional", "(cond ? A : A)", "A", true),
+        ("parenthesized name", "(A)", "A", true),
+        ("null", "null", "A", false),
+        ("mismatched identifier", "A", "Other", false),
+        ("mismatched dotted name", "ns.A", "ns.Other", false),
+    ];
+    let mut t = Subtests::new("TestJSDocAugmentsHeritage");
+    for (name, expression, tag_name, augments) in tests {
+        t.run(name, || {
+            let source_text = format!(
+                "/** @extends {{{tag_name}<string>}} */\nclass B extends {expression} {{}}"
+            );
+            let opts = SourceFileParseOptions {
+                file_name: "/index.js".to_string(),
+                path: Path("/index.js".to_string()),
+                ..Default::default()
+            };
+            let file = Rc::new(parse_source_file(&opts, leak(&source_text), ScriptKind::JS));
+            note_parsed_source_file(&file);
+            publish_parsed_files("/");
+            check_diagnostics(file.root)?;
+            assert_eq!(file.statements().nodes().len(), 1);
+            let class_b = file.statements().nodes().get(0);
+            assert!(is_class_declaration(class_b));
+
+            let base_type = get_class_extends_heritage_element(class_b);
+            assert!(base_type.is_some());
+            assert_eq!(get_text_of_node(base_type.expression()), expression);
+
+            let js_docs = class_b.js_doc(file.root);
+            assert_eq!(js_docs.len(), 1);
+            let tags = js_docs.get(0).tags();
+            assert!(tags.is_some());
+            assert_eq!(tags.nodes().len(), 1);
+            let tag = tags.nodes().get(0);
+            assert!(is_js_doc_augments_tag(tag));
+            let source_type_arguments = tag.class_name().type_arguments().to_vec();
+            assert_eq!(source_type_arguments.len(), 1);
+
+            let type_arguments = base_type.type_arguments().to_vec();
+            if augments {
+                assert_eq!(type_arguments.len(), 1);
+                let type_argument = type_arguments[0];
+                assert_eq!(type_argument.kind(), SyntaxKind::StringKeyword);
+                assert!(type_argument.flags().intersects(NodeFlags::REPARSED));
+                assert_eq!(type_argument.parent(), base_type);
+                assert_eq!(get_text_of_node(type_argument), "string");
+                assert_eq!(
+                    get_reparsed_node_for_node(source_type_arguments[0]),
+                    type_argument
+                );
+            } else {
+                assert_eq!(type_arguments.len(), 0);
+                assert_eq!(
+                    get_reparsed_node_for_node(source_type_arguments[0]),
+                    source_type_arguments[0]
+                );
+            }
+            Ok(())
+        });
+    }
+    t.finish();
 }
 
 // PORT: no Go counterpart. Go `JSDoc` of a TS file parses a comment
