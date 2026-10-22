@@ -3,7 +3,7 @@
 # the revision pipeline (scripts/goport/candidate.sh). This workflow is a fast check that the tree
 # builds and its own tests pass on Linux (x64 and arm64), macOS and Windows (x64, MSVC), that
 # the tsc compiles for Intel macOS, and that the wasm module (npm/wasm) passes its package tests
-# and the wasm-only Rust tests of crates/ts_wasm.
+# and the wasm-only Rust tests of crates/ts_wasm and goport_util.
 name: CI
 
 on:
@@ -202,8 +202,13 @@ jobs:
       - name: Package tests
         working-directory: npm/wasm
         run: npm test
-      # The wasm-only Rust tests of crates/ts_wasm (release_checker), in Node.
+      # The wasm-only Rust tests, in Node: release_checker in crates/ts_wasm, and the WASI case
+      # probe of goport_util's osvfs.rs (#89). The probe keeps its first answer, so its second test
+      # runs alone (--ignored).
       - name: wasm unit tests
-        run: cargo test --locked -p ts_wasm --target wasm32-wasip1
+        run: |
+          cargo test --locked -p ts_wasm --target wasm32-wasip1
+          cargo test --locked -p goport_util --lib --target wasm32-wasip1 -- osvfs::wasi_tests
+          cargo test --locked -p goport_util --lib --target wasm32-wasip1 -- osvfs::wasi_tests --ignored
         env:
           CARGO_TARGET_WASM32_WASIP1_RUNNER: node ${{ github.workspace }}/scripts/wasm/test-runner.mjs
