@@ -8,10 +8,12 @@ Each item: one line of goal, the files or worktree it owns, and what it waits fo
 
 Theo restarted the work (state note `goal-2026-10-22`): maintain and build ts-rust, handle public issues as before. The wind-down below is over.
 
-- **Running:** workflow issues1022 (i86 fix for #86, pr9192 review of #91 and #92, pr89, pr85, readme74 for #74, pr44 finish); bumpE-s1 (survey2.md and a study oracle at N prime 3e9236361fa9 = typescript@7.1.0-beta); after-r220 (followups68 refreshed on main with its skeptic, followups69 for the R219 and R220 reviewer items).
-- **Next:** int89 (main + followups68 + followups69 + the lanes above that pass) as R221 with a new auditor and reviewer; then bump E wave 0, wave 1 and wave 2 from survey2.md, and its pin-bump batch.
-- **Waits for Theo:** PR #81 (TypeScript JS API library), honorec1, gatecounts1, PRs #93 and #95 (lust; his own sessions).
-- **Done today:** #98 merged; #90 closed with thanks (Go structure); #97 closed as a duplicate of #94 (#94 lands when its CI is green).
+- **Running:** int89 (main + followups68 + followups69 + #100) -> R221 with a new auditor and reviewer; bumpE-w0 (tools branch goport-bumpE-tools, recordings at N prime 3e9236361fa9 = typescript@7.1.0-beta, R220 base at N prime, wave 1 gen on goport-bumpE-gen).
+- **Next:** R221 open, np-suite, verdicts, accept; bump E wave 2a lanes from survey2.md section 11.3 after wave 1 builds; the bump E pin-bump batch after R221 (N prime base re-measured on R221).
+- **After bump E wave 2:** #99 option C (binder and checker loops for long binary chains, Go visit order; design oct22/stack99/go-note.md and its check; full path with timing; CI test at 5,000 terms). Option D (transforms, facts, flow) only if a user needs emit at that depth.
+- **Waits for Theo:** PR #81 (TypeScript JS API library), honorec1 (batch.latestHono constants), gatecounts1, PRs #93 and #95 (lust; his own sessions).
+- **Waits for authors:** PR #85 (changes requested: content-hash parse key, memory growth, case flag).
+- **Done 2026-10-22:** merged #98, #94, #44, #89, #100 (with #91 and #92); closed #90 (Go structure), #97 (duplicate), #74 (README Conformance section), #86 (matches TS 7.1), #87 and #88 (#100); filed #99; testbox inputs disk reseeded.
 
 ## Handoff (2026-10-14)
 
