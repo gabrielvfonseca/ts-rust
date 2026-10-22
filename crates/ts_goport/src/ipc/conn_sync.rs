@@ -15,6 +15,16 @@ use std::time::Instant;
 // Go: ipc/conn_sync.go:18 SyncConn
 // SyncConn manages bidirectional communication with synchronous request handling.
 // Requests are handled one at a time inline, and outgoing calls are serialized.
+// PORT: Go `calls`, `reading` and `turn` (ts#64639) are not ported. Go's
+// `Call` can run on several goroutines; they make the answers of nested
+// requests go out in stack order: the answer of a request that came in
+// during call `depth` waits until the calls above it have ended
+// (`lockTurn`), and a new call waits while another call reads. Here every
+// call runs on the dispatch thread (the connection is `Rc`, not `Send`).
+// A call that starts while a nested request is handled is made by that
+// handler, on the same stack, so it ends before the handler answers, and
+// no call starts while another one reads. The answers go out in stack
+// order with no wait, and `lockTurn` would never wait.
 pub struct SyncConn {
     rwc: Arc<dyn ReadWriteCloser>,
     // PORT: Go `mu` serializes all protocol operations across goroutines.
@@ -28,7 +38,7 @@ pub struct SyncConn {
     timing: RefCell<Option<TimingCollector>>,
 }
 
-// Go: ipc/conn_sync.go:34 NewSyncConn
+// Go: ipc/conn_sync.go:38 NewSyncConn
 // NewSyncConn creates a new sync connection with the given transport and handler.
 pub fn new_sync_conn(
     rwc: Arc<dyn ReadWriteCloser>,
@@ -46,7 +56,7 @@ pub fn new_sync_conn(
 // PORT: the Go methods are inherent methods; `impl Conn` below forwards to
 // them, so callers need not import `Conn`.
 impl SyncConn {
-    // Go: ipc/conn_sync.go:45 SetCollectTiming
+    // Go: ipc/conn_sync.go:51 SetCollectTiming
     // SetCollectTiming enables or disables per-request server processing-time
     // measurement. When enabled, the connection accumulates timing that clients can
     // retrieve via a getServerTiming request.
@@ -58,7 +68,7 @@ impl SyncConn {
         }
     }
 
-    // Go: ipc/conn_sync.go:55 Run
+    // Go: ipc/conn_sync.go:61 Run
     // Run starts processing messages on the connection.
     // It blocks until the context is cancelled or an error occurs.
     pub fn run(&self, ctx: &Context) -> Result<(), GoError> {
@@ -80,7 +90,7 @@ impl SyncConn {
             };
 
             if msg.is_request() {
-                // ts#64142
+                // ts#64142. ts#64639: Go passes depth 0.
                 self.handle_request(ctx, msg)?;
             } else if msg.is_notification() {
                 self.handle_notification(ctx, msg);
@@ -93,12 +103,15 @@ impl SyncConn {
         }
     }
 
-    // Go: ipc/conn_sync.go:86 handleRequest
+    // Go: ipc/conn_sync.go:100 handleRequest
     // handleRequest processes an incoming request.
     // PORT: Go recovers panics in a deferred function; `go_recover` covers
     // the same body (the handler call and the response write). Go
     // `debug.Stack()` is the backtrace at the recover point.
     // ts#64142: write failures are returned, not panics.
+    // ts#64639: Go's `depth` parameter and each `lockTurn(depth)` before a
+    // write are not ported: the turn is always this request's (see
+    // `SyncConn`).
     fn handle_request(&self, ctx: &Context, msg: Message) -> Result<(), GoError> {
         // Intercept the meta-requests for collected server timing before dispatching
         // to the handler, so they are answered directly and not themselves recorded.
@@ -213,7 +226,7 @@ impl SyncConn {
         Ok(())
     }
 
-    // Go: ipc/conn_sync.go:164 handleNotification
+    // Go: ipc/conn_sync.go:178 handleNotification
     // handleNotification processes an incoming notification.
     fn handle_notification(&self, ctx: &Context, msg: Message) {
         let _ = self
@@ -221,7 +234,7 @@ impl SyncConn {
             .handle_notification(ctx, &msg.method, msg.params);
     }
 
-    // Go: ipc/conn_sync.go:170 Call
+    // Go: ipc/conn_sync.go:184 Call
     // Call sends a request to the client and waits for a response.
     // This method is safe to call from multiple goroutines - calls are serialized.
     pub fn call(
@@ -237,6 +250,8 @@ impl SyncConn {
         // 3. We need to ensure write/read pairs are atomic
         // PORT: the Go mutex is the `protocol` borrow, taken for each read and
         // write, so that a nested request (ts#64299) can use the protocol.
+        // ts#64639: Go's turn state (`calls`, `reading`, the call's `depth`)
+        // is not ported (see `SyncConn`).
         let id = jsonrpc::new_id_string(method);
 
         self.protocol
@@ -277,7 +292,7 @@ impl SyncConn {
         }
     }
 
-    // Go: ipc/conn_sync.go:224 Notify
+    // Go: ipc/conn_sync.go:253 Notify
     // Notify sends a notification to the client (no response expected).
     pub fn notify(
         &self,
@@ -328,7 +343,7 @@ mod tests {
         NilTransport, NoOpHandler, message, response_write_failed,
     };
 
-    // Go: ipc/conn_sync_test.go:15 syncFailingResponseProtocol
+    // Go: ipc/conn_sync_test.go:18 syncFailingResponseProtocol
     struct SyncFailingResponseProtocol {
         message: Option<Message>,
         response_err: GoError,
@@ -373,7 +388,7 @@ mod tests {
         }
     }
 
-    // Go: ipc/conn_sync_test.go:45 panicHandler
+    // Go: ipc/conn_sync_test.go:48 panicHandler
     struct PanicHandler;
 
     impl Handler for PanicHandler {
@@ -442,7 +457,7 @@ mod tests {
     }
 
     // PORT: not in Go. The panic answer runs in the deferred recover of
-    // `handleRequest` (ipc/conn_sync.go:119), so the Go runtime prints the
+    // `handleRequest` (ipc/conn_sync.go:134), so the Go runtime prints the
     // recovered panic before a panic in it. Go's stderr for `Run` on a
     // plain goroutine, as tsgo --api runs it (followups41
     // `go test -overlay`): `panic: handler panic [recovered]`, then
@@ -470,7 +485,7 @@ mod tests {
         assert!(!panic.repanicked);
     }
 
-    // Go: ipc/conn_sync_test.go:55 TestSyncConnRunReturnsResponseWriteFailure
+    // Go: ipc/conn_sync_test.go:58 TestSyncConnRunReturnsResponseWriteFailure
     #[test]
     fn test_sync_conn_run_returns_response_write_failure() {
         let response_err = response_write_failed();
@@ -494,7 +509,7 @@ mod tests {
         );
     }
 
-    // Go: ipc/conn_sync_test.go:68 TestSyncConnRunReturnsPanicResponseWriteFailure
+    // Go: ipc/conn_sync_test.go:71 TestSyncConnRunReturnsPanicResponseWriteFailure
     #[test]
     fn test_sync_conn_run_returns_panic_response_write_failure() {
         let response_err = response_write_failed();
@@ -521,5 +536,197 @@ mod tests {
             "{}",
             err.error()
         );
+    }
+
+    /// Go `json.Value(text)`.
+    fn json_value(text: &str) -> JsonValue {
+        JsonValue(text.as_bytes().to_vec())
+    }
+
+    /// Go `string(value)` of a `json.Value`.
+    fn json_text(value: &JsonValue) -> String {
+        String::from_utf8(value.0.clone()).expect("UTF-8 JSON")
+    }
+
+    // Go: ipc/conn_sync_test.go:85 gatedHandler
+    // PORT: Go gates the handler of each request on a channel, and the
+    // test starts the call of `"b"` on a second goroutine while the
+    // handler of the nested request for `"a"` waits. The connection is
+    // not `Send` (see `SyncConn`), so here the handler of `"a"` makes the
+    // call of `"b"`: on one thread, that is how a second call starts before
+    // `"a"` is answered. `b` keeps the result of that call.
+    struct GatedHandler {
+        conn: RefCell<Option<Rc<SyncConn>>>,
+        b: RefCell<Option<JsonValue>>,
+    }
+
+    impl Handler for GatedHandler {
+        fn handle_request(
+            &self,
+            ctx: &Context,
+            _method: &str,
+            params: JsonValue,
+        ) -> Result<Option<Box<dyn AnyValue>>, GoError> {
+            if json_text(&params) == r#""a""# {
+                let conn = self.conn.borrow().clone().expect("the connection");
+                let b = conn.call(ctx, "callback", Some(Box::new(json_value(r#""b""#))));
+                *self.b.borrow_mut() = b.ok();
+            }
+            Ok(Some(Box::new(params)))
+        }
+
+        fn handle_notification(
+            &self,
+            _ctx: &Context,
+            _method: &str,
+            _params: JsonValue,
+        ) -> Result<(), GoError> {
+            Ok(())
+        }
+    }
+
+    // Go: ipc/conn_sync_test.go:96 TestSyncConnAnswersNestedRequestsInStackOrder
+    // (ts#64639). The peer answers each call with a nested `resolve`
+    // request and serves it before it answers the call, so an answer that
+    // goes out of stack order lands in the wrong `serve` and changes
+    // `answers`.
+    #[test]
+    fn test_sync_conn_answers_nested_requests_in_stack_order() {
+        use std::collections::BTreeMap;
+        use std::os::unix::net::UnixStream;
+
+        let (server, client) = UnixStream::pair().expect("socket pair");
+        let server: Arc<dyn ReadWriteCloser> =
+            Arc::new(crate::ipc::conn_async::tests::PipeEnd::new(server));
+        let client: Arc<dyn ReadWriteCloser> =
+            Arc::new(crate::ipc::conn_async::tests::PipeEnd::new(client));
+        let handler = Rc::new(GatedHandler {
+            conn: RefCell::new(None),
+            b: RefCell::new(None),
+        });
+        let conn = new_sync_conn(
+            server.clone(),
+            Box::new(crate::ipc::new_jsonrpc_protocol(server)),
+            handler.clone(),
+        );
+        *handler.conn.borrow_mut() = Some(conn.clone());
+
+        // Go `serve`: answers a request with a nested `resolve` request,
+        // serves until that one is answered, then answers the request.
+        fn serve(
+            peer: &mut crate::ipc::JSONRPCProtocol,
+            answers: &mut BTreeMap<String, String>,
+        ) -> Option<JsonValue> {
+            loop {
+                let Ok(msg) = peer.read_message() else {
+                    return None;
+                };
+                if msg.is_response() {
+                    return Some(msg.result);
+                }
+                let _ = peer.write_request(
+                    Some(&jsonrpc::new_id_string("resolve")),
+                    "resolve",
+                    Some(Box::new(msg.params.clone())),
+                );
+                let answer = serve(peer, answers).unwrap_or_default();
+                answers.insert(json_text(&msg.params), json_text(&answer));
+                let _ = peer.write_response(msg.id.as_ref(), Some(Box::new(msg.params)));
+            }
+        }
+        let peer_end = client.clone();
+        let peer = std::thread::spawn(move || {
+            let mut peer = crate::ipc::new_jsonrpc_protocol(peer_end);
+            let mut answers = BTreeMap::new();
+            serve(&mut peer, &mut answers);
+            answers
+        });
+
+        let a = conn.call(
+            &context::background(),
+            "callback",
+            Some(Box::new(json_value(r#""a""#))),
+        );
+        let b = handler.b.borrow_mut().take();
+        handler.conn.borrow_mut().take();
+        client.close().expect("client close");
+        let answers = peer.join().expect("the peer thread");
+
+        assert_eq!(
+            answers,
+            BTreeMap::from([
+                (r#""a""#.to_string(), r#""a""#.to_string()),
+                (r#""b""#.to_string(), r#""b""#.to_string()),
+            ])
+        );
+        assert_eq!(a.map(|a| json_text(&a)).ok().as_deref(), Some(r#""a""#));
+        assert_eq!(b.map(|b| json_text(&b)).as_deref(), Some(r#""b""#));
+    }
+
+    // Go: ipc/conn_sync_test.go:139 callingNotificationHandler
+    struct CallingNotificationHandler {
+        conn: RefCell<Option<Rc<SyncConn>>>,
+    }
+
+    impl Handler for CallingNotificationHandler {
+        // Go: the embedded noOpHandler.
+        fn handle_request(
+            &self,
+            _ctx: &Context,
+            _method: &str,
+            _params: JsonValue,
+        ) -> Result<Option<Box<dyn AnyValue>>, GoError> {
+            Ok(None)
+        }
+
+        // Go: ipc/conn_sync_test.go:144
+        fn handle_notification(
+            &self,
+            ctx: &Context,
+            _method: &str,
+            _params: JsonValue,
+        ) -> Result<(), GoError> {
+            let conn = self.conn.borrow().clone().expect("the connection");
+            conn.call(ctx, "inner", None).map(|_| ())
+        }
+    }
+
+    // Go: ipc/conn_sync_test.go:149 TestSyncConnNotificationHandlerCanCall
+    // (ts#64639)
+    #[test]
+    fn test_sync_conn_notification_handler_can_call() {
+        use std::os::unix::net::UnixStream;
+
+        let (server, client) = UnixStream::pair().expect("socket pair");
+        let server: Arc<dyn ReadWriteCloser> =
+            Arc::new(crate::ipc::conn_async::tests::PipeEnd::new(server));
+        let client: Arc<dyn ReadWriteCloser> =
+            Arc::new(crate::ipc::conn_async::tests::PipeEnd::new(client));
+        let handler = Rc::new(CallingNotificationHandler {
+            conn: RefCell::new(None),
+        });
+        let conn = new_sync_conn(
+            server.clone(),
+            Box::new(crate::ipc::new_jsonrpc_protocol(server)),
+            handler.clone(),
+        );
+        *handler.conn.borrow_mut() = Some(conn.clone());
+        let peer_end = client.clone();
+        let peer = std::thread::spawn(move || {
+            let mut peer = crate::ipc::new_jsonrpc_protocol(peer_end);
+            let outer = peer.read_message().unwrap_or_default();
+            let _ = peer.write_notification("notify", None);
+            let inner = peer.read_message().unwrap_or_default();
+            let _ = peer.write_response(inner.id.as_ref(), Some(Box::new(inner.method)));
+            let _ = peer.write_response(outer.id.as_ref(), Some(Box::new(outer.method)));
+        });
+
+        let result = conn.call(&context::background(), "outer", None);
+        handler.conn.borrow_mut().take();
+        peer.join().expect("the peer thread");
+        client.close().expect("client close");
+
+        let result = result.unwrap_or_else(|err| panic!("call failed: {}", err.error()));
+        assert_eq!(json_text(&result), r#""outer""#);
     }
 }
