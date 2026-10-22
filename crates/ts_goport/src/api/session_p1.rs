@@ -69,7 +69,7 @@ static SOURCE_FILE_SYMBOL_INDEX_KEY: std::sync::LazyLock<
     crate::ast::source_file_ls::SourceFileDataKey<Rc<FxHashMap<SymbolID, SymbolId>>>,
 > = std::sync::LazyLock::new(crate::ast::source_file_ls::new_source_file_data_key);
 
-// Go: api/session.go:55 getSourceFileSymbolIndex (ts#64518)
+// Go: api/session.go:55 getSourceFileSymbolIndex (ts#64518, ts#64691)
 // The binder symbols that a source file owns, by handle.
 // PORT: `symbols` is an arena that holds the binder symbols of `file` (a
 // checker of a program that has the file, or a binder lineage copy). The
@@ -735,7 +735,7 @@ pub fn program_base_directory(program: &compiler::NewProgram) -> String {
     base_directory.clone()
 }
 
-// Go: api/session.go:206 symbolOwnerFile (ts#64518)
+// Go: api/session.go:205 symbolOwnerFile (ts#64518, ts#64691)
 // symbolOwnerFile returns the source file that owns a symbol's client identity, or nil when the
 // symbol is owned by its snapshot. Content-mapped outputs live in a cache that cannot yet be
 // addressed by file key, so their binder symbols remain snapshot-owned.
@@ -792,7 +792,7 @@ fn file_symbol_response(
     build_symbol_response(symbols, symbol, reference, file)
 }
 
-// Go: api/session.go:253 buildSymbolResponse (ts#64518)
+// Go: api/session.go:248 buildSymbolResponse (ts#64518, ts#64691)
 // PORT: Go nil `owner` is `Node::NIL`.
 pub fn build_symbol_response(
     symbols: &SymbolArena,
@@ -4909,7 +4909,7 @@ impl Session {
         Ok(results)
     }
 
-    // Go: api/session.go:2690 handleGetParentOfSymbol
+    // Go: api/session.go:3073 handleGetParentOfSymbol (ts#64691)
     pub fn handle_get_parent_of_symbol(
         &self,
         _ctx: &Context,
@@ -4920,7 +4920,7 @@ impl Session {
         })
     }
 
-    // Go: api/session.go:2695 handleGetMembersOfSymbol
+    // Go: api/session.go:3078 handleGetMembersOfSymbol (ts#64691)
     pub fn handle_get_members_of_symbol(
         &self,
         ctx: &Context,
@@ -4933,7 +4933,7 @@ impl Session {
         )
     }
 
-    // Go: api/session.go:2702 handleGetExportsOfSymbol
+    // Go: api/session.go:3085 handleGetExportsOfSymbol (ts#64691)
     pub fn handle_get_exports_of_symbol(
         &self,
         ctx: &Context,
@@ -4946,7 +4946,7 @@ impl Session {
         )
     }
 
-    // Go: api/session.go:2709 handleGetExportSymbolOfSymbol
+    // Go: api/session.go:3092 handleGetExportSymbolOfSymbol (ts#64691)
     pub fn handle_get_export_symbol_of_symbol(
         &self,
         _ctx: &Context,
