@@ -822,7 +822,7 @@ impl DeclarationTransformer {
         result
     }
 
-    // Go: transformers/declarations/transform.go:2084 DeclarationTransformer.visitThisPropertyAssignments
+    // Go: transformers/declarations/transform.go:2104 DeclarationTransformer.visitThisPropertyAssignments
     pub(crate) fn visit_this_property_assignments(&mut self, node: Node) -> Node {
         let mut is_static = false;
         let this_container = get_this_container(node, false, false);
@@ -868,11 +868,18 @@ impl DeclarationTransformer {
                 }
 
                 let ec = self.emit_context.clone();
-                let mut mods = ModifierList::NIL;
+                let mut modifier_flags = self.ensure_modifier_flags(node);
                 if is_static {
+                    modifier_flags |= ModifierFlags::STATIC;
+                }
+                let mut mods = ModifierList::NIL;
+                if modifier_flags != ModifierFlags::NONE {
                     mods = ec
                         .factory()
-                        .new_modifier_list(&[ec.factory().new_modifier(SyntaxKind::StaticKeyword)]);
+                        .new_modifier_list(&create_modifiers_from_modifier_flags(
+                            modifier_flags,
+                            &mut |kind| ec.factory().new_modifier(kind),
+                        ));
                 }
                 if has_dynamic_name(node) {
                     if !is_simple_inlineable_expression(name) {
