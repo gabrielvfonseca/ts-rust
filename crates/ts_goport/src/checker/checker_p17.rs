@@ -580,7 +580,7 @@ impl Checker {
                 // extensions. A relative specifier that one rewrites is
                 // checked in an ambient or type-only import too, when the
                 // declaration emit keeps it.
-                let rewrites = crate::program::ls_program::content_mapper_extension_rewrites();
+                let rewrites = crate::program::content_mapper_extension_rewrites();
                 let case_sensitive = use_case_sensitive_file_names();
                 let specifier = module_reference;
                 let mapped_specifier = tspath::rewrite_module_specifier_extension(

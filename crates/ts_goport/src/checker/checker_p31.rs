@@ -1023,8 +1023,7 @@ impl Checker {
                             }
                         } else if helper
                             .intersects(ExternalEmitHelpers::REWRITE_RELATIVE_IMPORT_EXTENSION)
-                            && !crate::program::ls_program::content_mapper_extension_rewrites()
-                                .is_empty()
+                            && !crate::program::content_mapper_extension_rewrites().is_empty()
                         {
                             // ts#64581 (checker.go:29227): the helper takes the
                             // output extensions as a 4th parameter.

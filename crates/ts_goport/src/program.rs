@@ -3638,7 +3638,7 @@ pub fn get_source_file_from_reference(origin: Node, r: &FileReference) -> Node {
     with_go(|go| go.get_source_file_from_reference(origin, r))
 }
 
-// Go: outputpaths/outputpaths.go:53 GetOutputPathsFor, called by
+// Go: outputpaths/outputpaths.go:52 GetOutputPathsFor, called by
 // compiler/emitHost.go:91 emitHost.GetOutputPathsFor and Program.Emit with
 // the program options.
 // PORT: Go reads three fields of the source file (#4712: the content

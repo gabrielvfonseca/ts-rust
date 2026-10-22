@@ -260,23 +260,6 @@ pub fn version_tables_reused(version: &'static GoProgram) -> bool {
         .is_some_and(|go| go.from_old_tables)
 }
 
-// Go: compiler/program.go:552 ContentMapperExtensionRewrites (ts#64581)
-/// The content mapper output extension rewrites of the current program,
-/// longest source first. Empty for an alias resolver program (Go
-/// `aliasResolver.ContentMapperExtensionRewrites` returns nil).
-// PORT: unlike the rest of this file, any thread can call it: it reads the
-// copy in the version tables, as `program::content_mapper_extensions` does.
-// The checker and the node builder call it.
-pub fn content_mapper_extension_rewrites() -> Vec<tspath::ExtensionRewrite> {
-    with_tables(|tables| {
-        tables
-            .go
-            .as_ref()
-            .map(|go| go.content_mapper_extension_rewrites().to_vec())
-            .unwrap_or_default()
-    })
-}
-
 /// The parsed file whose root is `file`, from any program made here that
 /// is not released, or None. Go `*ast.SourceFile` is one object in every
 /// program that has it; here the programs hold the `ParsedSourceFile`.

@@ -1188,7 +1188,7 @@ fn build_type_descriptor(
         .as_ref()
         .map_or(SymbolId::NIL, |alias| alias.symbol());
 
-    // Go: checker/tracer.go:81 Id and :84 FormatFlags
+    // Go: checker/tracer.go:81 Id and :85 FormatFlags
     let mut desc = TypeDescriptor {
         id: t.0,
         flags: format_type_flags(flags),
@@ -1257,7 +1257,7 @@ fn build_type_descriptor(
     }
 
     // Indexed access type
-    // Go: checker/tracer.go:146 IndexedAccessObjectType and :158 IndexedAccessIndexType
+    // Go: checker/tracer.go:146 IndexedAccessObjectType and :157 IndexedAccessIndexType
     if flags.intersects(TypeFlags::INDEXED_ACCESS) {
         let data = checker.ty(t).as_indexed_access_type();
         desc.indexed_access_object_type = opt_id(data.object_type);
@@ -1265,7 +1265,7 @@ fn build_type_descriptor(
     }
 
     // Conditional type
-    // Go: checker/tracer.go:89 IsConditional and :169-:211 Conditional*Type
+    // Go: checker/tracer.go:89 IsConditional and :168-:210 Conditional*Type
     if flags.intersects(TypeFlags::CONDITIONAL) {
         let data = checker.ty(t).as_conditional_type();
         desc.conditional_check_type = opt_id(data.check_type);
@@ -1283,7 +1283,7 @@ fn build_type_descriptor(
     }
 
     // Substitution type
-    // Go: checker/tracer.go:212 SubstitutionBaseType and :224 SubstitutionConstraintType
+    // Go: checker/tracer.go:212 SubstitutionBaseType and :223 SubstitutionConstraintType
     if flags.intersects(TypeFlags::SUBSTITUTION) {
         let data = checker.ty(t).as_substitution_type();
         desc.substitution_base_type = opt_id(data.base_type);
@@ -1291,8 +1291,8 @@ fn build_type_descriptor(
     }
 
     // Reference type
-    // Go: checker/tracer.go:234 ReferenceTarget, :246 ReferenceTypeArguments
-    // and :253 ReferenceNode
+    // Go: checker/tracer.go:234 ReferenceTarget, :245 ReferenceTypeArguments
+    // and :252 ReferenceNode
     let mut reference_node = Node::NIL;
     if flags.intersects(TypeFlags::OBJECT) && object_flags.intersects(ObjectFlags::REFERENCE) {
         let data = checker.ty(t).as_type_reference();
@@ -1314,7 +1314,7 @@ fn build_type_descriptor(
     }
 
     // Evolving array type
-    // Go: checker/tracer.go:292 EvolvingArrayElementType and :304 EvolvingArrayFinalType
+    // Go: checker/tracer.go:292 EvolvingArrayElementType and :303 EvolvingArrayFinalType
     if flags.intersects(TypeFlags::OBJECT) && object_flags.intersects(ObjectFlags::EVOLVING_ARRAY) {
         let data = checker.ty(t).as_evolving_array_type();
         desc.evolving_array_element_type = opt_id(data.element_type);

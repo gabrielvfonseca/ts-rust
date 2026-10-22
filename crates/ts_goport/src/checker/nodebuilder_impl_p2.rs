@@ -569,7 +569,7 @@ impl Checker {
                 .rewrite_relative_import_extensions
                 .is_true()
         {
-            let rewrites = crate::program::ls_program::content_mapper_extension_rewrites();
+            let rewrites = crate::program::content_mapper_extension_rewrites();
             let case_sensitive = crate::program::use_case_sensitive_file_names();
             if crate::frontend::tspath::should_rewrite_module_specifier_extension(
                 &specifier,

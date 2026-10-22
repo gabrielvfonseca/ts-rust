@@ -1215,7 +1215,7 @@ impl Checker {
             return self.create_promise_return_type(node, self.any_type);
         }
         let specifier = args[0];
-        // ts#64581 (checker.go:8472): a computed specifier is rewritten at
+        // ts#64581 (checker.go:8467): a computed specifier is rewritten at
         // run time by the imported helper.
         if self
             .compiler_options

@@ -197,7 +197,8 @@ pub(crate) const DECLARATION_EMIT_NODE_BUILDER_FLAGS: NodeBuilderFlags =
 // Go: transformers/declarations/transform.go:222 declarationEmitInternalNodeBuilderFlags
 #[allow(dead_code)]
 pub(crate) const DECLARATION_EMIT_INTERNAL_NODE_BUILDER_FLAGS: InternalNodeBuilderFlags =
-    InternalNodeBuilderFlags::ALLOW_UNRESOLVED_NAMES;
+    InternalNodeBuilderFlags::ALLOW_UNRESOLVED_NAMES
+        .union(InternalNodeBuilderFlags::REWRITE_MODULE_SPECIFIERS);
 
 /// The Go func that `setupDiagnosticContext` returns. Run it with
 /// `cleanup.run(self)` where Go runs `defer cleanupDiagnosticContext()`.
