@@ -535,10 +535,11 @@ impl SymlinkSeed {
     /// files that the OS file system does not show), and a program that
     /// emits declarations, which uses the cache.
     ///
-    /// A load with no parse workers (`parse_workers_enabled` is false)
-    /// leaves its lookups only in the host's `CachedFs`, which only the
-    /// loading thread reads. These are `--singleThreaded` (whose one checker
-    /// has a thread of its own), a thread budget of 1 CPU,
+    /// A load with no parse workers leaves its lookups only in the host's
+    /// `CachedFs`, which only the loading thread reads. These are
+    /// `--singleThreaded` (`FilesParser::parse` starts no workers; its one
+    /// checker has a thread of its own), and the loads where
+    /// `parse_workers_enabled` is false: a thread budget of 1 CPU,
     /// `GOPORT_PARSE_THREADS=0` and a load inside another load's prefetch.
     /// Its seed has none, so the finish makes the lookups that it needs
     /// (`HostStatCache::empty`). This is nearer to Go, which builds the
