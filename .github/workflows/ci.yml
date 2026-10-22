@@ -16,6 +16,9 @@ on:
       - "Cargo.lock"
       - "UPSTREAM.json"
       - "scripts/upstream/pin.py"
+      # The wasm job's module build and package tests.
+      - "npm/wasm/**"
+      - "scripts/wasm/**"
       - ".github/workflows/ci.yml"
 
 permissions:
