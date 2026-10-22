@@ -179,8 +179,10 @@ fn since(sys: &dyn System, start: SystemTime) -> std::time::Duration {
 // PORT: Go times each bind, check and emit call with `sys.Now()`, and so
 // does the port. When the incremental program started the check before
 // (`Program::start_check`, `tsc -p` and `tsc -b`), the check time adds the
-// time of that start (`Program::take_started_check_time`), and the check
-// call times the wait for the rest.
+// time of that start (`Program::take_started_check_time`). Under `tsc -p` the
+// check call times the wait for the rest. Under `tsc -b` the orchestrator
+// waits for the started check and emit before this call, so the build task
+// adds that wait to the started time (`Program::add_started_check_time`).
 pub fn emit_files_and_report_errors(input: &EmitInput) -> CompileAndEmitResult {
     let mut result = CompileAndEmitResult::default();
     result.times = input.compile_times.clone();
