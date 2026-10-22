@@ -24,6 +24,16 @@ profile="${WASM_PROFILE:-wasm}"
 # gzip and brotli than "-Oz --converge", at the same speed.
 opt="${WASM_OPT:---flatten --rereloop -Oz -Oz}"
 
+cargo_cmd=(cargo)
+# The capped runner needs a systemd user session (Linux hosts such as
+# zbook). CI runners have systemd-run but no user session.
+if [[ -z "${CI:-}" ]] && command -v systemd-run >/dev/null; then
+  cargo_cmd=("$repo/scripts/run-cargo-capped.sh")
+fi
+
+# A cold cache has no registry paths to remap until Cargo downloads the sources.
+"${cargo_cmd[@]}" fetch --locked --manifest-path "$repo/Cargo.toml"
+
 # At opt-level "s", LLVM inlines `#[inline]` functions up to cost 325; the
 # faster build above lowers that to 150.
 rustflags="${WASM_RUSTFLAGS:-}"
@@ -43,12 +53,6 @@ for remap in "${remaps[@]}"; do
 done
 export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }$rustflags"
 
-cargo_cmd=(cargo)
-# The capped runner needs a systemd user session (Linux hosts such as
-# zbook). CI runners have systemd-run but no user session.
-if [[ -z "${CI:-}" ]] && command -v systemd-run >/dev/null; then
-  cargo_cmd=("$repo/scripts/run-cargo-capped.sh")
-fi
 target_dir="${CARGO_TARGET_DIR:-$repo/target}"
 built="$target_dir/wasm32-wasip1/$profile/ts_wasm.wasm"
 mkdir -p "$(dirname "$out")"
