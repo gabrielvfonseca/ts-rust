@@ -68,7 +68,7 @@ test("gate-allow.txt: each corpus entry names the case of its reason", () => {
   const { entries, error } = allowStep(null);
   assert.equal(error, undefined);
   const corpus = entries.filter(e => e.id.startsWith("corpus-"));
-  assert.equal(corpus.length, 70); // 14 traceResolution cases at each of 5 pins (dc37b5249ab6, 52168999f3dc, B, N, N')
+  assert.equal(corpus.length, 84); // 14 traceResolution cases at each of 6 pins (dc37b5249ab6, 52168999f3dc, B, N, fed0bf24149f, 3e9236361fa9)
   for (const e of corpus) {
     const name = /^traceResolution case (\S+?)[: ]/.exec(e.reason)[1];
     assert.equal(e.path.split("/").at(-1).replace(/\.tsx?$/, ""), name, e.id);

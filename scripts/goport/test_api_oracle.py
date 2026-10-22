@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""Unit tests for api_oracle.py protocol 3 (pin B), protocol 4 (pin N), protocol 5 (pin N') and --wire. No server
-runs.
+"""Unit tests for api_oracle.py protocol 3 (pin B), protocol 4 (pin N), protocol 5 (pin N'), --wire and the LSP API
+pipe (#64818, bump E N''). No tsgo runs; the pipe test starts a fake LSP server (Python).
 
   python3 scripts/goport/test_api_oracle.py
 """
 import importlib.util
 import os
+import stat
+import sys
+import tempfile
 import unittest
+from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -27,7 +31,7 @@ def load(pin):
             os.environ["GOPORT_PIN_ACTIVE"] = old
 
 
-B, N, N2 = load("16c25522e123"), load("673a5f17d713"), load("fed0bf24149f")
+B, N, N2, N3 = load("16c25522e123"), load("673a5f17d713"), load("fed0bf24149f"), load("3e9236361fa9")
 OPEN = {"openProjects": ["@PROJECT_DIR@/tsconfig.json"]}
 CHANGE = {"fileChanges": {"changed": ["@PROJECT_DIR@/a.ts"]}}
 TEMP = {"file": "@PROJECT_DIR@/a.ts", "newText": "x"}
@@ -251,6 +255,70 @@ class Wire4(unittest.TestCase):
         for mod, wire in ((N, 4), (N2, 3), (B, 3), (B, 4)):
             with self.assertRaises(mod.UsageError):
                 mod.cmd_check(types.SimpleNamespace(wire=wire))
+
+
+# A fake LSP server: FAKE_PIPE=dir makes the requested pipe path a directory and listens on <path>/socket (Go after
+# #64818), FAKE_PIPE=path listens on the path itself (Go up to fed0bf24149f). It answers the path it listens on.
+FAKE_LSP = """
+import json, os, socket, sys
+inp, out = sys.stdin.buffer, sys.stdout.buffer
+def send(msg):
+    b = json.dumps(msg).encode()
+    out.write(b"Content-Length: %d\\r\\n\\r\\n" % len(b) + b)
+    out.flush()
+listeners = []
+while True:
+    n = None
+    while True:
+        line = inp.readline()
+        if not line:
+            sys.exit(0)
+        if not line.strip():
+            break
+        k, _, v = line.partition(b":")
+        if k.strip().lower() == b"content-length":
+            n = int(v)
+    msg = json.loads(inp.read(n))
+    m = msg.get("method")
+    if m == "custom/initializeAPISession":
+        path = msg["params"]["pipe"]
+        if os.environ["FAKE_PIPE"] == "dir":
+            os.mkdir(path, 0o700)
+            path = os.path.join(path, "socket")
+        listeners.append(socket.socket(socket.AF_UNIX))
+        listeners[-1].bind(path)
+        listeners[-1].listen(1)
+        send({"jsonrpc": "2.0", "id": msg["id"], "result": {"sessionId": "api-session-1", "pipe": path}})
+    elif m == "exit":
+        sys.exit(0)
+    elif "id" in msg:
+        send({"jsonrpc": "2.0", "id": msg["id"], "result": {} if m == "initialize" else None})
+"""
+
+
+class AnswerPipe(unittest.TestCase):
+    def test_pins(self):
+        self.assertEqual([m.ANSWER_PIPE for m in (B, N, N2, N3)], [False, False, False, True])
+
+    def peer(self, mod, mode):
+        """The socket path that an LSP API session of `mod` connects to, against the fake server in `mode`."""
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ, {"FAKE_PIPE": mode}):
+            fake = os.path.join(tmp, "fake-lsp")
+            with open(fake, "w", encoding="utf-8") as f:
+                f.write(f"#!{sys.executable}\n{FAKE_LSP}")
+            os.chmod(fake, stat.S_IRWXU)
+            server = mod.Server(fake, {"project": {"dir": tmp, "tsconfig": "tsconfig.json"}, "transport": "lsp"},
+                                tmp, None, "oracle0")
+            try:
+                server.start()
+                return os.path.relpath(server.sock.getpeername(), tmp)
+            finally:
+                server.stop()
+
+    def test_connects(self):
+        self.assertEqual(self.peer(N3, "dir"), "api0.sock/socket")
+        self.assertEqual(self.peer(N3, "path"), "api0.sock")
+        self.assertEqual(self.peer(N2, "path"), "api0.sock")
 
 
 if __name__ == "__main__":

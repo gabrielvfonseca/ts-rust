@@ -26,6 +26,7 @@ const KEPT_CRATE_SUITE = /^ts_(scanner|ast|diagnostics|path|core|jsnum)_lib$/;
 const STALE_REFERENCE_SUITE = "go_baselines_reference";
 // The wires an API rebase run may use: api_oracle.py check --wire 3 (protocol 3 base bins at a protocol 4 pin,
 // bump C reviewer ruling 1 item 1) and --wire 4 (protocol 4 base bins at a protocol 5 pin, bump D; ruling 3 item 6).
+// When both pins have the same API protocol, the runs have no wire (bump E ruling item 2).
 const API_REBASE_WIRES = [3, 4];
 // R132 is the last revision under the legacy cargo roster (rule goport-protected-set). It was opened
 // in batch port-18 under the legacy rules before stage 1 merged. A later revision needs protectedSet
@@ -552,7 +553,7 @@ function answerKeys(list) {
 }
 
 // batch.oracleRebase.<kind> (reviewer ruling 10) {runs [{label, dir, resultsSha256}], binsSha256,
-// oracleSha256, knownDiffs? [{key, reason}] (API only), wire and toolSha256 (API only)}: runs of the base
+// oracleSha256, knownDiffs? [{key, reason}] (API only), wire? and toolSha256 (API only)}: runs of the base
 // batch's bins (binsSha256, the tsgo sha256 of its gate manifest) with the oracle of the batch pin
 // (oracleSha256, upstreamPin.oracleSha256). Returns the runs, the base of the compare.
 function rebaseRuns(kind, entry, tsgo, oracle) {
@@ -567,22 +568,33 @@ function rebaseRuns(kind, entry, tsgo, oracle) {
   requireValue(Array.isArray(known) && known.every(diff => text(diff?.key) && text(diff.reason)) && new Set(known.map(diff => diff.key)).size === known.length
     && (kind === "api" || known.length === 0), `${field}.knownDiffs must list each {key, reason} once${kind === "lsp" ? "; the LSP has none" : ""}.`);
   if (kind === "api") {
-    requireValue(API_REBASE_WIRES.includes(entry.wire) && HASH.test(entry.toolSha256),
-      `${field} needs "wire": ${API_REBASE_WIRES.join(" or ")} and toolSha256, the api_oracle.py sha256 of its runs (bump C ruling 1 item 1).`);
+    requireValue((entry.wire === undefined || API_REBASE_WIRES.includes(entry.wire)) && HASH.test(entry.toolSha256),
+      `${field} needs "wire": ${API_REBASE_WIRES.join(" or ")} and toolSha256, the api_oracle.py sha256 of its runs (bump C ruling 1 item 1),`
+      + ` or toolSha256 and no "wire" key when both pins have the same API protocol (bump E ruling item 2).`);
   }
   return entry.runs;
 }
 
-// batch.oracleRebase.api (bump C reviewer ruling 1 item 1): the base bins speak an older API protocol, so each run
-// is `api_oracle.py check --wire <entry.wire>` (3 or 4) with one API tool. Every battery of each run's manifest.json
-// must have that wire and toolSha256 as its scriptSha.
+// batch.oracleRebase.api: each run is `api_oracle.py check` with one API tool (toolSha256 is the scriptSha of every
+// battery of each run's manifest.json). When the base bins speak an older API protocol, each run is `check --wire
+// <entry.wire>` (3 or 4; bump C reviewer ruling 1 item 1) and every battery has that wire. When both pins have the same
+// API protocol, the entry and the batteries have no wire (bump E ruling item 2). Runs that mix wire and no wire stop.
 function checkRebaseWire(entry, readEvidence) {
-  for (const run of entry.runs) {
+  const runs = entry.runs.map(run => {
     const manifest = readEvidence({ path: join(run.dir, "manifest.json") }, { pinned: false });
-    const batteries = Object.entries(manifest?.batteries ?? {});
+    return { run, batteries: Object.entries(manifest?.batteries ?? {}) };
+  });
+  // "<run label>/<battery>" of each battery with (wired true) or without a wire.
+  const named = wired => runs.flatMap(({ run, batteries }) =>
+    batteries.filter(([, record]) => (record?.wire !== undefined) === wired).map(([name]) => `${run.label}/${name}`));
+  const [withWire, without] = [named(true), named(false)];
+  requireValue(withWire.length === 0 || without.length === 0,
+    `batch.oracleRebase.api: the rebase runs mix wire and no wire (wire: ${withWire.join(", ")}; no wire: ${without.join(", ")}).`);
+  const want = entry.wire === undefined ? "with a wire (the entry has none) or without" : `without "wire": ${entry.wire} or`;
+  for (const { run, batteries } of runs) {
     const other = batteries.filter(([, record]) => record?.wire !== entry.wire || record.scriptSha !== entry.toolSha256).map(([name]) => name);
     requireValue(batteries.length > 0 && other.length === 0,
-      `batch.oracleRebase.api: rebase run ${run.label} (${run.dir}) has batteries without "wire": ${entry.wire} or api_oracle.py ${entry.toolSha256}${other.length ? `: ${other.join(", ")}` : ""}.`);
+      `batch.oracleRebase.api: rebase run ${run.label} (${run.dir}) has batteries ${want} api_oracle.py ${entry.toolSha256}${other.length ? `: ${other.join(", ")}` : ""}.`);
   }
 }
 
@@ -1162,7 +1174,10 @@ tree, Cargo.toml and Cargo.lock), as candidate.sh reuses it by that key.
   or 4 for protocol 4 base bins at a protocol 5 pin) and toolSha256 (bump C
   reviewer ruling 1 item 1): every battery of each
   run's manifest.json must have that wire and that api_oracle.py sha256 as
-  its scriptSha (scripts/goport/oracle-rebase.sh writes the fragment). The check runs oracle-compare.py
+  its scriptSha (scripts/goport/oracle-rebase.sh writes the fragment). When
+  both pins have the same API protocol, the api entry has no "wire" key and
+  no battery may have a wire (bump E ruling item 2). Runs that mix batteries
+  with and without a wire stop. The check runs oracle-compare.py
   with every run as a base (protected in any run), --identity and --parity
   with the known diff keys: each run must have its resultsSha256, binsSha256
   as its only tsgo and oracleSha256 as its only oracle, and the new run that
