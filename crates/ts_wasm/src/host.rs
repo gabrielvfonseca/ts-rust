@@ -45,7 +45,7 @@ pub enum Op {
 ///
 /// When the host reports a failure. The error holds the host's error text,
 /// which is empty when the host gave none.
-#[cfg(target_family = "wasm")]
+#[cfg(all(target_family = "wasm", not(test)))]
 #[allow(unsafe_code)]
 pub fn call(op: Op, request: &[u8]) -> Result<Vec<u8>, String> {
     #[link(wasm_import_module = "ts_host")]
@@ -68,13 +68,13 @@ pub fn call(op: Op, request: &[u8]) -> Result<Vec<u8>, String> {
     }
 }
 
-/// Native builds (the crate's tests) have no JavaScript host: `test_host`
-/// answers in its place.
+/// Native builds and the crate's tests have no JavaScript host: `test_host`
+/// answers in its place. A wasm test binary then imports nothing from it.
 ///
 /// # Errors
 ///
 /// When the test host has no such file or directory, with no error text.
-#[cfg(not(target_family = "wasm"))]
+#[cfg(any(test, not(target_family = "wasm")))]
 pub fn call(op: Op, request: &[u8]) -> Result<Vec<u8>, String> {
     test_host::call(op, request).ok_or_else(String::new)
 }
@@ -301,9 +301,9 @@ impl Fs for HostFs {
     }
 }
 
-/// An in-memory host for native tests: a map from absolute path to bytes.
+/// An in-memory host for the tests: a map from absolute path to bytes.
 /// Directories are the parents of the files.
-#[cfg(not(target_family = "wasm"))]
+#[cfg(any(test, not(target_family = "wasm")))]
 pub mod test_host {
     use super::Op;
     use std::collections::BTreeMap;
