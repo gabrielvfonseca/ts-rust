@@ -213,13 +213,17 @@ fn build_task_with_syntax_errors_finishes_when_its_emit_ends() {
 /// emit start with its program and end before the task finishes, so
 /// `EmitFilesAndReportErrors` waits for neither. Its check time must still
 /// be the time to the end of the check, as in `tsc -p` (`StartedTimes` in
-/// `build/build_task.rs`): 0.05s on a testbox, where it was 0.000s. Then an
+/// `build/build_task.rs`): at least a fifth of the total time. Then an
 /// emit-only option change makes `tsc -b` emit every file with every check
 /// cached (Go N: Check time 0.000s, Emit time 0.030s): that emit is emit
-/// time, not check time. With jemalloc (not Windows) `Memory allocs` and
-/// `Aggregate Memory allocs` count its allocation requests: they were 0.
-/// The bounds hold on a loaded host too: a load only adds to the check of
-/// the first build and to the emit of the second.
+/// time, not check time, so the check time is less than the emit time. With
+/// jemalloc (not Windows) `Memory allocs` and `Aggregate Memory allocs`
+/// count its allocation requests: they were 0. Each bound compares two
+/// times of one run, so a load moves both sides. On a testbox, also with 4
+/// times as many busy threads as cores, the check was 52 to 81% of the
+/// total time (before #91: 0 to 2%, up to 0.011s, so a fixed bound of 2 ms
+/// passed there), and the emit-only emit time was at least 0.064s more than
+/// its check time (#91 without its fixup: always less).
 #[test]
 fn build_statistics_time_the_started_check_and_emit() {
     let config = |extra: &str| {
@@ -236,8 +240,11 @@ fn build_statistics_time_the_started_check_and_emit() {
     }
     let (status, build) = solution.build(&["--force", "--extendedDiagnostics"]);
     assert_eq!(status, Some(0), "{build}");
-    let check = seconds(&build, "Check time");
-    assert!(check >= 0.002, "check time {check}s:\n{build}");
+    let (check, total) = (seconds(&build, "Check time"), seconds(&build, "Total time"));
+    assert!(
+        check > 0.0 && check * 5.0 >= total,
+        "check time {check}s, total time {total}s:\n{build}"
+    );
 
     solution.wait_for_a_later_mtime();
     solution.write("tsconfig.json", &config(r#", "removeComments": true"#));
