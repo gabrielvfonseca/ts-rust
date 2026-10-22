@@ -28,7 +28,9 @@
 //! tests: `tsc -p --listFilesOnly` emits nothing, and `tsc -b` of two small
 //! projects runs without a panic (also in the dev profile). An edit after a
 //! build first waits until a new file gets a later mtime than every file of
-//! the build (`Solution::wait_for_a_later_mtime`), so `tsc -b` sees it. The
+//! the build (`Solution::wait_for_a_later_mtime`), so `tsc -b` sees it. So
+//! does the statistics test: the `--extendedDiagnostics` times of a task
+//! whose check and emit started early. The
 //! barrier test loads the fixture and checks that `send_checker_barrier`
 //! waits for the emit pool and the d.ts twins. The emitretry1 tests (Unix)
 //! make their own project there too: a read-only output, or a `writeFile`
@@ -204,6 +206,100 @@ fn build_task_with_syntax_errors_finishes_when_its_emit_ends() {
         ),
         "p2 finishes before p1, so p3 loads after p2 wrote v2"
     );
+}
+
+/// pr9192 (#88, #87): `tsc -b --extendedDiagnostics` on a chain of 300
+/// modules (the repro of #88). The task's check and emit start with its
+/// program and end before the task finishes, so `EmitFilesAndReportErrors`
+/// waits for neither. Its check time must still be the time to the end of
+/// the check, as in `tsc -p` (build/build_task.rs `StartedTimes`): before,
+/// it was 0.000s to 0.002s where `tsc -p` gave 0.05s. Then an emit-only
+/// option change makes `tsc -b` emit every file with every check cached
+/// (Go N: Check time 0.000s, Emit time 0.030s): that emit is emit time, not
+/// check time. With jemalloc (not Windows) `Memory allocs` and `Aggregate
+/// Memory allocs` count its allocation requests: they were 0.
+#[test]
+fn build_statistics_time_the_started_check_and_emit() {
+    let solution = Solution::new();
+    solution.write("tsconfig.json", &project_config(""));
+    for i in 1..=300 {
+        solution.write(&format!("src/m{i}.ts"), &chain_module(i));
+    }
+    let output = Command::new(env!("CARGO_BIN_EXE_tsgo"))
+        .current_dir(&solution.root)
+        .args(["-p", ".", "--extendedDiagnostics", "--pretty", "false"])
+        .env("GOPORT_EARLY_EMIT", "1")
+        .output()
+        .expect("run tsgo -p");
+    let project = String::from_utf8_lossy(&output.stdout).into_owned();
+    let (status, build) = solution.build(&["--force", "--extendedDiagnostics"]);
+    assert_eq!(status, Some(0), "{build}");
+    let (check_p, check_b) = (
+        seconds(&project, "Check time"),
+        seconds(&build, "Check time"),
+    );
+    assert!(
+        check_b * 4.0 >= check_p,
+        "tsc -b check time {check_b}s, tsc -p {check_p}s:\n{build}"
+    );
+    let allocs = |stdout: &str, name: &str| -> u64 {
+        statistic(stdout, name).map_or(0, |value| value.parse().expect("a count"))
+    };
+    if cfg!(all(feature = "jemalloc", not(windows))) {
+        assert!(allocs(&build, "Memory allocs") > 0, "{build}");
+        assert!(allocs(&build, "Aggregate Memory allocs") > 0, "{build}");
+    }
+
+    solution.wait_for_a_later_mtime();
+    solution.write(
+        "tsconfig.json",
+        &project_config(r#", "removeComments": true"#),
+    );
+    let (status, emit_only) = solution.build(&["--extendedDiagnostics"]);
+    assert_eq!(status, Some(0), "{emit_only}");
+    let (check, emit) = (
+        seconds(&emit_only, "Check time"),
+        seconds(&emit_only, "Emit time"),
+    );
+    assert!(
+        check < emit,
+        "check time {check}s, emit time {emit}s:\n{emit_only}"
+    );
+    solution.remove();
+}
+
+/// Module `i` of the chain of #88: it imports module `i - 1`.
+fn chain_module(i: usize) -> String {
+    if i == 1 {
+        return "export interface T1 { a: number; b: string; c: number[] }\n\
+                export function f1(x: T1): number { return x.c.reduce((p, q) => p + q, 0) + x.b.length; }\n"
+            .to_owned();
+    }
+    let j = i - 1;
+    format!(
+        "import {{ f{j}, T{j} }} from \"./m{j}\";\n\
+         export interface T{i} {{ a: number; b: string; c: T{j}[] }}\n\
+         export function f{i}(x: T{i}): number {{ return x.c.map(y => y.a + f{j}(y)).reduce((p, q) => p + q, 0) + x.b.length; }}\n\
+         export const v{i} = [1, 2, 3].map(n => ({{ a: n, b: String(n), c: [] as T{j}[] }})).filter(o => o.a > 1);\n\
+         export type U{i} = {{ [K in keyof T{i}]: T{i}[K] extends number ? string : T{i}[K] }};\n"
+    )
+}
+
+/// The value of the `--extendedDiagnostics` row `name` in `stdout`.
+fn statistic<'a>(stdout: &'a str, name: &str) -> Option<&'a str> {
+    stdout.lines().find_map(|line| {
+        let value = line.strip_prefix(name)?.strip_prefix(':')?;
+        Some(value.trim())
+    })
+}
+
+/// The seconds of the time row `name` in `stdout`: 0 without the row (Go
+/// prints no row for a zero time).
+fn seconds(stdout: &str, name: &str) -> f64 {
+    statistic(stdout, name).map_or(0.0, |value| {
+        let value = value.strip_suffix('s').expect("a time ends in s");
+        value.parse().expect("a time in seconds")
+    })
 }
 
 /// tscbemit2: Go reads the global diagnostics before the emit, also with
