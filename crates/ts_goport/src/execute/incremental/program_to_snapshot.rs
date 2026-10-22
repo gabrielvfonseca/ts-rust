@@ -1071,3 +1071,7 @@ mod tests {
         assert_eq!(restored.localize(&crate::locale::DEFAULT), "mapper warning");
     }
 }
+
+#[cfg(test)]
+#[path = "buildinfo_path_tests.rs"]
+mod buildinfo_path_tests;
