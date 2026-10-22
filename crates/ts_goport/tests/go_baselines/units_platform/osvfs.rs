@@ -58,7 +58,108 @@ fn mklink(target: &Path, link: &Path) -> bool {
     }
 }
 
-// Go: os_test.go:17 TestOS
+/// The environment variable that names the subtest of
+/// `test_get_global_typings_cache_location` that a child process runs.
+const TYPINGS_SUBTEST_ENV: &str = "GOPORT_TEST_TYPINGS_SUBTEST";
+
+// Go: os_test.go:19 TestGetGlobalTypingsCacheLocation (ts#64836)
+// PORT: Go `t.Setenv` sets the process environment for one subtest (an
+// empty value reads as unset). Here each subtest runs in a child process
+// with its environment (`run_test_in_child_with_env`); the child runs only
+// the subtest that `TYPINGS_SUBTEST_ENV` names.
+#[test]
+fn test_get_global_typings_cache_location() {
+    let path = concat!(module_path!(), "::test_get_global_typings_cache_location");
+    let test = path.split_once("::").map_or(path, |(_, rest)| rest);
+    let cache_root = TempDir::new();
+    let cache_root = cache_root.path().to_str().expect("temp dir").to_string();
+    let root = cache_root.as_str();
+    let subtests: [(&str, Vec<(&str, &str)>); 4] = [
+        // Go: os_test.go:20
+        (
+            "user cache",
+            vec![
+                ("HOME", root),
+                ("home", root),
+                ("LocalAppData", root),
+                ("XDG_CACHE_HOME", root),
+            ],
+        ),
+        // Go: os_test.go:36
+        (
+            "missing user cache",
+            vec![
+                ("HOME", ""),
+                ("home", ""),
+                ("LocalAppData", ""),
+                ("XDG_CACHE_HOME", ""),
+            ],
+        ),
+        // Go: os_test.go:43
+        ("relative XDG cache", vec![("XDG_CACHE_HOME", "relative")]),
+        // Go: os_test.go:52
+        (
+            "relative user cache",
+            vec![
+                ("XDG_CACHE_HOME", ""),
+                ("HOME", "relative-home"),
+                ("home", "relative-home"),
+                ("LocalAppData", "relative-home"),
+            ],
+        ),
+    ];
+    for (name, mut env) in subtests {
+        env.push((TYPINGS_SUBTEST_ENV, name));
+        crate::support::child::run_test_in_child_with_env(test, &env, move || {
+            if std::env::var(TYPINGS_SUBTEST_ENV).as_deref() == Ok(name) {
+                typings_cache_location_subtest(name);
+            }
+        });
+    }
+}
+
+// Go: os_test.go:20 to :58, the subtests of TestGetGlobalTypingsCacheLocation
+fn typings_cache_location_subtest(name: &str) {
+    use ts_goport::cmd::tsgo::lsp::get_global_typings_cache_location;
+    let os = std::env::consts::OS;
+    match name {
+        "user cache" => {
+            // Go: os.UserCacheDir() with HOME, home, LocalAppData and
+            // XDG_CACHE_HOME all set to the cache root.
+            let cache_root = std::env::var("XDG_CACHE_HOME").expect("XDG_CACHE_HOME");
+            let cache_dir = match os {
+                "macos" | "ios" => format!("{cache_root}/Library/Caches"),
+                _ => cache_root,
+            };
+            let subdir = if os == "windows" {
+                "Microsoft/TypeScript"
+            } else {
+                "typescript"
+            };
+            let expected = tspath::get_normalized_absolute_path(
+                &tspath::combine_paths(
+                    &cache_dir,
+                    &[subdir, ts_goport::core::version_major_minor()],
+                ),
+                "",
+            );
+            assert_eq!(get_global_typings_cache_location(), expected);
+        }
+        "missing user cache" | "relative user cache" => {
+            assert_eq!(get_global_typings_cache_location(), "");
+        }
+        "relative XDG cache" => {
+            if matches!(os, "windows" | "macos" | "ios") {
+                println!("SKIP {name}: XDG_CACHE_HOME is not used on this platform");
+                return;
+            }
+            assert_eq!(get_global_typings_cache_location(), "");
+        }
+        _ => unreachable!("subtest {name}"),
+    }
+}
+
+// Go: os_test.go:61 TestOS
 #[test]
 fn test_os() {
     let fs = osvfs_fs();

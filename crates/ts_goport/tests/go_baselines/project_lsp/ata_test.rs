@@ -61,7 +61,45 @@ fn typings_file(name: &str) -> String {
 }
 
 child_test! {
-    // Go: ata_test.go:22 TestATA/local module should not be picked up
+    // Go: ata_test.go:23 TestATA/no typings cache disables acquisition (ts#64836)
+    // PORT: a Go `&project.SessionOptions{...}` literal without
+    // TypingsLocation: the empty typings location turns ATA off.
+    fn no_typings_cache_disables_acquisition() {
+        let app_text = r#"const $ = require("jquery");"#;
+        let files = files(&[
+            (APP, app_text),
+            (
+                "/user/username/projects/project/jsconfig.json",
+                r#"{
+				"typeAcquisition": { "enable": true }
+			}"#,
+            ),
+        ]);
+        let (session, utils) = projecttestutil::setup_with_options_and_typings_installer(
+            files,
+            Some(ts_goport::project::SessionOptions {
+                typings_location: String::new(),
+                ..projecttestutil::session_options("/")
+            }),
+            ti(&[], &[("jquery", "export const x: number;")]),
+        );
+
+        open_kind(&session, APP_URI, app_text, lsproto::LanguageKind::JAVA_SCRIPT);
+        session.wait_for_background_tasks();
+
+        let p = program(&session, APP_URI);
+        assert!(has_file(&p, APP));
+        assert_eq!(calls(&utils).len(), 0);
+        assert!(
+            !session
+                .fs()
+                .file_exists(&format!("{TEST_TYPINGS_LOCATION}/package.json"))
+        );
+    }
+}
+
+child_test! {
+    // Go: ata_test.go:53 TestATA/local module should not be picked up
     fn local_module_should_not_be_picked_up() {
         let files = files(&[
             (APP, "const c = require('./config');"),
@@ -412,7 +450,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:401 TestATA/should redo resolution that resolved to '.js' file after typings are installed
+    // Go: ata_test.go:432 TestATA/should redo resolution that resolved to '.js' file after typings are installed
     fn should_redo_resolution_that_resolved_to_js_file_after_typings_are_installed() {
         let files = files(&[
             // PORT: the Go literal is a raw string with `\n` escapes (not newlines).
@@ -459,7 +497,7 @@ fn jquery_typings_text(session: &Rc<Session>) -> String {
 }
 
 child_test! {
-    // Go: ata_test.go:432 TestATA/expired cache entry (inferred project, should install typings)
+    // Go: ata_test.go:463 TestATA/expired cache entry (inferred project, should install typings)
     fn expired_cache_entry_inferred_project_should_install_typings() {
         let files = cache_files("1.0.0", r#"{"dependencies":{"@types/jquery":{"version":"1.0.0"}}}"#);
         let (session, _) = open_app(files, ti(&[], &[("jquery", "export const y = 10")]));
@@ -469,7 +507,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:460 TestATA/non-expired cache entry (inferred project, should not install typings)
+    // Go: ata_test.go:491 TestATA/non-expired cache entry (inferred project, should not install typings)
     fn non_expired_cache_entry_inferred_project_should_not_install_typings() {
         let files = cache_files("1.3.0", r#"{"dependencies":{"@types/jquery":{"version":"1.3.0"}}}"#);
         let (session, _) = open_app(files, ti(&["jquery"], &[]));
@@ -478,12 +516,12 @@ child_test! {
     }
 }
 
-// Go: ata_test.go:486 TestATA/deduplicate from local @types packages
+// Go: ata_test.go:517 TestATA/deduplicate from local @types packages
 // PORT: Go skips this subtest ("Todo - implement removing local @types from
 // include list"); it is not ported.
 
 child_test! {
-    // Go: ata_test.go:519 TestATA/expired cache entry (inferred project, should install typings) lockfile3
+    // Go: ata_test.go:550 TestATA/expired cache entry (inferred project, should install typings) lockfile3
     fn expired_cache_entry_inferred_project_should_install_typings_lockfile3() {
         let files = cache_files(
             "1.0.0",
@@ -496,7 +534,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:547 TestATA/non-expired cache entry (inferred project, should not install typings) lockfile3
+    // Go: ata_test.go:578 TestATA/non-expired cache entry (inferred project, should not install typings) lockfile3
     fn non_expired_cache_entry_inferred_project_should_not_install_typings_lockfile3() {
         let files = cache_files(
             "1.3.0",
@@ -509,7 +547,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:573 TestATA/should install typings for unresolved imports
+    // Go: ata_test.go:604 TestATA/should install typings for unresolved imports
     fn should_install_typings_for_unresolved_imports() {
         let files = files(&[(
             APP,
