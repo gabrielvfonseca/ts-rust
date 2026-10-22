@@ -472,7 +472,7 @@ impl SymbolTrackerSharedState {
         self.diagnostics.push(diag);
     }
 
-    // Go: transformers/declarations/transform.go:116 NewDeclarationTransformer.func1 (reportExpandoFunctionErrors)
+    // Go: transformers/declarations/transform.go:117 NewDeclarationTransformer.func1 (reportExpandoFunctionErrors)
     // PORT: Go calls `resolver.GetPropertiesOfContainerFunction(node)` (not
     // locked) and reads `p.ValueDeclaration` of each result. The symbols live
     // in the checker arena, and the tracker path already holds the checker,

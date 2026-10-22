@@ -118,7 +118,7 @@ pub struct DeclarationTransformer {
     pub(crate) in_class_expression_declaration: bool,
 }
 
-// Go: transformers/declarations/transform.go:99 NewDeclarationTransformer
+// Go: transformers/declarations/transform.go:100 NewDeclarationTransformer
 // TODO: Convert to transformers.TransformerFactory signature to allow more automatic composition with other transforms
 // ts#64649: takes the emit resolver, and the emit context is the resolver's.
 // Go panics when the resolver or its context is nil; neither is nil here.
@@ -425,7 +425,7 @@ impl DeclarationTransformer {
         combined_statements
     }
 
-    // Go: transformers/declarations/transform.go:339 DeclarationTransformer.transformSourceFile
+    // Go: transformers/declarations/transform.go:340 DeclarationTransformer.transformSourceFile
     fn transform_source_file(&mut self, node: Node) -> Node {
         self.cjs_export_assignment = Node::NIL;
         self.cjs_export_assignment_name = Node::NIL;

@@ -23,8 +23,8 @@ use crate::declarations::transform::{
     DeclarationTransformer, ThisPropertyAssignmentKey, get_this_property_assignment_key,
 };
 use crate::declarations::util::{
-    can_have_literal_initializer, can_produce_diagnostics, get_effective_base_type_node,
-    has_scope_marker, is_declaration_and_not_visible, is_enclosing_declaration,
+    can_have_literal_initializer, can_produce_diagnostics, has_scope_marker,
+    is_declaration_and_not_visible, is_enclosing_declaration,
 };
 use crate::prelude::*;
 use crate::printer::{
@@ -403,14 +403,19 @@ impl DeclarationTransformer {
         result
     }
 
-    // Go: transformers/declarations/transform.go:1792 DeclarationTransformer.transformTypeAliasDeclaration
+    // Go: transformers/declarations/transform.go:1807 DeclarationTransformer.transformTypeAliasDeclaration
     pub(crate) fn transform_type_alias_declaration(&mut self, input: Node) -> Node {
         self.needs_declare = false;
+        let ec = self.emit_context.clone();
+        // ts#64770: Go visits the type before the modifiers and type parameters.
+        let mut type_node = self.visit(input.type_());
+        if type_node.is_nil() {
+            // stripInternal can elide an @internal type RHS; fall back like index signatures
+            type_node = ec.factory().new_keyword_type_node(SyntaxKind::AnyKeyword);
+        }
         let modifiers = self.ensure_modifiers(input);
         let name = input.name();
         let type_parameters = root_visit_nodes(self, input.type_parameter_list());
-        let type_node = self.visit(input.type_());
-        let ec = self.emit_context.clone();
         ec.factory().update_type_alias_declaration(
             input,
             modifiers,
@@ -700,7 +705,7 @@ impl DeclarationTransformer {
         ec.factory().new_node_list(&member_nodes)
     }
 
-    // Go: transformers/declarations/transform.go:1990 DeclarationTransformer.transformClassDeclaration
+    // Go: transformers/declarations/transform.go:2010 DeclarationTransformer.transformClassDeclaration
     pub(crate) fn transform_class_declaration(&mut self, input: Node) -> Node {
         let previous_enclosing_declaration = self.enclosing_declaration;
         self.enclosing_declaration = input;
@@ -723,7 +728,7 @@ impl DeclarationTransformer {
 
             let members = self.build_class_members(input, &extra_members);
 
-            let extends_clause = get_effective_base_type_node(input);
+            let extends_clause = get_class_extends_heritage_element(input);
 
             if extends_clause.is_some()
                 && !is_entity_name_expression(extends_clause.expression())
@@ -822,7 +827,7 @@ impl DeclarationTransformer {
         result
     }
 
-    // Go: transformers/declarations/transform.go:2084 DeclarationTransformer.visitThisPropertyAssignments
+    // Go: transformers/declarations/transform.go:2104 DeclarationTransformer.visitThisPropertyAssignments
     pub(crate) fn visit_this_property_assignments(&mut self, node: Node) -> Node {
         let mut is_static = false;
         let this_container = get_this_container(node, false, false);
@@ -868,11 +873,18 @@ impl DeclarationTransformer {
                 }
 
                 let ec = self.emit_context.clone();
-                let mut mods = ModifierList::NIL;
+                let mut modifier_flags = self.ensure_modifier_flags(node);
                 if is_static {
+                    modifier_flags |= ModifierFlags::STATIC;
+                }
+                let mut mods = ModifierList::NIL;
+                if modifier_flags != ModifierFlags::NONE {
                     mods = ec
                         .factory()
-                        .new_modifier_list(&[ec.factory().new_modifier(SyntaxKind::StaticKeyword)]);
+                        .new_modifier_list(&create_modifiers_from_modifier_flags(
+                            modifier_flags,
+                            &mut |kind| ec.factory().new_modifier(kind),
+                        ));
                 }
                 if has_dynamic_name(node) {
                     if !is_simple_inlineable_expression(name) {
@@ -945,7 +957,7 @@ impl DeclarationTransformer {
     }
 }
 
-// Go: transformers/declarations/transform.go:1563 isCommonJSAliasExport
+// Go: transformers/declarations/transform.go:1564 isCommonJSAliasExport
 pub(crate) fn is_common_js_alias_export(node: Node) -> bool {
     if is_binary_expression(node) && is_identifier(node.right()) {
         let symbol = node.symbol();
