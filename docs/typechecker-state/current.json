@@ -1727,8 +1727,8 @@
       "rule": "pin-bump-batch: a pin-bump batch lists each protected tool path it changes, and the reviewer judges each change (docs/typechecker-accountability.md, Protected paths)",
       "branch": "goport-bumpE-tools 95a3727c8 (from main dc6bf345e; 79624c944, d0a18fefc and the item 2 commit 95a3727c8); the 6 bump E files are byte-equal at d0a18fefc, int1 1ca663332 and int2 f7164a483",
       "form": "ruling item 4: a real merge of goport-bumpE-tools into main, the byte-equal check of the tool files against the candidate, a fast-forward push, before the side run; no squash and no checkout copy",
-      "mainBefore": "80dbf27b2 (TO FILL if main moves: the main that the merge starts from)",
-      "merge": "TO FILL: the merge commit of goport-bumpE-tools into main",
+      "mainBefore": "1316e49fb (the main that the merge started from)",
+      "merge": "c5e9d2c39 Merge branch 'goport-bumpE-tools' (bump E pin-bump tools, ruling items 2 to 4): main at goport-bumpE-tools 95a3727c8; the 8 files byte-equal to the tools branch; tool tests 90 of 90 and test_api_oracle OK before the merge; the batch check on the saved state rc 0 with identical output before and after (target/continuation-r97-goport/upstream/bumpE/w5/check-before.txt, check-after.txt)",
       "reviewRequest": [
         {
           "path": "target/continuation-r97-goport/upstream/bumpE/w4/ruling-request.md",
@@ -1827,7 +1827,7 @@
           "candidateNote": "equal to the tools branch"
         }
       ],
-      "toolTests": "d0a18fefc: node 89 of 89 (check-typechecker-batch.test.mjs, oracle-compare.test.mjs, gate-allow.test.mjs, exit-rule.test.mjs), test_api_oracle.py 21 of 21 (target/continuation-r97-goport/upstream/bumpE/w4/logs/tool-tests-d0a18fefc.log). The item 2 tool lane writes target/continuation-r97-goport/upstream/bumpE/w5/tool-tests.log (node 93 of 93 at 13:00) and target/continuation-r97-goport/upstream/bumpE/w5/real-check.log (the batch check with main's 9485d971 and the tools 63078a48 copy on the live state, a bump C state and a bump D state: live and bump C byte-identical before and after at 13:18, rc 0, PASS; bump D running). TO FILL: the lane's final result and its skeptic (auditor item 2 condition).",
+      "toolTests": "d0a18fefc: node 89 of 89 (check-typechecker-batch.test.mjs, oracle-compare.test.mjs, gate-allow.test.mjs, exit-rule.test.mjs), test_api_oracle.py 21 of 21 (target/continuation-r97-goport/upstream/bumpE/w4/logs/tool-tests-d0a18fefc.log). The item 2 tool lane writes target/continuation-r97-goport/upstream/bumpE/w5/tool-tests.log (node 93 of 93 at 13:00) and target/continuation-r97-goport/upstream/bumpE/w5/real-check.log (the batch check with main's 9485d971 and the tools 63078a48 copy on the live state, a bump C state and a bump D state: live and bump C byte-identical before and after at 13:18, rc 0, PASS; bump D running). done: the lane's final result and its skeptic (auditor item 2 condition).",
       "notChanged": "pin.py, record.py, np-suite.sh, gate.sh, gate-compare.py, candidate.sh, oracle-compare.py, lsp_oracle.py, compare-tests.py, masked-answers.py: byte-equal on main, the tools branch, int1 and int2 (reviewer item 4)."
     },
     "notExpectationChanges": [
