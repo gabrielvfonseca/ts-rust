@@ -7,28 +7,29 @@
 
 use crate::project::prelude::*;
 
+use crate::frontend::nativepath::is_network_path;
 use crate::frontend::stringutil_ls;
 use std::cell::Cell;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-// Go: project/watch.go:19 minWatchLocationDepth
+// Go: project/watch.go:20 minWatchLocationDepth
 pub const MIN_WATCH_LOCATION_DEPTH: i32 = 2;
 
-// Go: project/watch.go:22 fileSystemWatcherKey
+// Go: project/watch.go:23 fileSystemWatcherKey
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct FileSystemWatcherKey {
     pub pattern: String,
     pub kind: lsproto::WatchKind,
 }
 
-// Go: project/watch.go:27 fileSystemWatcherValue
+// Go: project/watch.go:28 fileSystemWatcherValue
 #[derive(Clone, Debug, Default)]
 pub struct FileSystemWatcherValue {
     pub count: i32,
     pub id: WatcherID,
 }
 
-// Go: project/watch.go:37 watchRegistry
+// Go: project/watch.go:38 watchRegistry
 // watchRegistry tracks the current watch globs and how many individual
 // WatchedFiles reference each glob. It provides ref-count helpers so callers
 // don't manipulate the map directly.
@@ -274,13 +275,20 @@ pub struct Watchers {
 }
 
 impl<T> WatchedFiles<T> {
-    // Go: project/watch.go:213 WatchedFiles.Watchers
+    // Go: project/watch.go:214 WatchedFiles.Watchers (ts#64832)
     // PORT: Go returns the shared slices and map; the port returns copies.
     pub fn watchers(&self) -> Watchers {
         // Go: w.computeWatchersOnce.Do(...)
         if !self.compute_watchers_once.get() {
             self.compute_watchers_once.set(true);
-            let result = (self.compute_glob_patterns)(&self.input);
+            let mut result = (self.compute_glob_patterns)(&self.input);
+            // Never ask the client to watch network locations; see nativepath.IsNetworkPath.
+            result
+                .patterns_inside_workspace
+                .retain(|pattern| !is_network_path(pattern));
+            result
+                .directories_outside_workspace
+                .retain(|dir| !is_network_path(dir));
             let mut globs = result.patterns_inside_workspace.clone();
             globs.sort();
             globs.dedup();

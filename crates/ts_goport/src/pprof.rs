@@ -52,7 +52,22 @@ use crate::frontend::vfs::osvfs::{filepath_clean, os_mkdir_all, os_path};
 use crate::fswatch::syscall::io_error_text;
 use crate::gostd::{GoError, errors};
 
-// Go: pprof/pprof.go:15 ProfileSession
+// Go: pprof/pprof.go:19 makeProfileDir (ts#64832)
+// makeProfileDir creates profileDir, refusing network paths so that
+// profiling requests cannot trigger connections to remote hosts.
+fn make_profile_dir(profile_dir: &str) -> Result<(), GoError> {
+    if crate::frontend::nativepath::is_network_path(profile_dir) {
+        return Err(errors::new(format!(
+            "network paths are not supported: {profile_dir}"
+        )));
+    }
+    if let Err(err) = mkdir_all(profile_dir, 0o755) {
+        return Err(wrap("failed to create profile directory", err));
+    }
+    Ok(())
+}
+
+// Go: pprof/pprof.go:29 ProfileSession
 // PORT: `cpu_file` is `None` after Go `p.cpuFile.Close()`. `cpu_profile`
 // is the state of the Go `runtime/pprof` goroutine `profileWriter` (see
 // `start_cpu_profile`).
@@ -64,12 +79,12 @@ pub struct ProfileSession {
     cpu_profile: Option<ProfileBuilder>,
 }
 
-// Go: pprof/pprof.go:23 BeginProfiling
+// Go: pprof/pprof.go:37 BeginProfiling (ts#64832)
 // BeginProfiling starts CPU and memory profiling, writing the profiles to the specified directory.
 // PORT: Go `panic(err)` is `go_panic` with the Go error text.
 #[must_use]
 pub fn begin_profiling(profile_dir: &str, log_writer: Writer) -> ProfileSession {
-    if let Err(err) = mkdir_all(profile_dir, 0o755) {
+    if let Err(err) = make_profile_dir(profile_dir) {
         go_panic(err.error());
     }
 
@@ -155,7 +170,7 @@ pub struct CpuProfiler {
 }
 
 impl CpuProfiler {
-    // Go: pprof/pprof.go:75 StartCPUProfile
+    // Go: pprof/pprof.go:89 StartCPUProfile (ts#64832)
     // StartCPUProfile starts CPU profiling, writing to the specified directory when stopped.
     pub fn start_cpu_profile(&self, profile_dir: &str) -> Result<(), GoError> {
         let mut session = lock(&self.mu);
@@ -164,9 +179,7 @@ impl CpuProfiler {
             return Err(errors::new("CPU profiling already in progress"));
         }
 
-        if let Err(err) = mkdir_all(profile_dir, 0o755) {
-            return Err(wrap("failed to create profile directory", err));
-        }
+        make_profile_dir(profile_dir)?;
 
         let cpu_profile_path = profile_path(profile_dir, "cpuprofile");
         let cpu_file = match create(&cpu_profile_path) {
@@ -215,12 +228,10 @@ impl CpuProfiler {
     }
 }
 
-// Go: pprof/pprof.go:124 SaveHeapProfile
+// Go: pprof/pprof.go:138 SaveHeapProfile (ts#64832)
 // SaveHeapProfile saves a heap profile to the specified directory.
 pub fn save_heap_profile(profile_dir: &str) -> Result<String, GoError> {
-    if let Err(err) = mkdir_all(profile_dir, 0o755) {
-        return Err(wrap("failed to create profile directory", err));
-    }
+    make_profile_dir(profile_dir)?;
 
     let heap_profile_path = profile_path(profile_dir, "heapprofile");
     // Go: defer heapFile.Close(). The file closes when it drops.
@@ -241,12 +252,10 @@ pub fn save_heap_profile(profile_dir: &str) -> Result<String, GoError> {
     Ok(heap_profile_path)
 }
 
-// Go: pprof/pprof.go:146 SaveAllocProfile
+// Go: pprof/pprof.go:160 SaveAllocProfile (ts#64832)
 // SaveAllocProfile saves an allocation profile to the specified directory.
 pub fn save_alloc_profile(profile_dir: &str) -> Result<String, GoError> {
-    if let Err(err) = mkdir_all(profile_dir, 0o755) {
-        return Err(wrap("failed to create profile directory", err));
-    }
+    make_profile_dir(profile_dir)?;
 
     let alloc_profile_path = profile_path(profile_dir, "allocprofile");
     // Go: defer allocFile.Close(). The file closes when it drops.

@@ -273,7 +273,7 @@ pub fn try_read_file(
 }
 
 impl CommandLineParser {
-    // Go: tsoptions/commandlineparser.go:232 (*commandLineParser).parseOptionValue
+    // Go: tsoptions/commandlineparser.go:232 (*commandLineParser).parseOptionValue (ts#64832)
     // PORT: the Go parameter `diag` is `diag_message`, because `diag` is the
     // diagnostics module in Rust.
     pub fn parse_option_value(
@@ -394,8 +394,19 @@ impl CommandLineParser {
                         );
                         // PORT: Go tests `err == nil`. validateJsonOptionValue
                         // returns nil errors or a non-empty slice, so that is
-                        // `is_empty`.
-                        if err.is_empty() {
+                        // `is_empty`. Go `opt.PathKind.IsRooted()` is
+                        // `is_file_path`.
+                        if let CompilerOptionsValue::String(path) = &val
+                            && err.is_empty()
+                            && opt.is_file_path
+                            && is_network_path_value(path, &self.current_directory)
+                        {
+                            // ts#64832
+                            self.errors.push(new_compiler_diagnostic(
+                                diag::Network_path_0_is_not_supported,
+                                args![path],
+                            ));
+                        } else if err.is_empty() {
                             self.options.insert(opt.name.to_string(), val);
                         } else {
                             self.errors.extend(err);

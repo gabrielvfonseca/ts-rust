@@ -1,6 +1,6 @@
-//! Go: internal/nativepath: realpath_linux.go, realpath_other.go,
-//! realpath_windows.go, eintr_unix.go, symlink_other.go and
-//! symlink_windows.go. Off Windows also the Go standard library
+//! Go: internal/nativepath: network.go, realpath_linux.go,
+//! realpath_other.go, realpath_windows.go, eintr_unix.go, symlink_other.go
+//! and symlink_windows.go. Off Windows also the Go standard library
 //! `filepath.EvalSymlinks` that two of them call.
 //!
 //! OS path helpers that osvfs and fswatch share. Paths are OS paths in the
@@ -253,6 +253,34 @@ pub fn is_symlink_or_reparse_point(path: &str) -> bool {
 #[cfg(not(windows))]
 pub fn is_symlink_or_reparse_point(path: &str) -> bool {
     std::fs::symlink_metadata(os_path(path)).is_ok_and(|info| info.file_type().is_symlink())
+}
+
+// Go: nativepath/network.go:11 IsNetworkPath (ts#64832)
+/// IsNetworkPath reports whether Windows may resolve path over the network.
+/// This includes UNC paths (`//server/share`), Win32 device paths (`//?/...`,
+/// `//./...`), and NT object paths (`/??/...`), with either separator. Device
+/// and object paths are included even when they name local volumes, because
+/// their `UNC` and `GLOBALROOT` forms reach the network redirector.
+///
+/// Accessing such a path can make Windows authenticate to an arbitrary host,
+/// leaking credentials, so these paths are never accessed on any platform.
+pub fn is_network_path(path: &str) -> bool {
+    let path = path.as_bytes();
+    if path.len() < 2 || !is_any_directory_separator(path[0]) {
+        return false;
+    }
+    if is_any_directory_separator(path[1]) {
+        return true;
+    }
+    path.len() >= 3
+        && path[1] == b'?'
+        && path[2] == b'?'
+        && (path.len() == 3 || is_any_directory_separator(path[3]))
+}
+
+// Go: nativepath/network.go:21 isAnyDirectorySeparator (ts#64832)
+fn is_any_directory_separator(char: u8) -> bool {
+    char == b'/' || char == b'\\'
 }
 
 #[cfg(all(test, unix))]

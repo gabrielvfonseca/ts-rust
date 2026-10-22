@@ -689,7 +689,7 @@ pub(crate) fn stringify_json(value: &CompilerOptionsValue, out: &mut String) {
 // host: Instance of ParseConfigHost used to enumerate files in folder.
 // basePath: A root directory to resolve relative path entries in the config file to. e.g. outDir
 // resolutionStack: Only present for backwards-compatibility. Should be empty.
-// Go: tsoptions/tsconfigparsing.go:1135 parseJsonConfigFileContentWorker (ts#64581: content mapper output extensions)
+// Go: tsoptions/tsconfigparsing.go:1135 parseJsonConfigFileContentWorker (ts#64581: content mapper output extensions, ts#64832)
 // PORT: Go `sourceFile` is a pointer that the result keeps, so it moves in
 // and into `ParsedCommandLine.config_file`. The Go `getFileNames` and
 // `getProjectReferences` closures run inline, in Go order. When `parseConfig`
@@ -867,6 +867,7 @@ pub fn parse_json_config_file_content_worker(
         (validated_include_specs_before_substitution, err) = validate_specs(
             specs,
             true, /*disallowTrailingRecursion*/
+            &base_path_for_file_names,
             tsconfig_node,
             "include",
         );
@@ -884,6 +885,7 @@ pub fn parse_json_config_file_content_worker(
         (validated_exclude_specs, err) = validate_specs(
             specs,
             false, /*disallowTrailingRecursion*/
+            &base_path_for_file_names,
             tsconfig_node,
             "exclude",
         );
@@ -900,6 +902,16 @@ pub fn parse_json_config_file_content_worker(
     if let Some(specs) = &file_specs.slice_value {
         for spec in specs {
             if let CompilerOptionsValue::String(spec) = spec {
+                // ts#64832
+                if is_network_path_value(spec, &base_path_for_file_names) {
+                    errors.push(create_diagnostic_for_spec(
+                        tsconfig_node,
+                        "files",
+                        diag::Network_path_0_is_not_supported,
+                        spec,
+                    ));
+                    continue;
+                }
                 validated_files_spec_before_substitution.push(spec.clone());
             }
         }
@@ -1224,7 +1236,7 @@ pub fn parse_json_config_file_content_worker(
         compile_on_save = *value;
     }
 
-    // Go: getProjectReferences(basePathForFileNames)
+    // Go: tsoptions/tsconfigparsing.go:1431 getProjectReferences(basePathForFileNames) (ts#64832)
     // PORT: Go nil is `None`. A `references` list, even `[]`, is `Some`.
     let mut project_references: Option<Vec<ProjectReference>> = None;
     let new_references_of_raw = get_prop_from_raw(
@@ -1258,6 +1270,17 @@ pub fn parse_json_config_file_content_worker(
                     "path",
                     diag::Compiler_option_0_cannot_be_given_an_empty_string,
                     args!["reference.path"],
+                ));
+                continue;
+            }
+            // ts#64832
+            if is_network_path_value(&r.reference.path, &base_path) {
+                errors.push(create_diagnostic_at_project_reference_property(
+                    source_file.as_ref(),
+                    index,
+                    "path",
+                    diag::Network_path_0_is_not_supported,
+                    args![r.reference.path],
                 ));
                 continue;
             }
@@ -1317,32 +1340,45 @@ fn should_report_no_input_files(
     file_names.is_empty() && can_json_report_no_input_files && resolution_stack.is_empty()
 }
 
-// Go: tsoptions/tsconfigparsing.go:1445 validateSpecs
+// Go: tsoptions/tsconfigparsing.go:1503 createDiagnosticForSpec (ts#64832)
+fn create_diagnostic_for_spec(
+    json_source_file: Node,
+    spec_key: &str,
+    message: &'static Message,
+    spec: &str,
+) -> Diagnostic {
+    let element = get_tsconfig_prop_array_element_value(json_source_file, spec_key, spec);
+    create_diagnostic_for_node_in_source_file_or_compiler_diagnostic(
+        json_source_file,
+        element,
+        message,
+        args![spec],
+    )
+}
+
+// Go: tsoptions/tsconfigparsing.go:1512 validateSpecs (ts#64832)
 // PORT: Go `specs any` always holds a `[]any`, so it is a slice here.
 fn validate_specs(
     specs: &[CompilerOptionsValue],
     disallow_trailing_recursion: bool,
+    base_path: &str,
     json_source_file: Node,
     spec_key: &str,
 ) -> (Vec<String>, Vec<Diagnostic>) {
-    let create_diagnostic = |message: &'static Message, spec: &str| -> Diagnostic {
-        let element = get_tsconfig_prop_array_element_value(json_source_file, spec_key, spec);
-        create_diagnostic_for_node_in_source_file_or_compiler_diagnostic(
-            json_source_file,
-            element,
-            message,
-            args![spec],
-        )
-    };
     let mut errors: Vec<Diagnostic> = Vec::new();
     let mut final_specs: Vec<String> = Vec::new();
     for value in specs {
         let CompilerOptionsValue::String(spec) = value else {
             continue;
         };
-        let diag = spec_to_diagnostic(spec, disallow_trailing_recursion);
+        let diag = spec_to_diagnostic(spec, disallow_trailing_recursion, base_path);
         if let Some(diag) = diag {
-            errors.push(create_diagnostic(diag, spec));
+            errors.push(create_diagnostic_for_spec(
+                json_source_file,
+                spec_key,
+                diag,
+                spec,
+            ));
         } else {
             final_specs.push(spec.clone());
         }
@@ -1350,11 +1386,17 @@ fn validate_specs(
     (final_specs, errors)
 }
 
-// Go: tsoptions/tsconfigparsing.go:1471 specToDiagnostic
+// Go: tsoptions/tsconfigparsing.go:1530 specToDiagnostic (ts#64832)
 pub(crate) fn spec_to_diagnostic(
     spec: &str,
     disallow_trailing_recursion: bool,
+    base_path: &str,
 ) -> Option<&'static Message> {
+    // ts#64832: `?` is a wildcard in specs, so only UNC and device roots can
+    // name a network path; a `/??/` spec matches local directories.
+    if get_normalized_absolute_path(spec, base_path).starts_with("//") {
+        return Some(diag::Network_path_0_is_not_supported);
+    }
     if disallow_trailing_recursion && invalid_trailing_recursion(spec) {
         return Some(diag::File_specification_cannot_end_in_a_recursive_directory_wildcard_Asterisk_Asterisk_Colon_0);
     }

@@ -1887,6 +1887,56 @@ fn parse_json_config_file_tests() -> Vec<ParseJsonConfigTestCase> {
                 existing_options: None,
             }],
         },
+        // Go: tsconfigparsing_test.go:261 (ts#64832)
+        ParseJsonConfigTestCase {
+            title: "reports errors for network paths",
+            include_compiler_options: true,
+            input: vec![TestConfig {
+                json_text: r#"{
+                "extends": ["//server/share/base.json", "\\\\?\\UNC\\server\\share\\base.json"],
+                "compilerOptions": {
+                    "outDir": "\\\\server\\share\\out",
+                    "rootDir": "./src",
+                    "typeRoots": ["./types", "\\??\\UNC\\server\\share\\types"],
+                    "mapRoot": "//server/share/maps",
+                    "declarationDir": "/x/../??/UNC/server/share/decl",
+                    "baseUrl": "/??/../apath"
+                },
+                "files": ["main.ts", "//server/share/a.ts", "../??/UNC/server/share/b.ts"],
+                "include": ["src", "\\\\.\\GLOBALROOT\\Device\\Mup\\server\\share"],
+                "exclude": ["//server/share/excluded", "../??/*.ts"],
+                "references": [{ "path": "//server/share/project" }]
+            }"#,
+                config_file_name: "/apath/tsconfig.json",
+                base_path: "/apath",
+                all_file_list: file_map(&[("/apath/main.ts", ""), ("/apath/src/index.ts", "")]),
+                existing_options: None,
+            }],
+        },
+        // Go: tsconfigparsing_test.go:285 (ts#64832)
+        ParseJsonConfigTestCase {
+            title: "reports errors for network path in string extends",
+            include_compiler_options: false,
+            input: vec![TestConfig {
+                json_text: r#"{ "extends": "\\\\server\\share\\base.json" }"#,
+                config_file_name: "/apath/tsconfig.json",
+                base_path: "/apath",
+                all_file_list: file_map(&[("/apath/main.ts", "")]),
+                existing_options: None,
+            }],
+        },
+        // Go: tsconfigparsing_test.go:294 (ts#64832)
+        ParseJsonConfigTestCase {
+            title: "reports errors for normalized network path in string extends",
+            include_compiler_options: false,
+            input: vec![TestConfig {
+                json_text: r#"{ "extends": "/x/../??/UNC/server/share/base.json" }"#,
+                config_file_name: "/apath/tsconfig.json",
+                base_path: "/apath",
+                all_file_list: file_map(&[("/apath/main.ts", "")]),
+                existing_options: None,
+            }],
+        },
         ParseJsonConfigTestCase {
             title: "parses tsconfig with compilerOptions, files, include, and exclude",
             include_compiler_options: true,

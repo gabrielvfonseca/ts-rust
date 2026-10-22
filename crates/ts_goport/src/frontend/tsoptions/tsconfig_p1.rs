@@ -723,7 +723,16 @@ pub fn normalize_non_list_option_value(
     value
 }
 
-// Go: tsoptions/tsconfigparsing.go:375 convertJsonOption
+// Go: tsoptions/tsconfigparsing.go:380 isNetworkPathValue (ts#64832)
+// isNetworkPathValue reports whether a path written in a config file refers
+// to a network location once resolved against basePath. Checking the resolved
+// path matches what the file system refuses to access, since normalization
+// can add or remove a `/??/` prefix.
+pub(crate) fn is_network_path_value(value: &str, base_path: &str) -> bool {
+    crate::frontend::nativepath::is_network_path(&get_normalized_absolute_path(value, base_path))
+}
+
+// Go: tsoptions/tsconfigparsing.go:384 convertJsonOption (ts#64832)
 pub fn convert_json_option(
     opt: &CommandLineOption,
     value: CompilerOptionsValue,
@@ -813,6 +822,22 @@ pub fn convert_json_option(
             validate_json_option_value(opt, value, value_expression, source_file);
         if !errors.is_empty() || validated_value.is_nil() {
             (validated_value, errors)
+        } else if let CompilerOptionsValue::String(path) = &validated_value
+            && opt.is_file_path
+            && is_network_path_value(path, base_path)
+        {
+            // ts#64832. Go `opt.PathKind.IsRooted()` is `is_file_path`.
+            (
+                CompilerOptionsValue::Nil,
+                vec![
+                    create_diagnostic_for_node_in_source_file_or_compiler_diagnostic(
+                        source_file,
+                        value_expression,
+                        diag::Network_path_0_is_not_supported,
+                        args![path],
+                    ),
+                ],
+            )
         } else {
             (
                 normalize_non_list_option_value(opt, base_path, validated_value),
@@ -918,7 +943,7 @@ pub fn get_extends_config_path_or_array(
     (extended_config_path_array, errors)
 }
 
-// Go: tsoptions/tsconfigparsing.go:471 getExtendsConfigPath
+// Go: tsoptions/tsconfigparsing.go:482 getExtendsConfigPath (ts#64832)
 pub fn get_extends_config_path(
     extended_config: &str,
     host: &dyn ParseConfigHost,
@@ -931,6 +956,18 @@ pub fn get_extends_config_path(
     let mut error_file = Node::NIL;
     if source_file.is_some() {
         error_file = source_file;
+    }
+    // ts#64832
+    if is_network_path_value(&extended_config, base_path) {
+        errors.push(
+            create_diagnostic_for_node_in_source_file_or_compiler_diagnostic(
+                error_file,
+                value_expression,
+                diag::Network_path_0_is_not_supported,
+                args![extended_config],
+            ),
+        );
+        return (String::new(), errors);
     }
     if is_rooted_disk_path(&extended_config)
         || extended_config.starts_with("./")

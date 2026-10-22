@@ -79,6 +79,45 @@ fn test_os() {
         println!("SKIP TestOS/Realpath: no home directory");
     }
 
+    // Go: os_test.go:99 NetworkPaths (ts#64832)
+    if cfg!(windows) {
+        println!(
+            "SKIP TestOS/NetworkPaths: requires POSIX paths where a leading // resolves locally"
+        );
+    } else {
+        // On POSIX systems, //dir resolves to /dir, so these paths name real
+        // files; the file system must refuse to touch them anyway.
+        let tmp = TempDir::new();
+        let dir = normalize(tmp.path());
+        std::fs::write(tmp.path().join("a.txt"), "a").expect("write a.txt");
+
+        let network_dir = format!("/{dir}");
+        let network_file = format!("/{dir}/a.txt");
+        let new_network_file = format!("/{dir}/b.txt");
+        assert!(ts_goport::frontend::nativepath::is_network_path(
+            &network_file
+        ));
+
+        assert!(!fs.directory_exists(&network_dir));
+        assert!(!fs.file_exists(&network_file));
+        let (_, ok) = fs.read_file(&network_file);
+        assert!(!ok);
+        assert!(fs.stat(&network_file).is_none());
+        let entries = fs.get_accessible_entries(&network_dir);
+        assert_eq!(entries.files.len(), 0);
+        assert_eq!(entries.directories.len(), 0);
+        assert_eq!(fs.realpath(&network_file), network_file);
+
+        let now = Some(std::time::SystemTime::now());
+        assert!(fs.write_file(&new_network_file, "b").is_err());
+        assert!(fs.append_file(&new_network_file, "b").is_err());
+        assert!(fs.chtimes(&network_file, now, now).is_err());
+        assert!(fs.remove(&network_file).is_err());
+
+        assert!(tmp.path().join("a.txt").exists());
+        assert!(!tmp.path().join("b.txt").exists());
+    }
+
     // UseCaseSensitiveFileNames
     // Just check that it works.
     let case_sensitive = fs.use_case_sensitive_file_names();

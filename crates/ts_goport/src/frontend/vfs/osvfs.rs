@@ -6,6 +6,7 @@
 //! The Go standard library pieces that osvfs reaches (`os.DirFS`,
 //! `os.RemoveAll`, `filepath.Abs`, `filepath.Clean`) are ported here too.
 
+use crate::frontend::nativepath::is_network_path;
 use crate::frontend::prelude::*;
 use std::borrow::Cow;
 use std::cell::OnceCell;
@@ -188,17 +189,29 @@ pub fn osvfs_fs() -> Rc<dyn Fs> {
     OS_VFS.with(Rc::clone)
 }
 
-// Go: os.go:138 isReparsePoint
+// Go: os.go:164 isReparsePoint
 fn is_reparse_point(path: &str) -> bool {
+    // ts#64832
+    if is_network_path(path) {
+        return false;
+    }
     crate::frontend::nativepath::is_symlink_or_reparse_point(&filepath_from_slash(path))
 }
 
-// Go: os.go:41 osFS
+// Go: os.go:42 osFS
 pub struct OsFs {
     common: Common,
 }
 
-// Go: os.go:46 isFileSystemCaseSensitive
+// Go: os.go:95 errNetworkPath (ts#64832)
+// errNetworkPath is returned when writing to a path that refers to a network
+// location. Such paths are never accessed; see [nativepath.IsNetworkPath].
+// PORT: Go keeps one error value; the port makes an equal `FsError` each time.
+fn err_network_path() -> FsError {
+    FsError::Other("network paths are not supported".to_string())
+}
+
+// Go: os.go:47 fileSystemCaseSensitivity
 // We do this right at startup to minimize the chance that executable gets moved or deleted.
 // PORT: Go computes this in package init. The port computes it on first use.
 fn is_file_system_case_sensitive() -> bool {
@@ -281,58 +294,76 @@ fn simple_to_lower(r: char) -> char {
 }
 
 impl Fs for OsFs {
-    // Go: os.go:88 UseCaseSensitiveFileNames
+    // Go: os.go:89 CaseSensitivity
     fn use_case_sensitive_file_names(&self) -> bool {
         is_file_system_case_sensitive()
     }
 
-    // Go: os.go:92 ReadFile
+    // Go: os.go:97 ReadFile (ts#64832)
     fn read_file(&self, path: &str) -> (String, bool) {
+        if is_network_path(path) {
+            return (String::new(), false);
+        }
         self.common.read_file(path)
     }
 
-    // Go: os.go:97 DirectoryExists
+    // Go: os.go:105 DirectoryExists (ts#64832)
     fn directory_exists(&self, path: &str) -> bool {
+        if is_network_path(path) {
+            return false;
+        }
         self.common.directory_exists(path)
     }
 
-    // Go: os.go:102 FileExists
+    // Go: os.go:113 FileExists (ts#64832)
     fn file_exists(&self, path: &str) -> bool {
+        if is_network_path(path) {
+            return false;
+        }
         self.common.file_exists(path)
     }
 
-    // Go: os.go:107 GetAccessibleEntries
+    // Go: os.go:121 GetAccessibleEntries (ts#64832)
     fn get_accessible_entries(&self, path: &str) -> Entries {
+        if is_network_path(path) {
+            return Entries::default();
+        }
         self.common.get_accessible_entries(path)
     }
 
-    // Go: os.go:112 Stat
+    // Go: os.go:129 Stat (ts#64832)
     fn stat(&self, path: &str) -> Option<FileInfo> {
+        if is_network_path(path) {
+            return None;
+        }
         self.common.stat(path)
     }
 
-    // Go: os.go:117 Realpath
+    // Go: os.go:137 Realpath
     fn realpath(&self, path: &str) -> String {
         os_fs_realpath(path)
     }
 
-    // Go: os.go:174 WriteFile
+    // Go: os.go:206 WriteFile
     fn write_file(&self, path: &str, content: &str) -> Result<(), FsError> {
         self.write_file_ensuring_dir(path, content, WriteFlag::Truncate)
     }
 
-    // Go: os.go:178 AppendFile
+    // Go: os.go:210 AppendFile
     fn append_file(&self, path: &str, content: &str) -> Result<(), FsError> {
         self.write_file_ensuring_dir(path, content, WriteFlag::Append)
     }
 
-    // Go: os.go:182 Remove
+    // Go: os.go:214 Remove (ts#64832)
     fn remove(&self, path: &str) -> Result<(), FsError> {
+        if is_network_path(path) {
+            return Err(err_network_path());
+        }
         // todo: #701 add retry mechanism?
         os_remove_all(path)
     }
 
-    // Go: os.go:188 Chtimes
+    // Go: os.go:223 Chtimes (ts#64832)
     // PORT: Go `os.Chtimes` is utimensat(AT_FDCWD, path, times, 0) on unix,
     // so it works on a file without read permission; a zero Go time
     // (`None` here) is UTIME_OMIT. Off unix, Rust std sets times through an
@@ -344,6 +375,9 @@ impl Fs for OsFs {
         a_time: Option<SystemTime>,
         m_time: Option<SystemTime>,
     ) -> Result<(), FsError> {
+        if is_network_path(path) {
+            return Err(err_network_path());
+        }
         use rustix::fs::{AtFlags, CWD, Timespec, Timestamps, UTIME_OMIT};
         // Go: syscall.NsecToTimespec(t.UnixNano())
         let timespec = |time: Option<SystemTime>| match time {
@@ -385,6 +419,9 @@ impl Fs for OsFs {
         a_time: Option<SystemTime>,
         m_time: Option<SystemTime>,
     ) -> Result<(), FsError> {
+        if is_network_path(path) {
+            return Err(err_network_path());
+        }
         let file = std::fs::File::open(os_path(path))
             .map_err(|err| FsError::path("chtimes", path, err))?;
         let mut times = std::fs::FileTimes::new();
@@ -503,11 +540,14 @@ enum WriteFlag {
     Append,
 }
 
-// Go: os.go:122 osFSRealpath
+// Go: os.go:142 osFSRealpath (ts#64832)
 pub fn os_fs_realpath(path: &str) -> String {
     let _ = root_length(path); // Assert path is rooted
 
     let orig = path;
+    if is_network_path(orig) {
+        return orig.to_string();
+    }
     let path = filepath_from_slash(path);
     let path = match crate::frontend::nativepath::realpath(&path) {
         Ok(path) => path,
@@ -517,11 +557,16 @@ pub fn os_fs_realpath(path: &str) -> String {
         Ok(path) => path,
         Err(_) => return orig.to_string(),
     };
+    // A local path may resolve to a network location, e.g. through a mapped
+    // network drive. Keep the original path so later accesses stay on it.
+    if is_network_path(&path) {
+        return orig.to_string();
+    }
     normalize_slashes(&path).into()
 }
 
 impl OsFs {
-    // Go: os.go:142 writeFileWithFlag
+    // Go: os.go:171 writeFileWithFlag
     fn write_file_with_flag(
         &self,
         path: &str,
@@ -548,12 +593,12 @@ impl OsFs {
         Ok(())
     }
 
-    // Go: os.go:158 ensureDirectoryExists
+    // Go: os.go:187 ensureDirectoryExists
     fn ensure_directory_exists(&self, directory_path: &str) -> Result<(), FsError> {
         os_mkdir_all(directory_path, 0o777)
     }
 
-    // Go: os.go:163 writeFileEnsuringDir
+    // Go: os.go:192 writeFileEnsuringDir (ts#64832)
     fn write_file_ensuring_dir(
         &self,
         path: &str,
@@ -561,6 +606,9 @@ impl OsFs {
         flag: WriteFlag,
     ) -> Result<(), FsError> {
         let _ = root_length(path); // Assert path is rooted
+        if is_network_path(path) {
+            return Err(err_network_path());
+        }
         if self.write_file_with_flag(path, content, flag).is_ok() {
             return Ok(());
         }

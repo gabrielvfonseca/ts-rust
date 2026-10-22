@@ -286,7 +286,7 @@ impl NewProgram {
         }
     }
 
-    // Go: program.go:914 (*Program).verifyCompilerOptions (ts#64581: external outputs)
+    // Go: program.go:914 (*Program).verifyCompilerOptions (ts#64581: external outputs, ts#64832)
     pub fn verify_compiler_options(&mut self) {
         // PORT: Go holds a `*core.CompilerOptions`. The `Rc` is cloned so
         // `self` can be borrowed mutably.
@@ -554,6 +554,20 @@ impl NewProgram {
                             i,
                             diag::Non_relative_paths_are_not_allowed_Did_you_forget_a_leading_Slash,
                             &[],
+                        );
+                    } else if crate::frontend::nativepath::is_network_path(
+                        &get_normalized_absolute_path(
+                            subst,
+                            &options.get_paths_base_path(&self.get_current_directory()),
+                        ),
+                    ) {
+                        // ts#64832
+                        self.create_diagnostic_for_option_path_key_value(
+                            syntax,
+                            key,
+                            i,
+                            diag::Network_path_0_is_not_supported,
+                            &args![subst],
                         );
                     }
                 }

@@ -2982,7 +2982,8 @@ impl PrefetchShared {
 
     /// The parse options and script kind of a job for `file_name`, when
     /// the parser can take it: a normalized absolute name with a known
-    /// extension.
+    /// extension, not a network path (ts#64832: the loader never reads one,
+    /// so a worker does not either).
     fn parse_request(&self, file_name: String) -> Option<(SourceFileParseOptions, ScriptKind)> {
         let config = &self.config;
         let script_kind = get_script_kind_from_file_name(&file_name);
@@ -2990,6 +2991,7 @@ impl PrefetchShared {
             || !has_extension(&file_name)
             || get_encoded_root_length(&file_name) == 0
             || file_name != normalize_path(&file_name)
+            || crate::frontend::nativepath::is_network_path(&file_name)
         {
             return None;
         }

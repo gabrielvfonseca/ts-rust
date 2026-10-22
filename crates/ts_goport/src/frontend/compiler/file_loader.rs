@@ -1432,6 +1432,17 @@ impl FileLoader {
         let diagnostic_file_name = normalize_slashes(reference_text);
         let fs = self.host.fs();
 
+        // ts#64832
+        if crate::frontend::nativepath::is_network_path(file_name) {
+            return (
+                String::new(),
+                Some(SourceFileFromReferenceDiagnostic {
+                    message: diag::Network_path_0_is_not_supported,
+                    args: args![diagnostic_file_name],
+                }),
+            );
+        }
+
         if has_extension(file_name) {
             let canonical_file_name =
                 get_canonical_file_name(file_name, fs.use_case_sensitive_file_names());

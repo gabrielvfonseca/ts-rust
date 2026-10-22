@@ -22,6 +22,7 @@ use std::panic::AssertUnwindSafe;
 use std::sync::{Arc, Condvar, LazyLock, Mutex, OnceLock, Weak};
 use std::time::Duration;
 
+use crate::frontend::nativepath::is_network_path;
 use crate::frontend::vfs::osvfs::{filepath_clean, go_string_from_os, os_path};
 use crate::fswatch::pathcompare::{ComparisonCache, ComparisonPath, PathComparer};
 use crate::fswatch::syscall;
@@ -44,7 +45,14 @@ pub static ERR_ROOT_PATH: LazyLock<GoError> =
 pub static ERR_NOT_ABSOLUTE: LazyLock<GoError> =
     LazyLock::new(|| errors::new("fswatch: path must be absolute"));
 
-// Go: watcher.go:31 ErrOverflow
+// Go: watcher.go:30 errNetworkPath (ts#64832)
+/// errNetworkPath is returned by [Watcher.WatchDirectory] and
+/// [Watcher.WatchFile] when the supplied path may refer to a network
+/// location. See [nativepath.IsNetworkPath].
+pub static ERR_NETWORK_PATH: LazyLock<GoError> =
+    LazyLock::new(|| errors::new("fswatch: network paths are not supported"));
+
+// Go: watcher.go:36 ErrOverflow
 /// ErrOverflow indicates that the kernel event queue overflowed and
 /// some filesystem changes were missed. The watch remains
 /// active; further events will continue to be delivered. Callers
@@ -788,7 +796,7 @@ impl Watcher for WatcherStruct {
             .expect("WatchDirectories returns one watch per request"))
     }
 
-    // Go: watcher.go:494 watcher.WatchDirectories (ts#64210: the path comparer)
+    // Go: watcher.go:499 watcher.WatchDirectories (ts#64210: the path comparer, ts#64832)
     fn watch_directories(
         &self,
         requests: &[WatchDirectoryRequest<'_>],
@@ -822,6 +830,10 @@ impl Watcher for WatcherStruct {
             let fn_ = request.callback.clone();
             // PORT: Go `if fn == nil { rollback(); return nil, errNilCallback }`;
             // a Rust callback is never nil.
+            if is_network_path(dir) {
+                rollback(&prepared);
+                return Err(ERR_NETWORK_PATH.clone());
+            }
             let mut dir = filepath_clean(dir);
             if !filepath_is_abs(&dir) {
                 rollback(&prepared);
@@ -905,12 +917,15 @@ impl Watcher for WatcherStruct {
         Ok(watches)
     }
 
-    // Go: watcher.go:591 watcher.WatchFile (ts#64210: fileOption)
+    // Go: watcher.go:600 watcher.WatchFile (ts#64210: fileOption, ts#64832)
     fn watch_file(&self, path: &str, fn_: WatchCallback) -> Result<Box<dyn Watch>, GoError> {
         // PORT: Go `if fn == nil { return nil, errNilCallback }`; a Rust
         // callback is never nil.
         if !self.available() {
             return Err(ERR_UNAVAILABLE.clone());
+        }
+        if is_network_path(path) {
+            return Err(ERR_NETWORK_PATH.clone());
         }
         let mut path = filepath_clean(path);
         if !filepath_is_abs(&path) {
@@ -1458,7 +1473,7 @@ pub fn new_dir_watch(
     dw
 }
 
-// Go: watcher.go:854 physicalDirFor
+// Go: watcher.go:866 physicalDirFor (ts#64832)
 /// physicalDirFor returns the physical path to watch for dir. If dir, or an
 /// ancestor of dir, is a symlink or reparse point, events are subscribed on its
 /// realpath while callbacks still use dir.
@@ -1467,7 +1482,9 @@ pub fn physical_dir_for(dir: &str) -> String {
         Ok(realpath) => realpath,
         Err(_) => return dir.to_string(),
     };
-    if realpath == dir {
+    // A mapped drive resolves to the network share behind it; keep watching
+    // it through the drive letter rather than opening the share directly.
+    if realpath == dir || is_network_path(&realpath) {
         return dir.to_string();
     }
     canonicalize_path(&filepath_clean(&realpath))
