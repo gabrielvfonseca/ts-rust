@@ -2052,19 +2052,19 @@ impl NodeList {
         }
     }
 
-    // Go: ast.go:134 Pos
+    // Go: ast.go:135 Pos
     #[must_use]
     pub fn pos(self) -> i32 {
         self.loc().pos()
     }
 
-    // Go: ast.go:135 End
+    // Go: ast.go:136 End
     #[must_use]
     pub fn end(self) -> i32 {
         self.loc().end()
     }
 
-    // Go: ast.go:139 HasTrailingComma
+    // Go: ast.go:138 HasTrailingComma
     #[must_use]
     pub fn has_trailing_comma(self) -> bool {
         let nodes = self.nodes();
@@ -2189,7 +2189,7 @@ impl ModifierList {
         self.0.loc()
     }
 
-    // Go: ast.go:157 ModifierList.ModifierFlags (set at ast.go:162)
+    // Go: ast.go:156 ModifierList.ModifierFlags (set at ast.go:163)
     /// Go `modifiers.ModifierFlags`. NONE when nil.
     // PERF: store and synthetic lists hold Go `ModifiersToFlags(nodes)`,
     // stored when the factory made the list (`new_store_modifier_list`,
@@ -2212,7 +2212,7 @@ impl ModifierList {
 // Visitor helpers
 // ──────────────────────────────────────────────────────────────────────
 
-// Go: ast.go:31 visit
+// Go: ast.go:32 visit
 fn visit(v: &mut dyn FnMut(Node) -> bool, node: Node) -> bool {
     if node.is_some() {
         return v(node);
@@ -2220,7 +2220,7 @@ fn visit(v: &mut dyn FnMut(Node) -> bool, node: Node) -> bool {
     false
 }
 
-// Go: ast.go:38 visitNodes
+// Go: ast.go:39 visitNodes
 fn visit_nodes(v: &mut dyn FnMut(Node) -> bool, nodes: NodeSlice) -> bool {
     for node in nodes {
         if v(node) {
@@ -2230,7 +2230,7 @@ fn visit_nodes(v: &mut dyn FnMut(Node) -> bool, nodes: NodeSlice) -> bool {
     false
 }
 
-// Go: ast.go:47 visitNodeList
+// Go: ast.go:48 visitNodeList
 fn visit_node_list(v: &mut dyn FnMut(Node) -> bool, node_list: NodeList) -> bool {
     if node_list.is_some() {
         return visit_nodes(v, node_list.nodes());
@@ -2238,7 +2238,7 @@ fn visit_node_list(v: &mut dyn FnMut(Node) -> bool, node_list: NodeList) -> bool
     false
 }
 
-// Go: ast.go:54 visitModifiers
+// Go: ast.go:55 visitModifiers
 fn visit_modifiers(v: &mut dyn FnMut(Node) -> bool, modifiers: ModifierList) -> bool {
     if modifiers.is_some() {
         return visit_nodes(v, modifiers.nodes());
@@ -2489,13 +2489,13 @@ impl Node {
         unreachable!("node {self:?} is not synthetic and has no store")
     }
 
-    // Go: ast.go:192 Pos
+    // Go: ast.go:189 Pos
     #[must_use]
     pub fn pos(self) -> i32 {
         self.loc().pos()
     }
 
-    // Go: ast.go:193 End
+    // Go: ast.go:190 End
     #[must_use]
     pub fn end(self) -> i32 {
         self.loc().end()
@@ -2508,7 +2508,7 @@ impl Node {
         crate::ast::go_file(self.file_index())
     }
 
-    // Go: ast.go:198 Name
+    // Go: ast_generated.go:11710 Name
     // PERF: U4 (CH6). A published store node reads its name child from the
     // store column (`frozen_store_child`), not from its node data. Debug
     // builds compare it with the data read.
@@ -2539,10 +2539,10 @@ impl Node {
     // `name_data` and `name_data_in`: Go `Name()` from the node data.
     name_arms!(name_data_accessor!(), opt, req);
 
-    // Go: ast.go:199 Modifiers
+    // Go: ast_generated.go:11835 Modifiers
     modifiers_variants!(modifiers_accessor! {});
 
-    // Go: ast.go:217 ParameterList
+    // Go: ast.go:200 ParameterList
     /// Go `FunctionLikeData().Parameters`. Nil for other nodes.
     // PORT: Go dereferences a nil FunctionLikeData here; we return nil.
     #[must_use]
@@ -2570,13 +2570,13 @@ impl Node {
         )
     }
 
-    // Go: ast.go:218 Parameters
+    // Go: ast.go:201 Parameters
     #[must_use]
     pub fn parameters(self) -> NodeSlice {
         self.parameter_list().nodes()
     }
 
-    // Go: ast.go:209 SubtreeFacts
+    // Go: ast_generated.go:9856 SubtreeFacts
     /// Go `node.SubtreeFacts()`: cached for a `CompositeBase` kind, computed
     /// on each call for any other kind (`subtree_facts_with_data`).
     #[must_use]
@@ -2584,7 +2584,7 @@ impl Node {
         with_data!(self, |d| subtree_facts_with_data(self, d))
     }
 
-    // Go: ast.go:229 Decorators
+    // Go: ast.go:204 Decorators
     #[must_use]
     pub fn decorators(self) -> NodeSlice {
         let modifiers = self.modifiers();
@@ -2612,7 +2612,7 @@ impl Node {
         slice
     }
 
-    // Go: ast.go:241 Symbol
+    // Go: ast.go:215 Symbol
     // PORT: Go reads `DeclarationData().Symbol`. The binder only sets the
     // symbol on declaration nodes, so reading the bind data directly is the
     // same.
@@ -2626,13 +2626,13 @@ impl Node {
         }
     }
 
-    // Go: ast.go:249 LocalSymbol
+    // Go: ast.go:223 LocalSymbol
     #[must_use]
     pub fn local_symbol(self) -> SymbolId {
         self.bind_extra(|e| e.local_symbol)
     }
 
-    // Go: ast.go:257 Locals
+    // Go: ast.go:231 Locals
     // PERF: U1 (d). Go `Locals()` is nil when `LocalsContainerData()` is nil.
     // A frozen store node whose kind is no locals container gives nil from
     // the kind table, without the binder data lookup. The binder sets locals
@@ -2923,7 +2923,7 @@ fn joined_text(n: Node, build: impl FnOnce() -> String) -> &'static str {
 }
 
 impl Node {
-    // Go: ast.go:265 Body
+    // Go: ast.go:239 Body
     // PORT: also covers ClassStaticBlockDeclaration, whose Go `Body` field
     // has no generated accessor.
     #[must_use]
@@ -2947,7 +2947,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:261 Text
+    // Go: ast.go:247 Text
     // PORT: also covers JsxText, whose Go `Text` field has no generated
     // accessor. Other kinds give "" instead of a panic.
     #[must_use]
@@ -3092,7 +3092,7 @@ impl Node {
         get_identifier_token(self.text()) != SyntaxKind::Identifier
     }
 
-    // Go: ast.go:311 Expression
+    // Go: ast.go:285 Expression
     // PERF: U4 (CH6). A published store node reads its expression child from
     // the store column (`frozen_store_child`), as `Node::name` does.
     #[must_use]
@@ -3125,7 +3125,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:387 RawText
+    // Go: ast.go:361 RawText
     // PORT: also covers NoSubstitutionTemplateLiteral, whose Go `RawText`
     // field has no generated accessor.
     #[must_use]
@@ -3145,7 +3145,7 @@ impl Node {
         }
     }
 
-    // Go: ast.go:477 ArgumentList
+    // Go: ast.go:451 ArgumentList
     #[must_use]
     pub fn argument_list(self) -> NodeList {
         list_of!(self, |d| match d {
@@ -3156,13 +3156,13 @@ impl Node {
         .unwrap_or(NodeList::NIL)
     }
 
-    // Go: ast.go:487 Arguments
+    // Go: ast.go:461 Arguments
     #[must_use]
     pub fn arguments(self) -> NodeSlice {
         self.argument_list().nodes()
     }
 
-    // Go: ast.go:495 TypeArgumentList
+    // Go: ast.go:469 TypeArgumentList
     // PERF: C2. A published store node whose data has no list gives nil from
     // the store column (`frozen_store_lacks_type_arguments`), without its
     // node data. A node with a list reads it from the data.
@@ -3189,13 +3189,13 @@ impl Node {
         .unwrap_or(NodeList::NIL)
     }
 
-    // Go: ast.go:519 TypeArguments
+    // Go: ast.go:493 TypeArguments
     #[must_use]
     pub fn type_arguments(self) -> NodeSlice {
         self.type_argument_list().nodes()
     }
 
-    // Go: ast.go:527 TypeParameterList
+    // Go: ast.go:501 TypeParameterList
     #[must_use]
     pub fn type_parameter_list(self) -> NodeList {
         list_by_data!(
@@ -3226,13 +3226,13 @@ impl Node {
         )
     }
 
-    // Go: ast.go:548 TypeParameters
+    // Go: ast.go:522 TypeParameters
     #[must_use]
     pub fn type_parameters(self) -> NodeSlice {
         self.type_parameter_list().nodes()
     }
 
-    // Go: ast.go:556 MemberList
+    // Go: ast.go:530 MemberList
     #[must_use]
     pub fn member_list(self) -> NodeList {
         let list = list_by_data!(
@@ -3251,13 +3251,13 @@ impl Node {
         list
     }
 
-    // Go: ast.go:574 Members
+    // Go: ast.go:548 Members
     #[must_use]
     pub fn members(self) -> NodeSlice {
         self.member_list().nodes()
     }
 
-    // Go: ast.go:582 StatementList
+    // Go: ast.go:556 StatementList
     #[must_use]
     pub fn statement_list(self) -> NodeList {
         list_by_data!(
@@ -3268,13 +3268,13 @@ impl Node {
         )
     }
 
-    // Go: ast.go:596 Statements
+    // Go: ast.go:570 Statements
     #[must_use]
     pub fn statements(self) -> NodeSlice {
         self.statement_list().nodes()
     }
 
-    // Go: ast.go:604 CanHaveStatements
+    // Go: ast.go:578 CanHaveStatements
     #[must_use]
     pub fn can_have_statements(self) -> bool {
         matches!(
@@ -3287,7 +3287,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:613 ModifierFlags
+    // Go: ast.go:587 ModifierFlags
     // PERF: U1 (b). A frozen store node reads its flags from the store column
     // (`frozen_store_modifier_flags`), without its node data and list.
     #[must_use]
@@ -3299,13 +3299,13 @@ impl Node {
         self.modifiers().modifier_flags()
     }
 
-    // Go: ast.go:621 ModifierNodes
+    // Go: ast.go:595 ModifierNodes
     #[must_use]
     pub fn modifier_nodes(self) -> NodeSlice {
         self.modifiers().nodes()
     }
 
-    // Go: ast.go:629 Type
+    // Go: ast.go:603 Type
     // PORT: also covers JsDocVariadicType, whose Go `Type` field has no
     // generated accessor.
     // PERF: C2. A published store node reads its type child from the store
@@ -3326,7 +3326,7 @@ impl Node {
         type_arms!(by_data!(self, Node::NIL,), opt, req)
     }
 
-    // Go: ast.go:751 Initializer
+    // Go: ast.go:725 Initializer
     // PERF: C2, as `Node::type_`. A node with both a type and an
     // initializer keeps only the type in the column; its initializer reads
     // take the node data.
@@ -3366,7 +3366,7 @@ impl Node {
     // the node data.
     initializer_arms!(initializer_data_accessor!(), opt, req);
 
-    // Go: ast.go:805 TagName
+    // Go: ast.go:779 TagName
     #[must_use]
     pub fn tag_name(self) -> Node {
         by_child_ids!(
@@ -3401,7 +3401,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:859 PropertyName
+    // Go: ast.go:833 PropertyName
     #[must_use]
     pub fn property_name(self) -> Node {
         by_child_ids!(
@@ -3411,7 +3411,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:871 PropertyNameOrName
+    // Go: ast.go:845 PropertyNameOrName
     #[must_use]
     pub fn property_name_or_name(self) -> Node {
         let name = self.property_name();
@@ -3421,7 +3421,7 @@ impl Node {
         name
     }
 
-    // Go: ast.go:879 IsTypeOnly
+    // Go: ast.go:853 IsTypeOnly
     #[must_use]
     pub fn is_type_only(self) -> bool {
         with_data!(self, |d| match d {
@@ -3434,7 +3434,7 @@ impl Node {
         })
     }
 
-    // Go: ast.go:896 CommentList
+    // Go: ast.go:870 CommentList
     #[must_use]
     pub fn comment_list(self) -> NodeList {
         list_by_data!(
@@ -3468,13 +3468,13 @@ impl Node {
         )
     }
 
-    // Go: ast.go:946 Comments
+    // Go: ast.go:920 Comments
     #[must_use]
     pub fn comments(self) -> NodeSlice {
         self.comment_list().nodes()
     }
 
-    // Go: ast.go:954 Label
+    // Go: ast.go:928 Label
     #[must_use]
     pub fn label(self) -> Node {
         let f = self.file_index();
@@ -3486,7 +3486,7 @@ impl Node {
         })
     }
 
-    // Go: ast.go:966 Attributes
+    // Go: ast.go:940 Attributes
     // PORT: also covers the `Attributes` fields of ImportDeclaration,
     // ExportDeclaration, ImportTypeNode and JSDocImportTag, which have no
     // generated accessor.
@@ -3506,7 +3506,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:978 Children
+    // Go: ast.go:952 Children
     #[must_use]
     pub fn children(self) -> NodeList {
         list_by_data!(
@@ -3517,7 +3517,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:988 ModuleSpecifier
+    // Go: ast.go:962 ModuleSpecifier
     #[must_use]
     pub fn module_specifier(self) -> Node {
         let f = self.file_index();
@@ -3529,7 +3529,7 @@ impl Node {
         })
     }
 
-    // Go: ast.go:1000 ImportClause
+    // Go: ast.go:974 ImportClause
     #[must_use]
     pub fn import_clause(self) -> Node {
         by_child_ids!(
@@ -3539,7 +3539,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:1010 Statement
+    // Go: ast.go:984 Statement
     #[must_use]
     pub fn statement(self) -> Node {
         by_child_ids!(
@@ -3556,7 +3556,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:1028 PropertyList
+    // Go: ast.go:1002 PropertyList
     #[must_use]
     pub fn property_list(self) -> NodeList {
         list_by_data!(
@@ -3578,13 +3578,13 @@ impl Node {
         )
     }
 
-    // Go: ast.go:1038 Properties
+    // Go: ast.go:1012 Properties
     #[must_use]
     pub fn properties(self) -> NodeSlice {
         self.property_list().nodes()
     }
 
-    // Go: ast.go:1046 ElementList
+    // Go: ast.go:1020 ElementList
     #[must_use]
     pub fn element_list(self) -> NodeList {
         list_by_data!(
@@ -3601,13 +3601,13 @@ impl Node {
         )
     }
 
-    // Go: ast.go:1062 Elements
+    // Go: ast.go:1036 Elements
     #[must_use]
     pub fn elements(self) -> NodeSlice {
         self.element_list().nodes()
     }
 
-    // Go: ast.go:1070 PostfixToken
+    // Go: ast.go:1044 PostfixToken
     // PERF: U4 (bind A). A published store node reads the token from the store
     // column (`frozen_store_child`), as `Node::name` does.
     #[must_use]
@@ -3638,7 +3638,7 @@ impl Node {
     // from the node data.
     postfix_arms!(postfix_token_data_accessor!(), opt);
 
-    // Go: ast.go:1094 QuestionToken
+    // Go: ast.go:1068 QuestionToken
     // PERF: U4 (bind A), as `Node::postfix_token`.
     #[must_use]
     pub fn question_token(self) -> Node {
@@ -3684,7 +3684,7 @@ impl Node {
     // `QuestionToken`.
     question_arms!(own_question_token_accessor!(), some_opt, some_req);
 
-    // Go: ast.go:1112 QuestionDotToken
+    // Go: ast.go:1086 QuestionDotToken
     #[must_use]
     pub fn question_dot_token(self) -> Node {
         by_child_ids!(
@@ -3699,7 +3699,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:1126 TypeExpression
+    // Go: ast.go:1100 TypeExpression
     // PORT: also covers the JSDoc `@this` and `@overload` tags, whose Go
     // `TypeExpression` fields have no generated accessor.
     #[must_use]
@@ -3723,7 +3723,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:1146 ClassName
+    // Go: ast.go:1120 ClassName
     #[must_use]
     pub fn class_name(self) -> Node {
         by_child_ids!(
@@ -3733,7 +3733,7 @@ impl Node {
         )
     }
 
-    // Go: ast.go:1158 Contains
+    // Go: ast.go:1132 Contains
     /// Reports whether `self` contains `descendant` by walking up the parent
     /// links. Panics if a non-SourceFile ancestor has no parent.
     #[must_use]
@@ -3757,14 +3757,14 @@ impl Node {
 // ──────────────────────────────────────────────────────────────────────
 
 impl Node {
-    // Go: ast.go:194 ForEachChild
+    // Go: ast_generated.go:8769 ForEachChild
     /// Calls `v` on each child in Go source order. Stops and returns true
     /// when `v` returns true.
     pub fn for_each_child(self, mut v: impl FnMut(Node) -> bool) -> bool {
         for_each_child_dyn(self, &mut v)
     }
 
-    // Go: ast.go:196 IterChildren
+    // Go: ast.go:191 IterChildren
     /// The children that `for_each_child` visits, in the same order.
     #[must_use]
     pub fn iter_children(self) -> std::vec::IntoIter<Node> {
@@ -4713,7 +4713,7 @@ fn walk_children<'d>(data: NodeData<'d>, w: &mut impl ChildVisit<'d>) -> bool {
         }
         NodeData::JsDocSignature(d) => ol!(d.type_parameters) || l!(d.parameters) || o!(d.type_),
         NodeData::JsDocNameReference(d) => n!(d.name),
-        // Go: ast.go:3170 forEachChild_JSDocParameterOrPropertyTag
+        // Go: ast.go:3097 forEachChild_JSDocParameterOrPropertyTag
         NodeData::JsDocParameterOrPropertyTag(d) => {
             n!(d.tag_name)
                 || (d.is_name_first && (n!(d.name) || o!(d.type_expression)))
@@ -5027,7 +5027,7 @@ fn is_type_syntax_data(n: Node, d: NodeData<'_>) -> bool {
     }
 }
 
-// Go: ast.go:1246 (*NodeDefault).propagateSubtreeFacts and the per-type
+// Go: ast.go:1173 (*NodeDefault).propagateSubtreeFacts and the per-type
 // propagateSubtreeFacts overrides in ast.go.
 // PORT: the Go overrides are merged into one match on the node data.
 // PERF: emitast1 F2. One data read per child: the type syntax test, the
@@ -5038,7 +5038,7 @@ fn propagate_node_facts(n: Node) -> SubtreeFacts {
 
 /// `propagate_node_facts` over the data `d` of `n`, read in place.
 fn propagate_node_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
-    // Go: ast.go:1621 (*TypeSyntaxBase).propagateSubtreeFacts
+    // Go: ast.go:1546 (*TypeSyntaxBase).propagateSubtreeFacts
     if is_type_syntax_data(n, d) {
         return TS;
     }
@@ -5075,7 +5075,7 @@ fn propagate_node_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
     }
 }
 
-// Go: ast.go:1602 (*CompositeBase).subtreeFactsWorker and ast.go:1234
+// Go: ast.go:1527 (*CompositeBase).subtreeFactsWorker and ast.go:1234 (at fed0bf24149f; removed by ts#64773)
 // (*NodeDefault).subtreeFactsWorker
 /// Go `n.SubtreeFacts()` for node `n` whose data `d` the caller loaded. A
 /// node of a `CompositeBase` kind gets the cached facts, or the facts
@@ -5083,7 +5083,7 @@ fn propagate_node_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
 /// a literal, type syntax) gets the facts computed from `d`, not cached.
 fn subtree_facts_with_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
     if is_type_syntax_data(n, d) {
-        // Go: ast.go:1619 (*TypeSyntaxBase).computeSubtreeFacts
+        // Go: ast.go:1544 (*TypeSyntaxBase).computeSubtreeFacts
         return TS;
     }
     non_type_subtree_facts(n, d)
@@ -5128,7 +5128,7 @@ fn composite_subtree_facts(n: Node, d: NodeData<'_>) -> SubtreeFacts {
     facts
 }
 
-// Go: ast.go computeSubtreeFacts overrides (ast.go:1619 to ast.go:2689) and
+// Go: ast.go computeSubtreeFacts overrides (ast.go:1544 to ast.go:2748) and
 // ast_generated.go computeSubtreeFacts methods.
 // PORT: the Go per-type methods are merged into one match. Types without an
 // override use Go `(*NodeDefault).computeSubtreeFacts`, which is None.
@@ -5177,7 +5177,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
     };
     let jsx = SubtreeFacts::SUBTREE_CONTAINS_JSX;
     match d {
-        // Go: ast.go:1623 (*Token).computeSubtreeFacts
+        // Go: ast.go:1548 (*Token).computeSubtreeFacts
         NodeData::Token(_) => match n.kind() {
             SyntaxKind::UsingKeyword => SubtreeFacts::SUBTREE_CONTAINS_USING,
             SyntaxKind::PublicKeyword
@@ -5218,11 +5218,11 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
             }
             _ => NONE_FACTS,
         },
-        // Go: ast.go:1670 (*PrivateIdentifier).computeSubtreeFacts
+        // Go: ast.go:1595 (*PrivateIdentifier).computeSubtreeFacts
         NodeData::PrivateIdentifier(_) => SubtreeFacts::SUBTREE_CONTAINS_CLASS_FIELDS,
-        // Go: ast.go:1678 (*Decorator).computeSubtreeFacts
+        // Go: ast.go:1603 (*Decorator).computeSubtreeFacts
         NodeData::Decorator(d) => p!(d.expression) | TS | SubtreeFacts::SUBTREE_CONTAINS_DECORATORS,
-        // Go: ast.go:1684 (*ForInOrOfStatement).computeSubtreeFacts
+        // Go: ast.go:1609 (*ForInOrOfStatement).computeSubtreeFacts
         NodeData::ForInOrOfStatement(d) => {
             p!(d.initializer)
                 | p!(d.expression)
@@ -5232,11 +5232,11 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     SubtreeFacts::SUBTREE_CONTAINS_FOR_AWAIT_OR_ASYNC_GENERATOR,
                 )
         }
-        // Go: ast.go:1691 (*ReturnStatement).computeSubtreeFacts
+        // Go: ast.go:1616 (*ReturnStatement).computeSubtreeFacts
         NodeData::ReturnStatement(d) => {
             po!(d.expression) | SubtreeFacts::SUBTREE_CONTAINS_FOR_AWAIT_OR_ASYNC_GENERATOR
         }
-        // Go: ast.go:1696 (*CatchClause).computeSubtreeFacts
+        // Go: ast.go:1621 (*CatchClause).computeSubtreeFacts
         NodeData::CatchClause(d) => {
             po!(d.variable_declaration)
                 | p!(d.block)
@@ -5245,7 +5245,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     SubtreeFacts::SUBTREE_CONTAINS_MISSING_CATCH_CLAUSE_VARIABLE,
                 )
         }
-        // Go: ast.go:1709 (*VariableStatement).computeSubtreeFacts
+        // Go: ast.go:1634 (*VariableStatement).computeSubtreeFacts
         NodeData::VariableStatement(d) => {
             if ambient(&d.modifiers) {
                 TS
@@ -5253,11 +5253,11 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 pm!(d.modifiers) | p!(d.declaration_list)
             }
         }
-        // Go: ast.go:1718 (*VariableDeclaration).computeSubtreeFacts
+        // Go: ast.go:1643 (*VariableDeclaration).computeSubtreeFacts
         NodeData::VariableDeclaration(d) => {
             p!(d.name) | e!(d.exclamation_token) | e!(d.type_) | po!(d.initializer)
         }
-        // Go: ast.go:1725 (*VariableDeclarationList).computeSubtreeFacts
+        // Go: ast.go:1650 (*VariableDeclarationList).computeSubtreeFacts
         NodeData::VariableDeclarationList(d) => {
             pl!(d.declarations)
                 | facts_if(
@@ -5265,7 +5265,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     SubtreeFacts::SUBTREE_CONTAINS_USING,
                 )
         }
-        // Go: ast.go:1734 (*BindingPattern).computeSubtreeFacts
+        // Go: ast.go:1659 (*BindingPattern).computeSubtreeFacts
         NodeData::BindingPattern(d) => match n.kind() {
             SyntaxKind::ObjectBindingPattern => propagate_node_list(
                 DataList::req(n, &d.elements),
@@ -5276,7 +5276,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
             }
             _ => NONE_FACTS,
         },
-        // Go: ast.go:1749 (*ParameterDeclaration).computeSubtreeFacts
+        // Go: ast.go:1674 (*ParameterDeclaration).computeSubtreeFacts
         NodeData::ParameterDeclaration(d) => {
             let name = req(f, d.name);
             if name.is_some() && is_this_identifier(name) {
@@ -5289,7 +5289,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     | po!(d.initializer)
             }
         }
-        // Go: ast.go:1765 (*BindingElement).computeSubtreeFacts
+        // Go: ast.go:1690 (*BindingElement).computeSubtreeFacts
         NodeData::BindingElement(d) => {
             po!(d.property_name)
                 | po!(d.name)
@@ -5299,7 +5299,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     SubtreeFacts::SUBTREE_CONTAINS_REST_OR_SPREAD,
                 )
         }
-        // Go: ast.go:1772 (*FunctionDeclaration).computeSubtreeFacts
+        // Go: ast.go:1697 (*FunctionDeclaration).computeSubtreeFacts
         NodeData::FunctionDeclaration(d) => {
             let flags = n.modifier_flags();
             if d.body.is_none() || flags.intersects(ModifierFlags::AMBIENT) {
@@ -5325,7 +5325,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     )
             }
         }
-        // Go: ast.go:1801 (*ClassLikeBase).computeSubtreeFacts
+        // Go: ast.go:1726 (*ClassLikeBase).computeSubtreeFacts
         NodeData::ClassDeclaration(d) => {
             if ambient(&d.modifiers) {
                 TS
@@ -5348,15 +5348,15 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     | pl!(d.members)
             }
         }
-        // Go: ast.go:1821 (*HeritageClause).computeSubtreeFacts
+        // Go: ast.go:1746 (*HeritageClause).computeSubtreeFacts
         NodeData::HeritageClause(d) => match d.token {
             SyntaxKind::ExtendsKeyword => pl!(d.types),
             SyntaxKind::ImplementsKeyword => TS,
             _ => NONE_FACTS,
         },
-        // Go: ast.go:1836 (*EnumMember).computeSubtreeFacts
+        // Go: ast.go:1761 (*EnumMember).computeSubtreeFacts
         NodeData::EnumMember(d) => p!(d.name) | po!(d.initializer) | TS,
-        // Go: ast.go:1842 (*EnumDeclaration).computeSubtreeFacts
+        // Go: ast.go:1767 (*EnumDeclaration).computeSubtreeFacts
         NodeData::EnumDeclaration(d) => {
             if ambient(&d.modifiers) {
                 TS
@@ -5364,7 +5364,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 pm!(d.modifiers) | p!(d.name) | pl!(d.members) | TS
             }
         }
-        // Go: ast.go:1853 (*ModuleDeclaration).computeSubtreeFacts
+        // Go: ast.go:1778 (*ModuleDeclaration).computeSubtreeFacts
         NodeData::ModuleDeclaration(d) => {
             if n.modifier_flags().intersects(ModifierFlags::AMBIENT) {
                 TS
@@ -5372,7 +5372,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 pm!(d.modifiers) | p!(d.name) | po!(d.body) | TS
             }
         }
-        // Go: ast.go:1868 (*ImportEqualsDeclaration).computeSubtreeFacts
+        // Go: ast.go:1793 (*ImportEqualsDeclaration).computeSubtreeFacts
         NodeData::ImportEqualsDeclaration(d) => {
             if d.is_type_only || !is_external_module_reference(req(f, d.module_reference)) {
                 TS
@@ -5380,7 +5380,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 pm!(d.modifiers) | p!(d.name) | p!(d.module_reference)
             }
         }
-        // Go: ast.go:1882 (*ImportSpecifier).computeSubtreeFacts
+        // Go: ast.go:1807 (*ImportSpecifier).computeSubtreeFacts
         NodeData::ImportSpecifier(d) => {
             if d.is_type_only {
                 TS
@@ -5388,7 +5388,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 po!(d.property_name) | p!(d.name)
             }
         }
-        // Go: ast.go:1891 (*ImportClause).computeSubtreeFacts
+        // Go: ast.go:1816 (*ImportClause).computeSubtreeFacts
         NodeData::ImportClause(d) => {
             if d.phase_modifier == Some(SyntaxKind::TypeKeyword) {
                 TS
@@ -5396,11 +5396,11 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 po!(d.name) | po!(d.named_bindings)
             }
         }
-        // Go: ast.go:1900 (*ExportAssignment).computeSubtreeFacts
+        // Go: ast.go:1825 (*ExportAssignment).computeSubtreeFacts
         NodeData::ExportAssignment(d) => {
             pm!(d.modifiers) | po!(d.type_) | p!(d.expression) | facts_if(d.is_export_equals, TS)
         }
-        // Go: ast.go:1908 (*ExportDeclaration).computeSubtreeFacts
+        // Go: ast.go:1833 (*ExportDeclaration).computeSubtreeFacts
         NodeData::ExportDeclaration(d) => {
             pm!(d.modifiers)
                 | po!(d.export_clause)
@@ -5408,7 +5408,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 | po!(d.attributes)
                 | facts_if(d.is_type_only, TS)
         }
-        // Go: ast.go:1916 (*ExportSpecifier).computeSubtreeFacts
+        // Go: ast.go:1841 (*ExportSpecifier).computeSubtreeFacts
         NodeData::ExportSpecifier(d) => {
             if d.is_type_only {
                 TS
@@ -5416,7 +5416,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 po!(d.property_name) | p!(d.name)
             }
         }
-        // Go: ast.go:1932 (*ConstructorDeclaration).computeSubtreeFacts
+        // Go: ast.go:1856 (*ConstructorDeclaration).computeSubtreeFacts
         NodeData::ConstructorDeclaration(d) => {
             if d.body.is_none() {
                 TS
@@ -5429,7 +5429,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     | po!(d.body)
             }
         }
-        // Go: ast.go:1951 (*AccessorDeclarationBase).computeSubtreeFacts
+        // Go: ast.go:1875 (*AccessorDeclarationBase).computeSubtreeFacts
         NodeData::GetAccessorDeclaration(d) => {
             if d.body.is_none() {
                 TS
@@ -5456,7 +5456,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     | po!(d.body)
             }
         }
-        // Go: ast.go:1970 (*MethodDeclaration).computeSubtreeFacts
+        // Go: ast.go:1894 (*MethodDeclaration).computeSubtreeFacts
         NodeData::MethodDeclaration(d) => {
             if d.body.is_none() {
                 TS
@@ -5482,7 +5482,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     )
             }
         }
-        // Go: ast.go:1995 (*PropertyDeclaration).computeSubtreeFacts
+        // Go: ast.go:1919 (*PropertyDeclaration).computeSubtreeFacts
         NodeData::PropertyDeclaration(d) => {
             pm!(d.modifiers)
                 | p!(d.name)
@@ -5491,27 +5491,27 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                 | po!(d.initializer)
                 | SubtreeFacts::SUBTREE_CONTAINS_CLASS_FIELDS
         }
-        // Go: ast.go:2009 (*ClassStaticBlockDeclaration).computeSubtreeFacts
+        // Go: ast.go:1933 (*ClassStaticBlockDeclaration).computeSubtreeFacts
         NodeData::ClassStaticBlockDeclaration(d) => {
             pm!(d.modifiers) | p!(d.body) | SubtreeFacts::SUBTREE_CONTAINS_CLASS_FIELDS
         }
-        // Go: ast.go:2015 (*KeywordExpression).computeSubtreeFacts
+        // Go: ast.go:1939 (*KeywordExpression).computeSubtreeFacts
         NodeData::KeywordExpression(_) => match n.kind() {
             SyntaxKind::ThisKeyword => SubtreeFacts::SUBTREE_CONTAINS_LEXICAL_THIS,
             SyntaxKind::SuperKeyword => SubtreeFacts::SUBTREE_CONTAINS_LEXICAL_SUPER,
             _ => NONE_FACTS,
         },
-        // Go: ast.go:2029 (*BigIntLiteral).computeSubtreeFacts
+        // Go: ast.go:1953 (*BigIntLiteral).computeSubtreeFacts
         NodeData::BigIntLiteral(_) => NONE_FACTS,
-        // Go: ast.go:2033 (*Identifier).computeSubtreeFacts
+        // Go: ast.go:1957 (*Identifier).computeSubtreeFacts
         NodeData::Identifier(_) => SubtreeFacts::SUBTREE_CONTAINS_IDENTIFIER,
-        // Go: ast.go:2037 (*NoSubstitutionTemplateLiteral).computeSubtreeFacts
+        // Go: ast.go:1961 (*NoSubstitutionTemplateLiteral).computeSubtreeFacts
         NodeData::NoSubstitutionTemplateLiteral(_) => facts_if(
             n.template_flags()
                 .intersects(TokenFlags::CONTAINS_INVALID_ESCAPE),
             SubtreeFacts::SUBTREE_CONTAINS_INVALID_TEMPLATE_ESCAPE,
         ),
-        // Go: ast.go:2044 (*BinaryExpression).computeSubtreeFacts
+        // Go: ast.go:1968 (*BinaryExpression).computeSubtreeFacts
         NodeData::BinaryExpression(d) => {
             let left = req(f, d.left);
             let operator_kind = req(f, d.operator_token).kind();
@@ -5533,11 +5533,11 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
             }
             facts
         }
-        // Go: ast.go:2061 (*YieldExpression).computeSubtreeFacts
+        // Go: ast.go:1985 (*YieldExpression).computeSubtreeFacts
         NodeData::YieldExpression(d) => {
             po!(d.expression) | SubtreeFacts::SUBTREE_CONTAINS_FOR_AWAIT_OR_ASYNC_GENERATOR
         }
-        // Go: ast.go:2065 (*ArrowFunction).computeSubtreeFacts
+        // Go: ast.go:1989 (*ArrowFunction).computeSubtreeFacts
         NodeData::ArrowFunction(d) => {
             pm!(d.modifiers)
                 | el!(d.type_parameters)
@@ -5550,7 +5550,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     SubtreeFacts::SUBTREE_CONTAINS_ANY_AWAIT,
                 )
         }
-        // Go: ast.go:2079 (*FunctionExpression).computeSubtreeFacts
+        // Go: ast.go:2003 (*FunctionExpression).computeSubtreeFacts
         NodeData::FunctionExpression(d) => {
             let is_async = modifiers_have_async(n, &d.modifiers);
             let is_generator = d.asterisk_token.is_some();
@@ -5571,11 +5571,11 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     SubtreeFacts::SUBTREE_CONTAINS_ANY_AWAIT,
                 )
         }
-        // Go: ast.go:2098 (*AsExpression).computeSubtreeFacts
+        // Go: ast.go:2022 (*AsExpression).computeSubtreeFacts
         NodeData::AsExpression(d) => p!(d.expression) | TS,
-        // Go: ast.go:2106 (*SatisfiesExpression).computeSubtreeFacts
+        // Go: ast.go:2030 (*SatisfiesExpression).computeSubtreeFacts
         NodeData::SatisfiesExpression(d) => p!(d.expression) | TS,
-        // Go: ast.go:2114 (*PropertyAccessExpression).computeSubtreeFacts
+        // Go: ast.go:2038 (*PropertyAccessExpression).computeSubtreeFacts
         NodeData::PropertyAccessExpression(d) => {
             let name = req(f, d.name);
             p!(d.expression)
@@ -5586,7 +5586,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     SubtreeFacts::SUBTREE_CONTAINS_PRIVATE_IDENTIFIER_IN_EXPRESSION,
                 )
         }
-        // Go: ast.go:2131 (*CallExpression).computeSubtreeFacts
+        // Go: ast.go:2056 (*CallExpression).computeSubtreeFacts
         NodeData::CallExpression(d) => {
             p!(d.expression)
                 | po!(d.question_dot_token)
@@ -5597,92 +5597,92 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
                     SubtreeFacts::SUBTREE_CONTAINS_DYNAMIC_IMPORT,
                 )
         }
-        // Go: ast.go:2144 (*NewExpression).computeSubtreeFacts
+        // Go: ast.go:2068 (*NewExpression).computeSubtreeFacts
         NodeData::NewExpression(d) => p!(d.expression) | el!(d.type_arguments) | pol!(d.arguments),
-        // Go: ast.go:2154 (*MetaProperty).computeSubtreeFacts
+        // Go: ast.go:2078 (*MetaProperty).computeSubtreeFacts
         NodeData::MetaProperty(d) => p!(d.name).without(SubtreeFacts::SUBTREE_CONTAINS_IDENTIFIER),
-        // Go: ast.go:2158 (*NonNullExpression).computeSubtreeFacts
+        // Go: ast.go:2082 (*NonNullExpression).computeSubtreeFacts
         NodeData::NonNullExpression(d) => p!(d.expression) | TS,
-        // Go: ast.go:2162 (*SpreadElement).computeSubtreeFacts
+        // Go: ast.go:2086 (*SpreadElement).computeSubtreeFacts
         NodeData::SpreadElement(d) => {
             p!(d.expression) | SubtreeFacts::SUBTREE_CONTAINS_REST_OR_SPREAD
         }
-        // Go: ast.go:2166 (*TaggedTemplateExpression).computeSubtreeFacts
+        // Go: ast.go:2090 (*TaggedTemplateExpression).computeSubtreeFacts
         NodeData::TaggedTemplateExpression(d) => {
             p!(d.tag) | po!(d.question_dot_token) | el!(d.type_arguments) | p!(d.template)
         }
-        // Go: ast.go:2183 (*SpreadAssignment).computeSubtreeFacts
+        // Go: ast.go:2107 (*SpreadAssignment).computeSubtreeFacts
         NodeData::SpreadAssignment(d) => {
             p!(d.expression)
                 | SubtreeFacts::SUBTREE_CONTAINS_ES_OBJECT_REST_OR_SPREAD
                 | SubtreeFacts::SUBTREE_CONTAINS_OBJECT_REST_OR_SPREAD
         }
-        // Go: ast.go:2187 (*PropertyAssignment).computeSubtreeFacts
+        // Go: ast.go:2111 (*PropertyAssignment).computeSubtreeFacts
         NodeData::PropertyAssignment(d) => p!(d.name) | po!(d.type_) | p!(d.initializer),
-        // Go: ast.go:2193 (*ShorthandPropertyAssignment).computeSubtreeFacts
+        // Go: ast.go:2117 (*ShorthandPropertyAssignment).computeSubtreeFacts
         NodeData::ShorthandPropertyAssignment(d) => {
             p!(d.name) | po!(d.type_) | po!(d.object_assignment_initializer) | TS
         }
-        // Go: ast.go:2200 (*AwaitExpression).computeSubtreeFacts
+        // Go: ast.go:2124 (*AwaitExpression).computeSubtreeFacts
         NodeData::AwaitExpression(d) => {
             p!(d.expression)
                 | SubtreeFacts::SUBTREE_CONTAINS_AWAIT
                 | SubtreeFacts::SUBTREE_CONTAINS_ANY_AWAIT
                 | SubtreeFacts::SUBTREE_CONTAINS_FOR_AWAIT_OR_ASYNC_GENERATOR
         }
-        // Go: ast.go:2205 (*TypeAssertion).computeSubtreeFacts
+        // Go: ast.go:2129 (*TypeAssertion).computeSubtreeFacts
         NodeData::TypeAssertion(d) => p!(d.expression) | TS,
-        // Go: ast.go:2213 (*ExpressionWithTypeArguments).computeSubtreeFacts
+        // Go: ast.go:2137 (*ExpressionWithTypeArguments).computeSubtreeFacts
         NodeData::ExpressionWithTypeArguments(d) => p!(d.expression) | el!(d.type_arguments),
-        // Go: ast.go:2279 (*TemplateHead).computeSubtreeFacts
+        // Go: ast.go:2183 (*TemplateHead).computeSubtreeFacts
         NodeData::TemplateHead(_) => facts_if(
             n.template_flags()
                 .intersects(TokenFlags::CONTAINS_INVALID_ESCAPE),
             SubtreeFacts::SUBTREE_CONTAINS_INVALID_TEMPLATE_ESCAPE,
         ),
-        // Go: ast.go:2286 (*TemplateMiddle).computeSubtreeFacts
+        // Go: ast.go:2190 (*TemplateMiddle).computeSubtreeFacts
         NodeData::TemplateMiddle(_) => facts_if(
             n.template_flags()
                 .intersects(TokenFlags::CONTAINS_INVALID_ESCAPE),
             SubtreeFacts::SUBTREE_CONTAINS_INVALID_TEMPLATE_ESCAPE,
         ),
-        // Go: ast.go:2293 (*TemplateTail).computeSubtreeFacts
+        // Go: ast.go:2197 (*TemplateTail).computeSubtreeFacts
         NodeData::TemplateTail(_) => facts_if(
             n.template_flags()
                 .intersects(TokenFlags::CONTAINS_INVALID_ESCAPE),
             SubtreeFacts::SUBTREE_CONTAINS_INVALID_TEMPLATE_ESCAPE,
         ),
-        // Go: ast.go:2300 (*JsxElement).computeSubtreeFacts
+        // Go: ast.go:2204 (*JsxElement).computeSubtreeFacts
         NodeData::JsxElement(d) => {
             p!(d.opening_element) | pl!(d.children) | p!(d.closing_element) | jsx
         }
-        // Go: ast.go:2307 (*JsxAttributes).computeSubtreeFacts
+        // Go: ast.go:2211 (*JsxAttributes).computeSubtreeFacts
         NodeData::JsxAttributes(d) => pl!(d.properties) | jsx,
-        // Go: ast.go:2312 (*JsxNamespacedName).computeSubtreeFacts
+        // Go: ast.go:2216 (*JsxNamespacedName).computeSubtreeFacts
         NodeData::JsxNamespacedName(d) => p!(d.namespace) | p!(d.name) | jsx,
-        // Go: ast.go:2318 (*JsxOpeningElement).computeSubtreeFacts
+        // Go: ast.go:2222 (*JsxOpeningElement).computeSubtreeFacts
         NodeData::JsxOpeningElement(d) => {
             p!(d.tag_name) | el!(d.type_arguments) | p!(d.attributes) | jsx
         }
-        // Go: ast.go:2325 (*JsxSelfClosingElement).computeSubtreeFacts
+        // Go: ast.go:2229 (*JsxSelfClosingElement).computeSubtreeFacts
         NodeData::JsxSelfClosingElement(d) => {
             p!(d.tag_name) | el!(d.type_arguments) | p!(d.attributes) | jsx
         }
-        // Go: ast.go:2332 (*JsxFragment).computeSubtreeFacts
+        // Go: ast.go:2236 (*JsxFragment).computeSubtreeFacts
         NodeData::JsxFragment(d) => pl!(d.children) | jsx,
-        // Go: ast.go:2337 and ast.go:2341 Jsx fragment tokens
+        // Go: ast.go:2241 and ast.go:2245 Jsx fragment tokens
         NodeData::JsxOpeningFragment(_) | NodeData::JsxClosingFragment(_) => jsx,
-        // Go: ast.go:2345 (*JsxAttribute).computeSubtreeFacts
+        // Go: ast.go:2249 (*JsxAttribute).computeSubtreeFacts
         NodeData::JsxAttribute(d) => p!(d.name) | po!(d.initializer) | jsx,
-        // Go: ast.go:2351 (*JsxSpreadAttribute).computeSubtreeFacts
+        // Go: ast.go:2255 (*JsxSpreadAttribute).computeSubtreeFacts
         NodeData::JsxSpreadAttribute(d) => p!(d.expression) | jsx,
-        // Go: ast.go:2355 (*JsxClosingElement).computeSubtreeFacts
+        // Go: ast.go:2259 (*JsxClosingElement).computeSubtreeFacts
         NodeData::JsxClosingElement(d) => p!(d.tag_name) | jsx,
-        // Go: ast.go:2359 (*JsxExpression).computeSubtreeFacts
+        // Go: ast.go:2263 (*JsxExpression).computeSubtreeFacts
         NodeData::JsxExpression(d) => po!(d.expression) | jsx,
-        // Go: ast.go:2363 (*JsxText).computeSubtreeFacts
+        // Go: ast.go:2267 (*JsxText).computeSubtreeFacts
         NodeData::JsxText(_) => jsx,
-        // Go: ast.go:2689 (*SourceFile).computeSubtreeFacts
+        // Go: ast.go:2748 (*SourceFile).computeSubtreeFacts
         NodeData::SourceFile(d) => pl!(d.statements),
         // Go: ast_generated.go computeSubtreeFacts methods
         NodeData::QualifiedName(d) => p!(d.left) | p!(d.right),
@@ -5737,7 +5737,7 @@ fn subtree_facts_of_data(n: Node, d: NodeData<'_>) -> SubtreeFacts {
         NodeData::ImportAttributes(d) => pl!(d.attributes),
         NodeData::PartiallyEmittedExpression(d) => p!(d.expression),
         NodeData::SyntheticReferenceExpression(d) => p!(d.expression) | p!(d.this_arg),
-        // Go: ast.go:1242 (*NodeDefault).computeSubtreeFacts
+        // Go: ast.go:1169 (*NodeDefault).computeSubtreeFacts
         _ => NONE_FACTS,
     }
 }
@@ -5752,19 +5752,19 @@ fn modifiers_have_async(n: Node, m: &Option<crate::astdata::ModifierList>) -> bo
 // Access kinds
 // ──────────────────────────────────────────────────────────────────────
 
-// Go: ast.go:1268 IsWriteOnlyAccess
+// Go: ast.go:1193 IsWriteOnlyAccess
 #[must_use]
 pub fn is_write_only_access(node: Node) -> bool {
     access_kind(node) == AccessKind::WRITE
 }
 
-// Go: ast.go:1272 IsWriteAccess
+// Go: ast.go:1197 IsWriteAccess
 #[must_use]
 pub fn is_write_access(node: Node) -> bool {
     access_kind(node) != AccessKind::READ
 }
 
-// Go: ast.go:1276 IsWriteAccessForReference
+// Go: ast.go:1201 IsWriteAccessForReference
 #[must_use]
 pub fn is_write_access_for_reference(node: Node) -> bool {
     let decl = get_declaration_from_name(node);
@@ -5773,7 +5773,7 @@ pub fn is_write_access_for_reference(node: Node) -> bool {
         || is_write_access(node)
 }
 
-// Go: ast.go:1281 GetDeclarationFromName
+// Go: ast.go:1206 GetDeclarationFromName
 /// The declaration that `name` names, or nil.
 #[must_use]
 pub fn get_declaration_from_name(name: Node) -> Node {
@@ -5828,7 +5828,7 @@ pub fn get_declaration_from_name(name: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast.go:1327 declarationIsWriteAccess
+// Go: ast.go:1252 declarationIsWriteAccess
 fn declaration_is_write_access(decl: Node) -> bool {
     if decl.is_nil() {
         return false;
@@ -5886,7 +5886,7 @@ fn declaration_is_write_access(decl: Node) -> bool {
     }
 }
 
-// Go: ast.go:1406 IsArrayLiteralOrObjectLiteralDestructuringPattern
+// Go: ast.go:1331 IsArrayLiteralOrObjectLiteralDestructuringPattern
 #[must_use]
 pub fn is_array_literal_or_object_literal_destructuring_pattern(node: Node) -> bool {
     if !(is_array_literal_expression(node) || is_object_literal_expression(node)) {
@@ -5912,7 +5912,7 @@ pub fn is_array_literal_or_object_literal_destructuring_pattern(node: Node) -> b
     is_array_literal_or_object_literal_destructuring_pattern(parent)
 }
 
-// Go: ast.go:1430 accessKind
+// Go: ast.go:1355 accessKind
 fn access_kind(node: Node) -> AccessKind {
     access_kind_ref(NodeRef::new(node))
 }
@@ -5996,7 +5996,7 @@ fn access_kind_ref(node: NodeRef) -> AccessKind {
     }
 }
 
-// Go: ast.go:1491 reverseAccessKind
+// Go: ast.go:1416 reverseAccessKind
 fn reverse_access_kind(a: AccessKind) -> AccessKind {
     if a == AccessKind::READ {
         AccessKind::WRITE
@@ -6009,7 +6009,7 @@ fn reverse_access_kind(a: AccessKind) -> AccessKind {
     }
 }
 
-// Go: ast.go:1515 IsDeclarationNode
+// Go: ast.go:1440 IsDeclarationNode
 /// Go `node.DeclarationData() != nil`: the node types that embed
 /// `DeclarationBase`.
 #[must_use]
@@ -6091,7 +6091,7 @@ fn is_declaration_data(d: NodeData<'_>) -> bool {
     )
 }
 
-// Go: ast.go:1532 IsLocalsContainer
+// Go: ast.go:1457 IsLocalsContainer
 /// Go `node.LocalsContainerData() != nil`: the node types that embed
 /// `LocalsContainerBase`.
 // PORT: the variant list is `locals_container_variants!`, shared with the
@@ -6104,7 +6104,7 @@ pub fn is_locals_container(node: Node) -> bool {
 }
 
 impl Node {
-    // Go: ast.go:1563 JSDoc
+    // Go: ast.go:1488 JSDoc
     /// The JSDoc nodes of this node. Pass `Node::NIL` for `file` to walk up
     /// to the source file.
     // PORT: Go resolves a lazy cache miss with the parser hook
@@ -6149,7 +6149,7 @@ impl Node {
         }
     }
 
-    // Go: ast.go:1581 EagerJSDoc
+    // Go: ast.go:1506 EagerJSDoc
     /// JSDoc nodes that are already parsed and cached. It never parses.
     // PORT: Go reads `jsdocCache`, which also holds the entries that a lazy
     // parse (`resolveJSDoc`) added. The port keeps those in `LAZY_JSDOC`
@@ -6210,27 +6210,27 @@ fn cached_js_doc(
     }
 }
 
-// Go: ast.go:1832 IsTypeOrJSTypeAliasDeclaration
+// Go: ast.go:1757 IsTypeOrJSTypeAliasDeclaration
 #[must_use]
 pub fn is_type_or_js_type_alias_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeAliasDeclaration
         || node.kind() == SyntaxKind::JsTypeAliasDeclaration
 }
 
-// Go: ast.go:1878 IsImportDeclarationOrJSImportDeclaration
+// Go: ast.go:1803 IsImportDeclarationOrJSImportDeclaration
 #[must_use]
 pub fn is_import_declaration_or_js_import_declaration(node: Node) -> bool {
     node.kind() == SyntaxKind::ImportDeclaration || node.kind() == SyntaxKind::JsImportDeclaration
 }
 
-// Go: ast.go:1904 IsAnyExportAssignment
+// Go: ast.go:1829 IsAnyExportAssignment
 #[must_use]
 pub fn is_any_export_assignment(node: Node) -> bool {
     node.kind() == SyntaxKind::ExportAssignment
 }
 
 impl Node {
-    // Go: ast.go:2217 (*ImportAttributesNode).GetResolutionModeOverride
+    // Go: ast.go:2142 (*ImportAttributesNode).GetResolutionModeOverride
     /// The `resolution-mode` from an import attributes node, and whether
     /// one was given. The node can be nil.
     // PORT: Go `grammarErrorOnNode` is a nil-able func; `None` is Go nil.
@@ -6315,7 +6315,7 @@ fn file_version_of(file: Node) -> Option<crate::ast::VersionPin> {
         .cloned()
 }
 
-// Go: ast.go:2566 (*SourceFile).Text
+// Go: ast.go:2465 (*SourceFile).Text
 /// The text of a SourceFile node. Hold the result only as long as it is
 /// read: the text of a freeable file version goes when the last holder
 /// lets go (`FileText`).
@@ -6331,13 +6331,13 @@ pub fn source_file_text(file: Node) -> FileText {
 // Content mapper info of a SourceFile (tsgo#4712)
 // ---------------------------------------------------------------------------
 
-// Go: ast/ast.go:2602 MappedDiagnosticDirectivePolicy
+// Go: ast/ast.go:2529 MappedDiagnosticDirectivePolicy
 crate::flags_macros::go_enum!(MappedDiagnosticDirectivePolicy, u8 {
     IGNORE = 0; // MappedDiagnosticDirectivePolicyIgnore
     EXPECT = 1; // MappedDiagnosticDirectivePolicyExpect
 });
 
-// Go: ast/ast.go:2609 MappedDiagnosticDirective
+// Go: ast/ast.go:2536 MappedDiagnosticDirective
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct MappedDiagnosticDirective {
     pub original_range: TextRange,
@@ -6348,7 +6348,7 @@ pub struct MappedDiagnosticDirective {
     pub source: String,
 }
 
-// Go: ast/ast.go:2618 ContentMapperSourceFileInfo
+// Go: ast/ast.go:2545 ContentMapperSourceFileInfo
 // PORT: Go `*SourceFile` is `Rc<ParsedSourceFile>` (the compiler host
 // type), and Go `*spanmap.SpanMap` is `Option<Arc<SpanMap>>`. Pass it to
 // `ParsedSourceFile::set_content_mapper_info`, which keeps it in two parts:
@@ -6428,7 +6428,7 @@ static EMPTY_PARSE_OPTIONS: crate::frontend::parser::SourceFileParseOptions =
             },
     };
 
-// Go: ast/ast.go:2639 (*SourceFile).SetContentMapperInfo, for the node side.
+// Go: ast/ast.go:2566 (*SourceFile).SetContentMapperInfo, for the node side.
 /// Stores the content mapper info of the parsed SourceFile `file`.
 /// `ParsedSourceFile::set_content_mapper_info` calls it.
 // PORT: panics when the info is already set, as Go does.
@@ -6465,7 +6465,7 @@ pub fn source_file_content_mapper_info(file: Node) -> Option<&'static ContentMap
         .copied()
 }
 
-// Go: ast/ast.go:2548 (*SourceFile).OriginalText
+// Go: ast/ast.go:2470 (*SourceFile).OriginalText
 // OriginalText returns the untransformed source text for content-mapped files, or Text() otherwise.
 #[must_use]
 pub fn source_file_original_text(file: Node) -> FileText {
@@ -6475,7 +6475,7 @@ pub fn source_file_original_text(file: Node) -> FileText {
     }
 }
 
-// Go: ast/ast.go:2556 (*SourceFile).OriginalFileName
+// Go: ast/ast.go:2478 (*SourceFile).OriginalFileName
 // OriginalFileName returns the canonical filename associated with a supplemental source file, or FileName() otherwise.
 #[must_use]
 pub fn source_file_original_file_name(file: Node) -> &'static str {
@@ -6486,7 +6486,7 @@ pub fn source_file_original_file_name(file: Node) -> &'static str {
     source_file_file_name(file)
 }
 
-// Go: ast/ast.go:2566 (*SourceFile).SpanMap
+// Go: ast/ast.go:2488 (*SourceFile).SpanMap
 // SpanMap returns the span map that maps positions in this file's transformed Text() back to its
 // original, untransformed content, or nil if the file is not content-mapped (or is a failure stub).
 // The returned map is nil-safe: a nil map maps positions identically.
@@ -6496,14 +6496,14 @@ pub fn source_file_span_map(file: Node) -> Option<&'static crate::spanmap::SpanM
     source_file_content_mapper_info(file)?.span_map.as_deref()
 }
 
-// Go: ast/ast.go:2571 (*SourceFile).IsContentMapped (ts#64518)
+// Go: ast/ast.go:2496 (*SourceFile).IsContentMapped (ts#64518)
 // IsContentMapped reports whether this file was produced by a content mapper.
 #[must_use]
 pub fn source_file_is_content_mapped(file: Node) -> bool {
     source_file_content_mapper_info(file).is_some()
 }
 
-// Go: ast/ast.go:2575 (*SourceFile).ContentMapper
+// Go: ast/ast.go:2502 (*SourceFile).ContentMapper
 // ContentMapper returns the identity of the content mapper that produced this file, or "" if the file
 // was not produced by a content mapper (or the mapper did not identify itself).
 #[must_use]
@@ -6511,7 +6511,7 @@ pub fn source_file_content_mapper(file: Node) -> &'static str {
     source_file_content_mapper_info(file).map_or("", |info| &info.content_mapper)
 }
 
-// Go: ast/ast.go:2584 (*SourceFile).IsContentMapperFailureStub
+// Go: ast/ast.go:2511 (*SourceFile).IsContentMapperFailureStub
 // IsContentMapperFailureStub reports whether this file is the empty placeholder produced when a content
 // mapper's transform failed.
 #[must_use]
@@ -6519,19 +6519,19 @@ pub fn source_file_is_content_mapper_failure_stub(file: Node) -> bool {
     !source_file_content_mapper(file).is_empty() && source_file_span_map(file).is_none()
 }
 
-// Go: ast/ast.go:2588 (*SourceFile).ContentMapperTransformIdentity
+// Go: ast/ast.go:2515 (*SourceFile).ContentMapperTransformIdentity
 #[must_use]
 pub fn source_file_content_mapper_transform_identity(file: Node) -> &'static str {
     source_file_content_mapper_info(file).map_or("", |info| &info.transform_identity)
 }
 
-// Go: ast/ast.go:2595 (*SourceFile).VirtualFileName
+// Go: ast/ast.go:2522 (*SourceFile).VirtualFileName
 #[must_use]
 pub fn source_file_virtual_file_name(file: Node) -> &'static str {
     source_file_content_mapper_info(file).map_or("", |info| &info.virtual_file_name)
 }
 
-// Go: ast/ast.go:2631 (*SourceFile).ContentMapperParseOptions
+// Go: ast/ast.go:2558 (*SourceFile).ContentMapperParseOptions
 // ContentMapperParseOptions returns the parse options used to acquire this file from the mapped parse cache.
 // PORT: returns a reference; the zero value is `EMPTY_PARSE_OPTIONS`.
 #[must_use]
@@ -6541,7 +6541,7 @@ pub fn source_file_content_mapper_parse_options(
     source_file_content_mapper_info(file).map_or(&EMPTY_PARSE_OPTIONS, |info| &info.parse_options)
 }
 
-// Go: ast/ast.go:2646 (*SourceFile).DiagnosticDirectives
+// Go: ast/ast.go:2573 (*SourceFile).DiagnosticDirectives
 #[must_use]
 pub fn source_file_diagnostic_directives(file: Node) -> &'static [MappedDiagnosticDirective] {
     match source_file_content_mapper_info(file) {
@@ -6550,7 +6550,7 @@ pub fn source_file_diagnostic_directives(file: Node) -> &'static [MappedDiagnost
     }
 }
 
-// Go: ast/ast.go:2654 (*SourceFile).SupplementalSourceFiles
+// Go: ast/ast.go:2581 (*SourceFile).SupplementalSourceFiles
 // SupplementalSourceFiles returns the additional outputs produced from this canonical source file.
 // PORT: the files are their SourceFile nodes. `ParsedSourceFile` has the
 // `Rc` form.
@@ -6562,7 +6562,7 @@ pub fn source_file_supplemental_source_files(file: Node) -> &'static [Node] {
     }
 }
 
-// Go: ast/ast.go:2662 (*SourceFile).CanonicalSourceFile
+// Go: ast/ast.go:2589 (*SourceFile).CanonicalSourceFile
 // CanonicalSourceFile returns the canonical output associated with this supplemental source file.
 // PORT: the file is its SourceFile node, or `Node::NIL`. `ParsedSourceFile`
 // has the `Rc` form.
@@ -6571,14 +6571,14 @@ pub fn source_file_canonical_source_file(file: Node) -> Node {
     source_file_content_mapper_info(file).map_or(Node::NIL, |info| info.canonical_source_file)
 }
 
-// Go: ast/ast.go:2670 (*SourceFile).IsContentMapperSupplemental
+// Go: ast/ast.go:2597 (*SourceFile).IsContentMapperSupplemental
 // IsContentMapperSupplemental reports whether this is an unnamed supplemental mapper output.
 #[must_use]
 pub fn source_file_is_content_mapper_supplemental(file: Node) -> bool {
     source_file_canonical_source_file(file).is_some()
 }
 
-// Go: ast.go:2674 (*SourceFile).HasIdentifier
+// Go: ast.go:2601 (*SourceFile).HasIdentifier
 // PORT: Go `identifiersOnce` is a per-thread cache (`IDENTIFIER_SETS`) for a
 // parsed file, whose id is never reused. A freeable file version keeps its
 // set, which is freed with it (lsshells M3). A factory SourceFile collects
@@ -6604,7 +6604,7 @@ pub fn source_file_has_identifier(file: Node, name: &str) -> bool {
     identifiers.contains(name)
 }
 
-// Go: ast.go:2681 collectIdentifiersForSourceFile
+// Go: ast.go:2608 collectIdentifiersForSourceFile
 fn collect_identifiers_for_source_file(source_file: Node) -> FxHashSet<&'static str> {
     fn collect(node: Node, identifiers: &mut FxHashSet<&'static str>) -> bool {
         match node.kind() {
@@ -6626,7 +6626,7 @@ fn collect_identifiers_for_source_file(source_file: Node) -> FxHashSet<&'static 
     identifiers
 }
 
-// Go: ast.go:2570 (*SourceFile).FileName
+// Go: ast.go:2628 (*SourceFile).FileName
 #[must_use]
 pub fn source_file_file_name(file: Node) -> &'static str {
     if is_synthetic_node(file) {
@@ -6635,7 +6635,7 @@ pub fn source_file_file_name(file: Node) -> &'static str {
     file_store_file_name(file.file_index())
 }
 
-// Go: ast.go:2578 (*SourceFile).Imports
+// Go: ast.go:2636 (*SourceFile).Imports
 // PORT: a freeable file version (lsshells M3b) gives a handle slice
 // (`NodeSlice::from_file_imports`), which reads the imports at each use.
 #[must_use]
@@ -6675,7 +6675,7 @@ fn source_file_list(file: Node, list: DiagnosticList) -> FileRef<[Diagnostic]> {
     ))
 }
 
-// Go: ast.go:2582 (*SourceFile).Diagnostics
+// Go: ast.go:2640 (*SourceFile).Diagnostics
 // PORT: a file that is not published yet reads its store (see
 // `source_file_language_variant`).
 #[must_use]
@@ -6686,19 +6686,19 @@ pub fn source_file_diagnostics(file: Node) -> FileRef<[Diagnostic]> {
     source_file_list(file, DiagnosticList::Parse)
 }
 
-// Go: ast.go:2590 (*SourceFile).JSDiagnostics
+// Go: ast.go:2648 (*SourceFile).JSDiagnostics
 #[must_use]
 pub fn source_file_js_diagnostics(file: Node) -> FileRef<[Diagnostic]> {
     source_file_list(file, DiagnosticList::Js)
 }
 
-// Go: ast.go:2598 (*SourceFile).JSDocDiagnostics
+// Go: ast.go:2656 (*SourceFile).JSDocDiagnostics
 #[must_use]
 pub fn source_file_jsdoc_diagnostics(file: Node) -> FileRef<[Diagnostic]> {
     source_file_list(file, DiagnosticList::JsDoc)
 }
 
-// Go: ast.go:2641 (*SourceFile).BindDiagnostics
+// Go: ast.go:2699 (*SourceFile).BindDiagnostics
 // PORT: panics before the file is bound. Go returns nil there.
 #[must_use]
 pub fn source_file_bind_diagnostics(file: Node) -> FileRef<[Diagnostic]> {
@@ -6709,13 +6709,13 @@ pub fn source_file_bind_diagnostics(file: Node) -> FileRef<[Diagnostic]> {
         .bind_diagnostics)
 }
 
-// Go: ast.go:2657 (*SourceFile).IsJS
+// Go: ast.go:2715 (*SourceFile).IsJS
 #[must_use]
 pub fn source_file_is_js(file: Node) -> bool {
     is_source_file_js(file)
 }
 
-// Go: ast.go:2702 (*SourceFile).ECMALineMap
+// Go: ast.go:2761 (*SourceFile).ECMALineMap
 #[must_use]
 pub fn source_file_ecma_line_map(file: Node) -> FileRef<[i32]> {
     if !is_synthetic_node(file)
@@ -6731,7 +6731,7 @@ pub fn source_file_ecma_line_map(file: Node) -> FileRef<[i32]> {
     FileRef::Static(line_map)
 }
 
-// Go: ast.go:2720 (*SourceFile).GetNameTable
+// Go: ast.go:2779 (*SourceFile).GetNameTable
 /// All names in the file mapped to their position. A name that appears
 /// more than once maps to -1.
 #[must_use]
@@ -6777,13 +6777,13 @@ fn compute_name_table(file: Node) -> FxHashMap<String, i32> {
     name_table
 }
 
-// Go: ast.go:2751 (*SourceFile).IsBound
+// Go: ast.go:2810 (*SourceFile).IsBound
 #[must_use]
 pub fn source_file_is_bound(file: Node) -> bool {
     crate::ast::with_go_file(file.file_index(), |g| g.file_bind.get().is_some())
 }
 
-// Go: ast.go:2756 (*SourceFile).GetPositionMap
+// Go: ast.go:2815 (*SourceFile).GetPositionMap
 // PORT: Go `positionMapOnce` is a per-thread cache (`POSITION_MAPS`).
 #[must_use]
 pub fn source_file_get_position_map(file: Node) -> FileRef<PositionMap> {
@@ -6815,7 +6815,7 @@ fn compute_source_file_position_map(file: Node) -> PositionMap {
     compute_position_map(&source_file_text(file))
 }
 
-// Go: ast.go:2840 (*SourceFile).GetDeclarationMap
+// Go: ast.go:2895 (*SourceFile).GetDeclarationMap
 #[must_use]
 pub fn source_file_get_declaration_map(file: Node) -> FileRef<FxHashMap<String, Vec<Node>>> {
     if let Some(version) = file_version_of(file) {
@@ -6842,7 +6842,7 @@ pub fn source_file_get_declaration_map(file: Node) -> FileRef<FxHashMap<String, 
     FileRef::Static(map)
 }
 
-// Go: ast.go:2849 (*SourceFile).computeDeclarationMap
+// Go: ast.go:2904 (*SourceFile).computeDeclarationMap
 fn compute_declaration_map(file: Node) -> FxHashMap<String, Vec<Node>> {
     fn add_declaration(result: &mut FxHashMap<String, Vec<Node>>, declaration: Node) {
         let name = get_declaration_name(declaration);
@@ -6980,7 +6980,7 @@ fn compute_declaration_map(file: Node) -> FxHashMap<String, Vec<Node>> {
     result
 }
 
-// Go: ast.go:3087 GetDeclarationName
+// Go: ast.go:3014 GetDeclarationName
 /// The plain text name of a declaration, or "" when it has none.
 #[must_use]
 pub fn get_declaration_name(declaration: Node) -> String {

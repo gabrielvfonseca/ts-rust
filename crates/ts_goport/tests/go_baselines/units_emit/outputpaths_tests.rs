@@ -1,11 +1,38 @@
 //! Port of internal/outputpaths/outputpaths_test.go (tsgo#4900).
 
 use ts_goport::frontend::outputpaths::{
-    OutputPathsHost, get_build_info_file_name, get_output_declaration_file_name_worker,
-    get_output_js_file_name_worker, get_source_file_path_in_new_dir,
+    OutputPathsHost, get_build_info_file_name, get_external_output_file_name,
+    get_output_declaration_file_name_worker, get_output_js_file_name_worker,
+    get_source_file_path_in_new_dir,
 };
-use ts_goport::frontend::tspath::ComparePathsOptions;
+use ts_goport::frontend::tspath::{ComparePathsOptions, ExtensionRewrite};
 use ts_goport::options::{CompilerOptions, Tristate};
+
+// Go: outputpaths/outputpaths_test.go:34 TestContentMapperOutputExtensionCaseInsensitivePaths (ts#64581)
+#[test]
+fn test_content_mapper_output_extension_case_insensitive_paths() {
+    let host = TestOutputPathsHost {
+        common_source_directory: "/src",
+        content_mapper_extensions: vec![".y.z".to_string()],
+        content_mapper_extension_rewrites: vec![ExtensionRewrite {
+            source: ".y.z".to_string(),
+            target: ".mjs".to_string(),
+        }],
+    };
+    let options = CompilerOptions {
+        out_dir: "/dist".to_string(),
+        ..Default::default()
+    };
+    let file_name = "/src/Widget.Y.Z";
+    assert_eq!(
+        get_external_output_file_name(file_name, &options, &host),
+        "/dist/Widget.mjs"
+    );
+    assert_eq!(
+        get_output_declaration_file_name_worker(file_name, &options, &host),
+        "/dist/Widget.d.mts"
+    );
+}
 
 // Go: outputpaths/outputpaths_test.go:29 TestGetSourceFileNameInNewDirSourceMatchesCommonDirectory
 // (ts#64159 renames TestGetSourceFilePathInNewDirSourceMatchesCommonDirectory)
@@ -85,10 +112,13 @@ fn test_get_build_info_file_name_across_roots() {
 }
 
 /// Go `outputPathsHost` (outputpaths_test.go:12): a common source directory,
-/// content mapper extensions, case-insensitive (ts#64159).
+/// content mapper extensions and their rewrites (ts#64581),
+/// case-insensitive (ts#64159).
+#[derive(Default)]
 struct TestOutputPathsHost {
     common_source_directory: &'static str,
     content_mapper_extensions: Vec<String>,
+    content_mapper_extension_rewrites: Vec<ExtensionRewrite>,
 }
 
 impl OutputPathsHost for TestOutputPathsHost {
@@ -97,6 +127,10 @@ impl OutputPathsHost for TestOutputPathsHost {
     }
     fn content_mapper_extensions(&self) -> Vec<String> {
         self.content_mapper_extensions.clone()
+    }
+    // Go: outputpaths/outputpaths_test.go:26 outputPathsHost.ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<ExtensionRewrite> {
+        self.content_mapper_extension_rewrites.clone()
     }
     // PORT: Go's host has no current directory (rooted paths); the common
     // source directory is rooted, so it is never read.
@@ -118,6 +152,7 @@ fn test_get_output_file_name_across_roots() {
     let host = TestOutputPathsHost {
         common_source_directory: "c:/src",
         content_mapper_extensions: Vec::new(),
+        ..Default::default()
     };
     assert_eq!(
         get_output_js_file_name_worker("d:/shared.ts", &options, &host),
@@ -135,6 +170,7 @@ fn test_output_file_names_preserve_empty_and_dot_stems() {
     let host = TestOutputPathsHost {
         common_source_directory: "/project/src",
         content_mapper_extensions: vec![".css".to_string()],
+        ..Default::default()
     };
     let options = CompilerOptions {
         out_dir: "/project/out".to_string(),

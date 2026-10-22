@@ -22,7 +22,7 @@ struct ApiFlags {
     run_external_code: bool,
 }
 
-// Go: cmd/tsc/api.go:29 parseAPIFlags (tsgo#4712)
+// Go: cmd/tsc/api.go:29 parseAPIFlags (tsgo#4712, ts#64818)
 // PORT: Go `StringVar` and `BoolVar` write into `result` as the flags are
 // parsed. The port's flag set has only `String` and `Bool`, so the values
 // are read into the result after the parse. The flag order and texts are
@@ -33,7 +33,7 @@ fn parse_api_flags(args: &[String]) -> Result<ApiFlags, GoError> {
     let pipe_path = flags.string(
         "pipe",
         "",
-        "use named pipe or Unix domain socket for communication instead of stdio",
+        "use a named pipe (Windows) or create a private Unix socket at <path>/socket, where <path> must not exist",
     );
     let callbacks = flags.string(
         "callbacks",

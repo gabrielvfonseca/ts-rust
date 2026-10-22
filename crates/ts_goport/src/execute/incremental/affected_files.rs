@@ -511,7 +511,7 @@ impl<'a> AffectedFilesHandler<'a> {
         seen_file_names_map
     }
 
-    // Go: incremental/affectedfileshandler.go:182 handleDtsMayChangeOfAffectedFile
+    // Go: incremental/affectedfileshandler.go:182 handleDtsMayChangeOfAffectedFile (ts#64691)
     // Handles semantic diagnostics and dts emit for affectedFile and files, that are referencing modules that export entities from affected file
     // This is because even though js emit doesnt change, dts emit / type used can change resulting in need for dts emit and js change
     fn handle_dts_may_change_of_affected_file(

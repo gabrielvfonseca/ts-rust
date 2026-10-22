@@ -26,7 +26,7 @@ const INTERSECTION_ARM: TypeFlags = TypeFlags::STRING
     .union(TypeFlags::INTERSECTION);
 
 impl Checker {
-    // Go: checker/checker.go:31404 instantiateInstantiableTypes
+    // Go: checker/checker.go:31499 instantiateInstantiableTypes
     pub fn instantiate_instantiable_types(&mut self, t: TypeId, mapper: MapperId) -> TypeId {
         let flags = self.ty(t).flags;
         if flags.intersects(TypeFlags::INSTANTIABLE) {
@@ -45,24 +45,24 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:31421 pushCachedContextualType
+    // Go: checker/checker.go:31516 pushCachedContextualType
     pub fn push_cached_contextual_type(&mut self, node: Node) {
         let t = self.get_contextual_type(node, ContextFlags::NONE);
         self.push_contextual_type(node, t, true /*isCache*/);
     }
 
-    // Go: checker/checker.go:31425 pushContextualType
+    // Go: checker/checker.go:31520 pushContextualType
     pub fn push_contextual_type(&mut self, node: Node, t: TypeId, is_cache: bool) {
         self.contextual_infos
             .push(ContextualInfo { node, t, is_cache });
     }
 
-    // Go: checker/checker.go:31429 popContextualType
+    // Go: checker/checker.go:31524 popContextualType
     pub fn pop_contextual_type(&mut self) {
         self.contextual_infos.pop();
     }
 
-    // Go: checker/checker.go:31435 findContextualNode
+    // Go: checker/checker.go:31530 findContextualNode
     pub fn find_contextual_node(&self, node: Node, include_caches: bool) -> i32 {
         for (i, info) in self.contextual_infos.iter().enumerate() {
             if node == info.node && (include_caches || !info.is_cache) {
@@ -72,7 +72,7 @@ impl Checker {
         -1
     }
 
-    // Go: checker/checker.go:31446 isContextSensitive
+    // Go: checker/checker.go:31541 isContextSensitive
     // Returns true if the given expression contains (at any level of nesting) a function or arrow expression
     // that is subject to contextual typing.
     pub fn is_context_sensitive(&mut self, node: Node) -> bool {
@@ -142,14 +142,14 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:31480 isContextSensitiveFunctionLikeDeclaration
+    // Go: checker/checker.go:31575 isContextSensitiveFunctionLikeDeclaration
     pub fn is_context_sensitive_function_like_declaration(&mut self, node: Node) -> bool {
         has_context_sensitive_parameters(node)
             || self.has_context_sensitive_return_expression(node)
             || self.has_context_sensitive_yield_expression(node)
     }
 
-    // Go: checker/checker.go:31484 hasContextSensitiveReturnExpression
+    // Go: checker/checker.go:31579 hasContextSensitiveReturnExpression
     pub fn has_context_sensitive_return_expression(&mut self, node: Node) -> bool {
         if !node.type_parameters().is_empty() || node.type_().is_some() {
             // PORT: Go `node.TypeParameters() != nil`; NodeSlice is empty when nil.
@@ -167,7 +167,7 @@ impl Checker {
         })
     }
 
-    // Go: checker/checker.go:31500 hasContextSensitiveYieldExpression
+    // Go: checker/checker.go:31595 hasContextSensitiveYieldExpression
     pub fn has_context_sensitive_yield_expression(&mut self, node: Node) -> bool {
         get_function_flags(node).intersects(FunctionFlags::GENERATOR)
             && node.body().is_some()
@@ -176,18 +176,18 @@ impl Checker {
             })
     }
 
-    // Go: checker/checker.go:31504 pushInferenceContext
+    // Go: checker/checker.go:31599 pushInferenceContext
     pub fn push_inference_context(&mut self, node: Node, context: InferenceContextId) {
         self.inference_context_infos
             .push(InferenceContextInfo { node, context });
     }
 
-    // Go: checker/checker.go:31508 popInferenceContext
+    // Go: checker/checker.go:31603 popInferenceContext
     pub fn pop_inference_context(&mut self) {
         self.inference_context_infos.pop();
     }
 
-    // Go: checker/checker.go:31514 getInferenceContext
+    // Go: checker/checker.go:31609 getInferenceContext
     pub fn get_inference_context(&self, node: Node) -> InferenceContextId {
         // Go: `slices.Backward` (ts#63902).
         for v in self.inference_context_infos.iter().rev() {
@@ -198,17 +198,17 @@ impl Checker {
         InferenceContextId::NIL
     }
 
-    // Go: checker/checker.go:31523 getTypeFacts
+    // Go: checker/checker.go:31618 getTypeFacts
     pub fn get_type_facts(&mut self, t: TypeId, mask: TypeFacts) -> TypeFacts {
         self.get_type_facts_worker(t, mask) & mask
     }
 
-    // Go: checker/checker.go:31527 hasTypeFacts
+    // Go: checker/checker.go:31622 hasTypeFacts
     pub fn has_type_facts(&mut self, t: TypeId, mask: TypeFacts) -> bool {
         self.get_type_facts(t, mask).0 != 0
     }
 
-    // Go: checker/checker.go:31531 getTypeFactsWorker
+    // Go: checker/checker.go:31626 getTypeFactsWorker
     // PERF: unionfn1. Go's switch is split in two, in Go's order. The arms
     // that read only the type (flags, literal values, the false types, an
     // object whose facts the caller does not need) are
@@ -429,7 +429,7 @@ impl Checker {
         facts
     }
 
-    // Go: checker/checker.go:31667 getIntersectionTypeFacts
+    // Go: checker/checker.go:31762 getIntersectionTypeFacts
     // PERF: chkfacts1. Go walks the list twice: `maybeTypeOfKind(t,
     // Primitive)`, then `getTypeFactsWorker` of each member. Here the first
     // walk does the kind test and also takes the facts of each member that
@@ -526,14 +526,14 @@ impl Checker {
         (ored_facts & TypeFacts::OR_FACTS_MASK) | (anded_facts & TypeFacts::AND_FACTS_MASK)
     }
 
-    // Go: checker/checker.go:31685 isZeroBigInt
+    // Go: checker/checker.go:31780 isZeroBigInt
     pub fn is_zero_big_int(&self, t: TypeId) -> bool {
         // PORT: Go compares with `jsnum.PseudoBigInt{}` (the zero value).
         let v = self.get_big_int_literal_value(t);
         !v.negative && v.base10_value.is_empty()
     }
 
-    // Go: checker/checker.go:31689 isFunctionObjectType
+    // Go: checker/checker.go:31784 isFunctionObjectType
     pub fn is_function_object_type(&mut self, t: TypeId) -> bool {
         if self
             .ty(t)
@@ -586,14 +586,14 @@ impl Checker {
             && self.is_type_subtype_of(t, global_function_type)
     }
 
-    // Go: checker/checker.go:31699 getTypeWithFacts
+    // Go: checker/checker.go:31794 getTypeWithFacts
     pub fn get_type_with_facts(&mut self, t: TypeId, include: TypeFacts) -> TypeId {
         self.filter_type(t, &mut |c: &mut Checker, t: TypeId| {
             c.has_type_facts(t, include)
         })
     }
 
-    // Go: checker/checker.go:31708 getAdjustedTypeWithFacts
+    // Go: checker/checker.go:31803 getAdjustedTypeWithFacts
     // This function is similar to getTypeWithFacts, except that in strictNullChecks mode it replaces type
     // unknown with the union {} | null | undefined (and reduces that accordingly), and it intersects remaining
     // instantiable types with {}, {} | null, or {} | undefined in order to remove null and/or undefined.
@@ -636,7 +636,7 @@ impl Checker {
         reduced
     }
 
-    // Go: checker/checker.go:31728 removeNullableByIntersection
+    // Go: checker/checker.go:31823 removeNullableByIntersection
     pub fn remove_nullable_by_intersection(
         &mut self,
         t: TypeId,
@@ -674,7 +674,7 @@ impl Checker {
         })
     }
 
-    // Go: checker/checker.go:31750 recombineUnknownType
+    // Go: checker/checker.go:31845 recombineUnknownType
     pub fn recombine_unknown_type(&self, t: TypeId) -> TypeId {
         if t == self.unknown_union_type {
             return self.unknown_type;
@@ -682,7 +682,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:31757 getGlobalNonNullableTypeInstantiation
+    // Go: checker/checker.go:31852 getGlobalNonNullableTypeInstantiation
     pub fn get_global_non_nullable_type_instantiation(&mut self, t: TypeId) -> TypeId {
         let resolver = self.get_global_non_nullable_type_alias_or_nil.clone();
         let alias = resolver(self);
@@ -693,7 +693,7 @@ impl Checker {
         self.get_intersection_type(&[t, empty_object_type])
     }
 
-    // Go: checker/checker.go:31765 convertAutoToAny
+    // Go: checker/checker.go:31860 convertAutoToAny
     pub fn convert_auto_to_any(&self, t: TypeId) -> TypeId {
         if t == self.auto_type {
             return self.any_type;
@@ -703,7 +703,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:31781 checkAwaitedType
+    // Go: checker/checker.go:31876 checkAwaitedType
     // Gets the "awaited type" of a type.
     // @param type The type to await.
     // @param withAlias When `true`, wraps the "awaited type" in `Awaited<T>` if needed.
@@ -728,7 +728,7 @@ impl Checker {
         self.error_type
     }
 
-    // Go: checker/checker.go:31802 getAwaitedType
+    // Go: checker/checker.go:31897 getAwaitedType
     // Gets the "awaited type" of a type.
     //
     // The "awaited type" of an expression is its "promised type" if the expression is a
@@ -741,7 +741,7 @@ impl Checker {
         self.get_awaited_type_ex(t, Node::NIL, None, Vec::new())
     }
 
-    // Go: checker/checker.go:31806 getAwaitedTypeEx
+    // Go: checker/checker.go:31901 getAwaitedTypeEx
     pub fn get_awaited_type_ex(
         &mut self,
         t: TypeId,
@@ -757,13 +757,13 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:31815 getAwaitedTypeNoAlias
+    // Go: checker/checker.go:31910 getAwaitedTypeNoAlias
     // Gets the "awaited type" of a type without introducing an `Awaited<T>` wrapper.
     pub fn get_awaited_type_no_alias(&mut self, t: TypeId) -> TypeId {
         self.get_awaited_type_no_alias_ex(t, Node::NIL, None, Vec::new())
     }
 
-    // Go: checker/checker.go:31819 getAwaitedTypeNoAliasEx
+    // Go: checker/checker.go:31914 getAwaitedTypeNoAliasEx
     pub fn get_awaited_type_no_alias_ex(
         &mut self,
         t: TypeId,
@@ -919,7 +919,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:31933 isAwaitedTypeInstantiation
+    // Go: checker/checker.go:32028 isAwaitedTypeInstantiation
     pub fn is_awaited_type_instantiation(&mut self, t: TypeId) -> bool {
         if self.ty(t).flags.intersects(TypeFlags::CONDITIONAL) {
             let resolver = self.get_global_awaited_symbol_or_nil.clone();
@@ -935,7 +935,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:31941 isAwaitedTypeNeeded
+    // Go: checker/checker.go:32036 isAwaitedTypeNeeded
     pub fn is_awaited_type_needed(&mut self, t: TypeId) -> bool {
         // If this is already an `Awaited<T>`, we shouldn't wrap it. This helps to avoid `Awaited<Awaited<T>>` in higher-order.
         if self.is_type_any(t) || self.is_awaited_type_instantiation(t) {
@@ -961,7 +961,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:31959 createAwaitedTypeIfNeeded
+    // Go: checker/checker.go:32054 createAwaitedTypeIfNeeded
     pub fn create_awaited_type_if_needed(&mut self, t: TypeId) -> TypeId {
         // We wrap type `T` in `Awaited<T>` based on the following conditions:
         // - `T` is not already an `Awaited<U>`, and
@@ -979,7 +979,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:31976 tryCreateAwaitedType
+    // Go: checker/checker.go:32071 tryCreateAwaitedType
     pub fn try_create_awaited_type(&mut self, t: TypeId) -> TypeId {
         // Nothing to do if `Awaited<T>` doesn't exist
         let resolver = self.get_global_awaited_symbol.clone();
@@ -993,7 +993,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:31988 unwrapAwaitedType
+    // Go: checker/checker.go:32083 unwrapAwaitedType
     // For a generic `Awaited<T>`, gets `T`.
     pub fn unwrap_awaited_type(&mut self, t: TypeId) -> TypeId {
         if self.ty(t).flags.intersects(TypeFlags::UNION) {
@@ -1011,7 +1011,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:31998 isThenableType
+    // Go: checker/checker.go:32093 isThenableType
     pub fn is_thenable_type(&mut self, t: TypeId) -> bool {
         let constraint = self.get_base_constraint_or_type(t);
         if self.all_types_assignable_to_kind(constraint, TypeFlags::PRIMITIVE | TypeFlags::NEVER) {
@@ -1028,12 +1028,12 @@ impl Checker {
             != 0
     }
 
-    // Go: checker/checker.go:32007 getAwaitedTypeOfPromise
+    // Go: checker/checker.go:32102 getAwaitedTypeOfPromise
     pub fn get_awaited_type_of_promise(&mut self, t: TypeId) -> TypeId {
         self.get_awaited_type_of_promise_ex(t, Node::NIL, None, Vec::new())
     }
 
-    // Go: checker/checker.go:32011 getAwaitedTypeOfPromiseEx
+    // Go: checker/checker.go:32106 getAwaitedTypeOfPromiseEx
     pub fn get_awaited_type_of_promise_ex(
         &mut self,
         t: TypeId,
@@ -1048,13 +1048,13 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:32020 isSomeSymbolAssigned
+    // Go: checker/checker.go:32115 isSomeSymbolAssigned
     // Check if a parameter or catch variable (or their bindings elements) is assigned anywhere
     pub fn is_some_symbol_assigned(&mut self, root_declaration: Node) -> bool {
         self.is_some_symbol_assigned_worker(root_declaration.name())
     }
 
-    // Go: checker/checker.go:32024 isSomeSymbolAssignedWorker
+    // Go: checker/checker.go:32119 isSomeSymbolAssignedWorker
     pub fn is_some_symbol_assigned_worker(&mut self, node: Node) -> bool {
         if node.kind() == SyntaxKind::Identifier {
             let symbol = self.get_symbol_of_declaration(node.parent());
@@ -1065,7 +1065,7 @@ impl Checker {
             .any(|e| e.name().is_some() && self.is_some_symbol_assigned_worker(e.name()))
     }
 
-    // Go: checker/checker.go:32033 getTargetType
+    // Go: checker/checker.go:32128 getTargetType
     // PORT: Go has both a package func `getTargetType` (checker.go:19465, ported in
     // checker_p22 as `Checker::get_target_type`) and this method with identical logic.
     // Both would be `get_target_type` on `Checker`, so this one gets a `_method` suffix.
@@ -1077,7 +1077,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:32040 getNarrowableTypeForReference
+    // Go: checker/checker.go:32135 getNarrowableTypeForReference
     pub fn get_narrowable_type_for_reference(
         &mut self,
         t: TypeId,
@@ -1109,7 +1109,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:32058 isConstraintPosition
+    // Go: checker/checker.go:32153 isConstraintPosition
     pub fn is_constraint_position(&mut self, t: TypeId, node: Node) -> bool {
         let parent = node.parent();
         // In an element access obj[x], we consider obj to be in a constraint position, except when obj is of
@@ -1132,7 +1132,7 @@ impl Checker {
             })
     }
 
-    // Go: checker/checker.go:32068 isGenericTypeWithUnionConstraint
+    // Go: checker/checker.go:32163 isGenericTypeWithUnionConstraint
     pub fn is_generic_type_with_union_constraint(&mut self, t: TypeId) -> bool {
         if self.ty(t).flags.intersects(TypeFlags::INTERSECTION) {
             return (0..self.ty(t).types().len())
@@ -1147,7 +1147,7 @@ impl Checker {
             .intersects(TypeFlags::NULLABLE | TypeFlags::UNION)
     }
 
-    // Go: checker/checker.go:32075 isGenericTypeWithoutNullableConstraint
+    // Go: checker/checker.go:32170 isGenericTypeWithoutNullableConstraint
     pub fn is_generic_type_without_nullable_constraint(&mut self, t: TypeId) -> bool {
         if self.ty(t).flags.intersects(TypeFlags::INTERSECTION) {
             return (0..self.ty(t).types().len())
@@ -1160,7 +1160,7 @@ impl Checker {
         !self.maybe_type_of_kind(constraint, TypeFlags::NULLABLE)
     }
 
-    // Go: checker/checker.go:32082 hasContextualTypeWithNoGenericTypes
+    // Go: checker/checker.go:32177 hasContextualTypeWithNoGenericTypes
     pub fn has_contextual_type_with_no_generic_types(
         &mut self,
         node: Node,
@@ -1190,7 +1190,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:32097 getNonUndefinedType
+    // Go: checker/checker.go:32192 getNonUndefinedType
     pub fn get_non_undefined_type(&mut self, t: TypeId) -> TypeId {
         let mut type_or_constraint = t;
         if self.some_type(t, &mut |c: &mut Checker, t: TypeId| {
@@ -1206,7 +1206,7 @@ impl Checker {
         self.get_type_with_facts(type_or_constraint, TypeFacts::NE_UNDEFINED)
     }
 
-    // Go: checker/checker.go:32110 isGenericTypeWithUndefinedConstraint
+    // Go: checker/checker.go:32205 isGenericTypeWithUndefinedConstraint
     pub fn is_generic_type_with_undefined_constraint(&mut self, t: TypeId) -> bool {
         if self.ty(t).flags.intersects(TypeFlags::INSTANTIABLE) {
             let constraint = self.get_base_constraint_of_type(t);
@@ -1217,7 +1217,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:32120 getActualTypeVariable
+    // Go: checker/checker.go:32215 getActualTypeVariable
     pub fn get_actual_type_variable(&mut self, t: TypeId) -> TypeId {
         let flags = self.ty(t).flags;
         if flags.intersects(TypeFlags::SUBSTITUTION) {
@@ -1236,7 +1236,7 @@ impl Checker {
         self.get_non_distributed_type_parameter(t)
     }
 
-    // Go: checker/checker.go:32134 GetSymbolAtLocation
+    // Go: checker/checker.go:32229 GetSymbolAtLocation
     pub fn get_symbol_at_location_exported(&mut self, node: Node) -> SymbolId {
         // !!!
         // const node = getParseTreeNode(nodeIn);
@@ -1245,7 +1245,7 @@ impl Checker {
         self.get_symbol_at_location(get_reparsed_node_for_node(node), true /*ignoreErrors*/)
     }
 
-    // Go: checker/checker.go:32147 getSymbolAtLocation
+    // Go: checker/checker.go:32242 getSymbolAtLocation
     // Returns the symbol associated with a given AST node. Do *not* use this function in the checker itself! It should
     // be used only by the language service and external tools. The semantics of the function are deliberately "fuzzy"
     // and aim to just return *some* symbol for the node. To obtain the symbol associated with a node for type checking

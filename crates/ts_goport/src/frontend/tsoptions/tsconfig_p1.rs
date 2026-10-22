@@ -13,7 +13,7 @@ fn leak_option(o: CommandLineOption) -> &'static CommandLineOption {
     Box::leak(Box::new(o))
 }
 
-// Go: tsoptions/tsconfigparsing.go:26 extendsResult
+// Go: tsoptions/tsconfigparsing.go:27 extendsResult
 // PORT: Go `collections.Set[string]` is `FxHashSet<String>`. Readers sort
 // the keys (`core.InsertSorted`), so order does not matter.
 #[derive(Clone, Debug, Default)]
@@ -114,7 +114,7 @@ pub static TSCONFIG_ROOT_OPTIONS_MAP: LazyLock<&'static CommandLineOption> = Laz
     })
 });
 
-// Go: tsoptions/tsconfigparsing.go:36 configFileSpecs
+// Go: tsoptions/tsconfigparsing.go:37 configFileSpecs
 #[derive(Clone, Debug, Default)]
 pub struct ConfigFileSpecs {
     pub files_specs: CompilerOptionsValue,
@@ -160,7 +160,7 @@ impl ConfigFileSpecs {
         false
     }
 
-    // Go: tsoptions/tsconfigparsing.go:52 (*configFileSpecs).getMatchedIncludeSpec
+    // Go: tsoptions/tsconfigparsing.go:53 (*configFileSpecs).getMatchedIncludeSpec
     pub fn get_matched_include_spec(
         &self,
         file_name: &str,
@@ -185,7 +185,7 @@ impl ConfigFileSpecs {
         String::new()
     }
 
-    // Go: tsoptions/tsconfigparsing.go:65 (*configFileSpecs).getMatchedFileSpec
+    // Go: tsoptions/tsconfigparsing.go:66 (*configFileSpecs).getMatchedFileSpec
     pub fn get_matched_file_spec(
         &self,
         file_name: &str,
@@ -213,10 +213,10 @@ impl ConfigFileSpecs {
     }
 }
 
-// Go: tsoptions/tsconfigparsing.go:148 FileExtensionInfo
+// Go: tsoptions/tsconfigparsing.go:148 FileExtensionInfo (at dc37b5249ab6)
 // tsgo#4712 removes it: extra extensions are plain strings now.
 
-// Go: tsoptions/tsconfigparsing.go:69 ExtendedConfigCache
+// Go: tsoptions/tsconfigparsing.go:70 ExtendedConfigCache
 // PORT: Go returns a shared `*ExtendedConfigCacheEntry`, so this returns
 // an `Rc`.
 pub trait ExtendedConfigCache {
@@ -229,7 +229,7 @@ pub trait ExtendedConfigCache {
     ) -> Rc<ExtendedConfigCacheEntry>;
 }
 
-// Go: tsoptions/tsconfigparsing.go:73 ExtendedConfigCacheEntry
+// Go: tsoptions/tsconfigparsing.go:74 ExtendedConfigCacheEntry
 // PORT: Go pointers are `Option<Rc<..>>`. `ParseExtendedConfig` finishes
 // the `TsConfigSourceFile` before the entry is shared, so no `RefCell`.
 #[derive(Clone, Debug, Default)]
@@ -240,7 +240,7 @@ pub struct ExtendedConfigCacheEntry {
 }
 
 impl ExtendedConfigCacheEntry {
-    // Go: tsoptions/tsconfigparsing.go:79 (*ExtendedConfigCacheEntry).ExtendedFileNames
+    // Go: tsoptions/tsconfigparsing.go:80 (*ExtendedConfigCacheEntry).ExtendedFileNames
     pub fn extended_file_names(&self) -> &[String] {
         if let Some(extended_result) = &self.extended_result {
             return &extended_result.extended_source_files;
@@ -249,7 +249,7 @@ impl ExtendedConfigCacheEntry {
     }
 }
 
-// Go: tsoptions/tsconfigparsing.go:86 parsedTsconfig
+// Go: tsoptions/tsconfigparsing.go:87 parsedTsconfig
 // PORT: Go `extendedConfigPath any` only ever holds a `[]string` (typed,
 // so never Go nil once set) or Go nil. `Some` is "set", `None` is Go nil.
 #[derive(Clone, Debug, Default)]
@@ -261,7 +261,7 @@ pub struct ParsedTsconfig {
     pub extended_config_path: Option<Vec<String>>,
 }
 
-// Go: tsoptions/tsconfigparsing.go:105 parseOwnConfigOfJsonSourceFile
+// Go: tsoptions/tsconfigparsing.go:106 parseOwnConfigOfJsonSourceFile
 pub fn parse_own_config_of_json_source_file(
     source_file: Node,
     host: &dyn ParseConfigHost,
@@ -416,7 +416,7 @@ pub fn parse_own_config_of_json_source_file(
     )
 }
 
-// Go: tsoptions/tsconfigparsing.go:208 TsConfigSourceFile
+// Go: tsoptions/tsconfigparsing.go:209 TsConfigSourceFile
 // PORT: Go `*configFileSpecs` is `Option<ConfigFileSpecs>`; readers copy
 // or borrow it and never share it.
 #[derive(Clone, Debug, Default)]
@@ -430,7 +430,7 @@ pub struct TsConfigSourceFile {
     pub file_name: String,
 }
 
-// Go: tsoptions/tsconfigparsing.go:214 tsconfigToSourceFile
+// Go: tsoptions/tsconfigparsing.go:215 tsconfigToSourceFile
 pub fn tsconfig_to_source_file(tsconfig_source_file: Option<&TsConfigSourceFile>) -> Node {
     match tsconfig_source_file {
         None => Node::NIL,
@@ -438,7 +438,7 @@ pub fn tsconfig_to_source_file(tsconfig_source_file: Option<&TsConfigSourceFile>
     }
 }
 
-// Go: tsoptions/tsconfigparsing.go:221 NewTsconfigSourceFileFromFilePath
+// Go: tsoptions/tsconfigparsing.go:222 NewTsconfigSourceFileFromFilePath
 // PORT: Go returns a pointer to a new value; this returns the value. The
 // parser keeps source text for the program, so the text is leaked.
 // PORT: Go keeps the parser fields (`ParseOptions()`) on the returned
@@ -484,7 +484,7 @@ pub type OnPropertySet<'a> = Box<
         + 'a,
 >;
 
-// Go: tsoptions/tsconfigparsing.go:231 jsonConversionNotifier
+// Go: tsoptions/tsconfigparsing.go:232 jsonConversionNotifier
 // PORT: Go func field is a boxed `FnMut`. Callers pass
 // `Option<&mut JsonConversionNotifier>` where Go passes a nilable pointer.
 // `on_property_set` borrows the value (Go passes the map pointer that the
@@ -495,7 +495,7 @@ pub struct JsonConversionNotifier<'a> {
     pub on_property_set: OnPropertySet<'a>,
 }
 
-// Go: tsoptions/tsconfigparsing.go:236 convertConfigFileToObject
+// Go: tsoptions/tsconfigparsing.go:237 convertConfigFileToObject
 pub fn convert_config_file_to_object(
     source_file: Node,
     json_conversion_notifier: Option<&mut JsonConversionNotifier<'_>>,
@@ -548,7 +548,7 @@ fn is_slice_value(value: &CompilerOptionsValue) -> bool {
     )
 }
 
-// Go: tsoptions/tsconfigparsing.go:266 isCompilerOptionsValue
+// Go: tsoptions/tsconfigparsing.go:267 isCompilerOptionsValue
 // PORT: Go `reflect` kind tests are variant matches (Go `orderedMapType`, line 333, is the `Map` match). Slice kinds are `List`
 // and `StringList`; `orderedMapType` is only the `Map` variant.
 pub fn is_compiler_options_value(
@@ -598,7 +598,7 @@ fn as_string(value: &CompilerOptionsValue) -> &str {
     }
 }
 
-// Go: tsoptions/tsconfigparsing.go:300 validateJsonOptionValue
+// Go: tsoptions/tsconfigparsing.go:301 validateJsonOptionValue
 pub fn validate_json_option_value(
     opt: &CommandLineOption,
     val: CompilerOptionsValue,
@@ -634,7 +634,7 @@ pub fn validate_json_option_value(
     (val, Vec::new())
 }
 
-// Go: tsoptions/tsconfigparsing.go:325 convertJsonOptionOfListType
+// Go: tsoptions/tsconfigparsing.go:326 convertJsonOptionOfListType
 // PORT: Go returns a `[]any` that callers store in an `any`, where a nil
 // slice is not Go nil. A non-nil input stays a non-nil `List` through
 // `core.MapIndex` and `core.Filter`. A `NilList` input (an array of nulls)
@@ -686,12 +686,12 @@ pub fn convert_json_option_of_list_type(
     (CompilerOptionsValue::NilList, errors)
 }
 
-// Go: tsoptions/tsconfigparsing.go:355 configDirTemplate
+// Go: tsoptions/tsconfigparsing.go:356 configDirTemplate
 pub const CONFIG_DIR_TEMPLATE: &str = "${configDir}";
 /// `CONFIG_DIR_TEMPLATE` lowered (Go lowers it on each call).
 const CONFIG_DIR_TEMPLATE_LOWER: &str = "${configdir}";
 
-// Go: tsoptions/tsconfigparsing.go:357 startsWithConfigDirTemplate
+// Go: tsoptions/tsconfigparsing.go:358 startsWithConfigDirTemplate
 // PORT: Go `strings.ToLower` (`strings_to_lower`), not `to_lowercase`:
 // `${confİgDir}` (U+0130) starts with the template in Go.
 pub fn starts_with_config_dir_template(value: &CompilerOptionsValue) -> bool {
@@ -701,7 +701,7 @@ pub fn starts_with_config_dir_template(value: &CompilerOptionsValue) -> bool {
     super::decls::strings_to_lower(str).starts_with(CONFIG_DIR_TEMPLATE_LOWER)
 }
 
-// Go: tsoptions/tsconfigparsing.go:361 normalizeNonListOptionValue
+// Go: tsoptions/tsconfigparsing.go:362 normalizeNonListOptionValue
 pub fn normalize_non_list_option_value(
     option: &CommandLineOption,
     base_path: &str,
@@ -723,7 +723,16 @@ pub fn normalize_non_list_option_value(
     value
 }
 
-// Go: tsoptions/tsconfigparsing.go:375 convertJsonOption
+// Go: tsoptions/tsconfigparsing.go:380 isNetworkPathValue (ts#64832)
+// isNetworkPathValue reports whether a path written in a config file refers
+// to a network location once resolved against basePath. Checking the resolved
+// path matches what the file system refuses to access, since normalization
+// can add or remove a `/??/` prefix.
+pub(crate) fn is_network_path_value(value: &str, base_path: &str) -> bool {
+    crate::frontend::nativepath::is_network_path(&get_normalized_absolute_path(value, base_path))
+}
+
+// Go: tsoptions/tsconfigparsing.go:384 convertJsonOption (ts#64832)
 pub fn convert_json_option(
     opt: &CommandLineOption,
     value: CompilerOptionsValue,
@@ -813,6 +822,22 @@ pub fn convert_json_option(
             validate_json_option_value(opt, value, value_expression, source_file);
         if !errors.is_empty() || validated_value.is_nil() {
             (validated_value, errors)
+        } else if let CompilerOptionsValue::String(path) = &validated_value
+            && opt.is_file_path
+            && is_network_path_value(path, base_path)
+        {
+            // ts#64832. Go `opt.PathKind.IsRooted()` is `is_file_path`.
+            (
+                CompilerOptionsValue::Nil,
+                vec![
+                    create_diagnostic_for_node_in_source_file_or_compiler_diagnostic(
+                        source_file,
+                        value_expression,
+                        diag::Network_path_0_is_not_supported,
+                        args![path],
+                    ),
+                ],
+            )
         } else {
             (
                 normalize_non_list_option_value(opt, base_path, validated_value),
@@ -834,7 +859,7 @@ pub fn convert_json_option(
     }
 }
 
-// Go: tsoptions/tsconfigparsing.go:422 getExtendsConfigPathOrArray
+// Go: tsoptions/tsconfigparsing.go:433 getExtendsConfigPathOrArray
 // PORT: Go returns a `[]string` that may be nil. Every caller stores it in
 // an `any`, where nil and empty are both non-nil, so this returns a `Vec`.
 pub fn get_extends_config_path_or_array(
@@ -918,7 +943,7 @@ pub fn get_extends_config_path_or_array(
     (extended_config_path_array, errors)
 }
 
-// Go: tsoptions/tsconfigparsing.go:471 getExtendsConfigPath
+// Go: tsoptions/tsconfigparsing.go:482 getExtendsConfigPath (ts#64832)
 pub fn get_extends_config_path(
     extended_config: &str,
     host: &dyn ParseConfigHost,
@@ -931,6 +956,18 @@ pub fn get_extends_config_path(
     let mut error_file = Node::NIL;
     if source_file.is_some() {
         error_file = source_file;
+    }
+    // ts#64832
+    if is_network_path_value(&extended_config, base_path) {
+        errors.push(
+            create_diagnostic_for_node_in_source_file_or_compiler_diagnostic(
+                error_file,
+                value_expression,
+                diag::Network_path_0_is_not_supported,
+                args![extended_config],
+            ),
+        );
+        return (String::new(), errors);
     }
     if is_rooted_disk_path(&extended_config)
         || extended_config.starts_with("./")
@@ -990,18 +1027,18 @@ pub fn get_extends_config_path(
     (String::new(), errors)
 }
 
-// Go: tsoptions/tsconfigparsing.go:507 tsConfigOptions
+// Go: tsoptions/tsconfigparsing.go:522 tsConfigOptions
 // PORT: Go declares this struct and never uses it. It is not ported, so no
 // `core.ProjectReference` type is needed here.
 
-// Go: tsoptions/tsconfigparsing.go:513 CommandLineOptionNameMap
+// Go: tsoptions/tsconfigparsing.go:528 CommandLineOptionNameMap
 // PORT: Go map type is a newtype. A Go nil map is an empty map; every
 // non-nil map built here has entries, so `is_nil` is `is_empty`.
 #[derive(Clone, Debug, Default)]
 pub struct CommandLineOptionNameMap(pub FxHashMap<String, &'static CommandLineOption>);
 
 impl CommandLineOptionNameMap {
-    // Go: tsoptions/tsconfigparsing.go:515 CommandLineOptionNameMap.Get
+    // Go: tsoptions/tsconfigparsing.go:530 CommandLineOptionNameMap.Get
     #[must_use]
     pub fn get(&self, name: &str) -> Option<&'static CommandLineOption> {
         match self.0.get(name) {
@@ -1010,7 +1047,7 @@ impl CommandLineOptionNameMap {
         }
     }
 
-    // Go: tsoptions/tsconfigparsing.go:523 CommandLineOptionNameMap.GetSpellingSuggestion
+    // Go: tsoptions/tsconfigparsing.go:538 CommandLineOptionNameMap.GetSpellingSuggestion
     // PORT: Go map order is random. The result does not depend on it: the
     // closest name wins and a tie goes to the smaller name (`compare`).
     #[must_use]
@@ -1038,7 +1075,7 @@ impl CommandLineOptionNameMap {
     }
 }
 
-// Go: tsoptions/tsconfigparsing.go:532 commandLineOptionsToMap
+// Go: tsoptions/tsconfigparsing.go:547 commandLineOptionsToMap
 pub fn command_line_options_to_map(
     compiler_options: &[&'static CommandLineOption],
 ) -> CommandLineOptionNameMap {
@@ -1051,11 +1088,11 @@ pub fn command_line_options_to_map(
     CommandLineOptionNameMap(result)
 }
 
-// Go: tsoptions/tsconfigparsing.go:541 CommandLineCompilerOptionsMap
+// Go: tsoptions/tsconfigparsing.go:556 CommandLineCompilerOptionsMap
 pub static COMMAND_LINE_COMPILER_OPTIONS_MAP: LazyLock<CommandLineOptionNameMap> =
     LazyLock::new(|| command_line_options_to_map(&OPTIONS_DECLARATIONS));
 
-// Go: tsoptions/tsconfigparsing.go:543 convertMapToOptions
+// Go: tsoptions/tsconfigparsing.go:558 convertMapToOptions
 pub fn convert_map_to_options<O: OptionParser>(
     compiler_options: &IndexMap<String, CompilerOptionsValue>,
     mut result: O,
@@ -1067,7 +1104,7 @@ pub fn convert_map_to_options<O: OptionParser>(
     result
 }
 
-// Go: tsoptions/tsconfigparsing.go:551 convertOptionsFromJson
+// Go: tsoptions/tsconfigparsing.go:566 convertOptionsFromJson
 pub fn convert_options_from_json<O: OptionParser>(
     options_name_map: &CommandLineOptionNameMap,
     json_options: &CompilerOptionsValue,
@@ -1127,7 +1164,7 @@ pub fn convert_options_from_json<O: OptionParser>(
     (result, errors)
 }
 
-// Go: tsoptions/tsconfigparsing.go:580 convertArrayLiteralExpressionToJson
+// Go: tsoptions/tsconfigparsing.go:595 convertArrayLiteralExpressionToJson
 // PORT: A Go nil `[]any` (every element converted to nil) is still a
 // non-nil `any`. It is a `NilList`, so readers can tell it from `[]`.
 pub fn convert_array_literal_expression_to_json(
@@ -1186,7 +1223,7 @@ pub fn directory_of_combined_path(file_name: &str, base_path: &str) -> String {
 // ParseConfigFileTextToJson parses the text of the tsconfig.json file
 // fileName is the path to the config file
 // jsonText is the text of the config file
-// Go: tsoptions/tsconfigparsing.go:613 ParseConfigFileTextToJson
+// Go: tsoptions/tsconfigparsing.go:628 ParseConfigFileTextToJson
 pub fn parse_config_file_text_to_json(
     file_name: &str,
     path: Path,
@@ -1266,7 +1303,7 @@ impl ResolutionHost for ResolverHost {
     }
 }
 
-// Go: tsoptions/tsconfigparsing.go:625 ParseJsonSourceFileConfigFileContent
+// Go: tsoptions/tsconfigparsing.go:640 ParseJsonSourceFileConfigFileContent
 // PORT: Go passes a pointer that no caller uses again, so the source file
 // moves into the result.
 #[allow(clippy::too_many_arguments)]
@@ -1295,7 +1332,7 @@ pub fn parse_json_source_file_config_file_content(
     )
 }
 
-// Go: tsoptions/tsconfigparsing.go:640 convertObjectLiteralExpressionToJson
+// Go: tsoptions/tsconfigparsing.go:655 convertObjectLiteralExpressionToJson
 // PORT: Go returns a nil map when `returnValue` is false. Every caller
 // passes true; `Nil` stands for the nil map.
 pub fn convert_object_literal_expression_to_json(
@@ -1378,7 +1415,7 @@ pub fn convert_object_literal_expression_to_json(
 // convertToJson converts the json syntax tree into the json value and report errors
 // This returns the json value (apart from checking errors) only if returnValue provided is true.
 // Otherwise it just checks the errors and returns undefined
-// Go: tsoptions/tsconfigparsing.go:692 convertToJson
+// Go: tsoptions/tsconfigparsing.go:707 convertToJson
 // PORT: Go returns `struct{}{}` for a missing root. That is a non-nil
 // value of no other type, so it is `CompilerOptionsValue::EmptyStruct`.
 pub fn convert_to_json(
@@ -1407,12 +1444,12 @@ pub fn convert_to_json(
     )
 }
 
-// Go: tsoptions/tsconfigparsing.go:712 isDoubleQuotedString
+// Go: tsoptions/tsconfigparsing.go:727 isDoubleQuotedString
 fn is_double_quoted_string(node: Node) -> bool {
     is_string_literal(node)
 }
 
-// Go: tsoptions/tsconfigparsing.go:716 convertPropertyValueToJson
+// Go: tsoptions/tsconfigparsing.go:731 convertPropertyValueToJson
 pub fn convert_property_value_to_json(
     source_file: Node,
     value_expression: Node,
@@ -1512,7 +1549,7 @@ pub fn convert_property_value_to_json(
 // jsonNode: The contents of the config file to parse
 // host: Instance of ParseConfigHost used to enumerate files in folder.
 // basePath: A root directory to resolve relative path entries in the config file to. e.g. outDir
-// Go: tsoptions/tsconfigparsing.go:770 ParseJsonConfigFileContent
+// Go: tsoptions/tsconfigparsing.go:785 ParseJsonConfigFileContent
 #[allow(clippy::too_many_arguments)]
 pub fn parse_json_config_file_content(
     json: &CompilerOptionsValue,
@@ -1543,7 +1580,7 @@ pub fn parse_json_config_file_content(
     )
 }
 
-// Go: tsoptions/tsconfigparsing.go:780 normalizeJsonValue
+// Go: tsoptions/tsconfigparsing.go:795 normalizeJsonValue
 // PORT: `CompilerOptionsValue` has no form for a Go `map[string]any` (Go
 // sorts its keys into an ordered map), so only the ordered map case is
 // ported. A Go typed slice (`reflect` case) is `StringList`; it cannot be
@@ -1572,7 +1609,7 @@ fn normalize_json_value(value: CompilerOptionsValue) -> CompilerOptionsValue {
 }
 
 // convertToObject converts the json syntax tree into the json value
-// Go: tsoptions/tsconfigparsing.go:817 convertToObject
+// Go: tsoptions/tsconfigparsing.go:832 convertToObject
 pub fn convert_to_object(source_file: Node) -> (CompilerOptionsValue, Vec<Diagnostic>) {
     let mut root_expression = Node::NIL;
     let statements = source_file.statements();

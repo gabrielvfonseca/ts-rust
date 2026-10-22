@@ -31,9 +31,9 @@ Files:
 Build, test and time (see the header of each script):
 
 ```sh
-GOPORT_BUILD_VERSION=7.1.0-dev.goport.1 scripts/run-cargo-capped.sh build --release -p ts_goport --bin tsgo --features noembed
+GOPORT_BUILD_VERSION=7.1.0-beta.goport.1 scripts/run-cargo-capped.sh build --release -p ts_goport --bin tsgo --features noembed
 GOPORT_PIN=<pin> scripts/goport/npm-pack.sh <out>/rs target/release/tsgo
-GOPORT_PIN=<pin> scripts/goport/npm-pack.sh --go 7.1.0-dev.goport.1 <out>/go
+GOPORT_PIN=<pin> scripts/goport/npm-pack.sh --go 7.1.0-beta.goport.1 <out>/go
 scripts/goport/npm-test.sh <out>/rs <out>/test-rs
 scripts/goport/perf-npm.sh <label> <out>/test-rs/proj <out>/test-go/proj   # on a quiet host
 ```
@@ -63,7 +63,7 @@ does not clash with the `tsc` of a `typescript` install) and one platform packag
 `lib/getExePath.js` finds `@tsc-rs/<platform>-<arch>`.
 
 The npm version (`--package-version`) is the port's own. The tsc is not stamped with it: it reports
-the TypeScript version of the source (`7.1.0-dev`), because the compiler matches `typesVersions`
+the TypeScript version of the source (`7.1.0-beta`), because the compiler matches `typesVersions`
 against that version. A tsc that reported 0.1.0 picked the `<=5.6` typings of zod's dependencies
 and lost 2 of Go's 21 zod errors. The main package records the tsc version as `tscVersion` for the
 postinstall check.

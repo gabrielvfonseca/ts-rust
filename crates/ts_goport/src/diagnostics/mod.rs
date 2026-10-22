@@ -468,7 +468,7 @@ mod tests {
 
     #[test]
     fn generated_catalog_is_complete_and_sorted() {
-        assert_eq!(CATALOG.len(), 2_222);
+        assert_eq!(CATALOG.len(), 2_229);
         assert!(
             CATALOG
                 .windows(2)

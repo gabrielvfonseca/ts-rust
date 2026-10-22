@@ -8,14 +8,15 @@ use ts_goport::frontend::tspath;
 use ts_goport::lsp::lsproto;
 use ts_goport::project::{
     PatternsAndIgnored, SeenFiles, WatchedFiles, create_resolution_lookup_glob_mapper,
-    get_path_components_for_watching, new_recursive_directory_watcher,
+    file_system_watcher_glob_string, get_path_components_for_watching,
+    new_recursive_directory_watcher, new_watched_files_for_paths,
 };
 
 fn components(path: &str) -> Vec<String> {
     get_path_components_for_watching(path, "")
 }
 
-// Go: watch_test.go:12 TestGetPathComponentsForWatching
+// Go: watch_test.go:13 TestGetPathComponentsForWatching
 #[test]
 fn get_path_components_for_watching_test() {
     assert_eq!(components("/project"), ["/", "project"]);
@@ -40,7 +41,7 @@ fn get_path_components_for_watching_test() {
     );
 }
 
-// Go: watch_test.go:25 TestNilWatchedFilesClone
+// Go: watch_test.go:26 TestNilWatchedFilesClone
 #[test]
 fn nil_watched_files_clone() {
     let result = WatchedFiles::<i32>::clone_(None, 42);
@@ -48,6 +49,49 @@ fn nil_watched_files_clone() {
         result.is_none(),
         "clone on a nil `WatchedFiles` should return nil"
     );
+}
+
+// Go: watch_test.go:34 TestWatchedFilesOmitsNetworkPaths (ts#64832)
+// PORT: `new_watched_files_for_paths` takes a current directory for its
+// path comparisons; the paths here are absolute, so it is "/".
+#[test]
+fn watched_files_omits_network_paths() {
+    let files: Vec<String> = [
+        "/workspace/a.ts",
+        "/external/b.ts",
+        "//server/share/c.ts",
+        "/??/UNC/server/share/d.ts",
+    ]
+    .map(String::from)
+    .to_vec();
+    for (workspace, expected) in [
+        (
+            "/workspace",
+            vec!["/workspace/a.ts", "file:///external/**/*"],
+        ),
+        (
+            "//server/share",
+            vec!["file:///external/**/*", "file:///workspace/**/*"],
+        ),
+    ] {
+        let base = new_watched_files_for_paths(
+            "test",
+            lsproto::WatchKind::CREATE,
+            true,
+            workspace,
+            "/",
+            true,
+        );
+        let w = WatchedFiles::clone_(Some(&base), files.clone()).expect("clone");
+        let watchers = w.watchers();
+        let globs: Vec<String> = watchers
+            .workspace_watchers
+            .iter()
+            .chain(&watchers.outside_workspace_watchers)
+            .map(file_system_watcher_glob_string)
+            .collect();
+        assert_eq!(globs, expected, "workspace {workspace}");
+    }
 }
 
 /// Go `var files collections.SyncMap[tspath.Path, string]` with
@@ -77,7 +121,7 @@ fn lookup_globs(
 const UPPER_DIRS: [&str; 3] = ["/Workspace", "/Lib", "/Project"];
 const LOWER_DIRS: [&str; 3] = ["/workspace", "/lib", "/current"];
 
-// Go: watch_test.go:33 TestResolutionLookupWatcherPreservesDirectorySpelling (ts#64159)
+// Go: watch_test.go:57 TestResolutionLookupWatcherPreservesDirectorySpelling (ts#64159)
 #[test]
 fn resolution_lookup_watcher_preserves_directory_spelling() {
     let result = lookup_globs(LOWER_DIRS, &["/External/Dir/file.ts"], false);
@@ -96,7 +140,7 @@ fn resolution_lookup_watcher_preserves_directory_spelling() {
     assert_eq!(base_uri.0, "file:///External/Dir");
 }
 
-// Go: watch_test.go:73 TestResolutionLookupWatcherPreservesIncludedDirectorySpelling (ts#64544)
+// Go: watch_test.go:97 TestResolutionLookupWatcherPreservesIncludedDirectorySpelling (ts#64544)
 #[test]
 fn resolution_lookup_watcher_preserves_included_directory_spelling() {
     let result = lookup_globs(
@@ -114,7 +158,7 @@ fn resolution_lookup_watcher_preserves_included_directory_spelling() {
     );
 }
 
-// Go: watch_test.go:55 TestResolutionLookupWatcherPreservesNodeModulesSpelling (ts#64544, ts#64159)
+// Go: watch_test.go:79 TestResolutionLookupWatcherPreservesNodeModulesSpelling (ts#64544, ts#64159)
 #[test]
 fn resolution_lookup_watcher_preserves_node_modules_spelling() {
     let result = lookup_globs(
@@ -128,7 +172,7 @@ fn resolution_lookup_watcher_preserves_node_modules_spelling() {
     );
 }
 
-// Go: watch_test.go:100 TestResolutionLookupWatcherAggregatesUsingHostCaseSensitivity (ts#64544)
+// Go: watch_test.go:124 TestResolutionLookupWatcherAggregatesUsingHostCaseSensitivity (ts#64544)
 #[test]
 fn resolution_lookup_watcher_aggregates_using_host_case_sensitivity() {
     for (name, use_case_sensitive_file_names) in

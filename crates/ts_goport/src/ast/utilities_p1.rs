@@ -471,7 +471,7 @@ fn next_symbol_id() -> u64 {
     })
 }
 
-// Go: ast/utilities.go:22 GetNodeId
+// Go: ast/utilities.go:24 GetNodeId
 // PORT: Go `ast.NodeId` is a `uint64`; returned here as `u64`.
 pub fn get_node_id(node: Node) -> u64 {
     NODE_IDS.with(|ids| {
@@ -493,7 +493,7 @@ pub fn get_node_id(node: Node) -> u64 {
     })
 }
 
-// Go: ast/utilities.go:34 GetSymbolId
+// Go: ast/utilities.go:36 GetSymbolId
 // PORT: Go `ast.SymbolId` is a `uint64`; returned here as `u64`. A symbol
 // handle is an index into `symbols`, which gives the slot where the id is
 // kept (see `SymbolArena::id_slot`).
@@ -507,7 +507,7 @@ pub fn get_symbol_id(symbols: &SymbolArena, symbol: SymbolId) -> u64 {
     }
 }
 
-// Go: ast/utilities.go:46 GetSymbolTable
+// Go: ast/utilities.go:95 GetSymbolTable
 // PORT: Go takes `*SymbolTable` and allocates the map in place. The arena
 // must be mutable to allocate a table.
 pub fn get_symbol_table(symbols: &mut SymbolArena, data: &mut SymbolTable) -> SymbolTable {
@@ -517,7 +517,7 @@ pub fn get_symbol_table(symbols: &mut SymbolArena, data: &mut SymbolTable) -> Sy
     *data
 }
 
-// Go: ast/utilities.go:53 GetMembers
+// Go: ast/utilities.go:102 GetMembers
 pub fn get_members(symbols: &mut SymbolArena, symbol: SymbolId) -> SymbolTable {
     let mut members = symbols.sym(symbol).members;
     let table = get_symbol_table(symbols, &mut members);
@@ -525,7 +525,7 @@ pub fn get_members(symbols: &mut SymbolArena, symbol: SymbolId) -> SymbolTable {
     table
 }
 
-// Go: ast/utilities.go:57 GetExports
+// Go: ast/utilities.go:106 GetExports
 pub fn get_exports(symbols: &mut SymbolArena, symbol: SymbolId) -> SymbolTable {
     let mut exports = symbols.sym(symbol).exports;
     let table = get_symbol_table(symbols, &mut exports);
@@ -533,7 +533,7 @@ pub fn get_exports(symbols: &mut SymbolArena, symbol: SymbolId) -> SymbolTable {
     table
 }
 
-// Go: ast/utilities.go:61 GetLocals
+// Go: ast/utilities.go:110 GetLocals
 // PORT: Go writes `container.LocalsContainerData().Locals`. Installed binder
 // data (`Node::locals`) is not written again, so the binder passes the
 // mutable per-node bind data of the file it is binding, indexed by
@@ -551,7 +551,7 @@ pub fn get_locals(
 }
 
 // Determines if a node is missing (either `nil` or empty)
-// Go: ast/utilities.go:66 NodeIsMissing
+// Go: ast/utilities.go:115 NodeIsMissing
 // PERF: noderef1 G1. The loc and the kind are read through one view
 // (`NodeRef`).
 pub fn node_is_missing(node: Node) -> bool {
@@ -564,29 +564,29 @@ pub fn node_is_missing(node: Node) -> bool {
 }
 
 // Determines if a node is present
-// Go: ast/utilities.go:71 NodeIsPresent
+// Go: ast/utilities.go:120 NodeIsPresent
 pub fn node_is_present(node: Node) -> bool {
     !node_is_missing(node)
 }
 
 // Determines if a node contains synthetic positions
-// Go: ast/utilities.go:76 NodeIsSynthesized
+// Go: ast/utilities.go:125 NodeIsSynthesized
 pub fn node_is_synthesized(node: Node) -> bool {
     position_is_synthesized(node.loc().pos()) || position_is_synthesized(node.loc().end())
 }
 
-// Go: ast/utilities.go:80 RangeIsSynthesized
+// Go: ast/utilities.go:129 RangeIsSynthesized
 pub fn range_is_synthesized(loc: TextRange) -> bool {
     position_is_synthesized(loc.pos()) || position_is_synthesized(loc.end())
 }
 
 // Determines whether a position is synthetic
-// Go: ast/utilities.go:85 PositionIsSynthesized
+// Go: ast/utilities.go:134 PositionIsSynthesized
 pub fn position_is_synthesized(pos: i32) -> bool {
     pos < 0
 }
 
-// Go: ast/utilities.go:89 FindLastVisibleNode
+// Go: ast/utilities.go:138 FindLastVisibleNode
 pub fn find_last_visible_node(nodes: &[Node]) -> Node {
     let mut from_end = 1usize;
     while from_end <= nodes.len()
@@ -602,22 +602,22 @@ pub fn find_last_visible_node(nodes: &[Node]) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:100 NodeKindIs
+// Go: ast/utilities.go:149 NodeKindIs
 pub fn node_kind_is(node: Node, kinds: &[SyntaxKind]) -> bool {
     kinds.contains(&node.kind())
 }
 
-// Go: ast/utilities.go:104 IsModifier
+// Go: ast/utilities.go:153 IsModifier
 pub fn is_modifier(node: Node) -> bool {
     is_modifier_kind(node.kind())
 }
 
-// Go: ast/utilities.go:108 IsModifierLike
+// Go: ast/utilities.go:157 IsModifierLike
 pub fn is_modifier_like(node: Node) -> bool {
     is_modifier(node) || is_decorator(node)
 }
 
-// Go: ast/utilities.go:112 IsCompoundAssignment
+// Go: ast/utilities.go:161 IsCompoundAssignment
 pub fn is_compound_assignment(token: SyntaxKind) -> bool {
     (token as u16) >= (SyntaxKind::FIRST_COMPOUND_ASSIGNMENT as u16)
         && (token as u16) <= (SyntaxKind::LAST_COMPOUND_ASSIGNMENT as u16)
@@ -702,7 +702,7 @@ impl BinaryView {
     }
 }
 
-// Go: ast/utilities.go:116 IsAssignmentExpression
+// Go: ast/utilities.go:165 IsAssignmentExpression
 pub fn is_assignment_expression(node: Node, exclude_compound_assignment: bool) -> bool {
     if node.kind() == SyntaxKind::BinaryExpression {
         let operator = node.operator_token().kind();
@@ -713,7 +713,7 @@ pub fn is_assignment_expression(node: Node, exclude_compound_assignment: bool) -
     false
 }
 
-// Go: ast/utilities.go:125 GetRightMostAssignedExpression
+// Go: ast/utilities.go:174 GetRightMostAssignedExpression
 pub fn get_right_most_assigned_expression(node: Node) -> Node {
     let mut node = node;
     while is_assignment_expression(node, false /*excludeCompoundAssignment*/) {
@@ -722,7 +722,7 @@ pub fn get_right_most_assigned_expression(node: Node) -> Node {
     node
 }
 
-// Go: ast/utilities.go:132 IsDestructuringAssignment
+// Go: ast/utilities.go:181 IsDestructuringAssignment
 pub fn is_destructuring_assignment(node: Node) -> bool {
     if is_assignment_expression(node, true /*excludeCompoundAssignment*/) {
         let kind = node.left().kind();
@@ -732,7 +732,7 @@ pub fn is_destructuring_assignment(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:140 IsObjectBindingOrAssignmentElement
+// Go: ast/utilities.go:189 IsObjectBindingOrAssignmentElement
 pub fn is_object_binding_or_assignment_element(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -743,7 +743,7 @@ pub fn is_object_binding_or_assignment_element(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:151 IsArrayBindingOrAssignmentElement
+// Go: ast/utilities.go:200 IsArrayBindingOrAssignmentElement
 pub fn is_array_binding_or_assignment_element(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::BindingElement
@@ -759,7 +759,7 @@ pub fn is_array_binding_or_assignment_element(node: Node) -> bool {
     is_assignment_expression(node, true /*excludeCompoundAssignment*/)
 }
 
-// Go: ast/utilities.go:166 IsBindingPattern
+// Go: ast/utilities.go:215 IsBindingPattern
 // PERF: noderef1 G3. One kind read, inline.
 #[inline]
 pub fn is_binding_pattern(node: Node) -> bool {
@@ -769,7 +769,7 @@ pub fn is_binding_pattern(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:170 IsForInOrOfStatement
+// Go: ast/utilities.go:219 IsForInOrOfStatement
 pub fn is_for_in_or_of_statement(node: Node) -> bool {
     node.is_some()
         && (node.kind() == SyntaxKind::ForInStatement || node.kind() == SyntaxKind::ForOfStatement)
@@ -779,14 +779,14 @@ pub fn is_for_in_or_of_statement(node: Node) -> bool {
 // assignment in an object literal that is an assignment target, or if it is parented by an array literal that is
 // an assignment target. Examples include 'a = xxx', '{ p: a } = xxx', '[{ a }] = xxx'.
 // (Note that `p` is not a target in the above examples, only `a`.)
-// Go: ast/utilities.go:178 IsAssignmentTarget
+// Go: ast/utilities.go:227 IsAssignmentTarget
 pub fn is_assignment_target(node: Node) -> bool {
     get_assignment_target(node).is_some()
 }
 
 // Returns the BinaryExpression, PrefixUnaryExpression, PostfixUnaryExpression, or ForInOrOfStatement that references
 // the given node as an assignment target
-// Go: ast/utilities.go:184 GetAssignmentTarget
+// Go: ast/utilities.go:233 GetAssignmentTarget
 // PERF: U4 (CH7). A step inside a published store reads the parent and its
 // kind with one store lookup (`frozen_store_parent_kind`).
 // PERF: deferbody1. Most calls end at the first step, at a parent kind that
@@ -895,29 +895,29 @@ fn get_assignment_target_from(node: Node, parent: Node, parent_kind: SyntaxKind)
     }
 }
 
-// Go: ast/utilities.go:228 IsLogicalBinaryOperator
+// Go: ast/utilities.go:277 IsLogicalBinaryOperator
 pub fn is_logical_binary_operator(token: SyntaxKind) -> bool {
     token == SyntaxKind::BarBarToken || token == SyntaxKind::AmpersandAmpersandToken
 }
 
-// Go: ast/utilities.go:232 IsLogicalOrCoalescingBinaryOperator
+// Go: ast/utilities.go:281 IsLogicalOrCoalescingBinaryOperator
 pub fn is_logical_or_coalescing_binary_operator(token: SyntaxKind) -> bool {
     is_logical_binary_operator(token) || token == SyntaxKind::QuestionQuestionToken
 }
 
-// Go: ast/utilities.go:236 IsLogicalOrCoalescingBinaryExpression
+// Go: ast/utilities.go:285 IsLogicalOrCoalescingBinaryExpression
 pub fn is_logical_or_coalescing_binary_expression(expr: Node) -> bool {
     is_binary_expression(expr)
         && is_logical_or_coalescing_binary_operator(expr.operator_token().kind())
 }
 
-// Go: ast/utilities.go:240 IsLogicalOrCoalescingAssignmentExpression
+// Go: ast/utilities.go:289 IsLogicalOrCoalescingAssignmentExpression
 pub fn is_logical_or_coalescing_assignment_expression(expr: Node) -> bool {
     is_binary_expression(expr)
         && is_logical_or_coalescing_assignment_operator(expr.operator_token().kind())
 }
 
-// Go: ast/utilities.go:244 IsLogicalExpression
+// Go: ast/utilities.go:293 IsLogicalExpression
 pub fn is_logical_expression(node: Node) -> bool {
     let mut node = node;
     loop {
@@ -933,12 +933,12 @@ pub fn is_logical_expression(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:256 IsAccessor
+// Go: ast/utilities.go:305 IsAccessor
 pub fn is_accessor(node: Node) -> bool {
     node.kind() == SyntaxKind::GetAccessor || node.kind() == SyntaxKind::SetAccessor
 }
 
-// Go: ast/utilities.go:260 IsPropertyNameLiteral
+// Go: ast/utilities.go:309 IsPropertyNameLiteral
 pub fn is_property_name_literal(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -949,12 +949,12 @@ pub fn is_property_name_literal(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:271 IsMemberName
+// Go: ast/utilities.go:320 IsMemberName
 pub fn is_member_name(node: Node) -> bool {
     node.kind() == SyntaxKind::Identifier || node.kind() == SyntaxKind::PrivateIdentifier
 }
 
-// Go: ast/utilities.go:275 IsEntityName
+// Go: ast/utilities.go:324 IsEntityName
 // PERF: noderef1 G3. One kind read, inline.
 #[inline]
 pub fn is_entity_name(node: Node) -> bool {
@@ -964,7 +964,7 @@ pub fn is_entity_name(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:279 IsPropertyName
+// Go: ast/utilities.go:328 IsPropertyName
 pub fn is_property_name(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -977,7 +977,7 @@ pub fn is_property_name(node: Node) -> bool {
 }
 
 // Return true if the given identifier is classified as an IdentifierName by inspecting the parent of the node
-// Go: ast/utilities.go:292 IsIdentifierName
+// Go: ast/utilities.go:341 IsIdentifierName
 pub fn is_identifier_name(node: Node) -> bool {
     let parent = node.parent();
     match parent.kind() {
@@ -1002,23 +1002,23 @@ pub fn is_identifier_name(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:310 IsPushOrUnshiftIdentifier
+// Go: ast/utilities.go:359 IsPushOrUnshiftIdentifier
 pub fn is_push_or_unshift_identifier(node: Node) -> bool {
     let text = node.text();
     text == "push" || text == "unshift"
 }
 
-// Go: ast/utilities.go:315 IsBooleanLiteral
+// Go: ast/utilities.go:364 IsBooleanLiteral
 pub fn is_boolean_literal(node: Node) -> bool {
     node.kind() == SyntaxKind::TrueKeyword || node.kind() == SyntaxKind::FalseKeyword
 }
 
-// Go: ast/utilities.go:319 IsLiteralExpression
+// Go: ast/utilities.go:368 IsLiteralExpression
 pub fn is_literal_expression(node: Node) -> bool {
     is_literal_kind(node.kind())
 }
 
-// Go: ast/utilities.go:323 IsStringLiteralLike
+// Go: ast/utilities.go:372 IsStringLiteralLike
 pub fn is_string_literal_like(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -1026,7 +1026,7 @@ pub fn is_string_literal_like(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:331 IsStringOrNumericLiteralLike
+// Go: ast/utilities.go:380 IsStringOrNumericLiteralLike
 // PERF: binderview1. The kind is read once (see `is_access_expression`).
 pub fn is_string_or_numeric_literal_like(node: Node) -> bool {
     matches!(
@@ -1037,7 +1037,7 @@ pub fn is_string_or_numeric_literal_like(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:335 IsSignedNumericLiteral
+// Go: ast/utilities.go:384 IsSignedNumericLiteral
 pub fn is_signed_numeric_literal(node: Node) -> bool {
     if node.kind() == SyntaxKind::PrefixUnaryExpression {
         return (node.operator() == SyntaxKind::PlusToken
@@ -1048,7 +1048,7 @@ pub fn is_signed_numeric_literal(node: Node) -> bool {
 }
 
 // Determines if a node is part of an OptionalChain
-// Go: ast/utilities.go:344 IsOptionalChain
+// Go: ast/utilities.go:393 IsOptionalChain
 // PERF: U4 (CH7). The kind test comes first (both tests are pure, so the
 // result is the same) and `OPTIONAL_CHAIN` is a parser bit
 // (`Node::parser_flags`), so most nodes load neither their flags nor their
@@ -1065,13 +1065,13 @@ pub fn is_optional_chain(node: Node) -> bool {
     ) && !node.parser_flags(NodeFlags::OPTIONAL_CHAIN).is_empty()
 }
 
-// Go: ast/utilities.go:357 getQuestionDotToken
+// Go: ast/utilities.go:406 getQuestionDotToken
 fn get_question_dot_token(node: Node) -> Node {
     node.question_dot_token()
 }
 
 // Determines if node is the root expression of an OptionalChain
-// Go: ast/utilities.go:362 IsOptionalChainRoot
+// Go: ast/utilities.go:411 IsOptionalChainRoot
 pub fn is_optional_chain_root(node: Node) -> bool {
     is_optional_chain(node)
         && !is_non_null_expression(node)
@@ -1087,7 +1087,7 @@ pub fn is_optional_chain_root(node: Node) -> bool {
 //     the end of the chain starting at `c?.`)
 //  5. For `a?.(b?.c).d`, both `b?.c` and `a?.(b?.c)d` are outermost (`c` is the end of the chain starting at `b`, and `d` is
 //     the end of the chain starting at `a?.`)
-// Go: ast/utilities.go:375 IsOutermostOptionalChain
+// Go: ast/utilities.go:424 IsOutermostOptionalChain
 pub fn is_outermost_optional_chain(node: Node) -> bool {
     let parent = node.parent();
     !is_optional_chain(parent) || // cases 1, 2, and 3
@@ -1096,24 +1096,24 @@ pub fn is_outermost_optional_chain(node: Node) -> bool {
 }
 
 // Determines whether a node is the expression preceding an optional chain (i.e. `a` in `a?.b`).
-// Go: ast/utilities.go:383 IsExpressionOfOptionalChainRoot
+// Go: ast/utilities.go:432 IsExpressionOfOptionalChainRoot
 pub fn is_expression_of_optional_chain_root(node: Node) -> bool {
     is_optional_chain_root(node.parent()) && node.parent().expression() == node
 }
 
-// Go: ast/utilities.go:387 IsNullishCoalesce
+// Go: ast/utilities.go:436 IsNullishCoalesce
 pub fn is_nullish_coalesce(node: Node) -> bool {
     node.kind() == SyntaxKind::BinaryExpression
         && node.operator_token().kind() == SyntaxKind::QuestionQuestionToken
 }
 
-// Go: ast/utilities.go:391 IsAssertionExpression
+// Go: ast/utilities.go:440 IsAssertionExpression
 pub fn is_assertion_expression(node: Node) -> bool {
     let kind = node.kind();
     kind == SyntaxKind::TypeAssertionExpression || kind == SyntaxKind::AsExpression
 }
 
-// Go: ast/utilities.go:396 isLeftHandSideExpressionKind
+// Go: ast/utilities.go:445 isLeftHandSideExpressionKind
 fn is_left_hand_side_expression_kind(kind: SyntaxKind) -> bool {
     matches!(
         kind,
@@ -1152,7 +1152,7 @@ fn is_left_hand_side_expression_kind(kind: SyntaxKind) -> bool {
 }
 
 // Determines whether a node is a LeftHandSideExpression based only on its kind.
-// Go: ast/utilities.go:411 IsLeftHandSideExpression
+// Go: ast/utilities.go:460 IsLeftHandSideExpression
 // PERF: binderview1. The kind is read once. Only a PartiallyEmittedExpression
 // is an outer expression of `OEK_PARTIALLY_EMITTED_EXPRESSIONS`, so any other
 // node is its own `SkipPartiallyEmittedExpressions`.
@@ -1164,7 +1164,7 @@ pub fn is_left_hand_side_expression(node: Node) -> bool {
     is_left_hand_side_expression_kind(skip_partially_emitted_expressions(node).kind())
 }
 
-// Go: ast/utilities.go:415 isUnaryExpressionKind
+// Go: ast/utilities.go:464 isUnaryExpressionKind
 fn is_unary_expression_kind(kind: SyntaxKind) -> bool {
     match kind {
         SyntaxKind::PrefixUnaryExpression
@@ -1179,12 +1179,12 @@ fn is_unary_expression_kind(kind: SyntaxKind) -> bool {
 }
 
 // Determines whether a node is a UnaryExpression based only on its kind.
-// Go: ast/utilities.go:430 IsUnaryExpression
+// Go: ast/utilities.go:479 IsUnaryExpression
 pub fn is_unary_expression(node: Node) -> bool {
     is_unary_expression_kind(skip_partially_emitted_expressions(node).kind())
 }
 
-// Go: ast/utilities.go:434 isExpressionKind
+// Go: ast/utilities.go:483 isExpressionKind
 fn is_expression_kind(kind: SyntaxKind) -> bool {
     match kind {
         SyntaxKind::ConditionalExpression
@@ -1201,23 +1201,23 @@ fn is_expression_kind(kind: SyntaxKind) -> bool {
 }
 
 // Determines whether a node is an expression based only on its kind.
-// Go: ast/utilities.go:451 IsExpression
+// Go: ast/utilities.go:500 IsExpression
 pub fn is_expression(node: Node) -> bool {
     is_expression_kind(skip_partially_emitted_expressions(node).kind())
 }
 
-// Go: ast/utilities.go:455 IsCommaExpression
+// Go: ast/utilities.go:504 IsCommaExpression
 pub fn is_comma_expression(node: Node) -> bool {
     node.kind() == SyntaxKind::BinaryExpression
         && node.operator_token().kind() == SyntaxKind::CommaToken
 }
 
-// Go: ast/utilities.go:459 IsCommaSequence
+// Go: ast/utilities.go:508 IsCommaSequence
 pub fn is_comma_sequence(node: Node) -> bool {
     is_comma_expression(node)
 }
 
-// Go: ast/utilities.go:463 IsIterationStatement
+// Go: ast/utilities.go:512 IsIterationStatement
 pub fn is_iteration_statement(node: Node, look_in_labeled_statements: bool) -> bool {
     match node.kind() {
         SyntaxKind::ForStatement
@@ -1234,7 +1234,7 @@ pub fn is_iteration_statement(node: Node, look_in_labeled_statements: bool) -> b
 }
 
 // Determines if a node is a property or element access expression
-// Go: ast/utilities.go:479 IsAccessExpression
+// Go: ast/utilities.go:528 IsAccessExpression
 // PERF: binderview1. The kind is read once: a kind read is a store lookup
 // that the compiler does not merge with a second one.
 pub fn is_access_expression(node: Node) -> bool {
@@ -1307,56 +1307,56 @@ static FUNCTION_LIKE_KINDS: KindSet = KindSet::of(&[
 ])
 .with(FUNCTION_LIKE_DECLARATION_KIND_LIST);
 
-// Go: ast/utilities.go:483 isFunctionLikeDeclarationKind
+// Go: ast/utilities.go:532 isFunctionLikeDeclarationKind
 #[inline]
 pub fn is_function_like_declaration_kind(kind: SyntaxKind) -> bool {
     FUNCTION_LIKE_DECLARATION_KINDS.contains(kind)
 }
 
 // Determines if a node is function-like (but is not a signature declaration)
-// Go: ast/utilities.go:498 IsFunctionLikeDeclaration
+// Go: ast/utilities.go:547 IsFunctionLikeDeclaration
 pub fn is_function_like_declaration(node: Node) -> bool {
     // TODO(rbuckton): Move `node != nil` test to call sites
     node.is_some() && is_function_like_declaration_kind(node.kind())
 }
 
-// Go: ast/utilities.go:503 IsFunctionLikeKind
+// Go: ast/utilities.go:552 IsFunctionLikeKind
 #[inline]
 pub fn is_function_like_kind(kind: SyntaxKind) -> bool {
     FUNCTION_LIKE_KINDS.contains(kind)
 }
 
 // Determines if a node is function- or signature-like.
-// Go: ast/utilities.go:518 IsFunctionLike
+// Go: ast/utilities.go:567 IsFunctionLike
 #[inline]
 pub fn is_function_like(node: Node) -> bool {
     // TODO(rbuckton): Move `node != nil` test to call sites
     node.is_some() && is_function_like_kind(node.kind())
 }
 
-// Go: ast/utilities.go:523 IsFunctionLikeOrClassStaticBlockDeclaration
+// Go: ast/utilities.go:572 IsFunctionLikeOrClassStaticBlockDeclaration
 pub fn is_function_like_or_class_static_block_declaration(node: Node) -> bool {
     node.is_some() && (is_function_like(node) || is_class_static_block_declaration(node))
 }
 
-// Go: ast/utilities.go:527 IsFunctionOrSourceFile
+// Go: ast/utilities.go:576 IsFunctionOrSourceFile
 pub fn is_function_or_source_file(node: Node) -> bool {
     is_function_like(node) || is_source_file(node)
 }
 
-// Go: ast/utilities.go:531 IsClassLike
+// Go: ast/utilities.go:580 IsClassLike
 pub fn is_class_like(node: Node) -> bool {
     node.kind() == SyntaxKind::ClassDeclaration || node.kind() == SyntaxKind::ClassExpression
 }
 
-// Go: ast/utilities.go:535 IsClassOrInterfaceLike
+// Go: ast/utilities.go:584 IsClassOrInterfaceLike
 pub fn is_class_or_interface_like(node: Node) -> bool {
     node.kind() == SyntaxKind::ClassDeclaration
         || node.kind() == SyntaxKind::ClassExpression
         || node.kind() == SyntaxKind::InterfaceDeclaration
 }
 
-// Go: ast/utilities.go:539 IsClassElement
+// Go: ast/utilities.go:588 IsClassElement
 pub fn is_class_element(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -1371,7 +1371,7 @@ pub fn is_class_element(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:554 IsMethodOrAccessor
+// Go: ast/utilities.go:603 IsMethodOrAccessor
 pub fn is_method_or_accessor(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -1388,7 +1388,7 @@ static PRIVATE_IDENTIFIER_CLASS_ELEMENT_KINDS: KindSet = KindSet::of(&[
     SyntaxKind::SetAccessor,
 ]);
 
-// Go: ast/utilities.go:562 IsPrivateIdentifierClassElementDeclaration
+// Go: ast/utilities.go:611 IsPrivateIdentifierClassElementDeclaration
 #[inline]
 pub fn is_private_identifier_class_element_declaration(node: Node) -> bool {
     // PERF: one kind lookup for `IsPropertyDeclaration || IsMethodOrAccessor`.
@@ -1396,7 +1396,7 @@ pub fn is_private_identifier_class_element_declaration(node: Node) -> bool {
         && is_private_identifier(node.name())
 }
 
-// Go: ast/utilities.go:566 IsObjectLiteralOrClassExpressionMethodOrAccessor
+// Go: ast/utilities.go:615 IsObjectLiteralOrClassExpressionMethodOrAccessor
 pub fn is_object_literal_or_class_expression_method_or_accessor(node: Node) -> bool {
     let kind = node.kind();
     (kind == SyntaxKind::MethodDeclaration
@@ -1406,7 +1406,7 @@ pub fn is_object_literal_or_class_expression_method_or_accessor(node: Node) -> b
             || node.parent().kind() == SyntaxKind::ClassExpression)
 }
 
-// Go: ast/utilities.go:572 IsTypeElement
+// Go: ast/utilities.go:621 IsTypeElement
 pub fn is_type_element(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -1421,7 +1421,7 @@ pub fn is_type_element(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:587 IsObjectLiteralElement
+// Go: ast/utilities.go:636 IsObjectLiteralElement
 pub fn is_object_literal_element(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -1434,26 +1434,26 @@ pub fn is_object_literal_element(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:600 IsObjectLiteralMethod
+// Go: ast/utilities.go:649 IsObjectLiteralMethod
 pub fn is_object_literal_method(node: Node) -> bool {
     node.is_some()
         && node.kind() == SyntaxKind::MethodDeclaration
         && node.parent().kind() == SyntaxKind::ObjectLiteralExpression
 }
 
-// Go: ast/utilities.go:604 IsAutoAccessorPropertyDeclaration
+// Go: ast/utilities.go:653 IsAutoAccessorPropertyDeclaration
 pub fn is_auto_accessor_property_declaration(node: Node) -> bool {
     is_property_declaration(node) && has_accessor_modifier(node)
 }
 
-// Go: ast/utilities.go:608 IsParameterPropertyDeclaration
+// Go: ast/utilities.go:657 IsParameterPropertyDeclaration
 pub fn is_parameter_property_declaration(node: Node, parent: Node) -> bool {
     is_parameter_declaration(node)
         && has_syntactic_modifier(node, ModifierFlags::PARAMETER_PROPERTY_MODIFIER)
         && parent.kind() == SyntaxKind::Constructor
 }
 
-// Go: ast/utilities.go:612 IsJsxChild
+// Go: ast/utilities.go:661 IsJsxChild
 pub fn is_jsx_child(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -1465,7 +1465,7 @@ pub fn is_jsx_child(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:624 IsJsxAttributeLike
+// Go: ast/utilities.go:673 IsJsxAttributeLike
 pub fn is_jsx_attribute_like(node: Node) -> bool {
     is_jsx_attribute(node) || is_jsx_spread_attribute(node)
 }
@@ -1490,7 +1490,7 @@ const DECLARATION_STATEMENT_KIND_LIST: &[SyntaxKind] = &[
 
 static DECLARATION_STATEMENT_KINDS: KindSet = KindSet::of(DECLARATION_STATEMENT_KIND_LIST);
 
-// Go: ast/utilities.go:628 isDeclarationStatementKind
+// Go: ast/utilities.go:677 isDeclarationStatementKind
 #[inline]
 fn is_declaration_statement_kind(kind: SyntaxKind) -> bool {
     DECLARATION_STATEMENT_KINDS.contains(kind)
@@ -1500,7 +1500,7 @@ fn is_declaration_statement_kind(kind: SyntaxKind) -> bool {
 // to rule out a Block node that is part of `try` or `catch` or is the Block-like body of a function.
 //
 // NOTE: ECMA262 would just call this a Declaration
-// Go: ast/utilities.go:653 IsDeclarationStatement
+// Go: ast/utilities.go:702 IsDeclarationStatement
 pub fn is_declaration_statement(node: Node) -> bool {
     is_declaration_statement_kind(node.kind())
 }
@@ -1535,7 +1535,7 @@ static STATEMENT_BUT_NOT_DECLARATION_KINDS: KindSet =
 static STATEMENT_KINDS: KindSet =
     KindSet::of(STATEMENT_BUT_NOT_DECLARATION_KIND_LIST).with(DECLARATION_STATEMENT_KIND_LIST);
 
-// Go: ast/utilities.go:657 isStatementKindButNotDeclarationKind
+// Go: ast/utilities.go:706 isStatementKindButNotDeclarationKind
 #[inline]
 fn is_statement_kind_but_not_declaration_kind(kind: SyntaxKind) -> bool {
     STATEMENT_BUT_NOT_DECLARATION_KINDS.contains(kind)
@@ -1545,7 +1545,7 @@ fn is_statement_kind_but_not_declaration_kind(kind: SyntaxKind) -> bool {
 // but it may use them to rule out a Block node that is part of `try` or `catch` or is the Block-like body of a function.
 //
 // NOTE: ECMA262 would just call this a Statement
-// Go: ast/utilities.go:687 IsStatementButNotDeclaration
+// Go: ast/utilities.go:736 IsStatementButNotDeclaration
 pub fn is_statement_but_not_declaration(node: Node) -> bool {
     is_statement_kind_but_not_declaration_kind(node.kind())
 }
@@ -1554,7 +1554,7 @@ pub fn is_statement_but_not_declaration(node: Node) -> bool {
 // them to rule out a Block node that is part of `try` or `catch` or is the Block-like body of a function.
 //
 // NOTE: ECMA262 would call this either a StatementListItem or ModuleListItem
-// Go: ast/utilities.go:695 IsStatement
+// Go: ast/utilities.go:744 IsStatement
 #[inline]
 pub fn is_statement(node: Node) -> bool {
     is_statement_ref(NodeRef::new(node))
@@ -1572,7 +1572,7 @@ pub fn is_statement_ref(node: NodeRef) -> bool {
 
 // Determines whether a node is a BlockStatement. If parents are available, this ensures the Block is
 // not part of a `try` statement, `catch` clause, or the Block-like body of a function
-// Go: ast/utilities.go:702 isBlockStatement
+// Go: ast/utilities.go:751 isBlockStatement
 // PERF: noderef1 G2. The node and its parent are read through one view
 // (`NodeRef`): one registry lookup, where the Go reads made eight.
 fn is_block_statement_ref(node: NodeRef) -> bool {
@@ -1593,7 +1593,7 @@ fn is_block_statement_ref(node: NodeRef) -> bool {
 }
 
 // Determines whether a node is the Block-like body of a function by walking the parent of the node
-// Go: ast/utilities.go:713 IsFunctionBlock
+// Go: ast/utilities.go:762 IsFunctionBlock
 // PERF: noderef1 G2. One view (`NodeRef`) for the node and its parent.
 pub fn is_function_block(node: Node) -> bool {
     if node.is_nil() {
@@ -1606,7 +1606,7 @@ pub fn is_function_block(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:717 IsBlockOrCatchScoped
+// Go: ast/utilities.go:766 IsBlockOrCatchScoped
 // PERF: lsshells M3 repair. `BLOCK_SCOPED` has no binder bit, so the walk
 // reads no binder data (`get_combined_parser_flags`).
 pub fn is_block_or_catch_scoped(declaration: Node) -> bool {
@@ -1614,14 +1614,14 @@ pub fn is_block_or_catch_scoped(declaration: Node) -> bool {
         || is_catch_clause_variable_declaration_or_binding_element(declaration)
 }
 
-// Go: ast/utilities.go:721 IsCatchClauseVariableDeclarationOrBindingElement
+// Go: ast/utilities.go:770 IsCatchClauseVariableDeclarationOrBindingElement
 pub fn is_catch_clause_variable_declaration_or_binding_element(declaration: Node) -> bool {
     let node = get_root_declaration(declaration);
     node.kind() == SyntaxKind::VariableDeclaration
         && node.parent().kind() == SyntaxKind::CatchClause
 }
 
-// Go: ast/utilities.go:726 IsTypeNodeKind
+// Go: ast/utilities.go:775 IsTypeNodeKind
 pub fn is_type_node_kind(kind: SyntaxKind) -> bool {
     match kind {
         SyntaxKind::AnyKeyword
@@ -1648,18 +1648,18 @@ pub fn is_type_node_kind(kind: SyntaxKind) -> bool {
         && (kind as u16) <= (SyntaxKind::LAST_TYPE_NODE as u16)
 }
 
-// Go: ast/utilities.go:751 IsTypeNode
+// Go: ast/utilities.go:800 IsTypeNode
 pub fn is_type_node(node: Node) -> bool {
     is_type_node_kind(node.kind())
 }
 
-// Go: ast/utilities.go:755 IsJSDocKind
+// Go: ast/utilities.go:804 IsJSDocKind
 pub fn is_js_doc_kind(kind: SyntaxKind) -> bool {
     (SyntaxKind::FIRST_JS_DOC_NODE as u16) <= (kind as u16)
         && (kind as u16) <= (SyntaxKind::LAST_JS_DOC_NODE as u16)
 }
 
-// Go: ast/utilities.go:759 IsJSDocTypeAssertion
+// Go: ast/utilities.go:808 IsJSDocTypeAssertion
 pub fn is_js_doc_type_assertion(node: Node) -> bool {
     if node.is_nil() || !is_parenthesized_expression(node) || !is_in_js_file(node) {
         return false;
@@ -1670,7 +1670,7 @@ pub fn is_js_doc_type_assertion(node: Node) -> bool {
         && expr.type_().flags().intersects(NodeFlags::REPARSED)
 }
 
-// Go: ast/utilities.go:767 IsPrologueDirective
+// Go: ast/utilities.go:816 IsPrologueDirective
 pub fn is_prologue_directive(node: Node) -> bool {
     node.kind() == SyntaxKind::ExpressionStatement
         && node.expression().kind() == SyntaxKind::StringLiteral
@@ -1695,7 +1695,7 @@ impl OuterExpressionKinds {
 }
 
 // Determines whether node is an "outer expression" of the provided kinds
-// Go: ast/utilities.go:791 IsOuterExpression
+// Go: ast/utilities.go:840 IsOuterExpression
 pub fn is_outer_expression(node: Node, kinds: OuterExpressionKinds) -> bool {
     match node.kind() {
         SyntaxKind::ParenthesizedExpression => {
@@ -1745,7 +1745,7 @@ pub fn is_outer_expression(node: Node, kinds: OuterExpressionKinds) -> bool {
 }
 
 // Descends into an expression, skipping past "outer expressions" of the provided kinds
-// Go: ast/utilities.go:817 SkipOuterExpressions
+// Go: ast/utilities.go:866 SkipOuterExpressions
 pub fn skip_outer_expressions(node: Node, kinds: OuterExpressionKinds) -> Node {
     let mut node = node;
     while is_outer_expression(node, kinds) {
@@ -1759,12 +1759,12 @@ pub fn skip_outer_expressions(node: Node, kinds: OuterExpressionKinds) -> Node {
 }
 
 // Skips past the parentheses of an expression
-// Go: ast/utilities.go:829 SkipParentheses
+// Go: ast/utilities.go:878 SkipParentheses
 pub fn skip_parentheses(node: Node) -> Node {
     skip_outer_expressions(node, OuterExpressionKinds::OEK_PARENTHESES)
 }
 
-// Go: ast/utilities.go:833 SkipTypeParentheses
+// Go: ast/utilities.go:882 SkipTypeParentheses
 pub fn skip_type_parentheses(node: Node) -> Node {
     let mut node = node;
     while is_parenthesized_type_node(node) {
@@ -1773,7 +1773,7 @@ pub fn skip_type_parentheses(node: Node) -> Node {
     node
 }
 
-// Go: ast/utilities.go:840 SkipPartiallyEmittedExpressions
+// Go: ast/utilities.go:889 SkipPartiallyEmittedExpressions
 pub fn skip_partially_emitted_expressions(node: Node) -> Node {
     skip_outer_expressions(
         node,
@@ -1782,7 +1782,7 @@ pub fn skip_partially_emitted_expressions(node: Node) -> Node {
 }
 
 // Walks up the parents of a parenthesized expression to find the containing node
-// Go: ast/utilities.go:845 WalkUpParenthesizedExpressions
+// Go: ast/utilities.go:894 WalkUpParenthesizedExpressions
 pub fn walk_up_parenthesized_expressions(node: Node) -> Node {
     let mut node = node;
     while node.is_some() && node.kind() == SyntaxKind::ParenthesizedExpression {
@@ -1792,7 +1792,7 @@ pub fn walk_up_parenthesized_expressions(node: Node) -> Node {
 }
 
 // Walks up the parents of a parenthesized type to find the containing node
-// Go: ast/utilities.go:853 WalkUpParenthesizedTypes
+// Go: ast/utilities.go:902 WalkUpParenthesizedTypes
 pub fn walk_up_parenthesized_types(node: Node) -> Node {
     let mut node = node;
     while node.is_some() && node.kind() == SyntaxKind::ParenthesizedType {
@@ -1802,7 +1802,7 @@ pub fn walk_up_parenthesized_types(node: Node) -> Node {
 }
 
 // Walks up the parents of a node to find the containing SourceFile
-// Go: ast/utilities.go:861 GetSourceFileOfNode
+// Go: ast/utilities.go:910 GetSourceFileOfNode
 // PORT: a frozen store node whose parent walk ends at its store root gets
 // that root in O(1) (`ast::store::frozen_source_file_of_node`). Other nodes
 // (synthetic nodes, nodes before the freeze) walk the parents like Go.
@@ -1828,7 +1828,7 @@ fn walk_to_source_file(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:877 newParentInChildrenSetter
+// Go: ast/utilities.go:926 newParentInChildrenSetter
 // PORT: Go keeps `parent` in a closure state and recurses through
 // `node.ForEachChild(state.visit)`. Rust carries the same state in a
 // struct. Go pools the closure with `sync.Pool`; that is only an
@@ -1854,7 +1854,7 @@ fn new_parent_in_children_setter() -> ParentInChildrenSetter {
     ParentInChildrenSetter { parent: Node::NIL }
 }
 
-// Go: ast/utilities.go:899 SetParentInChildren
+// Go: ast/utilities.go:948 SetParentInChildren
 pub fn set_parent_in_children(node: Node) {
     let mut f = new_parent_in_children_setter();
     f.visit(node);

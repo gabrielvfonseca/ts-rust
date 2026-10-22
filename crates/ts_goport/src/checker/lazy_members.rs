@@ -822,26 +822,9 @@ impl Checker {
             symbol = links_target;
             m = self.combine_type_mappers(links_mapper, m);
         }
-        // Keep the flags from the symbol we're instantiating.  Mark that is instantiated, and
-        // also transient so that we can just store data on it directly.
+        // Create a new transient symbol that shares the underlying data with the original symbol.
         // PORT: as in `instantiate_symbol`, the full symbol is pushed once.
-        let full = {
-            let s = self.sym(symbol);
-            Symbol {
-                flags: s.flags | SymbolFlags::TRANSIENT,
-                name: s.name.clone(),
-                check_flags: CheckFlags::INSTANTIATED
-                    | s.check_flags
-                        & (CheckFlags::READONLY
-                            | CheckFlags::LATE
-                            | CheckFlags::OPTIONAL_PARAMETER
-                            | CheckFlags::REST_PARAMETER),
-                declarations: s.declarations.clone(),
-                parent: s.parent,
-                value_declaration: s.value_declaration,
-                ..Symbol::default()
-            }
-        };
+        let full = crate::checker::checker_p23::instantiated_symbol_of(self.sym(symbol));
         self.symbol_count += 1;
         let result = self.symbols.push_symbol(full);
         self.value_symbol_links.insert_new_by_id(

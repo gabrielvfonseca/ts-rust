@@ -82,6 +82,11 @@ To try the example, run `python3 -m http.server -d npm/wasm` and open
   worker thread with a 256 MB stack (about 30,000 terms of `1 + 1 + ...`). Bun ignores that
   setting, so under Bun a call runs on the calling thread. In a browser worker, `tsc` runs through
   JSPI where the engine has it, which gives about 2 times the stack in Chrome.
+- A host with about 1 MB of stack (the Node main thread through `core.js`, Cloudflare workerd)
+  checks about 2,100 terms of `1 + 1 + ...` with `noEmit`, about 1,500 terms of `&&`, `||` or `??`,
+  and about 1,200 terms of any operator with emit on. A Node worker with `stackSizeMb: 8` checks
+  about 17,000 terms with `noEmit` and 10,000 with emit. Go recurses the same way but its stacks
+  grow; issue #99 tracks loops that remove this limit.
 - `scripts/wasm/diff.mjs` compares the module with the native tsgo on Query core, Hono, the
   multiprog fixtures and more, and `scripts/wasm/corpus.mjs` on the TypeScript compiler test cases.
   Exit codes, output and emitted files are byte-identical.

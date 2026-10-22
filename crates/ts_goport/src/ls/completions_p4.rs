@@ -7,7 +7,7 @@ use crate::ls::prelude::*;
 use crate::frontend::core_textchange::{TextChange, apply_bulk_edits};
 
 impl LanguageService {
-    // Go: completions.go:5488 ResolveCompletionItem
+    // Go: completions.go:5492 ResolveCompletionItem
     // PORT: Go takes `*lsproto.CompletionItem` and returns it after changing
     // it; Rust takes and returns the item by value. `data` is Go's nil-able
     // `*lsproto.CompletionItemData`. `file_name` is Go's
@@ -65,7 +65,7 @@ impl LanguageService {
     }
 }
 
-// Go: completions.go:5512 getCompletionDocumentationFormat
+// Go: completions.go:5516 getCompletionDocumentationFormat
 pub fn get_completion_documentation_format(ctx: &Context) -> lsproto::MarkupKind {
     lsproto::preferred_markup_kind(
         &lsproto::get_client_capabilities(ctx)
@@ -77,7 +77,7 @@ pub fn get_completion_documentation_format(ctx: &Context) -> lsproto::MarkupKind
 }
 
 impl LanguageService {
-    // Go: completions.go:5516 getCompletionItemDetails
+    // Go: completions.go:5520 getCompletionItemDetails
     #[allow(clippy::too_many_arguments)]
     pub fn get_completion_item_details(
         &self,
@@ -123,6 +123,7 @@ impl LanguageService {
                 &self.format_options(),
                 &self.converters,
                 &self.user_preferences(),
+                false, /*includeSymbolNameInDescription*/
             );
             // Go `&edits`: a `[]*lsproto.TextEdit` of non-nil edits.
             item.additional_text_edits = Some(edits.into_iter().map(Some).collect());
@@ -192,7 +193,7 @@ impl LanguageService {
     }
 }
 
-// Go: completions.go:5609 detailsData
+// Go: completions.go:5613 detailsData
 // PORT: Go `request *completionData` is `Option<CompletionData>`, and
 // `cases *struct{}` is `Option<()>`.
 #[derive(Default)]
@@ -203,7 +204,7 @@ pub struct DetailsData {
     pub cases: Option<()>,
 }
 
-// Go: completions.go:5616 symbolDetails
+// Go: completions.go:5620 symbolDetails
 // PORT: Go shares the `*symbolOriginInfo` pointer; Rust clones the origin.
 #[derive(Clone, Debug, Default)]
 pub struct SymbolDetails {
@@ -217,7 +218,7 @@ pub struct SymbolDetails {
 }
 
 impl LanguageService {
-    // Go: completions.go:5626 getSymbolCompletionFromItemData
+    // Go: completions.go:5630 getSymbolCompletionFromItemData
     pub fn get_symbol_completion_from_item_data(
         &self,
         ctx: &Context,
@@ -318,7 +319,7 @@ impl LanguageService {
     }
 }
 
-// Go: completions.go:5698 createSimpleDetails
+// Go: completions.go:5702 createSimpleDetails
 pub fn create_simple_details(
     item: lsproto::CompletionItem,
     name: &str,
@@ -327,7 +328,7 @@ pub fn create_simple_details(
     create_completion_details(item, name, "" /*documentation*/, doc_format)
 }
 
-// Go: completions.go:5706 createCompletionDetails
+// Go: completions.go:5710 createCompletionDetails
 pub fn create_completion_details(
     item: lsproto::CompletionItem,
     detail: &str,
@@ -351,7 +352,7 @@ pub fn create_completion_details(
     item
 }
 
-// Go: completions.go:5727 codeAction
+// Go: completions.go:5731 codeAction
 // PORT: Go's unexported `codeAction` is unused. It stays private because the
 // exported `CodeAction` (codeactions.go) has the same Rust name in package `ls`.
 #[allow(dead_code)]
@@ -363,7 +364,7 @@ struct CodeAction {
 }
 
 impl LanguageService {
-    // Go: completions.go:5734 createCompletionDetailsForSymbol
+    // Go: completions.go:5738 createCompletionDetailsForSymbol
     pub fn create_completion_details_for_symbol(
         &self,
         item: lsproto::CompletionItem,
@@ -384,7 +385,7 @@ impl LanguageService {
         create_completion_details(item, &quick_info, &documentation, doc_format)
     }
 
-    // Go: completions.go:5746 getImportStatementCompletionInfo
+    // Go: completions.go:5750 getImportStatementCompletionInfo
     pub fn get_import_statement_completion_info(
         &self,
         context_token: Node,
@@ -478,7 +479,7 @@ impl LanguageService {
         result
     }
 
-    // Go: completions.go:5821 getSingleLineReplacementSpanForImportCompletionNode
+    // Go: completions.go:5825 getSingleLineReplacementSpanForImportCompletionNode
     pub fn get_single_line_replacement_span_for_import_completion_node(
         &self,
         node: Node,
@@ -564,7 +565,7 @@ impl LanguageService {
     }
 }
 
-// Go: completions.go:5879 couldBeTypeOnlyImportSpecifier
+// Go: completions.go:5883 couldBeTypeOnlyImportSpecifier
 pub fn could_be_type_only_import_specifier(import_specifier: Node, context_token: Node) -> bool {
     is_import_specifier(import_specifier)
         && (import_specifier.is_type_only()
@@ -572,7 +573,7 @@ pub fn could_be_type_only_import_specifier(import_specifier: Node, context_token
                 && is_type_keyword_token_or_identifier(context_token))
 }
 
-// Go: completions.go:5883 canCompleteFromNamedBindings
+// Go: completions.go:5887 canCompleteFromNamedBindings
 pub fn can_complete_from_named_bindings(named_bindings: Node) -> bool {
     if !is_module_specifier_missing_or_empty(named_bindings.parent().parent().module_specifier())
         || named_bindings.parent().name().is_some()
@@ -599,7 +600,7 @@ pub fn can_complete_from_named_bindings(named_bindings: Node) -> bool {
     true
 }
 
-// Go: completions.go:5911 getPotentiallyInvalidImportSpecifier
+// Go: completions.go:5915 getPotentiallyInvalidImportSpecifier
 // Tries to identify the first named import that is not really a named import, but rather
 // just parser recovery for a situation like:
 //
@@ -628,7 +629,7 @@ pub fn get_potentially_invalid_import_specifier(named_bindings: Node) -> Node {
         .unwrap_or(Node::NIL)
 }
 
-// Go: completions.go:5921 isModuleSpecifierMissingOrEmpty
+// Go: completions.go:5925 isModuleSpecifierMissingOrEmpty
 pub fn is_module_specifier_missing_or_empty(specifier: Node) -> bool {
     if node_is_missing(specifier) {
         return true;
@@ -643,13 +644,13 @@ pub fn is_module_specifier_missing_or_empty(specifier: Node) -> bool {
     node.text().is_empty()
 }
 
-// Go: completions.go:5935 hasDocComment
+// Go: completions.go:5939 hasDocComment
 pub fn has_doc_comment(file: Node, position: i32) -> bool {
     let token = astnav::get_token_at_position(file, position);
     find_ancestor(token, is_js_doc).is_some()
 }
 
-// Go: completions.go:5941 getJSDocTagAtPosition
+// Go: completions.go:5945 getJSDocTagAtPosition
 // Get the corresponding JSDocTag node if the position is in a JSDoc comment
 pub fn get_js_doc_tag_at_position(node: Node, position: i32) -> Node {
     find_ancestor_or_quit(node, |n| {
@@ -663,7 +664,7 @@ pub fn get_js_doc_tag_at_position(node: Node, position: i32) -> Node {
     })
 }
 
-// Go: completions.go:5953 tryGetTypeExpressionFromTag
+// Go: completions.go:5957 tryGetTypeExpressionFromTag
 pub fn try_get_type_expression_from_tag(tag: Node) -> Node {
     if is_tag_with_type_expression(tag) {
         let type_expression = if is_js_doc_template_tag(tag) {
@@ -681,7 +682,7 @@ pub fn try_get_type_expression_from_tag(tag: Node) -> Node {
     Node::NIL
 }
 
-// Go: completions.go:5971 isTagWithTypeExpression
+// Go: completions.go:5975 isTagWithTypeExpression
 pub fn is_tag_with_type_expression(tag: Node) -> bool {
     match tag.kind() {
         SyntaxKind::JsDocParameterTag
@@ -697,7 +698,7 @@ pub fn is_tag_with_type_expression(tag: Node) -> bool {
 }
 
 impl LanguageService {
-    // Go: completions.go:5983 jsDocCompletionInfo
+    // Go: completions.go:5987 jsDocCompletionInfo
     pub fn js_doc_completion_info(
         &self,
         ctx: &Context,
@@ -725,7 +726,7 @@ impl LanguageService {
     }
 }
 
-// Go: completions.go:6005 jsDocTagNames
+// Go: completions.go:6009 jsDocTagNames
 pub static JS_DOC_TAG_NAMES: &[&str] = &[
     "abstract",
     "access",
@@ -816,7 +817,7 @@ pub static JS_DOC_TAG_NAMES: &[&str] = &[
 // PORT: Go `sync.OnceValue` package vars become lazily built thread-local
 // values (all language-service work runs on the dispatch thread).
 thread_local! {
-    // Go: completions.go:6092 jsDocTagNameCompletionItems
+    // Go: completions.go:6096 jsDocTagNameCompletionItems
     static JS_DOC_TAG_NAME_COMPLETION_ITEMS: Vec<lsproto::CompletionItem> = {
         let mut items: Vec<lsproto::CompletionItem> = Vec::with_capacity(JS_DOC_TAG_NAMES.len());
         for tag_name in JS_DOC_TAG_NAMES {
@@ -831,7 +832,7 @@ thread_local! {
         items
     };
 
-    // Go: completions.go:6105 jsDocTagCompletionItems
+    // Go: completions.go:6109 jsDocTagCompletionItems
     static JS_DOC_TAG_COMPLETION_ITEMS: Vec<lsproto::CompletionItem> = {
         let mut items: Vec<lsproto::CompletionItem> = Vec::with_capacity(JS_DOC_TAG_NAMES.len());
         for tag_name in JS_DOC_TAG_NAMES {
@@ -847,17 +848,17 @@ thread_local! {
     };
 }
 
-// Go: completions.go:6118 getJSDocTagNameCompletions
+// Go: completions.go:6122 getJSDocTagNameCompletions
 pub fn get_js_doc_tag_name_completions() -> Vec<CompletionItem> {
     JS_DOC_TAG_NAME_COMPLETION_ITEMS.with(|items| clone_items(items))
 }
 
-// Go: completions.go:6122 getJSDocTagCompletions
+// Go: completions.go:6126 getJSDocTagCompletions
 pub fn get_js_doc_tag_completions() -> Vec<CompletionItem> {
     JS_DOC_TAG_COMPLETION_ITEMS.with(|items| clone_items(items))
 }
 
-// Go: completions.go:6126 getJSDocParameterCompletions
+// Go: completions.go:6130 getJSDocParameterCompletions
 pub fn get_js_doc_parameter_completions(
     _ctx: &Context,
     file: Node,
@@ -1032,7 +1033,7 @@ pub fn get_js_doc_parameter_completions(
     result
 }
 
-// Go: completions.go:6274 getJSDocParamAnnotation
+// Go: completions.go:6278 getJSDocParamAnnotation
 // PORT: Go `tabstopCounter *int` is never nil at a call site, so it is
 // `&mut i32`; the Go `debug.Assert(tabstopCounter != nil)` always holds.
 #[allow(clippy::too_many_arguments)]
@@ -1136,7 +1137,7 @@ pub fn get_js_doc_param_annotation(
     }
 }
 
-// Go: completions.go:6360 getJSDocParamNameWithInitializer
+// Go: completions.go:6364 getJSDocParamNameWithInitializer
 // PORT: Go `strings.TrimSpace` and Rust `str::trim` both trim Unicode
 // White_Space.
 pub fn get_js_doc_param_name_with_initializer(param_name: &str, initializer: Node) -> String {
@@ -1147,7 +1148,7 @@ pub fn get_js_doc_param_name_with_initializer(param_name: &str, initializer: Nod
     format!("[{param_name}={initializer_text}]")
 }
 
-// Go: completions.go:6368 generateJSDocParamTagsForDestructuring
+// Go: completions.go:6372 generateJSDocParamTagsForDestructuring
 #[allow(clippy::too_many_arguments)]
 pub fn generate_js_doc_param_tags_for_destructuring(
     emit_context: &mut Option<Rc<EmitContext>>,
@@ -1192,7 +1193,7 @@ pub fn generate_js_doc_param_tags_for_destructuring(
     )
 }
 
-// Go: completions.go:6411 jsDocParamPatternWorker
+// Go: completions.go:6415 jsDocParamPatternWorker
 #[allow(clippy::too_many_arguments)]
 pub fn js_doc_param_pattern_worker(
     emit_context: &mut Option<Rc<EmitContext>>,
@@ -1265,7 +1266,7 @@ pub fn js_doc_param_pattern_worker(
     )]
 }
 
-// Go: completions.go:6484 jsDocParamElementWorker
+// Go: completions.go:6488 jsDocParamElementWorker
 // Assumes binding element is inside object binding pattern.
 // We can't deeply annotate an array binding pattern.
 #[allow(clippy::too_many_arguments)]
@@ -1329,7 +1330,7 @@ pub fn js_doc_param_element_worker(
     Vec::new()
 }
 
-// Go: completions.go:6545 getJSDocParameterNameCompletions
+// Go: completions.go:6549 getJSDocParameterNameCompletions
 pub fn get_js_doc_parameter_name_completions(tag: Node) -> Vec<CompletionItem> {
     if !is_identifier(tag.name()) {
         return Vec::new();
@@ -1378,7 +1379,7 @@ pub fn get_js_doc_parameter_name_completions(tag: Node) -> Vec<CompletionItem> {
 }
 
 impl LanguageService {
-    // Go: completions.go:6586 getExhaustiveCaseSnippets
+    // Go: completions.go:6590 getExhaustiveCaseSnippets
     #[allow(clippy::too_many_arguments)]
     pub fn get_exhaustive_case_snippets(
         &self,
@@ -1608,7 +1609,7 @@ impl LanguageService {
     }
 }
 
-// Go: completions.go:6724 typeNodeToExpression
+// Go: completions.go:6728 typeNodeToExpression
 pub fn type_node_to_expression(
     type_node: Node,
     target: ScriptTarget,
@@ -1675,7 +1676,7 @@ pub fn type_node_to_expression(
     }
 }
 
-// Go: completions.go:6786 entityNameToExpression
+// Go: completions.go:6790 entityNameToExpression
 pub fn entity_name_to_expression(
     entity_name: Node,
     target: ScriptTarget,
@@ -1693,7 +1694,7 @@ pub fn entity_name_to_expression(
     )
 }
 
-// Go: completions.go:6803 snippetPrinter
+// Go: completions.go:6807 snippetPrinter
 // PORT: Go keeps `baseWriter` and the writer that embeds it as two pointers
 // to one `ChangeTrackerWriter`. In Rust the snippet writer owns it, so Go
 // `p.baseWriter` is `p.writer.borrow().change_tracker_writer`. The printer
@@ -1724,7 +1725,7 @@ impl SnippetPrinter {
         unescaped
     }
 
-    // Go: completions.go:6820 printUnescapedNode
+    // Go: completions.go:6824 printUnescapedNode
     pub fn print_unescaped_node(&mut self, node: Node) -> String {
         {
             let mut writer = self.writer.borrow_mut();
@@ -1741,7 +1742,7 @@ impl SnippetPrinter {
         self.writer.borrow().string()
     }
 
-    // Go: completions.go:6827 printAndFormatNode
+    // Go: completions.go:6831 printAndFormatNode
     pub fn print_and_format_node(
         &mut self,
         ctx: &Context,
@@ -1752,7 +1753,7 @@ impl SnippetPrinter {
         self.print_and_format_node_with_settings(ctx, node, source_file, &format_options)
     }
 
-    // Go: completions.go:6831 printAndFormatNodeWithSettings
+    // Go: completions.go:6835 printAndFormatNodeWithSettings
     pub fn print_and_format_node_with_settings(
         &mut self,
         ctx: &Context,
@@ -1802,7 +1803,7 @@ impl SnippetPrinter {
     }
 }
 
-// Go: completions.go:6854 createSnippetPrinter
+// Go: completions.go:6858 createSnippetPrinter
 // PORT: a nil Go `emitContext` is `None`.
 pub fn create_snippet_printer(
     options: PrinterOptions,
@@ -1829,7 +1830,7 @@ pub fn create_snippet_printer(
     }
 }
 
-// Go: completions.go:6873 snippetEmitTextWriter
+// Go: completions.go:6877 snippetEmitTextWriter
 // Override base writer methods to perform snippet escaping.
 // PORT: Go embeds `*printer.ChangeTrackerWriter`; here it is the owned field
 // `change_tracker_writer`. The `EmitTextWriter` impl below forwards every
@@ -1840,7 +1841,7 @@ pub struct SnippetEmitTextWriter {
 }
 
 impl SnippetEmitTextWriter {
-    // Go: completions.go:6906 escapingWrite
+    // Go: completions.go:6910 escapingWrite
     // The formatter/scanner will have issues with snippet-escaped text,
     // so instead of writing the escaped text directly to the writer,
     // generate a set of changes that can be applied to the unescaped text
@@ -1862,7 +1863,7 @@ impl SnippetEmitTextWriter {
 }
 
 impl EmitTextWriter for SnippetEmitTextWriter {
-    // Go: completions.go:6878 Write
+    // Go: completions.go:6882 Write
     fn write(&mut self, s: &str) {
         self.escaping_write(s, |w| w.write(s));
     }
@@ -1871,7 +1872,7 @@ impl EmitTextWriter for SnippetEmitTextWriter {
         self.change_tracker_writer.write_trailing_semicolon(text);
     }
 
-    // Go: completions.go:6882 WriteComment
+    // Go: completions.go:6886 WriteComment
     fn write_comment(&mut self, text: &str) {
         self.escaping_write(text, |w| w.write_comment(text));
     }
@@ -1892,22 +1893,22 @@ impl EmitTextWriter for SnippetEmitTextWriter {
         self.change_tracker_writer.write_space(text);
     }
 
-    // Go: completions.go:6886 WriteStringLiteral
+    // Go: completions.go:6890 WriteStringLiteral
     fn write_string_literal(&mut self, text: &str) {
         self.escaping_write(text, |w| w.write_string_literal(text));
     }
 
-    // Go: completions.go:6890 WriteParameter
+    // Go: completions.go:6894 WriteParameter
     fn write_parameter(&mut self, text: &str) {
         self.escaping_write(text, |w| w.write_parameter(text));
     }
 
-    // Go: completions.go:6894 WriteProperty
+    // Go: completions.go:6898 WriteProperty
     fn write_property(&mut self, text: &str) {
         self.escaping_write(text, |w| w.write_property(text));
     }
 
-    // Go: completions.go:6898 WriteSymbol
+    // Go: completions.go:6902 WriteSymbol
     fn write_symbol(&mut self, text: &str, symbol: SymbolId) {
         self.escaping_write(text, |w| w.write_symbol(text, symbol));
     }

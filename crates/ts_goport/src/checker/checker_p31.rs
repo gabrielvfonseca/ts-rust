@@ -6,7 +6,7 @@
 use crate::prelude::*;
 
 impl Checker {
-    // Go: checker/checker.go:28509 distributeObjectOverIndexType
+    // Go: checker/checker.go:28590 distributeObjectOverIndexType
     pub fn distribute_object_over_index_type(
         &mut self,
         object_type: TypeId,
@@ -28,7 +28,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:28524 distributeIndexOverObjectType
+    // Go: checker/checker.go:28605 distributeIndexOverObjectType
     pub fn distribute_index_over_object_type(
         &mut self,
         object_type: TypeId,
@@ -60,8 +60,26 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:28540 getSimplifiedConditionalType
+    // Go: checker/checker.go:28621 getSimplifiedConditionalType
     pub fn get_simplified_conditional_type(&mut self, t: TypeId, writing: bool) -> TypeId {
+        let key = CachedTypeKey {
+            kind: if writing {
+                CachedTypeKind::SIMPLIFIED_CONDITIONAL_TYPE_FOR_WRITING
+            } else {
+                CachedTypeKind::SIMPLIFIED_CONDITIONAL_TYPE_FOR_READING
+            },
+            type_id: t,
+        };
+        if let Some(&cached) = self.cached_types.get(&key) {
+            return cached;
+        }
+        let result = self.get_simplified_conditional_type_worker(t, writing);
+        self.cached_types.insert(key, result);
+        result
+    }
+
+    // Go: checker/checker.go:28631 getSimplifiedConditionalTypeWorker
+    pub fn get_simplified_conditional_type_worker(&mut self, t: TypeId, writing: bool) -> TypeId {
         let check_type = self.ty(t).as_conditional_type().check_type;
         let extends_type = self.ty(t).as_conditional_type().extends_type;
         let true_type = self.get_true_type_from_conditional_type(t);
@@ -99,7 +117,7 @@ impl Checker {
     }
 
     // Invokes union simplification logic to determine if an intersection is considered empty as a union constituent
-    // Go: checker/checker.go:28563 isIntersectionEmpty
+    // Go: checker/checker.go:28654 isIntersectionEmpty
     pub fn is_intersection_empty(&mut self, type1: TypeId, type2: TypeId) -> bool {
         let intersected = self.intersect_types(type1, type2);
         let never_type = self.never_type;
@@ -107,7 +125,7 @@ impl Checker {
         self.ty(u).flags.intersects(TypeFlags::NEVER)
     }
 
-    // Go: checker/checker.go:28567 getSimplifiedTypeOrConstraint
+    // Go: checker/checker.go:28658 getSimplifiedTypeOrConstraint
     pub fn get_simplified_type_or_constraint(&mut self, t: TypeId) -> TypeId {
         let simplified = self.get_simplified_type(t, false /*writing*/);
         if simplified != t {
@@ -116,7 +134,7 @@ impl Checker {
         self.get_constraint_of_type(t)
     }
 
-    // Go: checker/checker.go:28574 getNormalizedUnionOrIntersectionType
+    // Go: checker/checker.go:28665 getNormalizedUnionOrIntersectionType
     pub fn get_normalized_union_or_intersection_type(
         &mut self,
         t: TypeId,
@@ -149,7 +167,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:28594 shouldNormalizeIntersection
+    // Go: checker/checker.go:28685 shouldNormalizeIntersection
     pub fn should_normalize_intersection(&mut self, t: TypeId) -> bool {
         let mut has_instantiable = false;
         let mut has_nullable_or_empty = false;
@@ -167,7 +185,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:28607 getNormalizedTupleType
+    // Go: checker/checker.go:28698 getNormalizedTupleType
     pub fn get_normalized_tuple_type(&mut self, t: TypeId, writing: bool) -> TypeId {
         let elements = self.get_element_types(t);
         // PORT: Go `core.SameMap` + `core.Same`.
@@ -186,7 +204,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:28621 getSingleBaseForNonAugmentingSubtype
+    // Go: checker/checker.go:28712 getSingleBaseForNonAugmentingSubtype
     pub fn get_single_base_for_non_augmenting_subtype(&mut self, t: TypeId) -> TypeId {
         if !self.ty(t).object_flags.intersects(ObjectFlags::REFERENCE) {
             return TypeId::NIL;
@@ -259,7 +277,7 @@ impl Checker {
         instantiated_base
     }
 
-    // Go: checker/checker.go:28661 getModifiersTypeFromMappedType
+    // Go: checker/checker.go:28752 getModifiersTypeFromMappedType
     pub fn get_modifiers_type_from_mapped_type(&mut self, t: TypeId) -> TypeId {
         if self.ty(t).as_mapped_type().modifiers_type.is_nil() {
             let modifiers_type: TypeId;
@@ -306,14 +324,14 @@ impl Checker {
         self.ty(t).as_mapped_type().modifiers_type
     }
 
-    // Go: checker/checker.go:28689 extractTypesOfKind
+    // Go: checker/checker.go:28780 extractTypesOfKind
     pub fn extract_types_of_kind(&mut self, t: TypeId, kind: TypeFlags) -> TypeId {
         self.filter_type(t, &mut |c: &mut Checker, t: TypeId| {
             c.ty(t).flags.intersects(kind)
         })
     }
 
-    // Go: checker/checker.go:28693 getRegularTypeOfObjectLiteral
+    // Go: checker/checker.go:28784 getRegularTypeOfObjectLiteral
     pub fn get_regular_type_of_object_literal(&mut self, t: TypeId) -> TypeId {
         if !(self.is_object_literal_type(t)
             && self
@@ -363,7 +381,7 @@ impl Checker {
         regular
     }
 
-    // Go: checker/checker.go:28710 transformTypeOfMembers
+    // Go: checker/checker.go:28801 transformTypeOfMembers
     pub fn transform_type_of_members(
         &mut self,
         t: TypeId,
@@ -383,7 +401,7 @@ impl Checker {
         members
     }
 
-    // Go: checker/checker.go:28723 markLinkedReferences
+    // Go: checker/checker.go:28814 markLinkedReferences
     pub fn mark_linked_references(
         &mut self,
         location: Node,
@@ -607,7 +625,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:28885 isExportOrExportExpression
+// Go: checker/checker.go:28976 isExportOrExportExpression
 // PERF: checkid1. The walk reads each node and its parent through views,
 // with one kind read of the parent: the walk goes to the root for most
 // locations. The tests and their order are Go's.
@@ -638,7 +656,7 @@ pub fn is_export_or_export_expression(location: Node) -> bool {
     false
 }
 
-// Go: checker/checker.go:28900 shouldMarkIdentifierAliasReferenced
+// Go: checker/checker.go:28991 shouldMarkIdentifierAliasReferenced
 // PERF: chkA. The parent and the great-grandparent come with their kinds
 // (`node_parent_and_kind`, one store lookup each), so each node is looked up
 // once. The tests and their order are Go's.
@@ -666,7 +684,7 @@ pub fn should_mark_identifier_alias_referenced(node: Node) -> bool {
     true
 }
 
-// Go: checker/checker.go:28921 isInternalModuleImportEqualsDeclaration
+// Go: checker/checker.go:29012 isInternalModuleImportEqualsDeclaration
 // PORT: `ast.IsInternalModuleImportEqualsDeclaration` already ports to the
 // free fn `is_internal_module_import_equals_declaration` (ast/utilities).
 // This checker-package copy is private and suffixed so the prelude globs do
@@ -677,7 +695,7 @@ fn is_internal_module_import_equals_declaration_p31(node: Node) -> bool {
 }
 
 impl Checker {
-    // Go: checker/checker.go:28926 markIdentifierAliasReferenced
+    // Go: checker/checker.go:29017 markIdentifierAliasReferenced
     pub fn mark_identifier_alias_referenced(&mut self, location: Node) {
         if is_this_in_type_query(location) {
             return;
@@ -688,7 +706,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:28936 markPropertyAliasReferenced
+    // Go: checker/checker.go:29027 markPropertyAliasReferenced
     pub fn mark_property_alias_referenced(
         &mut self,
         location: Node, /*PropertyAccessExpression | QualifiedName*/
@@ -778,7 +796,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:29008 isPartOfImportEqualsModuleReference
+// Go: checker/checker.go:29099 isPartOfImportEqualsModuleReference
 pub fn is_part_of_import_equals_module_reference(location: Node) -> bool {
     let import_equals = find_ancestor_kind(location, SyntaxKind::ImportEqualsDeclaration);
     if import_equals.is_nil() {
@@ -795,7 +813,7 @@ pub fn is_part_of_import_equals_module_reference(location: Node) -> bool {
 }
 
 impl Checker {
-    // Go: checker/checker.go:29021 markExportAssignmentAliasReferenced
+    // Go: checker/checker.go:29112 markExportAssignmentAliasReferenced
     pub fn mark_export_assignment_alias_referenced(
         &mut self,
         location: Node, /*ExportAssignment*/
@@ -816,7 +834,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29031 markJsxAliasReferenced
+    // Go: checker/checker.go:29122 markJsxAliasReferenced
     pub fn mark_jsx_alias_referenced(
         &mut self,
         node: Node, /*JsxOpeningLikeElement | JsxOpeningFragment*/
@@ -897,7 +915,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29077 markImportEqualsAliasReferenced
+    // Go: checker/checker.go:29168 markImportEqualsAliasReferenced
     pub fn mark_import_equals_alias_referenced(
         &mut self,
         location: Node, /*ImportEqualsDeclaration*/
@@ -907,7 +925,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29083 markExportSpecifierAliasReferenced
+    // Go: checker/checker.go:29174 markExportSpecifierAliasReferenced
     pub fn mark_export_specifier_alias_referenced(
         &mut self,
         location: Node, /*ExportSpecifier*/
@@ -953,7 +971,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29105 checkExternalEmitHelpers
+    // Go: checker/checker.go:29196 checkExternalEmitHelpers
     pub fn check_external_emit_helpers(&mut self, location: Node, helpers: ExternalEmitHelpers) {
         if !self.compiler_options.import_helpers.is_true() {
             return;
@@ -1003,6 +1021,19 @@ impl Checker {
                                     args![EXTERNAL_HELPERS_MODULE_NAME_TEXT, name, 5],
                                 );
                             }
+                        } else if helper
+                            .intersects(ExternalEmitHelpers::REWRITE_RELATIVE_IMPORT_EXTENSION)
+                            && !crate::program::content_mapper_extension_rewrites().is_empty()
+                        {
+                            // ts#64581 (checker.go:29227): the helper takes the
+                            // output extensions as a 4th parameter.
+                            if !self.has_signature_with_arity_greater_than(symbol, 3) {
+                                self.error(
+                                    location,
+                                    diag::This_syntax_requires_an_imported_helper_named_1_with_2_parameters_which_is_not_compatible_with_the_one_in_0_Consider_upgrading_your_version_of_0,
+                                    args![EXTERNAL_HELPERS_MODULE_NAME_TEXT, name, 4],
+                                );
+                            }
                         }
                     }
                 }
@@ -1014,7 +1045,7 @@ impl Checker {
             .requested_external_emit_helpers |= helpers;
     }
 
-    // Go: checker/checker.go:29143 hasSignatureWithArityGreaterThan
+    // Go: checker/checker.go:29238 hasSignatureWithArityGreaterThan
     pub fn has_signature_with_arity_greater_than(&mut self, symbol: SymbolId, arity: i32) -> bool {
         for signature in self.get_signatures_of_symbol(symbol) {
             if self.get_parameter_count(signature) > arity {
@@ -1024,7 +1055,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:29152 getHelperNames
+    // Go: checker/checker.go:29247 getHelperNames
     pub fn get_helper_names(&self, helper: ExternalEmitHelpers) -> Vec<String> {
         let names: &[&str] = match helper {
             ExternalEmitHelpers::REST => &["__rest"],
@@ -1062,7 +1093,7 @@ impl Checker {
         names.iter().map(|s| (*s).to_string()).collect()
     }
 
-    // Go: checker/checker.go:29202 resolveHelpersModule
+    // Go: checker/checker.go:29297 resolveHelpersModule
     pub fn resolve_helpers_module(&mut self, file: Node, error_node: Node) -> SymbolId {
         if self
             .source_file_links
@@ -1087,7 +1118,7 @@ impl Checker {
         self.source_file_links.get(file).external_helpers_module
     }
 
-    // Go: checker/checker.go:29215 markDecoratorAliasReferenced
+    // Go: checker/checker.go:29310 markDecoratorAliasReferenced
     pub fn mark_decorator_alias_referenced(&mut self, node: Node /*HasDecorators*/) {
         if self
             .compiler_options
@@ -1156,7 +1187,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29263 getParameterTypeNodeForDecoratorCheck
+    // Go: checker/checker.go:29358 getParameterTypeNodeForDecoratorCheck
     pub fn get_parameter_type_node_for_decorator_check(
         &mut self,
         node: Node, /*ParameterDeclaration*/
@@ -1168,7 +1199,7 @@ impl Checker {
         type_node
     }
 
-    // Go: checker/checker.go:29271 markDecoratorMedataDataTypeNodeAsReferenced
+    // Go: checker/checker.go:29366 markDecoratorMedataDataTypeNodeAsReferenced
     pub fn mark_decorator_meda_data_type_node_as_referenced(
         &mut self,
         node: Node, /*TypeNode*/
@@ -1179,7 +1210,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29278 getEntityNameForDecoratorMetadata
+    // Go: checker/checker.go:29373 getEntityNameForDecoratorMetadata
     pub fn get_entity_name_for_decorator_metadata(&mut self, node: Node) -> Node {
         if node.is_nil() {
             return node;
@@ -1208,7 +1239,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29299 getEntityNameForDecoratorMetadataFromTypeList
+    // Go: checker/checker.go:29394 getEntityNameForDecoratorMetadataFromTypeList
     pub fn get_entity_name_for_decorator_metadata_from_type_list(
         &mut self,
         type_nodes: &[Node],
@@ -1251,7 +1282,7 @@ impl Checker {
         common_entity_name
     }
 
-    // Go: checker/checker.go:29331 markAliasReferenced
+    // Go: checker/checker.go:29426 markAliasReferenced
     pub fn mark_alias_referenced(&mut self, symbol: SymbolId, location: Node) {
         if !self.can_collect_symbol_alias_accessibility_data {
             return;
@@ -1288,7 +1319,7 @@ impl Checker {
     // When an alias symbol is referenced, we need to mark the entity it references as referenced and in turn repeat that until
     // we reach a non-alias or an exported entity (which is always considered referenced). We do this by checking the target of
     // the alias as an expression (which recursively takes us back here if the target references another alias).
-    // Go: checker/checker.go:29353 markAliasSymbolAsReferenced
+    // Go: checker/checker.go:29448 markAliasSymbolAsReferenced
     pub fn mark_alias_symbol_as_referenced(&mut self, symbol: SymbolId) {
         if !self.alias_symbol_links.get(symbol).referenced {
             self.alias_symbol_links.get(symbol).referenced = true;
@@ -1315,7 +1346,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29374 markExportAsReferenced
+    // Go: checker/checker.go:29469 markExportAsReferenced
     pub fn mark_export_as_referenced(
         &mut self,
         node: Node, /*ImportEqualsDeclaration | ExportSpecifier*/
@@ -1337,7 +1368,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29386 markEntityNameOrEntityExpressionAsReference
+    // Go: checker/checker.go:29481 markEntityNameOrEntityExpressionAsReference
     pub fn mark_entity_name_or_entity_expression_as_reference(
         &mut self,
         type_name: Node, /*EntityNameOrEntityNameExpression | nil*/
@@ -1410,7 +1441,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:29421 getEntityNameFromTypeNode
+// Go: checker/checker.go:29516 getEntityNameFromTypeNode
 pub fn get_entity_name_from_type_node(node: Node /*TypeNode*/) -> Node {
     match node.kind() {
         SyntaxKind::TypeReference => node.type_name(),
@@ -1432,7 +1463,7 @@ pub fn get_entity_name_from_type_node(node: Node /*TypeNode*/) -> Node {
 impl Checker {
     // If a TypeNode can be resolved to a value symbol imported from an external module, it is
     // marked as referenced to prevent import elision.
-    // Go: checker/checker.go:29442 markTypeNodeAsReferenced
+    // Go: checker/checker.go:29537 markTypeNodeAsReferenced
     pub fn mark_type_node_as_referenced(&mut self, node: Node /*TypeNode*/) {
         if node.is_some() {
             self.mark_entity_name_or_entity_expression_as_reference(
@@ -1442,7 +1473,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29448 GetPromisedTypeOfPromise
+    // Go: checker/checker.go:29543 GetPromisedTypeOfPromise
     pub fn get_promised_type_of_promise(&mut self, t: TypeId) -> TypeId {
         self.get_promised_type_of_promise_ex(t, Node::NIL, None)
     }
@@ -1450,7 +1481,7 @@ impl Checker {
     // Gets the "promised type" of a promise.
     // @param type The type of the promise.
     // @remarks The "promised type" of a type is the type of the "value" parameter of the "onfulfilled" callback.
-    // Go: checker/checker.go:29455 getPromisedTypeOfPromiseEx
+    // Go: checker/checker.go:29550 getPromisedTypeOfPromiseEx
     // PORT: Go `thisTypeForErrorOut **Type` (nil-able out pointer) becomes
     // `Option<&mut TypeId>`.
     pub fn get_promised_type_of_promise_ex(
@@ -1565,4 +1596,13 @@ impl Checker {
         self.cached_types.insert(key, result);
         result
     }
+}
+
+// Go: checker/checker.go:143 const(CachedTypeKindSimplifiedConditionalTypeForReading)
+// PORT: the other kinds are in `src/flags.rs` (go_enum! CachedTypeKind). Go adds
+// these 2 at the end of the enum (#64648); bump E lane L3 does not own flags.rs,
+// so they are here with Go's values (after DECORATOR_CONTEXT_PRIVATE_STATIC = 21).
+impl CachedTypeKind {
+    pub const SIMPLIFIED_CONDITIONAL_TYPE_FOR_READING: Self = Self(22); // CachedTypeKindSimplifiedConditionalTypeForReading
+    pub const SIMPLIFIED_CONDITIONAL_TYPE_FOR_WRITING: Self = Self(23); // CachedTypeKindSimplifiedConditionalTypeForWriting
 }

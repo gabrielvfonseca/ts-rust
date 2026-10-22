@@ -15,12 +15,12 @@
 
 use crate::prelude::*;
 
-// Go: checker/links.go:10 nodeLinkStore
+// Go: checker/links.go:16 nodeLinkStore
 /// A links store keyed by node references (Go stores the values in the pages).
 // PORT: sparse pages: about 20% of the keys of a page have a record.
 pub type NodeLinkStore<V> = SparseLinkStore<Node, V>;
 
-// Go: checker/links.go:28 symbolArenaLinkStore
+// Go: checker/links.go:28 symbolArenaLinkStore (at fed0bf24149f; removed by ts#64711)
 /// A links store keyed by symbol references (Go stores the values in an arena;
 /// here they sit in the pages, as most keys of a page have a record).
 pub type SymbolArenaLinkStore<V> = LinkStore<SymbolId, V>;

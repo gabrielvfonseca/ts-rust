@@ -18,7 +18,7 @@ use ts_goport::frontend::module::{
     node_module_package_root_for_directory, node_module_package_root_for_file,
     normalize_path_for_cjs_resolution,
 };
-use ts_goport::frontend::tspath::{self, Path};
+use ts_goport::frontend::tspath::{self, ExtensionRewrite, Path};
 use ts_goport::frontend::vfs::{Fs, Replacements, wrapvfs_wrap};
 use ts_goport::modulespecifiers::deps::OutputPathsHost;
 use ts_goport::modulespecifiers::packagejson::InfoCacheEntry;
@@ -1788,6 +1788,10 @@ impl OutputPathsHost for MockModuleSpecifierGenerationHost {
     fn content_mapper_extensions(&self) -> Vec<String> {
         self.content_mapper_extensions.clone()
     }
+    // Go: specifiers_test.go:135 ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<ExtensionRewrite> {
+        Vec::new()
+    }
 }
 
 impl ModuleSpecifierGenerationHost for MockModuleSpecifierGenerationHost {
@@ -1797,9 +1801,13 @@ impl ModuleSpecifierGenerationHost for MockModuleSpecifierGenerationHost {
     fn common_source_directory(&self) -> String {
         self.current_dir.clone()
     }
-    // Go: specifiers_test.go:47 ContentMapperExtensions (tsgo#4712)
+    // Go: specifiers_test.go:131 ContentMapperExtensions (tsgo#4712)
     fn content_mapper_extensions(&self) -> Vec<String> {
         self.content_mapper_extensions.clone()
+    }
+    // Go: specifiers_test.go:135 ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<ExtensionRewrite> {
+        Vec::new()
     }
     fn get_global_typings_cache_location(&self) -> String {
         String::new()

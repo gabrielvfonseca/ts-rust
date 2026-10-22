@@ -1066,24 +1066,16 @@ impl<'a> Parser<'a> {
                     if extends_clause.is_some() && extends_clause.types().nodes().len() == 1 {
                         let target = extends_clause.types().nodes().get(0);
                         let source = tag.class_name();
-                        if has_same_property_access_name(target.expression(), source.expression())
-                            && target.type_argument_list().is_nil()
+                        if target.type_argument_list().is_nil()
                             && source.type_argument_list().is_some()
+                            && target.expression().kind() != SyntaxKind::NullKeyword
+                            && (!is_entity_name_expression(target.expression())
+                                || has_same_property_access_name(
+                                    target.expression(),
+                                    source.expression(),
+                                ))
                         {
-                            let source_arguments = source.type_argument_list();
-                            let mut new_arguments: Vec<Node> =
-                                Vec::with_capacity(source_arguments.nodes().len());
-                            for arg in source_arguments.nodes().iter() {
-                                new_arguments.push(self.add_deep_clone_reparse(arg));
-                            }
-                            let list = self.new_node_list(source_arguments.loc(), &new_arguments);
-                            let v = node_list_value(target, list);
-                            mutate(target, |data| {
-                                if let D::ExpressionWithTypeArguments(d) = data {
-                                    d.type_arguments = v;
-                                }
-                            });
-                            self.finish_mutated_node(target);
+                            self.set_reparsed_type_arguments(target, source.type_argument_list());
                         }
                     }
                 }
@@ -1092,7 +1084,23 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // Go: parser/reparser.go:615 makeQuestionIfOptional
+    // Go: parser/reparser.go:608 setReparsedTypeArguments
+    fn set_reparsed_type_arguments(&mut self, target: Node, source: NodeList) {
+        let mut type_arguments: Vec<Node> = Vec::with_capacity(source.nodes().len());
+        for type_argument in source.nodes().iter() {
+            type_arguments.push(self.add_deep_clone_reparse(type_argument));
+        }
+        let list = self.new_node_list(source.loc(), &type_arguments);
+        let v = node_list_value(target, list);
+        mutate(target, |data| {
+            if let D::ExpressionWithTypeArguments(d) = data {
+                d.type_arguments = v;
+            }
+        });
+        self.finish_mutated_node(target);
+    }
+
+    // Go: parser/reparser.go:617 makeQuestionIfOptional
     fn make_question_if_optional(&mut self, parameter: Node) -> Node {
         let mut question_token = Node::NIL;
         if parameter.is_bracketed()
@@ -1106,7 +1114,7 @@ impl<'a> Parser<'a> {
         question_token
     }
 
-    // Go: parser/reparser.go:678 makeNewCast
+    // Go: parser/reparser.go:680 makeNewCast
     fn make_new_cast(&mut self, t: Node, e: Node, is_assertion: bool) -> Node {
         let assert = if is_assertion {
             self.factory.new_as_expression(e, t)
@@ -1117,7 +1125,7 @@ impl<'a> Parser<'a> {
         assert
     }
 
-    // Go: parser/reparser.go:700 createExportModifier
+    // Go: parser/reparser.go:702 createExportModifier
     fn create_export_modifier(&mut self, location_node: Node) -> ModifierList {
         let export_modifier = self.factory.new_modifier(SyntaxKind::ExportKeyword);
         set_node_loc(export_modifier, location_node.loc());
@@ -1125,7 +1133,7 @@ impl<'a> Parser<'a> {
         self.new_modifier_list(location_node.loc(), &[export_modifier])
     }
 
-    // Go: parser/reparser.go:711 getInnermostNameOfJSDocNamespace
+    // Go: parser/reparser.go:713 getInnermostNameOfJSDocNamespace
     /// Returns the innermost identifier from a JSDoc namespace chain
     /// (ModuleDeclaration). For a simple identifier, it returns the identifier
     /// itself. For "A.B.C", it returns the identifier "C".
@@ -1144,7 +1152,7 @@ impl<'a> Parser<'a> {
         full_name
     }
 
-    // Go: parser/reparser.go:733 wrapInJSDocNamespace
+    // Go: parser/reparser.go:735 wrapInJSDocNamespace
     /// Wraps a statement (typically a type alias) in namespace declarations
     /// for a JSDoc dotted name. For name "A.B.C" and a type alias for C, this
     /// makes `namespace A { namespace B { type C = ... } }`. If the name is a
@@ -1181,7 +1189,7 @@ impl<'a> Parser<'a> {
     }
 }
 
-// Go: parser/reparser.go:625 findMatchingParameter
+// Go: parser/reparser.go:627 findMatchingParameter
 // PORT: returns the parameter node, or nil for Go `(nil, false)`.
 fn find_matching_parameter(fun: Node, parameter_tag: Node, js_doc: Node) -> Node {
     let mut tag_index: i64 = -1;
@@ -1211,7 +1219,7 @@ fn find_matching_parameter(fun: Node, parameter_tag: Node, js_doc: Node) -> Node
     Node::NIL
 }
 
-// Go: parser/reparser.go:650 skipSatisfiesExpressions
+// Go: parser/reparser.go:652 skipSatisfiesExpressions
 fn skip_satisfies_expressions(node: Node) -> Node {
     let mut node = node;
     while node.is_some() && node.kind() == SyntaxKind::SatisfiesExpression {
@@ -1220,7 +1228,7 @@ fn skip_satisfies_expressions(node: Node) -> Node {
     node
 }
 
-// Go: parser/reparser.go:657 getFunctionLikeHost
+// Go: parser/reparser.go:659 getFunctionLikeHost
 fn get_function_like_host(host: Node) -> Node {
     let mut fun = host;
     match host.kind() {
@@ -1248,7 +1256,7 @@ fn get_function_like_host(host: Node) -> Node {
     Node::NIL
 }
 
-// Go: parser/reparser.go:689 getClassLikeData
+// Go: parser/reparser.go:691 getClassLikeData
 // PORT: Go returns the `*ClassLikeBase` data. Here the class node (or nil);
 // callers read and write its fields through the node.
 fn get_class_like_data(parent: Node) -> Node {

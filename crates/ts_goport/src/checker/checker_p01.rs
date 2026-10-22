@@ -127,7 +127,7 @@ pub struct EnumRelationKey {
 
 // CachedTypeKey
 
-// Go: checker/checker.go:147 CachedTypeKey
+// Go: checker/checker.go:149 CachedTypeKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct CachedTypeKey {
     pub kind: CachedTypeKind,
@@ -136,7 +136,7 @@ pub struct CachedTypeKey {
 
 // NarrowedTypeKey
 
-// Go: checker/checker.go:154 NarrowedTypeKey
+// Go: checker/checker.go:156 NarrowedTypeKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct NarrowedTypeKey {
     pub t: TypeId,
@@ -147,7 +147,7 @@ pub struct NarrowedTypeKey {
 
 // UnionOfUnionKey
 
-// Go: checker/checker.go:163 UnionOfUnionKey
+// Go: checker/checker.go:165 UnionOfUnionKey
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct UnionOfUnionKey {
     pub id1: TypeId,
@@ -158,7 +158,7 @@ pub struct UnionOfUnionKey {
 
 // CachedSignatureKey
 
-// Go: checker/checker.go:172 CachedSignatureKey
+// Go: checker/checker.go:174 CachedSignatureKey
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CachedSignatureKey {
     pub sig: SignatureId,
@@ -175,23 +175,23 @@ fn signature_key_of(s: &str) -> CacheHashKey {
     b.hash()
 }
 
-// Go: checker/checker.go:171 SignatureKeyErased
+// Go: checker/checker.go:180 SignatureKeyErased
 // PORT: Go package vars become lazily computed statics. Read with
 // `*SIGNATURE_KEY_ERASED`.
 pub static SIGNATURE_KEY_ERASED: LazyLock<CacheHashKey> = LazyLock::new(|| signature_key_of("-"));
-// Go: checker/checker.go:172 SignatureKeyCanonical
+// Go: checker/checker.go:181 SignatureKeyCanonical
 pub static SIGNATURE_KEY_CANONICAL: LazyLock<CacheHashKey> =
     LazyLock::new(|| signature_key_of("*"));
-// Go: checker/checker.go:173 SignatureKeyBase
+// Go: checker/checker.go:182 SignatureKeyBase
 pub static SIGNATURE_KEY_BASE: LazyLock<CacheHashKey> = LazyLock::new(|| signature_key_of("#"));
-// Go: checker/checker.go:174 SignatureKeyInner
+// Go: checker/checker.go:183 SignatureKeyInner
 pub static SIGNATURE_KEY_INNER: LazyLock<CacheHashKey> = LazyLock::new(|| signature_key_of("<"));
-// Go: checker/checker.go:175 SignatureKeyOuter
+// Go: checker/checker.go:184 SignatureKeyOuter
 pub static SIGNATURE_KEY_OUTER: LazyLock<CacheHashKey> = LazyLock::new(|| signature_key_of(">"));
 
 // StringMappingKey
 
-// Go: checker/checker.go:187 StringMappingKey
+// Go: checker/checker.go:189 StringMappingKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct StringMappingKey {
     pub s: SymbolId,
@@ -200,7 +200,7 @@ pub struct StringMappingKey {
 
 // AssignmentReducedKey
 
-// Go: checker/checker.go:194 AssignmentReducedKey
+// Go: checker/checker.go:196 AssignmentReducedKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct AssignmentReducedKey {
     pub id1: TypeId,
@@ -209,7 +209,7 @@ pub struct AssignmentReducedKey {
 
 // DiscriminatedContextualTypeKey
 
-// Go: checker/checker.go:201 DiscriminatedContextualTypeKey
+// Go: checker/checker.go:203 DiscriminatedContextualTypeKey
 // PORT: Go `ast.NodeId` is the node handle here (a `Node` is unique per
 // node, like a Go node id).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -220,7 +220,7 @@ pub struct DiscriminatedContextualTypeKey {
 
 // InstantiationExpressionKey
 
-// Go: checker/checker.go:208 InstantiationExpressionKey
+// Go: checker/checker.go:210 InstantiationExpressionKey
 // PORT: Go `ast.NodeId` is the node handle here.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct InstantiationExpressionKey {
@@ -230,7 +230,7 @@ pub struct InstantiationExpressionKey {
 
 // SubstitutionTypeKey
 
-// Go: checker/checker.go:215 SubstitutionTypeKey
+// Go: checker/checker.go:217 SubstitutionTypeKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct SubstitutionTypeKey {
     pub base_id: TypeId,
@@ -239,7 +239,7 @@ pub struct SubstitutionTypeKey {
 
 // ReverseMappedTypeKey
 
-// Go: checker/checker.go:222 ReverseMappedTypeKey
+// Go: checker/checker.go:224 ReverseMappedTypeKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct ReverseMappedTypeKey {
     pub source_id: TypeId,
@@ -249,7 +249,7 @@ pub struct ReverseMappedTypeKey {
 
 // IterationTypesKey
 
-// Go: checker/checker.go:230 IterationTypesKey
+// Go: checker/checker.go:232 IterationTypesKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct IterationTypesKey {
     pub type_id: TypeId,
@@ -258,7 +258,7 @@ pub struct IterationTypesKey {
 
 // PropertiesTypesKey
 
-// Go: checker/checker.go:237 PropertiesTypesKey
+// Go: checker/checker.go:239 PropertiesTypesKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct PropertiesTypesKey {
     pub type_id: TypeId,
@@ -268,7 +268,7 @@ pub struct PropertiesTypesKey {
 
 // NonExistentPropertyKey
 
-// Go: checker/checker.go:245 NonExistentPropertyKey
+// Go: checker/checker.go:247 NonExistentPropertyKey
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct NonExistentPropertyKey {
     pub prop_node: Node,
@@ -278,14 +278,14 @@ pub struct NonExistentPropertyKey {
 
 // FlowLoopKey
 
-// Go: checker/checker.go:253 FlowLoopKey
+// Go: checker/checker.go:255 FlowLoopKey
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FlowLoopKey {
     pub flow_node: FlowNodeId,
     pub ref_key: CacheHashKey,
 }
 
-// Go: checker/checker.go:258 FlowLoopInfo
+// Go: checker/checker.go:260 FlowLoopInfo
 #[derive(Clone)]
 pub struct FlowLoopInfo {
     pub key: FlowLoopKey,
@@ -294,7 +294,7 @@ pub struct FlowLoopInfo {
 
 // InferenceContext
 
-// Go: checker/checker.go:277 InferenceContext
+// Go: checker/checker.go:279 InferenceContext
 // PERF (infermem1): 56 bytes (asserted below), not 120. The port keeps every context
 // of a run (typebox: about 3.9M, almost all from conditional types with
 // `infer`), so the fields that those contexts never set are in `rare`, a box
@@ -403,7 +403,7 @@ impl Default for InferenceContext {
     }
 }
 
-// Go: checker/checker.go:290 InferenceInfo
+// Go: checker/checker.go:293 InferenceInfo
 // PORT: Go `*InferenceInfo` is an index into `InferenceContext::inferences`.
 // PERF (infermem1): 32 bytes (asserted below), not 72. The two candidate
 // lists are in one box that the second candidate makes (typebox: about 6M
@@ -520,14 +520,14 @@ impl InferenceInfo {
     }
 }
 
-// Go: checker/checker.go:322 IntraExpressionInferenceSite
+// Go: checker/checker.go:325 IntraExpressionInferenceSite
 #[derive(Clone, Copy, Debug, Default)]
 pub struct IntraExpressionInferenceSite {
     pub node: Node,
     pub t: TypeId,
 }
 
-// Go: checker/checker.go:361 intrinsicTypeKinds
+// Go: checker/checker.go:364 intrinsicTypeKinds
 // PORT: Go package map var; read with `INTRINSIC_TYPE_KINDS.get(name)`.
 pub static INTRINSIC_TYPE_KINDS: LazyLock<FxHashMap<&'static str, IntrinsicTypeKind>> =
     LazyLock::new(|| {
@@ -540,7 +540,7 @@ pub static INTRINSIC_TYPE_KINDS: LazyLock<FxHashMap<&'static str, IntrinsicTypeK
         m
     });
 
-// Go: checker/checker.go:508 IterationTypes
+// Go: checker/checker.go:511 IterationTypes
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct IterationTypes {
     pub yield_type: TypeId,
@@ -548,7 +548,7 @@ pub struct IterationTypes {
     pub next_type: TypeId,
 }
 
-// Go: checker/checker.go:522 IterationTypesResolver
+// Go: checker/checker.go:525 IterationTypesResolver
 // PORT: Go func fields are `Rc<dyn Fn(&mut Checker, ...)>`. Go
 // `*diagnostics.Message` fields are always set by
 // `initializeIterationResolvers`, so they are plain `&'static Message`.
@@ -569,7 +569,7 @@ pub struct IterationTypesResolver {
     pub must_have_a_value_diagnostic: &'static Message,
 }
 
-// Go: checker/checker.go:538 WideningContext
+// Go: checker/checker.go:541 WideningContext
 // PORT: Go `*WideningContext` links become `Rc<RefCell<WideningContext>>`;
 // a nil parent is `None`.
 #[derive(Clone, Default)]
@@ -589,14 +589,14 @@ pub struct WideningContext {
     pub widened_types: FxHashMap<TypeId, TypeId>,
 }
 
-// Go: checker/checker.go:547 VarianceStackEntry
+// Go: checker/checker.go:550 VarianceStackEntry
 #[derive(Clone, Debug, Default)]
 pub struct VarianceStackEntry {
     pub symbol: SymbolId,
     pub type_parameters: Vec<TypeId>,
 }
 
-// Go: checker/checker.go:552 maxSerializationLevel
+// Go: checker/checker.go:555 maxSerializationLevel
 pub const MAX_SERIALIZATION_LEVEL: i32 = 2;
 
 // PORT: Go `Program` and `Host` interfaces (checker.go:555-583) are not
@@ -837,7 +837,7 @@ impl FlatKey for TypeId {
 
 // Checker
 
-// Go: checker/checker.go:585 Checker
+// Go: checker/checker.go:588 Checker
 // PORT: Go fields keep their order and snake names. Differences:
 // - `program Program` is `&'static GoProgram` (the installed `prog()`).
 // - `symbolArena`, `signatureArena`, `indexInfoArena` are replaced by the
@@ -922,7 +922,7 @@ pub struct Checker {
     pub subtype_reduction_cache: CacheKeyMap<Vec<TypeId>>,
     pub cached_types: FxHashMap<CachedTypeKey, TypeId>,
     pub cached_signatures: FxHashMap<CachedSignatureKey, SignatureId>,
-    pub undefined_properties: FxHashMap<String, SymbolId>,
+    pub undefined_properties: FxHashMap<SymbolId, SymbolId>,
     pub narrowed_types: FxHashMap<NarrowedTypeKey, TypeId>,
     pub assignment_reduced_types: FxHashMap<AssignmentReducedKey, TypeId>,
     pub discriminated_contextual_types: FxHashMap<DiscriminatedContextualTypeKey, TypeId>,
@@ -1365,7 +1365,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:913 NewChecker
+// Go: checker/checker.go:936 NewChecker
 // PORT: Go `NewChecker(program) (*Checker, *sync.Mutex)` becomes
 // `Checker::new(checker_index)`. The program is the installed `prog()`; the
 // mutex is dropped, and the tracer comes from the process tracing session
@@ -1755,8 +1755,8 @@ impl Checker {
             type_predicates: vec![TypePredicate::default()],
             mappers: ChunkedArena::with_nil(TypeMapper::default()),
             inference_contexts: ChunkedArena::with_nil(InferenceContext::default()),
-            // Go: compiler/checkerpool.go:104 makes the tracer when the pool
-            // has a tracing session; NewChecker stores it (checker.go:905).
+            // Go: compiler/checkerpool.go:375 makes the tracer when the pool
+            // has a tracing session; NewChecker stores it (checker.go:941).
             tracer: crate::tracing::new_checker_tracer(checker_index),
             effect_links: None,
             effect_relation_errors: FxHashMap::default(),

@@ -2982,7 +2982,8 @@ impl PrefetchShared {
 
     /// The parse options and script kind of a job for `file_name`, when
     /// the parser can take it: a normalized absolute name with a known
-    /// extension.
+    /// extension, not a network path (ts#64832: the loader never reads one,
+    /// so a worker does not either).
     fn parse_request(&self, file_name: String) -> Option<(SourceFileParseOptions, ScriptKind)> {
         let config = &self.config;
         let script_kind = get_script_kind_from_file_name(&file_name);
@@ -2990,6 +2991,7 @@ impl PrefetchShared {
             || !has_extension(&file_name)
             || get_encoded_root_length(&file_name) == 0
             || file_name != normalize_path(&file_name)
+            || crate::frontend::nativepath::is_network_path(&file_name)
         {
             return None;
         }
@@ -3262,7 +3264,7 @@ pub fn start_default_lib_prefetch(
     }
     let default_library_path =
         get_normalized_absolute_path(default_library_path, current_directory);
-    // Go: fileloader.go:153 (root lib tasks)
+    // Go: fileloader.go:213 (root lib tasks)
     let mut names: Vec<String> = match &options.lib {
         Some(libs) => libs
             .iter()
@@ -3465,6 +3467,9 @@ pub struct FileRefs {
     lib_reference_directives: Vec<FileReference>,
     type_reference_directives: Vec<FileReference>,
     import_specifiers: Vec<String>,
+    /// The ambient modules that the file declares: the loader does not
+    /// resolve an import of one of them (ts#64491), so the worker does not.
+    ambient_module_names: Vec<String>,
     /// The module indicator options that the cached parse read
     /// (`FileRefs::of_kept_parse`): the host gives the parse only for these
     /// options (`fits`). `None`: any options.
@@ -3482,6 +3487,7 @@ impl FileRefs {
             lib_reference_directives: file.lib_reference_directives.clone(),
             type_reference_directives: file.type_reference_directives.clone(),
             import_specifiers: file.imports.iter().map(|n| n.text().to_string()).collect(),
+            ambient_module_names: file.ambient_module_names.clone(),
             module_indicator_options: None,
         }
     }
@@ -3516,6 +3522,7 @@ impl FileRefs {
             lib_reference_directives: file.lib_reference_directives.clone(),
             type_reference_directives: file.type_reference_directives.clone(),
             import_specifiers,
+            ambient_module_names: file.ambient_module_names.clone(),
             module_indicator_options: None,
         }
     }
@@ -4028,7 +4035,7 @@ impl WorkerResolver {
             if shared.is_closed() {
                 return None;
             }
-            // Go: fileloader.go:1021 getModeForTypeReferenceDirectiveInFile
+            // Go: fileloader.go:1038 getModeForTypeReferenceDirectiveInFile
             let mode = if reference.resolution_mode != RESOLUTION_MODE_NONE {
                 reference.resolution_mode
             } else {
@@ -4089,8 +4096,13 @@ impl WorkerResolver {
             };
             modes.push(mode);
             // ts#63915: the loader does not resolve a source phase import.
+            // ts#64491: nor an ambient module that the file declares.
             if specifier.is_empty()
                 || usage.is_some_and(|(_, _, _, source_phase)| source_phase == Some(true))
+                || refs
+                    .ambient_module_names
+                    .iter()
+                    .any(|name| name == specifier)
             {
                 answers.push(None);
                 continue;
@@ -4098,7 +4110,7 @@ impl WorkerResolver {
             // The worker's resolver is the default resolver, which never
             // fails (Go resolver.go:469 gives a nil error). So no answer
             // has an error for the loader to note (Go
-            // `moduleResolutionError`, fileloader.go:884).
+            // `moduleResolutionError`, fileloader.go:901).
             let (resolved, _, err) =
                 self.resolver
                     .resolve_module_name(specifier, containing_file, mode, redirect);

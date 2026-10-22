@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 impl Checker {
-    // Go: checker/checker.go:32317 getIndexSignaturesAtLocation
+    // Go: checker/checker.go:32412 getIndexSignaturesAtLocation
     pub fn get_index_signatures_at_location(&mut self, node: Node) -> Vec<Node> {
         let mut signatures: Vec<Node> = Vec::new();
         if is_identifier(node)
@@ -26,7 +26,7 @@ impl Checker {
         signatures
     }
 
-    // Go: checker/checker.go:32333 getSymbolOfNameOrPropertyAccessExpression
+    // Go: checker/checker.go:32428 getSymbolOfNameOrPropertyAccessExpression
     // PERF: noderef1 G1. `name_ref` is the view (`NodeRef`) of `name`: the
     // kind and parent reads of the predicates below do one registry lookup
     // per node, not one per read.
@@ -239,7 +239,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:32468 isThisPropertyAndThisTyped
+    // Go: checker/checker.go:32563 isThisPropertyAndThisTyped
     pub fn is_this_property_and_this_typed(&mut self, node: Node) -> bool {
         if node.expression().kind() == SyntaxKind::ThisKeyword {
             let container = self.get_this_container(
@@ -264,7 +264,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:32483 getTypeOfNode
+    // Go: checker/checker.go:32578 getTypeOfNode
     pub fn get_type_of_node(&mut self, node: Node) -> TypeId {
         if is_source_file(node) && !is_external_or_common_js_module(node) {
             return self.error_type;
@@ -394,7 +394,7 @@ impl Checker {
         self.error_type
     }
 
-    // Go: checker/checker.go:32595 getThisTypeOfObjectLiteralFromContextualType
+    // Go: checker/checker.go:32690 getThisTypeOfObjectLiteralFromContextualType
     pub fn get_this_type_of_object_literal_from_contextual_type(
         &mut self,
         containing_literal: Node,
@@ -416,7 +416,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:32612 getThisTypeFromContextualType
+    // Go: checker/checker.go:32707 getThisTypeFromContextualType
     pub fn get_this_type_from_contextual_type(&mut self, t: TypeId) -> TypeId {
         self.map_type(t, &mut |c: &mut Checker, t: TypeId| -> TypeId {
             if c.ty(t).flags.intersects(TypeFlags::INTERSECTION) {
@@ -434,7 +434,7 @@ impl Checker {
         })
     }
 
-    // Go: checker/checker.go:32628 getThisTypeArgument
+    // Go: checker/checker.go:32723 getThisTypeArgument
     pub fn get_this_type_argument(&mut self, t: TypeId) -> TypeId {
         if self.ty(t).object_flags.intersects(ObjectFlags::REFERENCE)
             && self.ty(t).target() == self.global_this_type
@@ -444,7 +444,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:32635 getApplicableIndexInfos
+    // Go: checker/checker.go:32730 getApplicableIndexInfos
     pub fn get_applicable_index_infos(&mut self, t: TypeId, key_type: TypeId) -> Vec<IndexInfoId> {
         // Go: core.Filter
         let infos = self.get_index_infos_of_type(t);
@@ -458,7 +458,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:32639 getApplicableIndexSymbol
+    // Go: checker/checker.go:32734 getApplicableIndexSymbol
     pub fn get_applicable_index_symbol(&mut self, t: TypeId, key_type: TypeId) -> SymbolId {
         let info = self.get_applicable_index_info(t, key_type);
         if info.is_some() && info != self.any_base_type_index_info {
@@ -500,7 +500,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:32668 getRegularTypeOfExpression
+    // Go: checker/checker.go:32763 getRegularTypeOfExpression
     pub fn get_regular_type_of_expression(&mut self, mut expr: Node) -> TypeId {
         if is_right_side_of_qualified_name_or_property_access(expr) {
             expr = expr.parent();
@@ -509,7 +509,7 @@ impl Checker {
         self.get_regular_type_of_literal_type(t)
     }
 
-    // Go: checker/checker.go:32675 containsArgumentsReference
+    // Go: checker/checker.go:32770 containsArgumentsReference
     pub fn contains_arguments_reference(&mut self, node: Node) -> bool {
         if node.body().is_nil() {
             return false;
@@ -525,7 +525,7 @@ impl Checker {
         contains_arguments
     }
 
-    // Go: checker/checker.go:31884 containsArgumentsReference.visit
+    // Go: checker/checker.go:32779 containsArgumentsReference.visit
     // PORT: the Go recursive closure `visit` becomes this helper method.
     fn contains_arguments_reference_visit(&mut self, node: Node) -> bool {
         if node.is_nil() {
@@ -562,12 +562,12 @@ impl Checker {
         node.for_each_child(&mut |child: Node| self.contains_arguments_reference_visit(child))
     }
 
-    // Go: checker/checker.go:32712 GetTypeAtLocation
+    // Go: checker/checker.go:32807 GetTypeAtLocation
     pub fn get_type_at_location(&mut self, node: Node) -> TypeId {
         self.get_type_of_node(get_reparsed_node_for_node(node))
     }
 
-    // Go: checker/checker.go:32720 GetAliasedSymbol
+    // Go: checker/checker.go:32815 GetAliasedSymbol
     pub fn get_aliased_symbol(&mut self, symbol: SymbolId) -> SymbolId {
         self.resolve_alias(symbol)
     }

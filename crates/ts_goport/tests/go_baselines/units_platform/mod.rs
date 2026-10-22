@@ -34,6 +34,7 @@ mod fswatch_walkdir;
 mod fswatch_watcher;
 mod jsnum;
 mod lspwatcher;
+mod nativepath;
 mod osvfs;
 mod packagejson;
 mod semver;

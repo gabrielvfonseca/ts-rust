@@ -2,6 +2,7 @@
 //! (tsgo#4712, package `incremental_test`).
 
 use crate::support::vfstest::{self, MapFile};
+use std::collections::BTreeMap;
 use std::rc::Rc;
 use ts_goport::contentmapper::{self, Definition, Manifest, Mapper};
 use ts_goport::core::version;
@@ -15,7 +16,7 @@ use ts_goport::frontend::tsoptions::{ParsedCommandLine, ParsedOptions};
 use ts_goport::gostd::{GoError, errors};
 use ts_goport::prelude::*;
 
-// Go: incremental/buildinfo_contentmapper_test.go:16 configWithMappers
+// Go: incremental/buildinfo_contentmapper_test.go:17 configWithMappers
 fn config_with_mappers(mappers: Vec<Rc<Mapper>>) -> ParsedCommandLine {
     ParsedCommandLine {
         parsed_config: ParsedOptions {
@@ -39,7 +40,7 @@ fn manifest_mapper(name: &str, version: &str) -> Mapper {
     }
 }
 
-// Go: incremental/buildinfo_contentmapper_test.go:25 TestStaticContentMapperTransformIdentity
+// Go: incremental/buildinfo_contentmapper_test.go:23 TestStaticContentMapperTransformIdentity
 #[test]
 fn test_static_content_mapper_transform_identity() {
     assert_eq!(manifest_mapper("vue", "2.0.0").identity(), "vue@2.0.0");
@@ -99,7 +100,64 @@ fn test_static_content_mapper_transform_identity() {
     );
 }
 
-// Go: incremental/buildinfo_contentmapper_test.go:52 fakeBuildInfoReader
+// Go: incremental/buildinfo_contentmapper_test.go:48 TestContentMapperOutputExtensionsAffectIdentity (ts#64581)
+#[test]
+fn test_content_mapper_output_extensions_affect_identity() {
+    let map = |entries: &[(&str, &str)]| {
+        Some(
+            entries
+                .iter()
+                .map(|&(source, target)| (source.to_string(), target.to_string()))
+                .collect::<BTreeMap<String, String>>(),
+        )
+    };
+    let identity_of =
+        |mapper: &Mapper| mapper.transform_identity(Some(&CompilerOptions::default()));
+    let mut mapper = Mapper {
+        definition: Definition {
+            extensions: vec![".astro".to_string()],
+            ..Default::default()
+        },
+        manifest: Manifest {
+            name: "mapper".to_string(),
+            version: "1.0.0".to_string(),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let identity_mapping = identity_of(&mapper);
+    mapper.manifest.default_output_extensions = map(&[(".astro", ".js")]);
+    assert_eq!(identity_of(&mapper), identity_mapping);
+    mapper.definition.output_extensions = map(&[(".astro", ".js")]);
+    let js_identity = identity_of(&mapper);
+    mapper
+        .definition
+        .output_extensions
+        .as_mut()
+        .unwrap()
+        .insert(".astro".to_string(), ".jsx".to_string());
+    let jsx_identity = identity_of(&mapper);
+    assert_ne!(js_identity, jsx_identity);
+    mapper.definition.output_extensions = map(&[(".astro", ".js")]);
+    assert_eq!(identity_of(&mapper), js_identity);
+    mapper
+        .definition
+        .output_extensions
+        .as_mut()
+        .unwrap()
+        .insert(".astro".to_string(), ".jsx".to_string());
+    assert_eq!(identity_of(&mapper), jsx_identity);
+    mapper.definition.output_extensions = None;
+    assert_eq!(identity_of(&mapper), identity_mapping);
+    mapper.definition.output_extensions =
+        map(&[(".astro", ".js"), (".vue", ".mjs"), (".svelte", ".cjs")]);
+    let identity = identity_of(&mapper);
+    for _ in 0..100 {
+        assert_eq!(identity_of(&mapper), identity);
+    }
+}
+
+// Go: incremental/buildinfo_contentmapper_test.go:72 fakeBuildInfoReader
 struct FakeBuildInfoReader {
     build_info: Option<BuildInfo>,
 }
@@ -110,7 +168,7 @@ impl BuildInfoReader for FakeBuildInfoReader {
     }
 }
 
-// Go: incremental/buildinfo_contentmapper_test.go:60 fakeContentMapperProject
+// Go: incremental/buildinfo_contentmapper_test.go:80 fakeContentMapperProject
 // PORT: Go returns `p.identities, p.err`; with an error, the port returns
 // only the error.
 #[derive(Clone, Default)]
@@ -162,7 +220,7 @@ fn host_with_project(project: &FakeContentMapperProject) -> Rc<dyn CompilerHost>
     )
 }
 
-// Go: incremental/buildinfo_contentmapper_test.go:77 TestDynamicContentMapperIdentities
+// Go: incremental/buildinfo_contentmapper_test.go:100 TestDynamicContentMapperIdentities
 #[test]
 fn test_dynamic_content_mapper_identities() {
     let config = config_with_mappers(vec![Rc::new(Mapper {
@@ -205,7 +263,7 @@ fn test_dynamic_content_mapper_identities() {
     );
 }
 
-// Go: incremental/buildinfo_contentmapper_test.go:98 TestContentMapperIdentityError
+// Go: incremental/buildinfo_contentmapper_test.go:121 TestContentMapperIdentityError
 #[test]
 fn test_content_mapper_identity_error() {
     let want = errors::new("identity failed");
@@ -218,7 +276,7 @@ fn test_content_mapper_identity_error() {
     }
 }
 
-// Go: incremental/buildinfo_contentmapper_test.go:106 TestReadBuildInfoProgramContentMapperIdentityMismatch
+// Go: incremental/buildinfo_contentmapper_test.go:129 TestReadBuildInfoProgramContentMapperIdentityMismatch
 #[test]
 fn test_read_build_info_program_content_mapper_identity_mismatch() {
     // An otherwise-valid, incremental build info whose recorded mapper identity differs from the current

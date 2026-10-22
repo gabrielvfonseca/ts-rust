@@ -538,15 +538,26 @@ pub(crate) static EXPORT_STAR_HELPER: EmitHelper = EmitHelper {
     text_callback: None,
 };
 
-// Go: printer/helpers.go:546 rewriteRelativeImportExtensionsHelper
+// Go: printer/helpers.go:546 rewriteRelativeImportExtensionsHelper (ts#64581)
+/// ts#64581: `extraExtensions` maps content mapper extensions to their output
+/// extensions; `ignoreCase` compares them without case.
 pub(crate) static REWRITE_RELATIVE_IMPORT_EXTENSIONS_HELPER: EmitHelper = EmitHelper {
     name: "typescript:rewriteRelativeImportExtensions",
     import_name: "__rewriteRelativeImportExtension",
     scoped: false,
     priority: None,
     dependencies: &[],
-    text: r##"var __rewriteRelativeImportExtension = (this && this.__rewriteRelativeImportExtension) || function (path, preserveJsx) {
+    text: r##"var __rewriteRelativeImportExtension = (this && this.__rewriteRelativeImportExtension) || function (path, preserveJsx, extraExtensions, ignoreCase) {
     if (typeof path === "string" && /^\.\.?\//.test(path)) {
+        if (extraExtensions) {
+            for (var extension in extraExtensions) {
+                var suffix = path.slice(-extension.length);
+                if (suffix === extension || ignoreCase && suffix.toLowerCase() === extension.toLowerCase()) {
+                    var output = extraExtensions[extension];
+                    return output === extension ? path : path.slice(0, -extension.length) + output;
+                }
+            }
+        }
         return path.replace(/\.(tsx)$|((?:\.d)?)((?:\.[^./]+?)?)\.([cm]?)ts$/i, function (m, tsx, d, ext, cm) {
             return tsx ? preserveJsx ? ".jsx" : ".js" : d && (!ext || !cm) ? m : (d + ext + "." + cm.toLowerCase() + "js");
         });

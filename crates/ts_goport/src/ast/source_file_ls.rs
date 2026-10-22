@@ -31,7 +31,7 @@ thread_local! {
         const { RefCell::new(PerFileMap::new()) };
 }
 
-// Go: ast/ast.go:2386 SourceFileDataKey
+// Go: ast/ast.go:2311 SourceFileDataKey
 /// SourceFileDataKey identifies lazily-computed data attached to a SourceFile by
 /// another package. Prefer regular SourceFile fields for ast-owned data.
 // PORT: Go `key sourceFileDataKey` is `u64` (Go `type sourceFileDataKey
@@ -60,16 +60,16 @@ impl<T> std::fmt::Debug for SourceFileDataKey<T> {
     }
 }
 
-// Go: ast/ast.go:2393 sourceFileDataKeyCounter
+// Go: ast/ast.go:2318 sourceFileDataKeyCounter
 static SOURCE_FILE_DATA_KEY_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-// Go: ast/ast.go:2395 sourceFileDataCell
+// Go: ast/ast.go:2320 sourceFileDataCell
 // PORT: Go `once sync.Once` and `value T` are one `OnceCell<T>`.
 pub struct SourceFileDataCell<T> {
     value: OnceCell<T>,
 }
 
-// Go: ast/ast.go:2400 NewSourceFileDataKey
+// Go: ast/ast.go:2325 NewSourceFileDataKey
 pub fn new_source_file_data_key<T>() -> SourceFileDataKey<T> {
     SourceFileDataKey {
         // Go `atomic.Uint64.Add(1)` returns the new value.
@@ -78,7 +78,7 @@ pub fn new_source_file_data_key<T>() -> SourceFileDataKey<T> {
     }
 }
 
-// Go: ast/ast.go:2404 (*SourceFile).GetOrComputeData (ts#63902)
+// Go: ast/ast.go:2329 (*SourceFile).GetOrComputeData (ts#63902)
 // PORT: Go `compute func(*SourceFile) T` is `FnOnce(Node) -> T`; the value
 // is returned by clone (Go copies `T`; callers use `Rc` or `Copy` values).
 // `compute` runs without any thread-local borrow held, so it can read other
@@ -92,7 +92,7 @@ pub fn source_file_get_or_compute_data<T: Clone + 'static>(
     cell.value.get_or_init(|| compute(file)).clone()
 }
 
-// Go: ast/ast.go:2412 (*SourceFile).getDataCell (ts#63902)
+// Go: ast/ast.go:2337 (*SourceFile).getDataCell (ts#63902)
 // PORT: a Rust reference cannot be nil, so only `key.key == 0` is checked.
 fn source_file_get_data_cell<T: 'static>(
     file: Node,
@@ -124,14 +124,14 @@ fn source_file_get_data_cell<T: 'static>(
     })
 }
 
-// Go: ast/ast.go:2441 TokenCacheKey
+// Go: ast/ast.go:2366 TokenCacheKey
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TokenCacheKey {
     parent: Node,
     loc: TextRange,
 }
 
-// Go: ast/ast.go:2776 (*SourceFile).GetOrCreateToken
+// Go: ast/ast.go:2831 (*SourceFile).GetOrCreateToken
 /// Gets a token from the file's token cache, or creates it if it does not already exist.
 /// This function should NOT be used for creating synthetic tokens that are not in the file in the first place.
 // PORT: Go `%v` of `Kind` prints the Go kind name ("KindIdentifier"); this
@@ -180,7 +180,7 @@ pub fn source_file_get_or_create_token(
     token
 }
 
-// Go: ast/ast.go:2935 createToken
+// Go: ast/ast.go:2862 createToken
 /// `kind` should be a token kind.
 fn create_token(kind: SyntaxKind, file: Node, pos: i32, end: i32, flags: TokenFlags) -> Node {
     // Go: if file.tokenFactory == nil { file.tokenFactory = NewNodeFactory(NodeFactoryHooks{}) }

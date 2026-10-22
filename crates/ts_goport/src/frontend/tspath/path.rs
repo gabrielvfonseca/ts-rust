@@ -1300,6 +1300,25 @@ fn relative_path_from_normalized_paths(
     ))
 }
 
+// Go: tspath/rooted_path.go:58 TryRootedPathFromAbsolute (ts#64159)
+/// TryRootedPathFromAbsolute validates and normalizes an absolute path,
+/// including converting platform directory separators to '/'.
+// PORT: Go returns `(RootedPath, bool)`; `None` is Go `ok == false`. The
+// port keeps string paths.
+pub fn try_rooted_path_from_absolute(path: &str) -> Option<String> {
+    if has_rooted_url_suffix(path) || !path_is_absolute(path) {
+        return None;
+    }
+    let mut normalized = get_normalized_absolute_path(path, "");
+    // Go: tspath/rooted_path.go:65 ensureRootedPathRootSeparator
+    if get_root_length(&normalized) == normalized.len()
+        && !has_trailing_directory_separator(&normalized)
+    {
+        normalized.push(DIRECTORY_SEPARATOR as char);
+    }
+    Some(normalized)
+}
+
 // Go: tspath/rooted_path.go:106 hasRootedURLSuffix (ts#64159)
 /// A URL root with a query or a fragment after its scheme.
 // PORT: private in Go tspath. `to_rooted_path` and the Rust ports of the

@@ -409,7 +409,7 @@ fn checker_arena() -> &'static LeakArena {
     CHECKER_ARENA.with(|arena| *arena)
 }
 
-// Go: checker/types.go:36 IndexKind
+// Go: checker/types.go:37 IndexKind
 // PORT: `flags.rs` was generated at an older pin, so this enum (ts#64264) is
 // declared here.
 crate::flags_macros::go_enum!(IndexKind, i32 {
@@ -443,12 +443,12 @@ impl TypeFormatFlags {
     );
 }
 
-// Go: checker/types.go:165 externalHelpersModuleNameText
+// Go: checker/types.go:166 externalHelpersModuleNameText
 pub const EXTERNAL_HELPERS_MODULE_NAME_TEXT: &str = "tslib";
 
 // Links for referenced symbols
 
-// Go: checker/types.go:176 SymbolReferenceLinks
+// Go: checker/types.go:177 SymbolReferenceLinks
 #[derive(Clone, Debug, Default)]
 pub struct SymbolReferenceLinks {
     pub reference_kinds: SymbolFlags, // Flags for the meanings of the symbol that were referenced
@@ -456,7 +456,7 @@ pub struct SymbolReferenceLinks {
 
 // Links for value symbols
 
-// Go: checker/types.go:182 ValueSymbolLinks
+// Go: checker/types.go:183 ValueSymbolLinks
 #[derive(Clone, Debug, Default)]
 pub struct ValueSymbolLinks {
     pub resolved_type: TypeId, // Type of value symbol
@@ -483,7 +483,7 @@ const _: () = assert!(std::mem::size_of::<ValueSymbolLinks>() == 28);
 
 // Additional links for mapped symbols
 
-// Go: checker/types.go:194 MappedSymbolLinks
+// Go: checker/types.go:249 MappedSymbolLinks
 #[derive(Clone, Debug, Default)]
 pub struct MappedSymbolLinks {
     pub key_type: TypeId,           // Key type for mapped type member
@@ -492,7 +492,7 @@ pub struct MappedSymbolLinks {
 
 // Additional links for deferred type symbols
 
-// Go: checker/types.go:201 DeferredSymbolLinks
+// Go: checker/types.go:256 DeferredSymbolLinks
 #[derive(Clone, Debug, Default)]
 pub struct DeferredSymbolLinks {
     pub parent: TypeId,            // Source union/intersection of a deferred type
@@ -502,7 +502,7 @@ pub struct DeferredSymbolLinks {
 
 // Links for alias symbols
 
-// Go: checker/types.go:209 AliasSymbolLinks
+// Go: checker/types.go:264 AliasSymbolLinks
 #[derive(Clone, Debug, Default)]
 pub struct AliasSymbolLinks {
     pub immediate_target: SymbolId, // Immediate target of an alias. May be another alias. Do not access directly, use `checker.getImmediateAliasedSymbol` instead.
@@ -513,7 +513,7 @@ pub struct AliasSymbolLinks {
 
 // Links for module symbols
 
-// Go: checker/types.go:218 ModuleSymbolLinks
+// Go: checker/types.go:273 ModuleSymbolLinks
 #[derive(Clone, Debug, Default)]
 pub struct ModuleSymbolLinks {
     pub resolved_exports: SymbolTable, // Resolved exports of module or combined early- and late-bound static members of a class.
@@ -522,7 +522,7 @@ pub struct ModuleSymbolLinks {
     pub exports_checked: bool,
 }
 
-// Go: checker/types.go:224 ReverseMappedSymbolLinks
+// Go: checker/types.go:279 ReverseMappedSymbolLinks
 #[derive(Clone, Debug, Default)]
 pub struct ReverseMappedSymbolLinks {
     pub property_type: TypeId,
@@ -532,7 +532,7 @@ pub struct ReverseMappedSymbolLinks {
 
 // Links for late-bound symbols
 
-// Go: checker/types.go:232 LateBoundLinks
+// Go: checker/types.go:287 LateBoundLinks
 #[derive(Clone, Debug, Default)]
 pub struct LateBoundLinks {
     pub late_symbol: SymbolId,
@@ -540,7 +540,7 @@ pub struct LateBoundLinks {
 
 // Links for export type symbols
 
-// Go: checker/types.go:238 ExportTypeLinks
+// Go: checker/types.go:293 ExportTypeLinks
 #[derive(Clone, Debug, Default)]
 pub struct ExportTypeLinks {
     pub target: SymbolId,         // Target symbol
@@ -549,7 +549,7 @@ pub struct ExportTypeLinks {
 
 // Links for type aliases
 
-// Go: checker/types.go:245 TypeAliasLinks
+// Go: checker/types.go:300 TypeAliasLinks
 #[derive(Clone, Default)]
 pub struct TypeAliasLinks {
     pub declared_type: TypeId,
@@ -561,7 +561,7 @@ pub struct TypeAliasLinks {
 
 // Links for declared types (type parameters, class types, interface types, enums)
 
-// Go: checker/types.go:254 DeclaredTypeLinks
+// Go: checker/types.go:309 DeclaredTypeLinks
 #[derive(Clone, Debug, Default)]
 pub struct DeclaredTypeLinks {
     pub declared_type: TypeId,
@@ -573,7 +573,7 @@ pub struct DeclaredTypeLinks {
 
 // Links for switch clauses
 
-// Go: checker/types.go:264 ExhaustiveState
+// Go: checker/types.go:319 ExhaustiveState
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct ExhaustiveState(pub u8);
 
@@ -585,7 +585,7 @@ impl ExhaustiveState {
     pub const TRUE: Self = Self(3); // Switch statement is exhaustive
 }
 
-// Go: checker/types.go:273 SwitchStatementLinks
+// Go: checker/types.go:328 SwitchStatementLinks
 #[derive(Clone, Debug, Default)]
 pub struct SwitchStatementLinks {
     pub exhaustive_state: ExhaustiveState, // Switch statement exhaustiveness
@@ -595,7 +595,7 @@ pub struct SwitchStatementLinks {
     pub witnesses: Vec<String>,
 }
 
-// Go: checker/types.go:281 ArrayLiteralLinks
+// Go: checker/types.go:336 ArrayLiteralLinks
 #[derive(Clone, Debug, Default)]
 pub struct ArrayLiteralLinks {
     pub indices_computed: bool,
@@ -605,13 +605,13 @@ pub struct ArrayLiteralLinks {
 
 // Links for late-binding containers
 
-// Go: checker/types.go:296 MembersAndExportsLinks
+// Go: checker/types.go:351 MembersAndExportsLinks
 /// Indexed by `MembersOrExportsResolutionKind` (`links[kind.0 as usize]`).
 pub type MembersAndExportsLinks = [SymbolTable; 2];
 
 // Links for synthetic spread properties
 
-// Go: checker/types.go:300 SpreadLinks
+// Go: checker/types.go:355 SpreadLinks
 #[derive(Clone, Debug, Default)]
 pub struct SpreadLinks {
     pub left_spread: SymbolId,  // Left source for synthetic spread property
@@ -620,20 +620,20 @@ pub struct SpreadLinks {
 
 // Links for variances of type aliases and interface types
 
-// Go: checker/types.go:307 VarianceLinks
+// Go: checker/types.go:362 VarianceLinks
 #[derive(Clone, Debug, Default)]
 pub struct VarianceLinks {
     pub variances: SharedList<VarianceFlags>,
 }
 
-// Go: checker/types.go:325 MarkedAssignmentSymbolLinks
+// Go: checker/types.go:380 MarkedAssignmentSymbolLinks
 #[derive(Clone, Debug, Default)]
 pub struct MarkedAssignmentSymbolLinks {
     pub last_assignment_pos: i32,
     pub has_definite_assignment: bool, // Symbol is definitely assigned somewhere
 }
 
-// Go: checker/types.go:330 accessibleChainCacheKey
+// Go: checker/types.go:385 accessibleChainCacheKey
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct AccessibleChainCacheKey {
     pub use_only_external_aliasing: bool,
@@ -641,7 +641,7 @@ pub struct AccessibleChainCacheKey {
     pub meaning: SymbolFlags,
 }
 
-// Go: checker/types.go:336 ContainingSymbolLinks
+// Go: checker/types.go:391 ContainingSymbolLinks
 #[derive(Clone, Debug, Default)]
 pub struct ContainingSymbolLinks {
     // PORT: Go keys by `ast.NodeId` of the file node; the `Node` handle of
@@ -654,7 +654,7 @@ pub struct ContainingSymbolLinks {
 
 // Common links
 
-// Go: checker/types.go:375 NodeLinks
+// Go: checker/types.go:430 NodeLinks
 #[derive(Clone, Default)]
 pub struct NodeLinks {
     pub flags: NodeCheckFlags, // Set of flags specific to Node
@@ -662,13 +662,13 @@ pub struct NodeLinks {
     pub has_reported_statement_in_ambient_context: bool, // Cache boolean if we report statements in ambient context
 }
 
-// Go: checker/types.go:381 SymbolNodeLinks
+// Go: checker/types.go:436 SymbolNodeLinks
 #[derive(Clone, Debug, Default)]
 pub struct SymbolNodeLinks {
     pub resolved_symbol: SymbolId, // Resolved symbol associated with node
 }
 
-// Go: checker/types.go:385 TypeNodeLinks
+// Go: checker/types.go:440 TypeNodeLinks
 #[derive(Clone, Debug, Default)]
 pub struct TypeNodeLinks {
     pub resolved_type: TypeId, // Resolved type associated with node
@@ -682,7 +682,7 @@ pub struct TypeNodeLinks {
     pub flow_steps: Option<Rc<[FlowStep]>>,
 }
 
-// Go: checker/types.go:390 ComputedNameNodeLinks
+// Go: checker/types.go:463 ComputedNameNodeLinks
 #[derive(Clone, Debug, Default)]
 pub struct ComputedNameNodeLinks {
     pub has_name: Option<bool>, // If the node has a computable name. Go `*bool`; nil is `None`.
@@ -704,7 +704,7 @@ pub enum FlowStep {
 
 // Links for enum members
 
-// Go: checker/types.go:397 EnumMemberLinks
+// Go: checker/types.go:470 EnumMemberLinks
 #[derive(Clone, Default)]
 pub struct EnumMemberLinks {
     pub value: EvaluatorResult, // Constant value of enum member
@@ -712,7 +712,7 @@ pub struct EnumMemberLinks {
 
 // Links for assertion expressions
 
-// Go: checker/types.go:403 AssertionLinks
+// Go: checker/types.go:476 AssertionLinks
 #[derive(Clone, Debug, Default)]
 pub struct AssertionLinks {
     pub expr_type: TypeId, // Assertion expression type
@@ -720,7 +720,7 @@ pub struct AssertionLinks {
 
 // SourceFile links
 
-// Go: checker/types.go:409 SourceFileLinks
+// Go: checker/types.go:482 SourceFileLinks
 #[derive(Clone, Debug, Default)]
 pub struct SourceFileLinks {
     pub type_checked: bool,
@@ -740,7 +740,7 @@ pub struct SourceFileLinks {
 
 // Signature specific links
 
-// Go: checker/types.go:425 SignatureLinks
+// Go: checker/types.go:498 SignatureLinks
 #[derive(Clone, Debug, Default)]
 pub struct SignatureLinks {
     pub resolved_signature: SignatureId, // Cached signature of signature node or call expression
@@ -748,7 +748,7 @@ pub struct SignatureLinks {
     pub decorator_signature: SignatureId, // Signature for decorator as if invoked by the runtime
 }
 
-// Go: checker/types.go:520 typeFlagNames
+// Go: checker/types.go:593 typeFlagNames
 static TYPE_FLAG_NAMES: [(TypeFlags, &str); 29] = [
     (TypeFlags::ANY, "Any"),
     (TypeFlags::UNKNOWN, "Unknown"),
@@ -782,7 +782,7 @@ static TYPE_FLAG_NAMES: [(TypeFlags, &str); 29] = [
 ];
 
 // FormatTypeFlags returns the individual flag names as a slice of strings.
-// Go: checker/types.go:556 FormatTypeFlags
+// Go: checker/types.go:629 FormatTypeFlags
 pub fn format_type_flags(flags: TypeFlags) -> Vec<String> {
     let mut result: Vec<String> = Vec::with_capacity(flags.0.count_ones() as usize);
     for (flag, name) in TYPE_FLAG_NAMES.iter() {
@@ -799,14 +799,14 @@ pub fn format_type_flags(flags: TypeFlags) -> Vec<String> {
 // String returns a pipe-separated string of flag names.
 // PORT: Go `String()` methods on flag types become `Display` impls so Go
 // `%v` formatting ports to `{}`.
-// Go: checker/types.go:570 TypeFlags.String
+// Go: checker/types.go:643 TypeFlags.String
 impl std::fmt::Display for TypeFlags {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format_type_flags(*self).join("|"))
     }
 }
 
-// Go: checker/types.go:574 VarianceFlags.String
+// Go: checker/types.go:647 VarianceFlags.String
 impl std::fmt::Display for VarianceFlags {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let variance = *self & VarianceFlags::VARIANCE_MASK;
@@ -829,7 +829,7 @@ impl std::fmt::Display for VarianceFlags {
 
 // TypeAlias
 
-// Go: checker/types.go:664 TypeAlias
+// Go: checker/types.go:737 TypeAlias
 #[derive(Clone, Debug, Default)]
 pub struct TypeAlias {
     pub symbol: SymbolId,
@@ -837,12 +837,12 @@ pub struct TypeAlias {
 }
 
 impl TypeAlias {
-    // Go: checker/types.go:669 TypeAlias.Symbol
+    // Go: checker/types.go:742 TypeAlias.Symbol
     pub fn symbol(&self) -> SymbolId {
         self.symbol
     }
 
-    // Go: checker/types.go:676 TypeAlias.TypeArguments
+    // Go: checker/types.go:749 TypeAlias.TypeArguments
     pub fn type_arguments(&self) -> &[TypeId] {
         &self.type_arguments
     }
@@ -857,7 +857,7 @@ pub trait TypeAliasExt {
 }
 
 impl TypeAliasExt for Option<Rc<TypeAlias>> {
-    // Go: checker/types.go:669 TypeAlias.Symbol
+    // Go: checker/types.go:742 TypeAlias.Symbol
     fn symbol(&self) -> SymbolId {
         match self {
             None => SymbolId::NIL,
@@ -865,7 +865,7 @@ impl TypeAliasExt for Option<Rc<TypeAlias>> {
         }
     }
 
-    // Go: checker/types.go:676 TypeAlias.TypeArguments
+    // Go: checker/types.go:749 TypeAlias.TypeArguments
     fn type_arguments(&self) -> &[TypeId] {
         match self {
             None => &[],
@@ -884,7 +884,7 @@ impl TypeAliasExt for Option<Rc<TypeAlias>> {
 // a flags test and the `TypeData` tag read share one line. The header is 24
 // bytes and `TypeData` 104 (`TypeReference` is the largest kind), so the size
 // is 128 (2 lines).
-// Go: checker/types.go:685 Type
+// Go: checker/types.go:786 Type
 #[derive(Clone, Default)]
 #[repr(C, align(64))]
 pub struct Type {
@@ -918,19 +918,19 @@ fn type_cast_panic(have: &TypeData, want: &str) -> ! {
 }
 
 impl Type {
-    // Go: checker/types.go:695 Type.Id
+    // Go: checker/types.go:827 Type.Id
     #[inline]
     pub fn id(&self) -> TypeId {
         self.id
     }
 
-    // Go: checker/types.go:699 Type.Flags
+    // Go: checker/types.go:831 Type.Flags
     #[inline]
     pub fn flags(&self) -> TypeFlags {
         self.flags
     }
 
-    // Go: checker/types.go:703 Type.ObjectFlags
+    // Go: checker/types.go:835 Type.ObjectFlags
     #[inline]
     pub fn object_flags(&self) -> ObjectFlags {
         self.object_flags
@@ -938,7 +938,7 @@ impl Type {
 
     // Casts for concrete struct types
 
-    // Go: checker/types.go:709 Type.AsIntrinsicType
+    // Go: checker/types.go:841 Type.AsIntrinsicType
     #[inline]
     pub fn as_intrinsic_type(&self) -> &IntrinsicType {
         match &self.data {
@@ -954,7 +954,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:710 Type.AsLiteralType
+    // Go: checker/types.go:842 Type.AsLiteralType
     #[inline]
     pub fn as_literal_type(&self) -> &LiteralType {
         match &self.data {
@@ -970,7 +970,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:711 Type.AsUniqueESSymbolType
+    // Go: checker/types.go:843 Type.AsUniqueESSymbolType
     #[inline]
     pub fn as_unique_es_symbol_type(&self) -> &UniqueESSymbolType {
         match &self.data {
@@ -986,7 +986,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:712 Type.AsTupleType
+    // Go: checker/types.go:846 Type.AsTupleType
     #[inline]
     pub fn as_tuple_type(&self) -> &TupleType {
         match &self.data {
@@ -1002,7 +1002,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:713 Type.AsInstantiationExpressionType
+    // Go: checker/types.go:847 Type.AsInstantiationExpressionType
     #[inline]
     pub fn as_instantiation_expression_type(&self) -> &InstantiationExpressionType {
         match &self.data {
@@ -1018,7 +1018,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:716 Type.AsMappedType
+    // Go: checker/types.go:850 Type.AsMappedType
     #[inline]
     pub fn as_mapped_type(&self) -> &MappedType {
         match &self.data {
@@ -1034,7 +1034,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:717 Type.AsReverseMappedType
+    // Go: checker/types.go:851 Type.AsReverseMappedType
     #[inline]
     pub fn as_reverse_mapped_type(&self) -> &ReverseMappedType {
         match &self.data {
@@ -1050,7 +1050,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:718 Type.AsEvolvingArrayType
+    // Go: checker/types.go:855 Type.AsEvolvingArrayType
     #[inline]
     pub fn as_evolving_array_type(&self) -> &EvolvingArrayType {
         match &self.data {
@@ -1066,7 +1066,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:719 Type.AsTypeParameter
+    // Go: checker/types.go:859 Type.AsTypeParameter
     #[inline]
     pub fn as_type_parameter(&self) -> &TypeParameter {
         match &self.data {
@@ -1082,7 +1082,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:720 Type.AsUnionType
+    // Go: checker/types.go:862 Type.AsUnionType
     #[inline]
     pub fn as_union_type(&self) -> &UnionType {
         match &self.data {
@@ -1098,7 +1098,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:721 Type.AsIntersectionType
+    // Go: checker/types.go:863 Type.AsIntersectionType
     #[inline]
     pub fn as_intersection_type(&self) -> &IntersectionType {
         match &self.data {
@@ -1114,7 +1114,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:722 Type.AsIndexType
+    // Go: checker/types.go:866 Type.AsIndexType
     #[inline]
     pub fn as_index_type(&self) -> &IndexType {
         match &self.data {
@@ -1130,7 +1130,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:723 Type.AsIndexedAccessType
+    // Go: checker/types.go:867 Type.AsIndexedAccessType
     #[inline]
     pub fn as_indexed_access_type(&self) -> &IndexedAccessType {
         match &self.data {
@@ -1146,7 +1146,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:724 Type.AsTemplateLiteralType
+    // Go: checker/types.go:871 Type.AsTemplateLiteralType
     #[inline]
     pub fn as_template_literal_type(&self) -> &TemplateLiteralType {
         match &self.data {
@@ -1162,7 +1162,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:725 Type.AsStringMappingType
+    // Go: checker/types.go:875 Type.AsStringMappingType
     #[inline]
     pub fn as_string_mapping_type(&self) -> &StringMappingType {
         match &self.data {
@@ -1178,7 +1178,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:726 Type.AsSubstitutionType
+    // Go: checker/types.go:879 Type.AsSubstitutionType
     #[inline]
     pub fn as_substitution_type(&self) -> &SubstitutionType {
         match &self.data {
@@ -1194,7 +1194,7 @@ impl Type {
         }
     }
 
-    // Go: checker/types.go:727 Type.AsConditionalType
+    // Go: checker/types.go:883 Type.AsConditionalType
     #[inline]
     pub fn as_conditional_type(&self) -> &ConditionalType {
         match &self.data {
@@ -1216,7 +1216,7 @@ impl Type {
     // with Go's nil dereference text. Use `self.data.as_x()` (returns
     // `Option`) for Go nil checks.
 
-    // Go: checker/types.go:731 Type.AsConstrainedType
+    // Go: checker/types.go:889 Type.AsConstrainedType
     #[inline]
     pub fn as_constrained_type(&self) -> &ConstrainedType {
         self.data
@@ -1230,7 +1230,7 @@ impl Type {
             .unwrap_or_else(|| crate::core::go_nil_dereference())
     }
 
-    // Go: checker/types.go:732 Type.AsStructuredType
+    // Go: checker/types.go:896 Type.AsStructuredType
     #[inline]
     pub fn as_structured_type(&self) -> &StructuredType {
         self.data
@@ -1244,7 +1244,7 @@ impl Type {
             .unwrap_or_else(|| crate::core::go_nil_dereference())
     }
 
-    // Go: checker/types.go:733 Type.AsObjectType
+    // Go: checker/types.go:903 Type.AsObjectType
     #[inline]
     pub fn as_object_type(&self) -> &ObjectType {
         self.data
@@ -1258,7 +1258,7 @@ impl Type {
             .unwrap_or_else(|| crate::core::go_nil_dereference())
     }
 
-    // Go: checker/types.go:734 Type.AsTypeReference
+    // Go: checker/types.go:910 Type.AsTypeReference
     #[inline(always)]
     pub fn as_type_reference(&self) -> &TypeReference {
         self.data
@@ -1272,7 +1272,7 @@ impl Type {
             .unwrap_or_else(|| crate::core::go_nil_dereference())
     }
 
-    // Go: checker/types.go:735 Type.AsInterfaceType
+    // Go: checker/types.go:917 Type.AsInterfaceType
     #[inline]
     pub fn as_interface_type(&self) -> &InterfaceType {
         self.data
@@ -1286,7 +1286,7 @@ impl Type {
             .unwrap_or_else(|| crate::core::go_nil_dereference())
     }
 
-    // Go: checker/types.go:736 Type.AsUnionOrIntersectionType
+    // Go: checker/types.go:924 Type.AsUnionOrIntersectionType
     #[inline]
     pub fn as_union_or_intersection_type(&self) -> &UnionOrIntersectionType {
         self.data
@@ -1302,7 +1302,7 @@ impl Type {
 
     // PORT: Go returns a fresh slice (`[]*Type{t}`) for the default case, so
     // this returns an owned `Vec`.
-    // Go: checker/types.go:740 Type.Distributed
+    // Go: checker/types.go:931 Type.Distributed
     pub fn distributed(&self) -> Vec<TypeId> {
         if self.flags.intersects(TypeFlags::UNION) {
             return self.as_union_type().union_or_intersection.types.to_vec();
@@ -1314,7 +1314,7 @@ impl Type {
 
     // Common accessors
 
-    // Go: checker/types.go:752 Type.Target
+    // Go: checker/types.go:943 Type.Target
     // PERF: `inline(always)`: with a plain `#[inline]` hint LLVM kept this
     // out of line (elysia: 0.8 to 1.0% self).
     #[inline(always)]
@@ -1336,7 +1336,7 @@ impl Type {
         panic!("Unhandled case in Type.Target")
     }
 
-    // Go: checker/types.go:768 Type.Mapper
+    // Go: checker/types.go:959 Type.Mapper
     #[inline]
     pub fn mapper(&self) -> MapperId {
         if self.flags.intersects(TypeFlags::OBJECT) {
@@ -1349,7 +1349,7 @@ impl Type {
         panic!("Unhandled case in Type.Mapper")
     }
 
-    // Go: checker/types.go:780 Type.Types
+    // Go: checker/types.go:971 Type.Types
     #[inline(always)]
     pub fn types(&self) -> &[TypeId] {
         if self.flags.intersects(TypeFlags::UNION_OR_INTERSECTION) {
@@ -1376,72 +1376,72 @@ impl Type {
     // `Checker` methods: `self.target_interface_type(t)`,
     // `self.target_tuple_type(t)` (defined below).
 
-    // Go: checker/types.go:798 Type.Symbol
+    // Go: checker/types.go:989 Type.Symbol
     pub fn symbol(&self) -> SymbolId {
         self.symbol
     }
 
-    // Go: checker/types.go:802 Type.Alias
+    // Go: checker/types.go:993 Type.Alias
     pub fn alias(&self) -> Option<Rc<TypeAlias>> {
         self.alias.clone()
     }
 
-    // Go: checker/types.go:806 Type.IsUnion
+    // Go: checker/types.go:997 Type.IsUnion
     pub fn is_union(&self) -> bool {
         self.flags.intersects(TypeFlags::UNION)
     }
 
-    // Go: checker/types.go:810 Type.IsString
+    // Go: checker/types.go:1001 Type.IsString
     pub fn is_string(&self) -> bool {
         self.flags.intersects(TypeFlags::STRING)
     }
 
-    // Go: checker/types.go:814 Type.IsIntersection
+    // Go: checker/types.go:1005 Type.IsIntersection
     pub fn is_intersection(&self) -> bool {
         self.flags.intersects(TypeFlags::INTERSECTION)
     }
 
-    // Go: checker/types.go:818 Type.IsStringLiteral
+    // Go: checker/types.go:1009 Type.IsStringLiteral
     pub fn is_string_literal(&self) -> bool {
         self.flags.intersects(TypeFlags::STRING_LITERAL)
     }
 
-    // Go: checker/types.go:822 Type.IsNumberLiteral
+    // Go: checker/types.go:1013 Type.IsNumberLiteral
     pub fn is_number_literal(&self) -> bool {
         self.flags.intersects(TypeFlags::NUMBER_LITERAL)
     }
 
-    // Go: checker/types.go:826 Type.IsBigIntLiteral
+    // Go: checker/types.go:1017 Type.IsBigIntLiteral
     pub fn is_big_int_literal(&self) -> bool {
         self.flags.intersects(TypeFlags::BIG_INT_LITERAL)
     }
 
-    // Go: checker/types.go:830 Type.IsEnumLiteral
+    // Go: checker/types.go:1021 Type.IsEnumLiteral
     pub fn is_enum_literal(&self) -> bool {
         self.flags.intersects(TypeFlags::ENUM_LITERAL)
     }
 
-    // Go: checker/types.go:834 Type.IsBooleanLike
+    // Go: checker/types.go:1025 Type.IsBooleanLike
     pub fn is_boolean_like(&self) -> bool {
         self.flags.intersects(TypeFlags::BOOLEAN_LIKE)
     }
 
-    // Go: checker/types.go:838 Type.IsStringLike
+    // Go: checker/types.go:1029 Type.IsStringLike
     pub fn is_string_like(&self) -> bool {
         self.flags.intersects(TypeFlags::STRING_LIKE)
     }
 
-    // Go: checker/types.go:842 Type.IsClass
+    // Go: checker/types.go:1033 Type.IsClass
     pub fn is_class(&self) -> bool {
         self.object_flags.intersects(ObjectFlags::CLASS)
     }
 
-    // Go: checker/types.go:846 Type.IsTypeParameter
+    // Go: checker/types.go:1037 Type.IsTypeParameter
     pub fn is_type_parameter(&self) -> bool {
         self.flags.intersects(TypeFlags::TYPE_PARAMETER)
     }
 
-    // Go: checker/types.go:850 Type.IsIndex
+    // Go: checker/types.go:1041 Type.IsIndex
     pub fn is_index(&self) -> bool {
         self.flags.intersects(TypeFlags::INDEX)
     }
@@ -1452,13 +1452,13 @@ impl Type {
 }
 
 impl Checker {
-    // Go: checker/types.go:790 Type.TargetInterfaceType
+    // Go: checker/types.go:981 Type.TargetInterfaceType
     pub fn target_interface_type(&self, t: TypeId) -> &InterfaceType {
         let target = self.ty(t).as_type_reference().object.target;
         self.ty(target).as_interface_type()
     }
 
-    // Go: checker/types.go:794 Type.TargetTupleType
+    // Go: checker/types.go:985 Type.TargetTupleType
     pub fn target_tuple_type(&self, t: TypeId) -> &TupleType {
         let target = self.ty(t).as_type_reference().object.target;
         self.ty(target).as_tuple_type()
@@ -1551,7 +1551,7 @@ impl<T: Clone> Clone for ArenaBox<T> {
 // expression types are rare; union and intersection data is large, and in a
 // one-program process it is in the checker arena (`ArenaBox`), not a malloc
 // block.
-// Go: checker/types.go:860 TypeData
+// Go: checker/types.go:860 TypeData (at fed0bf24149f; ts#64774 makes it typeKind, checker/types.go:761)
 #[derive(Clone)]
 pub enum TypeData {
     Intrinsic(IntrinsicType),
@@ -1613,7 +1613,7 @@ impl Default for TypeData {
 }
 
 impl TypeData {
-    // Go: checker/types.go:877 TypeBase.AsConstrainedType
+    // Go: checker/types.go:1056 TypeBase.AsConstrainedType
     #[inline]
     pub fn as_constrained_type(&self) -> Option<&ConstrainedType> {
         match self {
@@ -1653,7 +1653,7 @@ impl TypeData {
         }
     }
 
-    // Go: checker/types.go:878 TypeBase.AsStructuredType
+    // Go: checker/types.go:1057 TypeBase.AsStructuredType
     // PERF: the common kinds are tests at the call site, and the other kinds
     // are out of line (`as_structured_type_other`). With every kind in one
     // match, LLVM makes a jump table: a load and an indirect jump for every
@@ -1696,7 +1696,7 @@ impl TypeData {
         }
     }
 
-    // Go: checker/types.go:879 TypeBase.AsObjectType
+    // Go: checker/types.go:1058 TypeBase.AsObjectType
     #[inline]
     pub fn as_object_type(&self) -> Option<&ObjectType> {
         match self {
@@ -1724,7 +1724,7 @@ impl TypeData {
         }
     }
 
-    // Go: checker/types.go:880 TypeBase.AsTypeReference
+    // Go: checker/types.go:1059 TypeBase.AsTypeReference
     #[inline]
     pub fn as_type_reference(&self) -> Option<&TypeReference> {
         match self {
@@ -1743,7 +1743,7 @@ impl TypeData {
         }
     }
 
-    // Go: checker/types.go:881 TypeBase.AsInterfaceType
+    // Go: checker/types.go:1060 TypeBase.AsInterfaceType
     #[inline]
     pub fn as_interface_type(&self) -> Option<&InterfaceType> {
         match self {
@@ -1762,7 +1762,7 @@ impl TypeData {
         }
     }
 
-    // Go: checker/types.go:882 TypeBase.AsUnionOrIntersectionType
+    // Go: checker/types.go:1061 TypeBase.AsUnionOrIntersectionType
     #[inline]
     pub fn as_union_or_intersection_type(&self) -> Option<&UnionOrIntersectionType> {
         match self {
@@ -1784,14 +1784,14 @@ impl TypeData {
 
 // IntrinsicTypeData
 
-// Go: checker/types.go:886 IntrinsicType
+// Go: checker/types.go:1065 IntrinsicType
 #[derive(Clone, Debug, Default)]
 pub struct IntrinsicType {
     pub intrinsic_name: String,
 }
 
 impl IntrinsicType {
-    // Go: checker/types.go:891 IntrinsicType.IntrinsicName
+    // Go: checker/types.go:1070 IntrinsicType.IntrinsicName
     pub fn intrinsic_name(&self) -> &str {
         &self.intrinsic_name
     }
@@ -1810,7 +1810,7 @@ pub enum LiteralValue {
     PseudoBigInt(PseudoBigInt),
 }
 
-// Go: checker/types.go:895 LiteralType
+// Go: checker/types.go:1074 LiteralType
 #[derive(Clone, Debug, Default)]
 pub struct LiteralType {
     pub value: Option<LiteralValue>, // string | jsnum.Number | bool | PseudoBigInt | nil (computed enum)
@@ -1827,24 +1827,24 @@ pub struct LiteralType {
 }
 
 impl LiteralType {
-    // Go: checker/types.go:902 LiteralType.Value
+    // Go: checker/types.go:1081 LiteralType.Value
     pub fn value(&self) -> Option<&LiteralValue> {
         self.value.as_ref()
     }
 
-    // Go: checker/types.go:906 LiteralType.FreshType
+    // Go: checker/types.go:1085 LiteralType.FreshType
     pub fn fresh_type(&self) -> TypeId {
         self.fresh_type
     }
 
-    // Go: checker/types.go:910 LiteralType.RegularType
+    // Go: checker/types.go:1089 LiteralType.RegularType
     pub fn regular_type(&self) -> TypeId {
         self.regular_type
     }
 
     // Formats the raw value like Go `%v` on `LiteralType.value`. A nil value
     // (computed enum) prints as Go's `<nil>`.
-    // Go: checker/checker.go:26996 indexType.AsLiteralType().value
+    // Go: checker/checker.go:27741 indexType.AsLiteralType().value
     pub fn value_arg(&self) -> String {
         match &self.value {
             Some(value) => value.to_string(),
@@ -1853,7 +1853,7 @@ impl LiteralType {
     }
 
     // PORT: Go `ValueToString(nil)` panics; unwrapping here panics the same way.
-    // Go: checker/types.go:914 LiteralType.String
+    // Go: checker/types.go:1093 LiteralType.String
     pub fn string(&self) -> String {
         value_to_string(
             self.value
@@ -1867,7 +1867,7 @@ impl LiteralType {
 // argument, and diagnostics format arguments with `%v`. This `Display` impl
 // gives the same text: a string prints raw (no quotes), a number uses its
 // `String()`, a bool prints true/false and a bigint prints with no `n`.
-// Go: diagnostics/diagnostics.go:146 fmt.Sprintf("%v", arg)
+// Go: diagnostics/diagnostics.go:158 fmt.Sprintf("%v", arg)
 impl std::fmt::Display for LiteralValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -1881,7 +1881,7 @@ impl std::fmt::Display for LiteralValue {
 
 // UniqueESSymbolTypeData
 
-// Go: checker/types.go:920 UniqueESSymbolType
+// Go: checker/types.go:1099 UniqueESSymbolType
 #[derive(Clone, Debug, Default)]
 pub struct UniqueESSymbolType {
     pub name: String,
@@ -1889,7 +1889,7 @@ pub struct UniqueESSymbolType {
 
 // ConstrainedType (type with computed base constraint)
 
-// Go: checker/types.go:927 ConstrainedType
+// Go: checker/types.go:1106 ConstrainedType
 #[derive(Clone, Debug, Default)]
 pub struct ConstrainedType {
     pub resolved_base_constraint: TypeId,
@@ -1905,7 +1905,7 @@ pub struct ConstrainedType {
 // and write them with `set_signatures` and
 // `set_object_type_without_abstract_construct_signatures`.
 // PORT: layout only. `repr(C)` keeps this field order (see `ObjectType`).
-// Go: checker/types.go:936 StructuredType
+// Go: checker/types.go:1115 StructuredType
 #[derive(Clone, Debug, Default)]
 #[repr(C)]
 pub struct StructuredType {
@@ -1921,7 +1921,7 @@ pub struct StructuredType {
 ///
 /// PERF: `align(64)`, so a record never spans 2 cache lines. `repr(C)` puts
 /// the signatures and their count first.
-// Go: checker/types.go:936 StructuredType
+// Go: checker/types.go:1115 StructuredType
 #[derive(Clone, Debug, Default)]
 #[repr(C, align(64))]
 pub struct StructuredSignatures {
@@ -2016,7 +2016,7 @@ impl StructuredType {
             .object_type_without_abstract_construct_signatures = t;
     }
 
-    // Go: checker/types.go:949 StructuredType.CallSignatures
+    // Go: checker/types.go:1132 StructuredType.CallSignatures
     pub fn call_signatures(&self) -> &[SignatureId] {
         match &self.signatures_data {
             Some(d) => &d.signatures[..d.call_signature_count as usize],
@@ -2024,7 +2024,7 @@ impl StructuredType {
         }
     }
 
-    // Go: checker/types.go:953 StructuredType.ConstructSignatures
+    // Go: checker/types.go:1139 StructuredType.ConstructSignatures
     pub fn construct_signatures(&self) -> &[SignatureId] {
         match &self.signatures_data {
             Some(d) => &d.signatures[d.call_signature_count as usize..],
@@ -2032,7 +2032,7 @@ impl StructuredType {
         }
     }
 
-    // Go: checker/types.go:957 StructuredType.Properties
+    // Go: checker/types.go:1167 StructuredType.Properties
     pub fn properties(&self) -> &[SymbolId] {
         &self.properties
     }
@@ -2091,7 +2091,7 @@ pub type InstantiationMap = FlatMap<CacheHashKey, TypeId>;
 // PORT: layout only. `repr(C)` keeps `target` and `mapper` first. An
 // anonymous object type then has them, its members table and its
 // signatures on the first cache line of its `Type` (see `TypeReference`).
-// Go: checker/types.go:994 ObjectType
+// Go: checker/types.go:1204 ObjectType
 #[derive(Clone, Default)]
 #[repr(C)]
 pub struct ObjectType {
@@ -2117,7 +2117,7 @@ impl InstantiationMapId {
 // line of a type reference's `Type` holds the `TypeData` tag (the memo, see
 // `GenericArgumentsMemo`), the type arguments, the target and the mapper.
 // The resolved members and `node` are on the second line.
-// Go: checker/types.go:1005 TypeReference
+// Go: checker/types.go:1215 TypeReference
 #[derive(Clone, Default)]
 #[repr(C)]
 pub struct TypeReference {
@@ -2151,7 +2151,7 @@ pub enum GenericArgumentsMemo {
 
 // InterfaceType (when generic, serves as reference to instantiation of itself)
 
-// Go: checker/types.go:1015 InterfaceType
+// Go: checker/types.go:1225 InterfaceType
 #[derive(Clone, Default)]
 pub struct InterfaceType {
     pub reference: TypeReference,
@@ -2177,12 +2177,12 @@ pub struct InterfaceType {
 }
 
 impl InterfaceType {
-    // Go: checker/types.go:1053 InterfaceType.ThisType
+    // Go: checker/types.go:1263 InterfaceType.ThisType
     pub fn this_type(&self) -> TypeId {
         self.this_type
     }
 
-    // Go: checker/types.go:1032 InterfaceType.OuterTypeParameters
+    // Go: checker/types.go:1242 InterfaceType.OuterTypeParameters
     pub fn outer_type_parameters(&self) -> &[TypeId] {
         if self.all_type_parameters.is_empty() {
             return &[];
@@ -2190,7 +2190,7 @@ impl InterfaceType {
         &self.all_type_parameters[..self.outer_type_parameter_count as usize]
     }
 
-    // Go: checker/types.go:1039 InterfaceType.LocalTypeParameters
+    // Go: checker/types.go:1249 InterfaceType.LocalTypeParameters
     pub fn local_type_parameters(&self) -> &[TypeId] {
         if self.all_type_parameters.is_empty() {
             return &[];
@@ -2199,7 +2199,7 @@ impl InterfaceType {
             [self.outer_type_parameter_count as usize..self.all_type_parameters.len() - 1]
     }
 
-    // Go: checker/types.go:1046 InterfaceType.TypeParameters
+    // Go: checker/types.go:1256 InterfaceType.TypeParameters
     pub fn type_parameters(&self) -> &[TypeId] {
         if self.all_type_parameters.is_empty() {
             return &[];
@@ -2210,7 +2210,7 @@ impl InterfaceType {
 
 // TupleType
 
-// Go: checker/types.go:1073 TupleElementInfo
+// Go: checker/types.go:1283 TupleElementInfo
 #[derive(Clone, Copy, Debug, Default)]
 pub struct TupleElementInfo {
     pub flags: ElementFlags,
@@ -2218,18 +2218,18 @@ pub struct TupleElementInfo {
 }
 
 impl TupleElementInfo {
-    // Go: checker/types.go:1078 TupleElementInfo.TupleElementFlags
+    // Go: checker/types.go:1288 TupleElementInfo.TupleElementFlags
     pub fn tuple_element_flags(&self) -> ElementFlags {
         self.flags
     }
 
-    // Go: checker/types.go:1079 TupleElementInfo.LabeledDeclaration
+    // Go: checker/types.go:1289 TupleElementInfo.LabeledDeclaration
     pub fn labeled_declaration(&self) -> Node {
         self.labeled_declaration
     }
 }
 
-// Go: checker/types.go:1081 TupleType
+// Go: checker/types.go:1291 TupleType
 #[derive(Clone, Default)]
 pub struct TupleType {
     pub interface: InterfaceType,
@@ -2241,17 +2241,17 @@ pub struct TupleType {
 }
 
 impl TupleType {
-    // Go: checker/types.go:1090 TupleType.FixedLength
+    // Go: checker/types.go:1300 TupleType.FixedLength
     pub fn fixed_length(&self) -> i32 {
         self.fixed_length
     }
 
-    // Go: checker/types.go:1091 TupleType.IsReadonly
+    // Go: checker/types.go:1301 TupleType.IsReadonly
     pub fn is_readonly(&self) -> bool {
         self.readonly
     }
 
-    // Go: checker/types.go:1092 TupleType.ElementFlags
+    // Go: checker/types.go:1302 TupleType.ElementFlags
     pub fn element_flags(&self) -> Vec<ElementFlags> {
         let mut element_flags = vec![ElementFlags::NONE; self.element_infos.len()];
         for (i, info) in self.element_infos.iter().enumerate() {
@@ -2260,7 +2260,7 @@ impl TupleType {
         element_flags
     }
 
-    // Go: checker/types.go:1099 TupleType.ElementInfos
+    // Go: checker/types.go:1309 TupleType.ElementInfos
     pub fn element_infos(&self) -> &[TupleElementInfo] {
         &self.element_infos
     }
@@ -2268,7 +2268,7 @@ impl TupleType {
 
 // InstantiationExpressionType
 
-// Go: checker/types.go:1103 InstantiationExpressionType
+// Go: checker/types.go:1313 InstantiationExpressionType
 #[derive(Clone, Default)]
 pub struct InstantiationExpressionType {
     pub object: ObjectType,
@@ -2277,7 +2277,7 @@ pub struct InstantiationExpressionType {
 
 // MappedType
 
-// Go: checker/types.go:1110 MappedType
+// Go: checker/types.go:1320 MappedType
 // PORT: `declaration` and `declaration_name_type` are private, so only
 // `set_declaration` writes them and they stay in step.
 #[derive(Clone, Default)]
@@ -2318,27 +2318,27 @@ impl MappedType {
         self.declaration_name_type
     }
 
-    // Go: checker/types.go:1122 MappedType.TypeParameter
+    // Go: checker/types.go:1332 MappedType.TypeParameter
     pub fn type_parameter(&self) -> TypeId {
         self.type_parameter
     }
 
-    // Go: checker/types.go:1123 MappedType.ConstraintType
+    // Go: checker/types.go:1333 MappedType.ConstraintType
     pub fn constraint_type(&self) -> TypeId {
         self.constraint_type
     }
 
-    // Go: checker/types.go:1124 MappedType.NameType
+    // Go: checker/types.go:1334 MappedType.NameType
     pub fn name_type(&self) -> TypeId {
         self.name_type
     }
 
-    // Go: checker/types.go:1125 MappedType.TemplateType
+    // Go: checker/types.go:1335 MappedType.TemplateType
     pub fn template_type(&self) -> TypeId {
         self.template_type
     }
 
-    // Go: checker/types.go:1126 MappedType.ResolveComponents
+    // Go: checker/types.go:1336 MappedType.ResolveComponents
     // PORT: the Go receiver is unused; the mapped type lives in the checker's
     // arena, so this takes the checker and the type and no `self`.
     pub fn resolve_components(c: &mut Checker, typ: TypeId) {
@@ -2351,7 +2351,7 @@ impl MappedType {
 
 // ReverseMappedType
 
-// Go: checker/types.go:1135 ReverseMappedType
+// Go: checker/types.go:1345 ReverseMappedType
 #[derive(Clone, Default)]
 pub struct ReverseMappedType {
     pub object: ObjectType,
@@ -2362,7 +2362,7 @@ pub struct ReverseMappedType {
 
 // EvolvingArrayType
 
-// Go: checker/types.go:1144 EvolvingArrayType
+// Go: checker/types.go:1354 EvolvingArrayType
 #[derive(Clone, Default)]
 pub struct EvolvingArrayType {
     pub object: ObjectType,
@@ -2372,7 +2372,7 @@ pub struct EvolvingArrayType {
 
 // UnionOrIntersectionTypeData
 
-// Go: checker/types.go:1152 UnionOrIntersectionType
+// Go: checker/types.go:1362 UnionOrIntersectionType
 #[derive(Clone, Debug, Default)]
 pub struct UnionOrIntersectionType {
     pub structured: StructuredType,
@@ -2383,7 +2383,7 @@ pub struct UnionOrIntersectionType {
 }
 
 impl UnionOrIntersectionType {
-    // Go: checker/types.go:1162 UnionOrIntersectionType.Types
+    // Go: checker/types.go:1372 UnionOrIntersectionType.Types
     pub fn types(&self) -> &[TypeId] {
         &self.types
     }
@@ -2391,7 +2391,7 @@ impl UnionOrIntersectionType {
 
 // UnionType
 
-// Go: checker/types.go:1168 UnionType
+// Go: checker/types.go:1378 UnionType
 #[derive(Clone, Debug, Default)]
 pub struct UnionType {
     pub union_or_intersection: UnionOrIntersectionType,
@@ -2405,7 +2405,7 @@ pub struct UnionType {
 
 // IntersectionType
 
-// Go: checker/types.go:1179 IntersectionType
+// Go: checker/types.go:1389 IntersectionType
 #[derive(Clone, Debug, Default)]
 pub struct IntersectionType {
     pub union_or_intersection: UnionOrIntersectionType,
@@ -2415,7 +2415,7 @@ pub struct IntersectionType {
 
 // TypeParameter
 
-// Go: checker/types.go:1187 TypeParameter
+// Go: checker/types.go:1397 TypeParameter
 #[derive(Clone, Debug, Default)]
 pub struct TypeParameter {
     pub constrained: ConstrainedType,
@@ -2429,7 +2429,7 @@ pub struct TypeParameter {
 }
 
 impl TypeParameter {
-    // Go: checker/types.go:1198 TypeParameter.IsThisType
+    // Go: checker/types.go:1408 TypeParameter.IsThisType
     pub fn is_this_type(&self) -> bool {
         self.is_this_type
     }
@@ -2437,7 +2437,7 @@ impl TypeParameter {
 
 // IndexType
 
-// Go: checker/types.go:1213 IndexType
+// Go: checker/types.go:1423 IndexType
 #[derive(Clone, Debug, Default)]
 pub struct IndexType {
     pub constrained: ConstrainedType,
@@ -2446,7 +2446,7 @@ pub struct IndexType {
 }
 
 impl IndexType {
-    // Go: checker/types.go:1219 IndexType.Target
+    // Go: checker/types.go:1429 IndexType.Target
     #[inline]
     pub fn target(&self) -> TypeId {
         self.target
@@ -2455,7 +2455,7 @@ impl IndexType {
 
 // IndexedAccessType
 
-// Go: checker/types.go:1223 IndexedAccessType
+// Go: checker/types.go:1433 IndexedAccessType
 #[derive(Clone, Debug, Default)]
 pub struct IndexedAccessType {
     pub constrained: ConstrainedType,
@@ -2465,12 +2465,12 @@ pub struct IndexedAccessType {
 }
 
 impl IndexedAccessType {
-    // Go: checker/types.go:1230 IndexedAccessType.ObjectType
+    // Go: checker/types.go:1440 IndexedAccessType.ObjectType
     pub fn object_type(&self) -> TypeId {
         self.object_type
     }
 
-    // Go: checker/types.go:1231 IndexedAccessType.IndexType
+    // Go: checker/types.go:1441 IndexedAccessType.IndexType
     pub fn index_type(&self) -> TypeId {
         self.index_type
     }
@@ -2478,7 +2478,7 @@ impl IndexedAccessType {
 
 // PORT: Go shares the `texts` and `types` slices; `Rc<[_]>` makes the
 // clones cheap. The contents never change after creation.
-// Go: checker/types.go:1233 TemplateLiteralType
+// Go: checker/types.go:1443 TemplateLiteralType
 #[derive(Clone, Debug, Default)]
 pub struct TemplateLiteralType {
     pub constrained: ConstrainedType,
@@ -2492,18 +2492,18 @@ pub struct TemplateLiteralType {
 }
 
 impl TemplateLiteralType {
-    // Go: checker/types.go:1239 TemplateLiteralType.Texts
+    // Go: checker/types.go:1449 TemplateLiteralType.Texts
     pub fn texts(&self) -> &[String] {
         &self.texts
     }
 
-    // Go: checker/types.go:1240 TemplateLiteralType.Types
+    // Go: checker/types.go:1450 TemplateLiteralType.Types
     pub fn types(&self) -> &[TypeId] {
         &self.types
     }
 }
 
-// Go: checker/types.go:1242 StringMappingType
+// Go: checker/types.go:1452 StringMappingType
 #[derive(Clone, Debug, Default)]
 pub struct StringMappingType {
     pub constrained: ConstrainedType,
@@ -2511,14 +2511,14 @@ pub struct StringMappingType {
 }
 
 impl StringMappingType {
-    // Go: checker/types.go:1247 StringMappingType.Target
+    // Go: checker/types.go:1457 StringMappingType.Target
     #[inline]
     pub fn target(&self) -> TypeId {
         self.target
     }
 }
 
-// Go: checker/types.go:1249 SubstitutionType
+// Go: checker/types.go:1459 SubstitutionType
 #[derive(Clone, Debug, Default)]
 pub struct SubstitutionType {
     pub constrained: ConstrainedType,
@@ -2527,12 +2527,12 @@ pub struct SubstitutionType {
 }
 
 impl SubstitutionType {
-    // Go: checker/types.go:1255 SubstitutionType.BaseType
+    // Go: checker/types.go:1465 SubstitutionType.BaseType
     pub fn base_type(&self) -> TypeId {
         self.base_type
     }
 
-    // Go: checker/types.go:1256 SubstitutionType.SubstConstraint
+    // Go: checker/types.go:1466 SubstitutionType.SubstConstraint
     pub fn subst_constraint(&self) -> TypeId {
         self.constraint
     }
@@ -2541,7 +2541,7 @@ impl SubstitutionType {
 // PORT: Go shares one `*ConditionalRoot` between a conditional type and all
 // its instantiations and mutates `instantiations`, so `ConditionalType.root`
 // is `Rc<RefCell<ConditionalRoot>>`.
-// Go: checker/types.go:1258 ConditionalRoot
+// Go: checker/types.go:1468 ConditionalRoot
 #[derive(Clone, Default)]
 pub struct ConditionalRoot {
     pub node: Node, // *ast.ConditionalTypeNode
@@ -2560,7 +2560,7 @@ pub struct ConditionalRoot {
     pub distribution_dependent: Option<bool>,
 }
 
-// Go: checker/types.go:1269 ConditionalType
+// Go: checker/types.go:1479 ConditionalType
 #[derive(Clone, Default)]
 pub struct ConditionalType {
     pub constrained: ConstrainedType,
@@ -2577,12 +2577,12 @@ pub struct ConditionalType {
 }
 
 impl ConditionalType {
-    // Go: checker/types.go:1283 ConditionalType.CheckType
+    // Go: checker/types.go:1493 ConditionalType.CheckType
     pub fn check_type(&self) -> TypeId {
         self.check_type
     }
 
-    // Go: checker/types.go:1284 ConditionalType.ExtendsType
+    // Go: checker/types.go:1494 ConditionalType.ExtendsType
     pub fn extends_type(&self) -> TypeId {
         self.extends_type
     }
@@ -2590,7 +2590,7 @@ impl ConditionalType {
 
 // Signature
 
-// Go: checker/types.go:1312 Signature
+// Go: checker/types.go:1523 Signature
 #[derive(Clone, Debug, Default)]
 pub struct Signature {
     pub id: SignatureId,
@@ -2618,61 +2618,61 @@ pub struct Signature {
 }
 
 impl Signature {
-    // Go: checker/types.go:1329 Signature.Id
+    // Go: checker/types.go:1604 Signature.Id
     pub fn id(&self) -> SignatureId {
         self.id
     }
 
-    // Go: checker/types.go:1333 Signature.Flags
+    // Go: checker/types.go:1608 Signature.Flags
     pub fn flags(&self) -> SignatureFlags {
         self.flags
     }
 
-    // Go: checker/types.go:1337 Signature.TypeParameters
+    // Go: checker/types.go:1612 Signature.TypeParameters
     pub fn type_parameters(&self) -> &[TypeId] {
         &self.type_parameters
     }
 
-    // Go: checker/types.go:1341 Signature.Declaration
+    // Go: checker/types.go:1619 Signature.Declaration
     pub fn declaration(&self) -> Node {
         self.declaration
     }
 
-    // Go: checker/types.go:1345 Signature.Target
+    // Go: checker/types.go:1623 Signature.Target
     #[inline]
     pub fn target(&self) -> SignatureId {
         self.target
     }
 
-    // Go: checker/types.go:1349 Signature.ThisParameter
+    // Go: checker/types.go:1627 Signature.ThisParameter
     pub fn this_parameter(&self) -> SymbolId {
         self.this_parameter
     }
 
-    // Go: checker/types.go:1353 Signature.Parameters
+    // Go: checker/types.go:1634 Signature.Parameters
     pub fn parameters(&self) -> &[SymbolId] {
         &self.parameters
     }
 
-    // Go: checker/types.go:1357 Signature.HasRestParameter
+    // Go: checker/types.go:1638 Signature.HasRestParameter
     pub fn has_rest_parameter(&self) -> bool {
         self.flags.intersects(SignatureFlags::HAS_REST_PARAMETER)
     }
 
-    // Go: checker/types.go:1361 Signature.MinArgumentCount
+    // Go: checker/types.go:1642 Signature.MinArgumentCount
     pub fn min_argument_count(&self) -> i32 {
         self.min_argument_count
     }
 }
 
-// Go: checker/types.go:1365 CompositeSignature
+// Go: checker/types.go:1646 CompositeSignature
 #[derive(Clone, Debug, Default)]
 pub struct CompositeSignature {
     pub is_union: bool,               // True for union, false for intersection
     pub signatures: Vec<SignatureId>, // Individual signatures
 }
 
-// Go: checker/types.go:1379 TypePredicate
+// Go: checker/types.go:1660 TypePredicate
 #[derive(Clone, Debug, Default)]
 pub struct TypePredicate {
     pub kind: TypePredicateKind,
@@ -2683,22 +2683,22 @@ pub struct TypePredicate {
 }
 
 impl TypePredicate {
-    // Go: checker/types.go:1386 TypePredicate.Type
+    // Go: checker/types.go:1667 TypePredicate.Type
     pub fn type_(&self) -> TypeId {
         self.t
     }
 
-    // Go: checker/types.go:1390 TypePredicate.Kind
+    // Go: checker/types.go:1671 TypePredicate.Kind
     pub fn kind(&self) -> TypePredicateKind {
         self.kind
     }
 
-    // Go: checker/types.go:1394 TypePredicate.ParameterIndex
+    // Go: checker/types.go:1675 TypePredicate.ParameterIndex
     pub fn parameter_index(&self) -> i32 {
         self.parameter_index
     }
 
-    // Go: checker/types.go:1398 TypePredicate.ParameterName
+    // Go: checker/types.go:1679 TypePredicate.ParameterName
     pub fn parameter_name(&self) -> &str {
         &self.parameter_name
     }
@@ -2706,7 +2706,7 @@ impl TypePredicate {
 
 // IndexInfo
 
-// Go: checker/types.go:1404 IndexInfo
+// Go: checker/types.go:1685 IndexInfo
 #[derive(Clone, Debug, Default)]
 pub struct IndexInfo {
     pub key_type: TypeId,
@@ -2718,22 +2718,22 @@ pub struct IndexInfo {
 }
 
 impl IndexInfo {
-    // Go: checker/types.go:1413 IndexInfo.KeyType
+    // Go: checker/types.go:1694 IndexInfo.KeyType
     pub fn key_type(&self) -> TypeId {
         self.key_type
     }
 
-    // Go: checker/types.go:1417 IndexInfo.ValueType
+    // Go: checker/types.go:1698 IndexInfo.ValueType
     pub fn value_type(&self) -> TypeId {
         self.value_type
     }
 
-    // Go: checker/types.go:1421 IndexInfo.IsReadonly
+    // Go: checker/types.go:1702 IndexInfo.IsReadonly
     pub fn is_readonly(&self) -> bool {
         self.is_readonly
     }
 
-    // Go: checker/types.go:1425 IndexInfo.Declaration
+    // Go: checker/types.go:1706 IndexInfo.Declaration
     pub fn declaration(&self) -> Node {
         self.declaration
     }
@@ -2777,10 +2777,10 @@ impl std::ops::BitOrAssign for Ternary {
 
 // PORT: Go `TypeComparer` is a func value stored in checker fields and
 // inference contexts, so it is an `Rc<dyn Fn>` that gets the checker first.
-// Go: checker/types.go:1446 TypeComparer
+// Go: checker/types.go:1727 TypeComparer
 pub type TypeComparer = Rc<dyn Fn(&mut Checker, TypeId, TypeId, bool) -> Ternary>;
 
-// Go: checker/types.go:1448 LanguageFeatureMinimumTargetMap
+// Go: checker/types.go:1729 LanguageFeatureMinimumTargetMap
 #[derive(Clone, Copy, Debug)]
 pub struct LanguageFeatureMinimumTargetMap {
     pub exponentiation: ScriptTarget,
@@ -2807,7 +2807,7 @@ pub struct LanguageFeatureMinimumTargetMap {
 
 // PORT: Go package var `LanguageFeatureMinimumTarget` is never mutated, so
 // it is a Rust const.
-// Go: checker/types.go:1471 LanguageFeatureMinimumTarget
+// Go: checker/types.go:1752 LanguageFeatureMinimumTarget
 pub const LANGUAGE_FEATURE_MINIMUM_TARGET: LanguageFeatureMinimumTargetMap =
     LanguageFeatureMinimumTargetMap {
         exponentiation: ScriptTarget::ES2016,
@@ -2833,7 +2833,7 @@ pub const LANGUAGE_FEATURE_MINIMUM_TARGET: LanguageFeatureMinimumTargetMap =
     };
 
 // Aliases for types
-// Go: checker/types.go:1495 StringLiteralType
+// Go: checker/types.go:1776 StringLiteralType
 pub type StringLiteralType = Type;
 
 // PORT: no Go counterpart. Go allocates each `Type` and `TypeMapper` on its

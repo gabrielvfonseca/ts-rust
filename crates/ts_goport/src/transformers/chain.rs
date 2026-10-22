@@ -4,14 +4,14 @@ use crate::prelude::*;
 
 use super::transformer::{TransformOptions, Transformer, TransformerBox, TransformerFactory};
 
-// Go: transformers/chain.go:10 chainedTransformer
+// Go: transformers/chain.go:11 chainedTransformer
 pub struct ChainedTransformer {
     emit_context: Rc<EmitContext>,
     components: Vec<TransformerBox>,
 }
 
 impl ChainedTransformer {
-    // Go: transformers/chain.go:15 chainedTransformer.visit
+    // Go: transformers/chain.go:16 chainedTransformer.visit
     fn visit(&mut self, node: Node) -> Node {
         if node.kind() != SyntaxKind::SourceFile {
             panic!("Chained transform passed non-sourcefile initial node");
@@ -42,7 +42,7 @@ impl Transformer for ChainedTransformer {
     }
 }
 
-// Go: transformers/chain.go:38 Chain
+// Go: transformers/chain.go:41 Chain
 // Chains transforms in left-to-right order, running them one at a time in order (as opposed to interleaved at each node)
 // - the resulting combined transform only operates on SourceFile nodes
 // PORT: Go returns a new factory. Rust closures cannot be named in a

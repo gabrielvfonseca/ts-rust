@@ -31,7 +31,7 @@ fn is_resolved_p17(resolved_module: Option<&ResolvedModule>) -> bool {
 }
 
 impl Checker {
-    // Go: checker/checker.go:15203 reportNonExportedMember
+    // Go: checker/checker.go:15208 reportNonExportedMember
     pub fn report_non_exported_member(
         &mut self,
         name: Node,
@@ -114,7 +114,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:15235 reportInvalidImportEqualsExportMember
+    // Go: checker/checker.go:15240 reportInvalidImportEqualsExportMember
     pub fn report_invalid_import_equals_export_member(
         &mut self,
         name: Node,
@@ -142,7 +142,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:15245 getTargetOfExportSpecifier
+    // Go: checker/checker.go:15250 getTargetOfExportSpecifier
     pub fn get_target_of_export_specifier(
         &mut self,
         node: Node,
@@ -188,7 +188,7 @@ impl Checker {
         resolved
     }
 
-    // Go: checker/checker.go:15270 getTargetOfExportAssignment
+    // Go: checker/checker.go:15275 getTargetOfExportAssignment
     pub fn get_target_of_export_assignment(&mut self, node: Node) -> SymbolId {
         // An `export =` / `export default` inside a namespace/module block is a grammar error;
         // checkExportAssignment reports it and returns without resolving the expression. Mirror that
@@ -203,14 +203,14 @@ impl Checker {
         resolved
     }
 
-    // Go: checker/checker.go:15284 getTargetOfBinaryExpression
+    // Go: checker/checker.go:15289 getTargetOfBinaryExpression
     pub fn get_target_of_binary_expression(&mut self, node: Node) -> SymbolId {
         let resolved = self.get_target_of_alias_like_expression(node.right());
         self.mark_symbol_of_alias_declaration_if_type_only(node, Node::NIL);
         resolved
     }
 
-    // Go: checker/checker.go:15290 getTargetOfAliasLikeExpression
+    // Go: checker/checker.go:15295 getTargetOfAliasLikeExpression
     pub fn get_target_of_alias_like_expression(&mut self, expression: Node) -> SymbolId {
         if is_class_expression(expression) {
             let t = self.check_expression_cached(expression);
@@ -233,7 +233,7 @@ impl Checker {
         self.get_resolved_symbol_or_nil(expression)
     }
 
-    // Go: checker/checker.go:15305 getTargetOfNamespaceExportDeclaration
+    // Go: checker/checker.go:15310 getTargetOfNamespaceExportDeclaration
     pub fn get_target_of_namespace_export_declaration(&mut self, node: Node) -> SymbolId {
         if can_have_symbol(node.parent()) {
             let resolved = self.resolve_external_module_symbol(
@@ -246,7 +246,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:15314 getTargetOfAccessExpression
+    // Go: checker/checker.go:15319 getTargetOfAccessExpression
     pub fn get_target_of_access_expression(&mut self, node: Node) -> SymbolId {
         if is_binary_expression(node.parent()) {
             let expr = node.parent();
@@ -257,7 +257,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:15324 getModuleSpecifierForImportOrExport
+    // Go: checker/checker.go:15329 getModuleSpecifierForImportOrExport
     pub fn get_module_specifier_for_import_or_export(&mut self, node: Node) -> Node {
         match node.kind() {
             SyntaxKind::ImportClause => return get_module_specifier_from_node(node.parent()),
@@ -284,7 +284,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:15346 getModuleSpecifierFromNode
+// Go: checker/checker.go:15351 getModuleSpecifierFromNode
 pub fn get_module_specifier_from_node(node: Node) -> Node {
     match node.kind() {
         SyntaxKind::ImportDeclaration | SyntaxKind::JsImportDeclaration => {
@@ -300,7 +300,7 @@ pub fn get_module_specifier_from_node(node: Node) -> Node {
 }
 
 impl Checker {
-    // Go: checker/checker.go:15377 markSymbolOfAliasDeclarationIfTypeOnly
+    // Go: checker/checker.go:15382 markSymbolOfAliasDeclarationIfTypeOnly
     //
     // Marks a symbol as type-only if its declaration is syntactically type-only.
     // If it is not itself marked type-only, but resolves to a type-only alias
@@ -335,7 +335,7 @@ impl Checker {
         links.type_only_declaration.is_some()
     }
 
-    // Go: checker/checker.go:15395 resolveExternalModuleName
+    // Go: checker/checker.go:15400 resolveExternalModuleName
     pub fn resolve_external_module_name(
         &mut self,
         location: Node,
@@ -359,7 +359,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:15404 getCannotResolveModuleNameErrorForSpecificModule
+    // Go: checker/checker.go:15409 getCannotResolveModuleNameErrorForSpecificModule
     pub fn get_cannot_resolve_module_name_error_for_specific_module(
         &mut self,
         module_name: Node,
@@ -377,7 +377,7 @@ impl Checker {
         None
     }
 
-    // Go: checker/checker.go:15416 resolveExternalModuleNameWorker
+    // Go: checker/checker.go:15421 resolveExternalModuleNameWorker
     pub fn resolve_external_module_name_worker(
         &mut self,
         location: Node,
@@ -409,7 +409,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:15426 getExternalModuleFileFromDeclaration
+    // Go: checker/checker.go:15431 getExternalModuleFileFromDeclaration
     pub fn get_external_module_file_from_declaration(&mut self, declaration: Node) -> Node {
         let mut specifier = Node::NIL;
         if declaration.kind() == SyntaxKind::ModuleDeclaration {
@@ -446,7 +446,7 @@ impl Checker {
         decl
     }
 
-    // Go: checker/checker.go:15453 resolveExternalModule
+    // Go: checker/checker.go:15458 resolveExternalModule
     pub fn resolve_external_module(
         &mut self,
         location: Node,
@@ -573,9 +573,28 @@ impl Checker {
                 );
             }
 
-            // ts#64638 (Go N' checker.go:15540): no disk-layout import
+            // ts#64638 (checker.go:15545): no disk-layout import
             // diagnostics for a custom (API) resolution.
             if error_node.is_some() && !rm.is_custom_resolution {
+                // ts#64581 (checker.go:15546): the content mapper output
+                // extensions. A relative specifier that one rewrites is
+                // checked in an ambient or type-only import too, when the
+                // declaration emit keeps it.
+                let rewrites = crate::program::content_mapper_extension_rewrites();
+                let case_sensitive = use_case_sensitive_file_names();
+                let specifier = module_reference;
+                let mapped_specifier = tspath::rewrite_module_specifier_extension(
+                    specifier,
+                    &rewrites,
+                    case_sensitive,
+                )
+                .is_some();
+                let check_declaration_rewrite = self.compiler_options.get_emit_declarations()
+                    && mapped_specifier
+                    && tspath_p17::path_is_relative(module_reference)
+                    && !with_source_file_info(importing_source_file, |info| {
+                        info.is_declaration_file
+                    });
                 if rm.resolved_using_ts_extension
                     && tspath_p17::is_declaration_file_name(module_reference)
                 {
@@ -628,17 +647,37 @@ impl Checker {
                     .compiler_options
                     .rewrite_relative_import_extensions
                     .is_true()
-                    && !location.flags().intersects(NodeFlags::AMBIENT)
+                    && (!location.flags().intersects(NodeFlags::AMBIENT)
+                        || check_declaration_rewrite)
                     && !tspath_p17::is_declaration_file_name(module_reference)
-                    && !is_literal_import_type_node(location)
-                    && !is_part_of_type_only_import_or_export_declaration(location)
+                    && (!is_literal_import_type_node(location)
+                        && !is_part_of_type_only_import_or_export_declaration(location)
+                        || check_declaration_rewrite)
                 {
-                    let should_rewrite = core_p17::should_rewrite_module_specifier(
-                        module_reference,
-                        self.compiler_options,
+                    let should_rewrite = tspath::should_rewrite_module_specifier_extension(
+                        specifier,
+                        &rewrites,
+                        case_sensitive,
                     );
-                    if !rm.resolved_using_ts_extension && should_rewrite {
-                        // ts#64159 (checker.go:15583): the path relative to the importing
+                    let source_content_mapper = source_file_content_mapper(source_file);
+                    let mut mapped_source = false;
+                    if !source_content_mapper.is_empty() {
+                        mapped_source = tspath::rewrite_file_extension(
+                            source_file_file_name(source_file),
+                            &rewrites,
+                            case_sensitive,
+                        )
+                        .is_some();
+                    }
+                    // ts#64581 (checker.go:15597): a content mapped file
+                    // whose output extension is rewritten resolves like a
+                    // TS extension.
+                    let resolved_using_rewritable_extension = rm.resolved_using_ts_extension
+                        || rm.resolved_using_extra_extensions
+                            && !source_content_mapper.is_empty()
+                            && mapped_source;
+                    if !resolved_using_rewritable_extension && should_rewrite {
+                        // ts#64159 (checker.go:15600): the path relative to the importing
                         // file, or the resolved name when the two have different roots.
                         let relative_to_source_file = tspath_p17::relative_path_from_file(
                             source_file_file_name(importing_source_file),
@@ -654,23 +693,34 @@ impl Checker {
                             diag::This_relative_import_path_is_unsafe_to_rewrite_because_it_looks_like_a_file_name_but_actually_resolves_to_0,
                             args![relative_to_source_file],
                         );
-                    } else if rm.resolved_using_ts_extension
+                    } else if resolved_using_rewritable_extension
                         && !should_rewrite
-                        && source_file_may_be_emitted(source_file, false)
+                        && (mapped_source || source_file_may_be_emitted(source_file, false))
                     {
+                        let mut extension =
+                            tspath_p17::get_any_extension_from_path(module_reference, &[], false);
+                        if mapped_source
+                            && let Some(rewrite) = tspath::get_file_extension_rewrite(
+                                source_file_file_name(source_file),
+                                &rewrites,
+                                case_sensitive,
+                            )
+                        {
+                            extension = rewrite.source.clone();
+                        }
                         self.error(
                             error_node,
                             diag::This_import_uses_a_0_extension_to_resolve_to_an_input_TypeScript_file_but_will_not_be_rewritten_during_emit_because_it_is_not_a_relative_path,
-                            args![tspath_p17::get_any_extension_from_path(module_reference, &[], false)],
+                            args![extension],
                         );
-                    } else if rm.resolved_using_ts_extension && should_rewrite {
+                    } else if resolved_using_rewritable_extension && should_rewrite {
                         if let Some(redirect) = get_redirect_for_resolution(source_file) {
                             let own_root_dir = common_source_directory().to_string();
                             let other_root_dir = redirect.common_source_directory().to_string();
 
                             let case_sensitive = use_case_sensitive_file_names();
 
-                            // ts#64159 (checker.go:15609): `None` is Go `rootsCompatible == false`.
+                            // ts#64159 (checker.go:15631): `None` is Go `rootsCompatible == false`.
                             let root_dir_path = tspath_p17::relative_path_from_directory(
                                 &own_root_dir,
                                 &other_root_dir,
@@ -692,7 +742,7 @@ impl Checker {
                                 case_sensitive,
                             );
 
-                            // ts#64159 (checker.go:15628): other roots (R4) are a mismatch.
+                            // ts#64159 (checker.go:15650): other roots (R4) are a mismatch.
                             if root_dir_path.is_none()
                                 || out_dir_path.is_none()
                                 || root_dir_path != out_dir_path
@@ -948,7 +998,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:15759 tryResolvePatternAmbientModule
+    // Go: checker/checker.go:15781 tryResolvePatternAmbientModule
     // Resolves the module reference to a pattern ambient module, if one exists.
     // If a resolved symbol from regular module resolution exists and we have an empty import attributes type,
     // we prefer the resolved symbol.
@@ -1037,13 +1087,13 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:15811 resolutionExtensionIsTSOrJson
+// Go: checker/checker.go:15833 resolutionExtensionIsTSOrJson
 pub fn resolution_extension_is_ts_or_json(ext: &str) -> bool {
     tspath_p17::extension_is_ts(ext) || ext == tspath_p17::EXTENSION_JSON
 }
 
 impl Checker {
-    // Go: checker/checker.go:15815 getSuggestedImportSource
+    // Go: checker/checker.go:15837 getSuggestedImportSource
     pub fn get_suggested_import_source(
         &mut self,
         module_reference: &str,
@@ -1078,7 +1128,7 @@ impl Checker {
         import_source_without_extension.to_string()
     }
 
-    // Go: checker/checker.go:15838 getSuggestedImportExtension
+    // Go: checker/checker.go:15860 getSuggestedImportExtension
     pub fn get_suggested_import_extension(
         &mut self,
         extensionless_import_path: &str,
@@ -1118,7 +1168,7 @@ impl Checker {
         ""
     }
 
-    // Go: checker/checker.go:15862 errorOnImplicitAnyModule
+    // Go: checker/checker.go:15884 errorOnImplicitAnyModule
     // PORT: Go takes `*module.ResolvedModule` and dereferences it without a nil
     // check. Every caller passes a resolved module, so this takes a reference.
     pub fn error_on_implicit_any_module(
@@ -1156,7 +1206,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:15883 createModuleNotFoundChain
+    // Go: checker/checker.go:15905 createModuleNotFoundChain
     pub fn create_module_not_found_chain(
         &mut self,
         _resolved_module: &ResolvedModule,
@@ -1193,7 +1243,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:15901 createModeMismatchDetails
+    // Go: checker/checker.go:15923 createModeMismatchDetails
     pub fn create_mode_mismatch_details(
         &mut self,
         source_file: Node,
@@ -1208,7 +1258,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:15910 tryFindAmbientModule
+    // Go: checker/checker.go:15932 tryFindAmbientModule
     pub fn try_find_ambient_module(
         &mut self,
         module_name: &str,
@@ -1231,7 +1281,7 @@ impl Checker {
         symbol
     }
 
-    // Go: checker/checker.go:15922 GetAmbientModules
+    // Go: checker/checker.go:15944 GetAmbientModules
     // PORT: Go `sync.Once` becomes the `ambient_modules_once` flag.
     pub fn get_ambient_modules(&mut self) -> Vec<SymbolId> {
         if !self.ambient_modules_once {
@@ -1253,7 +1303,7 @@ impl Checker {
         self.ambient_modules.clone()
     }
 
-    // Go: checker/checker.go:15942 resolveExternalModuleSymbol
+    // Go: checker/checker.go:15964 resolveExternalModuleSymbol
     pub fn resolve_external_module_symbol(
         &mut self,
         module_symbol: SymbolId,
@@ -1271,7 +1321,7 @@ impl Checker {
         module_symbol
     }
 
-    // Go: checker/checker.go:15954 resolveESModuleSymbol
+    // Go: checker/checker.go:15976 resolveESModuleSymbol
     //
     // Resolves the given external module symbol, possibly removing call and construct signatures or creating a
     // wrapper module with a synthetic default.
@@ -1395,7 +1445,7 @@ impl Checker {
         symbol
     }
 
-    // Go: checker/checker.go:16010 hasSignatures
+    // Go: checker/checker.go:16032 hasSignatures
     pub fn has_signatures(&mut self, t: TypeId) -> bool {
         !self
             .get_signatures_of_structured_type(t, SignatureKind::CALL)
@@ -1406,7 +1456,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:16014 isESMFormatImportImportingCommonjsFormatFile
+// Go: checker/checker.go:16036 isESMFormatImportImportingCommonjsFormatFile
 pub fn is_esm_format_import_importing_commonjs_format_file(
     usage_mode: ResolutionMode,
     target_mode: ResolutionMode,
@@ -1415,7 +1465,7 @@ pub fn is_esm_format_import_importing_commonjs_format_file(
 }
 
 impl Checker {
-    // Go: checker/checker.go:16018 getTypeWithSyntheticDefaultOnly
+    // Go: checker/checker.go:16040 getTypeWithSyntheticDefaultOnly
     pub fn get_type_with_synthetic_default_only(
         &mut self,
         t: TypeId,
@@ -1450,7 +1500,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:16032 getTypeWithSyntheticDefaultImportType
+    // Go: checker/checker.go:16054 getTypeWithSyntheticDefaultImportType
     pub fn get_type_with_synthetic_default_import_type(
         &mut self,
         t: TypeId,
@@ -1515,7 +1565,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:16060 isCommonJSRequire
+    // Go: checker/checker.go:16082 isCommonJSRequire
     pub fn is_common_js_require(&mut self, node: Node) -> bool {
         if !is_require_call(node, true /*requireStringLiteralLikeArgument*/) {
             return false;
@@ -1562,7 +1612,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:16093 createDefaultPropertyWrapperForModule
+    // Go: checker/checker.go:16115 createDefaultPropertyWrapperForModule
     pub fn create_default_property_wrapper_for_module(
         &mut self,
         symbol: SymbolId,
@@ -1590,7 +1640,7 @@ impl Checker {
         self.new_anonymous_type(anonymous_symbol, member_table, &[], &[], &[])
     }
 
-    // Go: checker/checker.go:16107 cloneTypeAsModuleType
+    // Go: checker/checker.go:16129 cloneTypeAsModuleType
     pub fn clone_type_as_module_type(
         &mut self,
         symbol: SymbolId,
@@ -1632,7 +1682,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:16122 getTargetOfAliasDeclaration
+    // Go: checker/checker.go:16144 getTargetOfAliasDeclaration
     pub fn get_target_of_alias_declaration(&mut self, node: Node) -> SymbolId {
         if node.is_nil() {
             return SymbolId::NIL;
@@ -1682,7 +1732,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:16158 resolveEntityName
+    // Go: checker/checker.go:16180 resolveEntityName
     //
     // Resolves a qualified name and any involved aliases.
     pub fn resolve_entity_name(
@@ -2087,19 +2137,6 @@ mod core_p17 {
             || EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES.contains(&name)
     }
 
-    // Go: core/core.go:724 ShouldRewriteModuleSpecifier
-    pub fn should_rewrite_module_specifier(
-        specifier: &str,
-        compiler_options: &CompilerOptions,
-    ) -> bool {
-        compiler_options
-            .rewrite_relative_import_extensions
-            .is_true()
-            && super::tspath_p17::path_is_relative(specifier)
-            && !super::tspath_p17::is_declaration_file_name(specifier)
-            && super::tspath_p17::has_ts_file_extension(specifier)
-    }
-
     // Go: core/pattern.go FindBestPatternMatch
     // PORT: `ast.PatternAmbientModule.Pattern` is stored as a prefix and a
     // suffix. Ambient module patterns always contain a star, so Go
@@ -2151,7 +2188,7 @@ mod module_p17 {
     use crate::diagnostics::Message;
     use crate::prelude::*;
 
-    // Go: module/util.go:125 GetResolutionDiagnostic
+    // Go: module/util.go:132 GetResolutionDiagnostic
     pub fn get_resolution_diagnostic(
         options: &CompilerOptions,
         resolved_module: &ResolvedModule,

@@ -6,6 +6,7 @@
 //! The Go standard library pieces that osvfs reaches (`os.DirFS`,
 //! `os.RemoveAll`, `filepath.Abs`, `filepath.Clean`) are ported here too.
 
+use crate::frontend::nativepath::is_network_path;
 use crate::frontend::prelude::*;
 use std::borrow::Cow;
 use std::cell::OnceCell;
@@ -162,10 +163,10 @@ pub fn os_override_installed() -> bool {
 }
 
 // PORT: the Go semaphores `blockingOpSema`, `readSema` and `writeSema`
-// (os.go:20) limit concurrent syscalls. The port is single-threaded, so they
+// (os.go:21) limit concurrent syscalls. The port is single-threaded, so they
 // are not ported.
 
-// Go: os.go:30 FS
+// Go: os.go:31 FS
 // FS creates a new FS from the OS file system.
 // PORT: the Go package function `osvfs.FS` is `osvfs_fs`. Go returns one
 // package-level value; this returns a clone of one per-thread value. With
@@ -173,7 +174,7 @@ pub fn os_override_installed() -> bool {
 // one that the override's `fs` makes on the first call on that thread.
 pub fn osvfs_fs() -> Rc<dyn Fs> {
     thread_local! {
-        // Go: os.go:34 osVFS
+        // Go: os.go:35 osVFS
         static OS_VFS: Rc<dyn Fs> = Rc::new(OsFs {
             common: Common {
                 root_for: os_dir_fs,
@@ -188,17 +189,29 @@ pub fn osvfs_fs() -> Rc<dyn Fs> {
     OS_VFS.with(Rc::clone)
 }
 
-// Go: os.go:138 isReparsePoint
+// Go: os.go:164 isReparsePoint
 fn is_reparse_point(path: &str) -> bool {
+    // ts#64832
+    if is_network_path(path) {
+        return false;
+    }
     crate::frontend::nativepath::is_symlink_or_reparse_point(&filepath_from_slash(path))
 }
 
-// Go: os.go:41 osFS
+// Go: os.go:42 osFS
 pub struct OsFs {
     common: Common,
 }
 
-// Go: os.go:46 isFileSystemCaseSensitive
+// Go: os.go:95 errNetworkPath (ts#64832)
+// errNetworkPath is returned when writing to a path that refers to a network
+// location. Such paths are never accessed; see [nativepath.IsNetworkPath].
+// PORT: Go keeps one error value; the port makes an equal `FsError` each time.
+fn err_network_path() -> FsError {
+    FsError::Other("network paths are not supported".to_string())
+}
+
+// Go: os.go:47 fileSystemCaseSensitivity
 // We do this right at startup to minimize the chance that executable gets moved or deleted.
 // PORT: Go computes this in package init. The port computes it on first use.
 fn is_file_system_case_sensitive() -> bool {
@@ -245,7 +258,7 @@ fn is_file_system_case_sensitive() -> bool {
     })
 }
 
-// Go: os.go:77 swapCase
+// Go: os.go:78 swapCase
 // Convert all lowercase chars to uppercase, and vice-versa
 fn swap_case(str: &str) -> String {
     str.chars()
@@ -281,58 +294,76 @@ fn simple_to_lower(r: char) -> char {
 }
 
 impl Fs for OsFs {
-    // Go: os.go:88 UseCaseSensitiveFileNames
+    // Go: os.go:89 CaseSensitivity
     fn use_case_sensitive_file_names(&self) -> bool {
         is_file_system_case_sensitive()
     }
 
-    // Go: os.go:92 ReadFile
+    // Go: os.go:97 ReadFile (ts#64832)
     fn read_file(&self, path: &str) -> (String, bool) {
+        if is_network_path(path) {
+            return (String::new(), false);
+        }
         self.common.read_file(path)
     }
 
-    // Go: os.go:97 DirectoryExists
+    // Go: os.go:105 DirectoryExists (ts#64832)
     fn directory_exists(&self, path: &str) -> bool {
+        if is_network_path(path) {
+            return false;
+        }
         self.common.directory_exists(path)
     }
 
-    // Go: os.go:102 FileExists
+    // Go: os.go:113 FileExists (ts#64832)
     fn file_exists(&self, path: &str) -> bool {
+        if is_network_path(path) {
+            return false;
+        }
         self.common.file_exists(path)
     }
 
-    // Go: os.go:107 GetAccessibleEntries
+    // Go: os.go:121 GetAccessibleEntries (ts#64832)
     fn get_accessible_entries(&self, path: &str) -> Entries {
+        if is_network_path(path) {
+            return Entries::default();
+        }
         self.common.get_accessible_entries(path)
     }
 
-    // Go: os.go:112 Stat
+    // Go: os.go:129 Stat (ts#64832)
     fn stat(&self, path: &str) -> Option<FileInfo> {
+        if is_network_path(path) {
+            return None;
+        }
         self.common.stat(path)
     }
 
-    // Go: os.go:117 Realpath
+    // Go: os.go:137 Realpath
     fn realpath(&self, path: &str) -> String {
         os_fs_realpath(path)
     }
 
-    // Go: os.go:174 WriteFile
+    // Go: os.go:206 WriteFile
     fn write_file(&self, path: &str, content: &str) -> Result<(), FsError> {
         self.write_file_ensuring_dir(path, content, WriteFlag::Truncate)
     }
 
-    // Go: os.go:178 AppendFile
+    // Go: os.go:210 AppendFile
     fn append_file(&self, path: &str, content: &str) -> Result<(), FsError> {
         self.write_file_ensuring_dir(path, content, WriteFlag::Append)
     }
 
-    // Go: os.go:182 Remove
+    // Go: os.go:214 Remove (ts#64832)
     fn remove(&self, path: &str) -> Result<(), FsError> {
+        if is_network_path(path) {
+            return Err(err_network_path());
+        }
         // todo: #701 add retry mechanism?
         os_remove_all(path)
     }
 
-    // Go: os.go:188 Chtimes
+    // Go: os.go:223 Chtimes (ts#64832)
     // PORT: Go `os.Chtimes` is utimensat(AT_FDCWD, path, times, 0) on unix,
     // so it works on a file without read permission; a zero Go time
     // (`None` here) is UTIME_OMIT. Off unix, Rust std sets times through an
@@ -344,6 +375,9 @@ impl Fs for OsFs {
         a_time: Option<SystemTime>,
         m_time: Option<SystemTime>,
     ) -> Result<(), FsError> {
+        if is_network_path(path) {
+            return Err(err_network_path());
+        }
         use rustix::fs::{AtFlags, CWD, Timespec, Timestamps, UTIME_OMIT};
         // Go: syscall.NsecToTimespec(t.UnixNano())
         let timespec = |time: Option<SystemTime>| match time {
@@ -385,6 +419,9 @@ impl Fs for OsFs {
         a_time: Option<SystemTime>,
         m_time: Option<SystemTime>,
     ) -> Result<(), FsError> {
+        if is_network_path(path) {
+            return Err(err_network_path());
+        }
         let file = std::fs::File::open(os_path(path))
             .map_err(|err| FsError::path("chtimes", path, err))?;
         let mut times = std::fs::FileTimes::new();
@@ -411,10 +448,28 @@ impl Fs for OsFs {
 /// directory part, a directory that does not open, a failed stat, a path
 /// of `PATH_MAX` bytes or more) is stat'ed by its full path, as `stat`
 /// does, unless an `lstat` finds that its name is a link.
+///
+/// ts#64832: `stat` refuses a network path (no mtime), so this does not
+/// read one either: it gives `Some(None)` for it.
 pub fn os_mod_times_of_non_links<'a>(
     paths: impl IntoIterator<Item = &'a str>,
 ) -> Vec<Option<Option<SystemTime>>> {
-    mod_times(paths)
+    let paths: Vec<&str> = paths.into_iter().collect();
+    if !paths.iter().any(|path| is_network_path(path)) {
+        return mod_times(paths);
+    }
+    let mut local =
+        mod_times(paths.iter().copied().filter(|path| !is_network_path(path))).into_iter();
+    paths
+        .iter()
+        .map(|path| {
+            if is_network_path(path) {
+                Some(None)
+            } else {
+                local.next().expect("one mtime per local path")
+            }
+        })
+        .collect()
 }
 
 /// `os_mod_times_of_non_links`.
@@ -503,11 +558,14 @@ enum WriteFlag {
     Append,
 }
 
-// Go: os.go:122 osFSRealpath
+// Go: os.go:142 osFSRealpath (ts#64832)
 pub fn os_fs_realpath(path: &str) -> String {
     let _ = root_length(path); // Assert path is rooted
 
     let orig = path;
+    if is_network_path(orig) {
+        return orig.to_string();
+    }
     let path = filepath_from_slash(path);
     let path = match crate::frontend::nativepath::realpath(&path) {
         Ok(path) => path,
@@ -517,11 +575,16 @@ pub fn os_fs_realpath(path: &str) -> String {
         Ok(path) => path,
         Err(_) => return orig.to_string(),
     };
+    // A local path may resolve to a network location, e.g. through a mapped
+    // network drive. Keep the original path so later accesses stay on it.
+    if is_network_path(&path) {
+        return orig.to_string();
+    }
     normalize_slashes(&path).into()
 }
 
 impl OsFs {
-    // Go: os.go:142 writeFileWithFlag
+    // Go: os.go:171 writeFileWithFlag
     fn write_file_with_flag(
         &self,
         path: &str,
@@ -548,12 +611,12 @@ impl OsFs {
         Ok(())
     }
 
-    // Go: os.go:158 ensureDirectoryExists
+    // Go: os.go:187 ensureDirectoryExists
     fn ensure_directory_exists(&self, directory_path: &str) -> Result<(), FsError> {
         os_mkdir_all(directory_path, 0o777)
     }
 
-    // Go: os.go:163 writeFileEnsuringDir
+    // Go: os.go:192 writeFileEnsuringDir (ts#64832)
     fn write_file_ensuring_dir(
         &self,
         path: &str,
@@ -561,6 +624,9 @@ impl OsFs {
         flag: WriteFlag,
     ) -> Result<(), FsError> {
         let _ = root_length(path); // Assert path is rooted
+        if is_network_path(path) {
+            return Err(err_network_path());
+        }
         if self.write_file_with_flag(path, content, flag).is_ok() {
             return Ok(());
         }
@@ -571,8 +637,9 @@ impl OsFs {
     }
 }
 
-// Go: os.go:193 GetGlobalTypingsCacheLocation
-// PORT: not ported. Only the language server (cmd/tsc/lsp.go) calls it.
+// Go: os.go:231 GetGlobalTypingsCacheLocation
+// PORT: ported in `cmd::tsgo::lsp` (`get_global_typings_cache_location`).
+// Only the language server (cmd/tsc/lsp.go) calls it.
 
 // Go: os/file.go DirFS
 // PORT: Go standard library. `os.DirFS(dir)` with the `Stat`, `ReadDir`
@@ -1308,6 +1375,45 @@ fn win_cut_path(path: &[u8]) -> Option<(&[u8], &[u8])> {
     Some((&path[..i], &path[i + 1..]))
 }
 
+// PORT: not in Go (Go returns true for wasm). The WASI probe of
+// `is_file_system_case_sensitive` (#89) in a wasm32-wasip1 test binary.
+// scripts/wasm/test-runner.mjs runs it in Node with a new empty temp dir as
+// the root `/` (CI job `wasm`). The probe keeps its first answer, so each
+// test needs its own process: the second test is ignored, and CI runs it
+// alone with `--ignored`.
+#[cfg(all(test, target_os = "wasi"))]
+mod wasi_tests {
+    use super::*;
+
+    /// The probe stats the current directory under a swapped case
+    /// (`/CASE-PROBE`). Its answer is the host's: here a file in the
+    /// directory and its name in the other case. Linux CI is case-sensitive.
+    #[test]
+    fn case_probe_answers_for_the_host_file_system() {
+        std::fs::create_dir_all("/case-probe").unwrap();
+        std::fs::write("/case-probe/a.txt", "a").unwrap();
+        let host = std::fs::metadata("/case-probe/A.TXT").is_err();
+        std::env::set_current_dir("/case-probe").unwrap();
+        assert_eq!(os_current_dir().unwrap(), "/case-probe");
+        assert_eq!(is_file_system_case_sensitive(), host);
+        assert_eq!(osvfs_fs().use_case_sensitive_file_names(), host);
+    }
+
+    /// The current directory under a swapped case exists, as on a
+    /// case-insensitive file system: here a twin directory `/CASE-PROBE`.
+    /// Then the file system is case-insensitive. Without the probe, wasm
+    /// gives true.
+    #[test]
+    #[ignore = "run alone (--ignored): the probe keeps its first answer"]
+    fn case_probe_finds_the_current_directory_under_a_swapped_case() {
+        std::fs::create_dir_all("/case-probe").unwrap();
+        std::fs::create_dir_all("/CASE-PROBE").unwrap();
+        std::env::set_current_dir("/case-probe").unwrap();
+        assert!(!is_file_system_case_sensitive());
+        assert!(!osvfs_fs().use_case_sensitive_file_names());
+    }
+}
+
 #[cfg(all(test, windows))]
 mod windows_tests {
     use super::{is_reserved_name, windows_localize};
@@ -1375,8 +1481,9 @@ mod tests {
     // directory, a time before 1970, a path with no file name, names
     // through 30 directory links that are a chain of 30 file links (more
     // than 40 links) and one file link, and a file through 41 directory
-    // links (ELOOP). The test keeps the name of the removed `os_mod_times`
-    // (followups21), so the protected name stays.
+    // links (ELOOP), and (ts#64832) the network spelling `//<root>/a/x.ts`
+    // of a file, which `stat` refuses. The test keeps the name of the
+    // removed `os_mod_times` (followups21), so the protected name stays.
     #[test]
     fn os_mod_times_matches_stat() {
         let dir = std::env::temp_dir().join(format!("ts_goport_mod_times_{}", std::process::id()));
@@ -1404,7 +1511,7 @@ mod tests {
             .chtimes(dir.join("a/y.ts").to_str().unwrap(), None, Some(old))
             .unwrap();
         let root = dir.to_str().unwrap();
-        let paths: Vec<String> = [
+        let mut paths: Vec<String> = [
             "a/x.ts",
             "a/y.ts",
             "a/lx.ts",
@@ -1423,6 +1530,7 @@ mod tests {
         .iter()
         .map(|name| format!("{root}/{name}"))
         .collect();
+        paths.push(format!("/{root}/a/x.ts"));
         let m_times = os_mod_times_of_non_links(paths.iter().map(String::as_str));
         let fs = osvfs_fs();
         let want: Vec<Option<Option<SystemTime>>> = paths
@@ -1442,6 +1550,7 @@ mod tests {
         assert!(want[12].is_some_and(|m_time| m_time.is_some()));
         assert_eq!(want[12], want[0]);
         assert_eq!(want[13], Some(None));
+        assert_eq!(want[14], Some(None));
     }
 
     // PORT: not in Go. Go `os.ReadDir` lstats an entry whose `d_type` is

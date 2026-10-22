@@ -400,7 +400,7 @@ const customStructures: Structure[] = [
                 name: "pipe",
                 type: { kind: "base", name: "string" },
                 optional: true,
-                documentation: "Optional path to use for the named pipe or Unix domain socket. If not provided, a unique path will be generated.",
+                documentation: "Optional named pipe path on Windows. On Unix, the path must not exist and will be created as a private directory containing a socket named 'socket'. If not provided, a unique path will be generated.",
             },
         ],
         documentation: "Parameters for the initializeAPISession request.",
@@ -452,6 +452,7 @@ const customStructures: Structure[] = [
             { name: "cwd", type: { kind: "base", name: "string" }, optional: true, documentation: "Absolute working directory for the mapper process." },
             { name: "compilerOptions", type: { kind: "array", element: { kind: "base", name: "string" } }, optional: true, documentation: "Compiler option names forwarded to the mapper." },
             { name: "dynamicConfig", type: { kind: "base", name: "boolean" }, optional: true, documentation: "Whether the mapper uses project-scoped dynamic configuration." },
+            { name: "outputExtensions", type: { kind: "map", key: { kind: "base", name: "string" }, value: { kind: "base", name: "string" } }, optional: true, documentation: "Default source-to-runtime output extension mappings." },
         ],
         documentation: "Inline content mapper manifest supplied by a contributing extension.",
     },
@@ -2177,9 +2178,12 @@ function findPresenceDiscriminator(entries: { fieldName: string; typeName: strin
  * Generate the Go code
  *
  * PORT: this port of the pinned generator emits Rust instead of Go. Lines
- * 1-2175 above are a verbatim copy of the pinned generate.mts (microsoft/TypeScript
+ * 1-2176 above are a verbatim copy of the pinned generate.mts (microsoft/TypeScript
  * 673a5f17d713 tsc/internal/lsp/lsproto/_generate; only the tinyexec import is
- * dropped), so every type name, union name, literal name,
+ * dropped). Two custom structure entries follow 3e9236361fa9
+ * tools/scripts/lsp/generate.mts: ContentMapperManifest.outputExtensions
+ * (ts#64581) and the InitializeAPISessionParams.pipe text (ts#64818). So every
+ * type name, union name, literal name,
  * discriminator and try order is the Go one. generateCode below is the
  * rewritten emitter. It keeps Go type strings from resolveType and converts
  * them to Rust types in one place (goTypeToRust). Go marshals structs by

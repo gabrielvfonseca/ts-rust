@@ -1,9 +1,10 @@
 # Bundled lib provenance
 
-The 115 `lib*.d.ts` files here are exact copies of `tsc/internal/bundled/libs`
-in microsoft/TypeScript at `fed0bf24149fb1ed36039212648bafdafc1ea10e`
-(2026-10-08, the bump D pin). Since #63993 that directory is the lib source:
-the TypeScript submodule is gone, and the files are edited in place.
+The 116 `lib*.d.ts` files here are exact copies of `tsc/internal/bundled/libs`
+in microsoft/TypeScript at `3e9236361fa97a9e6c685f4833ac457ae2d8c50a`
+(2026-10-19, the bump E pin, typescript@7.1.0-beta). Since #63993 that
+directory is the lib source: the TypeScript submodule is gone, and the files
+are edited in place.
 
 This is the only lib dir. `src/frontend/bundled/embed.rs` embeds every file
 here (`bundled_lib!`), `scripts/copy-libs.sh` copies them next to the binaries

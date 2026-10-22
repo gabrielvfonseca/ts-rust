@@ -14,7 +14,7 @@ fn node_slice_element_or_nil(nodes: NodeSlice, index: usize) -> Node {
 }
 
 impl Checker {
-    // Go: checker/checker.go:9606 getEffectiveCheckNode
+    // Go: checker/checker.go:9603 getEffectiveCheckNode
     pub fn get_effective_check_node(&mut self, argument: Node) -> Node {
         let flags = if is_in_js_file(argument) {
             OuterExpressionKinds::OEK_PARENTHESES
@@ -26,7 +26,7 @@ impl Checker {
         skip_outer_expressions(argument, flags)
     }
 
-    // Go: checker/checker.go:9615 inferTypeArguments
+    // Go: checker/checker.go:9612 inferTypeArguments
     pub fn infer_type_arguments(
         &mut self,
         node: Node,
@@ -241,7 +241,7 @@ impl Checker {
         self.get_inferred_type_list(context)
     }
 
-    // Go: checker/checker.go:9723 getCandidateForOverloadFailure
+    // Go: checker/checker.go:9720 getCandidateForOverloadFailure
     // No signature was applicable. We have already reported the errors for the invalid signature.
     // PORT: Go mutates the caller's `candidates` slice (see pickLongestCandidateSignature), so it
     // is `&mut [SignatureId]`.
@@ -269,7 +269,7 @@ impl Checker {
         self.create_union_of_signatures_for_overload_failure(candidates)
     }
 
-    // Go: checker/checker.go:9735 pickLongestCandidateSignature
+    // Go: checker/checker.go:9732 pickLongestCandidateSignature
     pub fn pick_longest_candidate_signature(
         &mut self,
         node: Node,
@@ -316,7 +316,7 @@ impl Checker {
         instantiated
     }
 
-    // Go: checker/checker.go:9766 getLongestCandidateIndex
+    // Go: checker/checker.go:9763 getLongestCandidateIndex
     pub fn get_longest_candidate_index(
         &mut self,
         candidates: &[SignatureId],
@@ -337,7 +337,7 @@ impl Checker {
         max_params_index
     }
 
-    // Go: checker/checker.go:9782 getTypeArgumentsFromNodes
+    // Go: checker/checker.go:9779 getTypeArgumentsFromNodes
     pub fn get_type_arguments_from_nodes(
         &mut self,
         type_argument_nodes: &[Node],
@@ -364,7 +364,7 @@ impl Checker {
         type_arguments
     }
 
-    // Go: checker/checker.go:9800 inferSignatureInstantiationForOverloadFailure
+    // Go: checker/checker.go:9797 inferSignatureInstantiationForOverloadFailure
     pub fn infer_signature_instantiation_for_overload_failure(
         &mut self,
         node: Node,
@@ -393,7 +393,7 @@ impl Checker {
         self.create_signature_instantiation(candidate, &type_argument_types)
     }
 
-    // Go: checker/checker.go:9806 createUnionOfSignaturesForOverloadFailure
+    // Go: checker/checker.go:9803 createUnionOfSignaturesForOverloadFailure
     pub fn create_union_of_signatures_for_overload_failure(
         &mut self,
         candidates: &[SignatureId],
@@ -512,7 +512,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:9847 createCombinedSymbolFromTypes
+    // Go: checker/checker.go:9844 createCombinedSymbolFromTypes
     pub fn create_combined_symbol_from_types(
         &mut self,
         sources: &[SymbolId],
@@ -522,7 +522,7 @@ impl Checker {
         self.create_combined_symbol_for_overload_failure(sources, union)
     }
 
-    // Go: checker/checker.go:9851 createCombinedSymbolForOverloadFailure
+    // Go: checker/checker.go:9848 createCombinedSymbolForOverloadFailure
     pub fn create_combined_symbol_for_overload_failure(
         &mut self,
         sources: &[SymbolId],
@@ -533,13 +533,13 @@ impl Checker {
         self.create_symbol_with_type(first, t)
     }
 
-    // Go: checker/checker.go:9856 getRestTypeOfSignature
+    // Go: checker/checker.go:9853 getRestTypeOfSignature
     pub fn get_rest_type_of_signature(&mut self, signature: SignatureId) -> TypeId {
         let t = self.try_get_rest_type_of_signature(signature);
         if t.is_some() { t } else { self.any_type }
     }
 
-    // Go: checker/checker.go:9860 tryGetRestTypeOfSignature
+    // Go: checker/checker.go:9857 tryGetRestTypeOfSignature
     pub fn try_get_rest_type_of_signature(&mut self, signature: SignatureId) -> TypeId {
         if !self.signature_has_rest_parameter(signature) {
             return TypeId::NIL;
@@ -560,7 +560,7 @@ impl Checker {
         self.get_index_type_of_type(rest_type, number_type)
     }
 
-    // Go: checker/checker.go:9874 reportCallResolutionErrors
+    // Go: checker/checker.go:9871 reportCallResolutionErrors
     pub fn report_call_resolution_errors(
         &mut self,
         node: Node,
@@ -652,7 +652,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:9910 addImplementationSuccessElaboration
+    // Go: checker/checker.go:9907 addImplementationSuccessElaboration
     pub fn add_implementation_success_elaboration(
         &mut self,
         s: &CallState,
@@ -690,7 +690,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:9930 getArgumentArityError
+    // Go: checker/checker.go:9927 getArgumentArityError
     // PORT: Go `int` sentinels (math.MaxInt/MinInt) are kept as i64 locals.
     pub fn get_argument_arity_error(
         &mut self,
@@ -859,7 +859,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:10048 isPromiseResolveArityError
+    // Go: checker/checker.go:10045 isPromiseResolveArityError
     pub fn is_promise_resolve_arity_error(&mut self, node: Node) -> bool {
         if !is_call_expression(node) || !is_identifier(node.expression()) {
             return false;
@@ -893,7 +893,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:10068 getErrorNodeForCallNode
+// Go: checker/checker.go:10065 getErrorNodeForCallNode
 pub fn get_error_node_for_call_node(node: Node) -> Node {
     let mut node = node;
     if is_call_expression(node) {
@@ -906,7 +906,7 @@ pub fn get_error_node_for_call_node(node: Node) -> Node {
 }
 
 impl Checker {
-    // Go: checker/checker.go:10078 getTypeArgumentArityError
+    // Go: checker/checker.go:10075 getTypeArgumentArityError
     // PORT: Go `int` sentinels (math.MaxInt/MinInt) are kept as i64 locals.
     pub fn get_type_argument_arity_error(
         &mut self,
@@ -982,7 +982,7 @@ impl Checker {
         diagnostic
     }
 
-    // Go: checker/checker.go:10119 reportCannotInvokePossiblyNullOrUndefinedError
+    // Go: checker/checker.go:10116 reportCannotInvokePossiblyNullOrUndefinedError
     pub fn report_cannot_invoke_possibly_null_or_undefined_error(
         &mut self,
         node: Node,
@@ -1000,7 +1000,7 @@ impl Checker {
         self.error(node, message, args![]);
     }
 
-    // Go: checker/checker.go:10127 resolveUntypedCall
+    // Go: checker/checker.go:10124 resolveUntypedCall
     pub fn resolve_untyped_call(&mut self, node: Node) -> SignatureId {
         if self.call_like_expression_may_have_type_arguments(node) {
             // Check type arguments even though we will give an error that untyped calls may not accept type arguments.
@@ -1027,13 +1027,13 @@ impl Checker {
         self.any_signature
     }
 
-    // Go: checker/checker.go:10148 resolveErrorCall
+    // Go: checker/checker.go:10145 resolveErrorCall
     pub fn resolve_error_call(&mut self, node: Node) -> SignatureId {
         self.resolve_untyped_call(node);
         self.unknown_signature
     }
 
-    // Go: checker/checker.go:10158 isUntypedFunctionCall
+    // Go: checker/checker.go:10155 isUntypedFunctionCall
     /**
      * TS 1.0 spec: 4.12
      * If FuncExpr is of type Any, or of an object type that has no call or construct signatures
@@ -1074,7 +1074,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:10165 invocationErrorDetails
+    // Go: checker/checker.go:10162 invocationErrorDetails
     pub fn invocation_error_details(
         &mut self,
         error_target: Node,
@@ -1200,7 +1200,7 @@ impl Checker {
         diagnostic
     }
 
-    // Go: checker/checker.go:10221 invocationError
+    // Go: checker/checker.go:10218 invocationError
     // PORT: Go (#4825) adds the diagnostic, then `invocationErrorRecovery` adds
     // related info to the stored one (an equal diagnostic added before, or this
     // one). See `invocation_error_recovery` for the order here.
@@ -1221,7 +1221,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:10230 invocationErrorRecovery
+    // Go: checker/checker.go:10227 invocationErrorRecovery
     // PORT: Go adds the related info to the diagnostic that `addDiagnostic`
     // returned. The stored `&mut Diagnostic` cannot be kept across the checker
     // calls here, so this returns the related info, and the caller runs it before
@@ -1257,7 +1257,7 @@ impl Checker {
         None
     }
 
-    // Go: checker/checker.go:10246 isGenericFunctionReturningFunction
+    // Go: checker/checker.go:10243 isGenericFunctionReturningFunction
     pub fn is_generic_function_returning_function(&mut self, signature: SignatureId) -> bool {
         if self.sig(signature).type_parameters.is_empty() {
             return false;
@@ -1266,7 +1266,7 @@ impl Checker {
         self.is_function_type(return_type)
     }
 
-    // Go: checker/checker.go:10250 skippedGenericFunction
+    // Go: checker/checker.go:10247 skippedGenericFunction
     pub fn skipped_generic_function(&mut self, node: Node, check_mode: CheckMode) {
         if check_mode.intersects(CheckMode::INFERENTIAL) {
             // We have skipped a generic function during inferential typing. Obtain the inference context and
@@ -1276,7 +1276,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:10259 checkTaggedTemplateExpression
+    // Go: checker/checker.go:10256 checkTaggedTemplateExpression
     pub fn check_tagged_template_expression(&mut self, node: Node) -> TypeId {
         if !self.check_grammar_tagged_template_chain(node) {
             self.check_grammar_type_arguments(node, node.type_argument_list());
@@ -1286,12 +1286,12 @@ impl Checker {
         self.get_return_type_of_signature(signature)
     }
 
-    // Go: checker/checker.go:10268 checkParenthesizedExpression
+    // Go: checker/checker.go:10265 checkParenthesizedExpression
     pub fn check_parenthesized_expression(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         self.check_expression_ex(node.expression(), check_mode)
     }
 
-    // Go: checker/checker.go:10272 checkClassExpression
+    // Go: checker/checker.go:10269 checkClassExpression
     pub fn check_class_expression(&mut self, node: Node) -> TypeId {
         self.check_class_like_declaration(node);
         self.check_node_deferred(node);
@@ -1300,7 +1300,7 @@ impl Checker {
         self.get_type_of_symbol(symbol)
     }
 
-    // Go: checker/checker.go:10279 getFirstTransformableStaticClassElement
+    // Go: checker/checker.go:10276 getFirstTransformableStaticClassElement
     pub fn get_first_transformable_static_class_element(&mut self, node: Node) -> Node {
         let will_transform_static_elements_of_decorated_class = !self.legacy_decorators
             && self.language_version
@@ -1338,7 +1338,7 @@ impl Checker {
         Node::NIL
     }
 
-    // Go: checker/checker.go:10306 checkClassExpressionExternalHelpers
+    // Go: checker/checker.go:10303 checkClassExpressionExternalHelpers
     pub fn check_class_expression_external_helpers(&mut self, node: Node) {
         if node.name().is_some() {
             return;
@@ -1376,7 +1376,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:10334 checkClassExpressionDeferred
+    // Go: checker/checker.go:10331 checkClassExpressionDeferred
     pub fn check_class_expression_deferred(&mut self, node: Node) {
         self.check_source_elements(node.members());
         // ts#64646, Go N' checker.go:10336
@@ -1384,7 +1384,7 @@ impl Checker {
         self.register_for_unused_identifiers_check(node);
     }
 
-    // Go: checker/checker.go:10340 checkFunctionExpressionOrObjectLiteralMethod
+    // Go: checker/checker.go:10337 checkFunctionExpressionOrObjectLiteralMethod
     pub fn check_function_expression_or_object_literal_method(
         &mut self,
         node: Node,
@@ -1461,7 +1461,7 @@ impl Checker {
         self.get_type_of_symbol(symbol)
     }
 
-    // Go: checker/checker.go:10381 contextuallyCheckFunctionExpressionOrObjectLiteralMethod
+    // Go: checker/checker.go:10378 contextuallyCheckFunctionExpressionOrObjectLiteralMethod
     pub fn contextually_check_function_expression_or_object_literal_method(
         &mut self,
         node: Node,
@@ -1568,7 +1568,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:10437 checkFunctionExpressionOrObjectLiteralMethodDeferred
+    // Go: checker/checker.go:10434 checkFunctionExpressionOrObjectLiteralMethodDeferred
     pub fn check_function_expression_or_object_literal_method_deferred(&mut self, node: Node) {
         let function_flags = get_function_flags(node);
         let return_type = self.get_return_type_from_annotation(node);
@@ -1611,7 +1611,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:10470 inferFromAnnotatedParametersAndReturn
+    // Go: checker/checker.go:10467 inferFromAnnotatedParametersAndReturn
     pub fn infer_from_annotated_parameters_and_return(
         &mut self,
         sig: SignatureId,
@@ -1662,7 +1662,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:10495 getContextualSignature
+    // Go: checker/checker.go:10492 getContextualSignature
     // Return the contextual signature for a given expression node. A contextual type provides a
     // contextual signature if it has a single call signature and if that call signature is non-generic.
     // If the contextual type is a union type, get the signature from each type possible and if they are

@@ -117,7 +117,7 @@ pub fn parse_project_reference(json: &CompilerOptionsValue) -> Option<ProjectRef
     None
 }
 
-// Go: tsoptions/parsinghelpers.go:138 parseContentMapper (tsgo#4712)
+// Go: tsoptions/parsinghelpers.go:138 parseContentMapper (tsgo#4712, ts#64581)
 // PORT: Go returns a nilable `*contentmapper.Mapper`; that is an owned
 // `Option<Mapper>`, which the caller changes and then puts in an `Rc`.
 pub fn parse_content_mapper(value: &CompilerOptionsValue) -> (Option<Mapper>, Vec<Diagnostic>) {
@@ -157,6 +157,21 @@ pub fn parse_content_mapper(value: &CompilerOptionsValue) -> (Option<Mapper>, Ve
             args!["contentMapper.extensions", "string[]"],
         ));
     }
+    // A null `outputExtensions` leaves the map nil, and the caller then does
+    // not apply the manifest default (ts#64581).
+    if let Some(output_extensions) = v
+        .get("outputExtensions")
+        .filter(|value| !matches!(value, CompilerOptionsValue::Nil))
+    {
+        if let Some(values) = parse_string_string_map_strict(output_extensions) {
+            mapper.definition.output_extensions = Some(values);
+        } else {
+            errors.push(new_compiler_diagnostic(
+                diag::Compiler_option_0_requires_a_value_of_type_1,
+                args!["contentMapper.outputExtensions", "object or null"],
+            ));
+        }
+    }
     if let Some(options) = v.get("options") {
         if !matches!(options, CompilerOptionsValue::Map(_)) {
             errors.push(new_compiler_diagnostic(
@@ -179,7 +194,26 @@ pub fn parse_content_mapper(value: &CompilerOptionsValue) -> (Option<Mapper>, Ve
     (Some(mapper), errors)
 }
 
-// Go: tsoptions/parsinghelpers.go:178 parseStringArrayStrict (tsgo#4712)
+// Go: tsoptions/parsinghelpers.go:183 parseStringStringMapStrict (ts#64581)
+// PORT: Go `(map[string]string, bool)` is an `Option`; the Go map is a
+// `BTreeMap` (see `contentmapper::Definition`).
+pub fn parse_string_string_map_strict(
+    value: &CompilerOptionsValue,
+) -> Option<std::collections::BTreeMap<String, String>> {
+    let CompilerOptionsValue::Map(object) = value else {
+        return None;
+    };
+    let mut result = std::collections::BTreeMap::new();
+    for (key, value) in object {
+        let CompilerOptionsValue::String(str) = value else {
+            return None;
+        };
+        result.insert(key.clone(), str.clone());
+    }
+    Some(result)
+}
+
+// Go: tsoptions/parsinghelpers.go:201 parseStringArrayStrict (tsgo#4712)
 // parseStringArrayStrict returns the string slice and true only if value is an array whose
 // elements are all strings. A missing element or wrong element type yields false.
 // PORT: Go `([]string, bool)` is `Option<Vec<String>>`.
@@ -197,7 +231,7 @@ pub fn parse_string_array_strict(value: &CompilerOptionsValue) -> Option<Vec<Str
     Some(result)
 }
 
-// Go: tsoptions/parsinghelpers.go:194 parseJsonToStringKey
+// Go: tsoptions/parsinghelpers.go:217 parseJsonToStringKey
 // PORT: Go returns a map pointer that is never nil. It is `Option` so it
 // can go straight to the nilable `json` argument of
 // `parseJsonConfigFileContentWorker`; it is always `Some`.
@@ -244,7 +278,7 @@ pub fn parse_json_to_string_key(
     Some(result)
 }
 
-// Go: tsoptions/parsinghelpers.go:231 optionParser
+// Go: tsoptions/parsinghelpers.go:254 optionParser
 // PORT: Go `*diagnostics.Message` results are never nil for the ported
 // parsers, so they are `&'static Message`.
 pub trait OptionParser {
@@ -253,56 +287,56 @@ pub trait OptionParser {
     fn unknown_did_you_mean_diagnostic(&self) -> &'static Message;
 }
 
-// Go: tsoptions/parsinghelpers.go:237 compilerOptionsParser
+// Go: tsoptions/parsinghelpers.go:260 compilerOptionsParser
 // PORT: the embedded Go `*core.CompilerOptions` is a mutable borrow.
 pub struct CompilerOptionsParser<'a> {
     pub compiler_options: &'a mut CompilerOptions,
 }
 
 impl OptionParser for CompilerOptionsParser<'_> {
-    // Go: tsoptions/parsinghelpers.go:242 (*compilerOptionsParser).ParseOption
+    // Go: tsoptions/parsinghelpers.go:265 (*compilerOptionsParser).ParseOption
     fn parse_option(&mut self, key: &str, value: CompilerOptionsValue) -> Vec<Diagnostic> {
         parse_compiler_options(key, value, self.compiler_options)
     }
 
-    // Go: tsoptions/parsinghelpers.go:275 (*compilerOptionsParser).UnknownOptionDiagnostic
+    // Go: tsoptions/parsinghelpers.go:298 (*compilerOptionsParser).UnknownOptionDiagnostic
     fn unknown_option_diagnostic(&self) -> &'static Message {
         extra_key_diagnostics("compilerOptions").expect("known key")
     }
 
-    // Go: tsoptions/parsinghelpers.go:279 (*compilerOptionsParser).UnknownDidYouMeanDiagnostic
+    // Go: tsoptions/parsinghelpers.go:302 (*compilerOptionsParser).UnknownDidYouMeanDiagnostic
     fn unknown_did_you_mean_diagnostic(&self) -> &'static Message {
         extra_key_did_you_mean_diagnostics("compilerOptions").expect("known key")
     }
 }
 
-// Go: tsoptions/parsinghelpers.go:283 typeAcquisitionParser
+// Go: tsoptions/parsinghelpers.go:306 typeAcquisitionParser
 // PORT: the embedded Go `*core.TypeAcquisition` is a mutable borrow.
 pub struct TypeAcquisitionParser<'a> {
     pub type_acquisition: &'a mut TypeAcquisition,
 }
 
 impl OptionParser for TypeAcquisitionParser<'_> {
-    // Go: tsoptions/parsinghelpers.go:287 (*typeAcquisitionParser).ParseOption
+    // Go: tsoptions/parsinghelpers.go:310 (*typeAcquisitionParser).ParseOption
     fn parse_option(&mut self, key: &str, value: CompilerOptionsValue) -> Vec<Diagnostic> {
         parse_type_acquisition(key, value, self.type_acquisition)
     }
 
-    // Go: tsoptions/parsinghelpers.go:291 (*typeAcquisitionParser).UnknownOptionDiagnostic
+    // Go: tsoptions/parsinghelpers.go:314 (*typeAcquisitionParser).UnknownOptionDiagnostic
     fn unknown_option_diagnostic(&self) -> &'static Message {
         extra_key_diagnostics("typeAcquisition").expect("known key")
     }
 
-    // Go: tsoptions/parsinghelpers.go:295 (*typeAcquisitionParser).UnknownDidYouMeanDiagnostic
+    // Go: tsoptions/parsinghelpers.go:318 (*typeAcquisitionParser).UnknownDidYouMeanDiagnostic
     fn unknown_did_you_mean_diagnostic(&self) -> &'static Message {
         extra_key_did_you_mean_diagnostics("typeAcquisition").expect("known key")
     }
 }
 
-// Go: tsoptions/parsinghelpers.go:299 buildOptionsParser
+// Go: tsoptions/parsinghelpers.go:322 buildOptionsParser
 // PORT: ported next to `core.BuildOptions` in execute/build/command_line.rs.
 
-// Go: tsoptions/parsinghelpers.go:315 ParseCompilerOptions
+// Go: tsoptions/parsinghelpers.go:338 ParseCompilerOptions
 // PORT: Go `allOptions` can be nil; every Rust caller has options, so the
 // nil check is dropped.
 pub fn parse_compiler_options(
@@ -607,7 +641,7 @@ fn as_new_line_kind(value: &CompilerOptionsValue) -> Option<NewLineKind> {
     }
 }
 
-// Go: tsoptions/parsinghelpers.go:325 floatOrInt32ToFlag
+// Go: tsoptions/parsinghelpers.go:348 floatOrInt32ToFlag
 // PORT: the Go type parameter `T ~int32` is the pair (`typed`, `from_i32`):
 // `typed` is Go `value.(T)` and `from_i32` is the Go conversion `T(...)`.
 // Go `value.(float64)` panics on another type; so does this port. A JSON
@@ -686,7 +720,7 @@ pub fn merge_compiler_options_with_paths<'a>(
     target_options
 }
 
-// Go: tsoptions/parsinghelpers.go:336 mergeCompilerOptions
+// Go: tsoptions/parsinghelpers.go:359 mergeCompilerOptions
 // mergeCompilerOptions merges the source compiler options into the target compiler options
 // with optional awareness of explicitly set null values in the raw JSON.
 // Fields in the source options will overwrite the corresponding fields in the target options,
@@ -880,7 +914,7 @@ pub fn merge_compiler_options<'a>(
     target_options
 }
 
-// Go: tsoptions/parsinghelpers.go:386 convertToOptionsWithAbsolutePaths
+// Go: tsoptions/parsinghelpers.go:409 convertToOptionsWithAbsolutePaths
 // PORT: Go changes the map through its pointer and returns it. The Rust
 // port takes the map by value and returns it.
 pub fn convert_to_options_with_absolute_paths(
@@ -900,7 +934,7 @@ pub fn convert_to_options_with_absolute_paths(
     Some(options_base)
 }
 
-// Go: tsoptions/parsinghelpers.go:401 ConvertOptionToAbsolutePath
+// Go: tsoptions/parsinghelpers.go:424 ConvertOptionToAbsolutePath
 pub fn convert_option_to_absolute_path(
     o: &str,
     v: &CompilerOptionsValue,
@@ -960,11 +994,11 @@ pub fn convert_option_to_absolute_path(
     (CompilerOptionsValue::Nil, false)
 }
 
-// Go: tsoptions/rawcompileroptions.go:67 RawCompilerOptions.Finalize (ts#64159)
+// Go: tsoptions/rawcompileroptions.go:67 RawCompilerOptions.Finalize (ts#64159, ts#64843)
 /// Compiler options from raw JSON values (the API's `compilerOptions`), with
 /// each file system path option rooted against `base_path` (a
 /// `${configDir}` prefix is replaced by it). Only exact option names and the
-/// internal `configFilePath`, `allowNonTsExtensions` and
+/// internal `configFilePath`, `pathsBasePath`, `allowNonTsExtensions` and
 /// `suppressOutputPathCheck` are read; other keys are dropped.
 /// PORT: Go `RawCompilerOptions` keeps the JSON values in an ordered map;
 /// here the caller converts them to `CompilerOptionsValue`. The option path
@@ -994,6 +1028,8 @@ pub fn finalize_raw_compiler_options(
                 .is_some_and(|element| element.is_file_path),
             Some(option) => option.is_file_path,
             None if key == "configFilePath" => true,
+            // ts#64843: a directory path (Go CommandLineOptionPathKindDirectory).
+            None if key == "pathsBasePath" => true,
             None if key == "allowNonTsExtensions" || key == "suppressOutputPathCheck" => false,
             None => continue,
         };
@@ -1027,7 +1063,7 @@ pub fn finalize_raw_compiler_options(
 mod tests {
     use super::*;
 
-    // Go: tsoptions/rawcompileroptions_test.go:14 TestRawCompilerOptionsFinalizePaths (ts#64159)
+    // Go: tsoptions/rawcompileroptions_test.go:14 TestRawCompilerOptionsFinalizePaths (ts#64159, ts#64843)
     // PORT: the JSON is given as `CompilerOptionsValue`s in the same order.
     #[test]
     fn finalize_raw_compiler_options_paths() {
@@ -1054,6 +1090,7 @@ mod tests {
             ("allowNonTsExtensions", CompilerOptionsValue::Bool(true)),
             ("suppressOutputPathCheck", CompilerOptionsValue::Bool(true)),
             ("configFilePath", string("")),
+            ("pathsBasePath", string("config")),
             ("NoImplicitAny", CompilerOptionsValue::Bool(true)),
         ] {
             raw.insert(key.to_string(), value);
@@ -1082,6 +1119,7 @@ mod tests {
         assert_eq!(options.allow_non_ts_extensions, Tristate::True);
         assert_eq!(options.suppress_output_path_check, Tristate::True);
         assert_eq!(options.config_file_path, "");
+        assert_eq!(options.paths_base_path, "/project/config");
         assert_eq!(options.no_implicit_any, Tristate::Unknown);
     }
 

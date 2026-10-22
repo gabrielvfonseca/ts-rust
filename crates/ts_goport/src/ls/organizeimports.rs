@@ -1265,7 +1265,7 @@ fn get_categorized_exports(export_group: &[Node]) -> CategorizedExports {
     }
 }
 
-// Go: ast/ast.go:273 (*Node).Text
+// Go: ast/ast.go:247 (*Node).Text
 /// Go `node.Text()` of an import attribute value or an export module
 /// specifier. The parser allows any expression there, and Go panics for a
 /// kind with no text, so the request answers Go's InternalError.

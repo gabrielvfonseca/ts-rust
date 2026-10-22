@@ -59,9 +59,11 @@ impl TransformReferenceResolver for EmitResolverReferenceResolver {
     }
 }
 
-// Go: transformers/chain.go:26 TransformOptions
+// Go: transformers/chain.go:27 TransformOptions
 // PORT: Go `GetEmitModuleFormatOfFile func(file ast.HasFileName)` takes the
-// source file node here.
+// source file node here. Go `CaseSensitivity` (ts#64581) is the
+// `use_case_sensitive_file_names` flag; its Go zero value
+// (`CaseInsensitive`) is `false`.
 #[derive(Clone)]
 pub struct TransformOptions {
     pub context: Rc<EmitContext>,
@@ -69,6 +71,9 @@ pub struct TransformOptions {
     pub resolver: Rc<dyn TransformReferenceResolver>,
     pub emit_resolver: Rc<dyn EmitResolver>,
     pub get_emit_module_format_of_file: Rc<dyn Fn(Node) -> ModuleKind>,
+    /// ts#64581: the output extension rewrites of the content mappers.
+    pub content_mapper_extension_rewrites: Vec<crate::frontend::tspath::ExtensionRewrite>,
+    pub use_case_sensitive_file_names: bool,
 }
 
 // Go: transformers/transformer.go:8 Transformer
@@ -85,7 +90,7 @@ pub trait Transformer {
 /// A constructed transformer (Go `*transformers.Transformer`).
 pub type TransformerBox = Box<dyn Transformer>;
 
-// Go: transformers/chain.go:34 TransformerFactory
+// Go: transformers/chain.go:37 TransformerFactory
 /// Go `TransformerFactory`. `None` is Go nil.
 pub type TransformerFactory = dyn Fn(&TransformOptions) -> Option<TransformerBox>;
 

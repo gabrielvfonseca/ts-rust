@@ -83,7 +83,7 @@ child_test! {
     }
 }
 
-// Go: session_createprogram_test.go:44 TestCreateSnapshotCreatesPrograms
+// Go: session_createprogram_test.go:45 TestCreateSnapshotCreatesPrograms
 child_test! {
     fn create_snapshot_creates_programs() {
         const FILE_A: &str = "/home/projects/p/a.ts";
@@ -110,12 +110,12 @@ child_test! {
         // ts#64159: nil (Go session_createprogram_test.go:76).
         assert_eq!(response.projects[0].config_file_name, None);
         assert_eq!(response.projects[1].config_file_name, None);
-        assert_eq!(response.projects[0].root_files, vec![FILE_A, FILE_B]);
-        assert_eq!(
-            response.projects[0].compiler_options.as_ref().unwrap().strict,
-            Tristate::True
-        );
-        assert_eq!(response.projects[1].root_files, vec![FILE_B]);
+        // ts#64681: the parsed command line has the root files and options
+        // (Go session_createprogram_test.go:78-80).
+        let parsed = |i: usize| response.projects[i].parsed_command_line.as_ref().unwrap();
+        assert_eq!(parsed(0).file_names, vec![FILE_A, FILE_B]);
+        assert_eq!(parsed(0).options.as_ref().unwrap().strict, Tristate::True);
+        assert_eq!(parsed(1).file_names, vec![FILE_B]);
 
         let snapshot = nil_error(session.get_snapshot_data(response.snapshot));
         assert_eq!(snapshot.snapshot.created_programs().len(), 2);
@@ -201,7 +201,7 @@ child_test! {
     }
 }
 
-// Go: session_createprogram_test.go:140 TestUpdateSnapshotReconfiguresSyntheticProgram
+// Go: session_createprogram_test.go:141 TestUpdateSnapshotReconfiguresSyntheticProgram
 child_test! {
     fn update_snapshot_reconfigures_synthetic_program() {
         let (project_session, _) = projecttestutil::setup(files(&[
@@ -237,14 +237,10 @@ child_test! {
             },
         ));
         assert_eq!(reconfigured.projects[0].id, program_id.as_id());
-        assert_eq!(
-            reconfigured.projects[0].root_files,
-            vec!["/home/projects/p/b.ts"]
-        );
-        assert_eq!(
-            reconfigured.projects[0].compiler_options.as_ref().unwrap().strict,
-            Tristate::True
-        );
+        // ts#64681 (Go session_createprogram_test.go:173-174).
+        let parsed = reconfigured.projects[0].parsed_command_line.as_ref().unwrap();
+        assert_eq!(parsed.file_names, vec!["/home/projects/p/b.ts"]);
+        assert_eq!(parsed.options.as_ref().unwrap().strict, Tristate::True);
         session.close();
         project_session.close();
     }
@@ -496,7 +492,9 @@ child_test! {
                 ..Default::default()
             },
         ));
-        let options = response.projects[0].compiler_options.as_ref().unwrap();
+        // ts#64681: the options are the parsed command line's.
+        let parsed = response.projects[0].parsed_command_line.as_ref().unwrap();
+        let options = parsed.options.as_ref().unwrap();
         assert_eq!(options.no_lib, Tristate::True);
         assert_eq!(options.out_dir, "/dist");
         assert_eq!(
@@ -520,7 +518,8 @@ child_test! {
 // `ParseCompilerOptions` does not read as an entry
 // (tsoptions/options_generated.go:154-161), so the plugins of a created
 // program have no names. The expected project text is from a Go N' probe
-// (`handleCreateSnapshot`, then `json.Marshal` of `Projects[0]`).
+// (`handleCreateSnapshot`, then `json.Marshal` of `Projects[0]`); at
+// 3e9236361fa9 it has no `rootFiles` and `compilerOptions` (ts#64681).
 child_test! {
     fn create_snapshot_drops_raw_plugin_names() {
         let (project_session, _) = projecttestutil::setup(files(&[(
@@ -540,7 +539,7 @@ child_test! {
         ));
         assert_eq!(
             json_marshal(&response.projects[0], &[]).expect("marshal"),
-            r#"{"id":"/dev/null/synthetic/1","currentDirectory":"/","dirty":false,"parsedCommandLine":{"fileNames":["/home/projects/p/a.ts"],"options":{"noLib":true,"plugins":[{"name":""},{"name":""}]},"errors":[]},"rootFiles":["/home/projects/p/a.ts"],"compilerOptions":{"noLib":true,"plugins":[{"name":""},{"name":""}]}}"#
+            r#"{"id":"/dev/null/synthetic/1","currentDirectory":"/","dirty":false,"parsedCommandLine":{"fileNames":["/home/projects/p/a.ts"],"options":{"noLib":true,"plugins":[{"name":""},{"name":""}]},"errors":[]}}"#
         );
         session.close();
         project_session.close();
@@ -564,10 +563,9 @@ child_test! {
         ));
         let program_id =
             created.operation.as_ref().unwrap().created_programs.as_ref().unwrap()[0].clone();
-        assert_eq!(
-            created.projects[0].compiler_options.as_ref().unwrap().out_dir,
-            ""
-        );
+        // ts#64681: the options are the parsed command line's.
+        let parsed = created.projects[0].parsed_command_line.as_ref().unwrap();
+        assert_eq!(parsed.options.as_ref().unwrap().out_dir, "");
 
         let reconfigured = nil_error(session.handle_update_snapshot(
             &bg(),
@@ -583,11 +581,79 @@ child_test! {
             },
         ));
         assert_eq!(reconfigured.projects[0].id, program_id.as_id());
-        let options = reconfigured.projects[0].compiler_options.as_ref().unwrap();
+        let parsed = reconfigured.projects[0].parsed_command_line.as_ref().unwrap();
+        let options = parsed.options.as_ref().unwrap();
         assert_eq!(options.strict, Tristate::True);
         assert_eq!(options.out_dir, "/out");
         assert_eq!(options.root_dir, "/src");
         session.close();
         project_session.close();
+    }
+}
+
+// Go: session_createprogram_test.go:320 TestCreateSnapshotResolvesPathsRelativeToParsedConfigDirectory (ts#64843)
+child_test! {
+    fn create_snapshot_resolves_paths_relative_to_parsed_config_directory() {
+        const MAIN_FILE: &str = "/project/main.ts";
+        const LIB_FILE: &str = "/project/types/lib.d.ts";
+        let (mut init, _) = projecttestutil::get_session_init_options(
+            files(&[
+                (MAIN_FILE, r#"import { x } from "lib"; export const y: number = x;"#),
+                (LIB_FILE, "export declare const x: number;"),
+            ]),
+            None,
+            TypingsInstallerOptions::default(),
+        );
+        // Go: init.Options.CurrentDirectory = "/somewhere-else"
+        Rc::get_mut(&mut init.options)
+            .expect("the init options are not shared yet")
+            .current_directory = "/somewhere-else".to_string();
+        let session = api::new_standalone_session(&init, None);
+
+        let mut parse_params = api::ParseJsonConfigFileContentParams::default();
+        json_unmarshal(
+            br#"{
+		"json": {
+			"compilerOptions": {
+				"module": "esnext",
+				"moduleResolution": "bundler",
+				"noLib": true,
+				"types": [],
+				"paths": { "lib": ["./types/lib.d.ts"] }
+			}
+		},
+		"configDirectory": "/project"
+	}"#,
+            &mut parse_params,
+            &[],
+        )
+        .unwrap_or_else(|err| panic!("unmarshal: {err:?}"));
+        let parsed = nil_error(session.handle_parse_json_config_file_content(&bg(), &parse_params))
+            .expect("a config file response");
+
+        // Round-trip the parsed options through JSON as an API client would.
+        let encoded_options = json_marshal(
+            &parsed
+                .options
+                .as_ref()
+                .map(ts_goport::options_json::CompilerOptionsJSON),
+            &[],
+        )
+        .unwrap_or_else(|err| panic!("marshal: {err:?}"));
+        let create_params = CreateSnapshotParams {
+            snapshot_request_changes_params: unmarshal_changes(&format!(
+                r#"{{"createPrograms":[{{"rootFiles":["{MAIN_FILE}"],"compilerOptions":{encoded_options}}}]}}"#
+            )),
+            ..Default::default()
+        };
+
+        let response = nil_error(session.handle_create_snapshot(&bg(), &create_params));
+        let snapshot = nil_error(session.get_snapshot_data(response.snapshot));
+        let program = nil_error(snapshot.get_program(&response.projects[0].id));
+        assert!(
+            program.get_source_file(LIB_FILE).is_some(),
+            "expected 'lib' to resolve via paths relative to /project"
+        );
+        session.close();
     }
 }
