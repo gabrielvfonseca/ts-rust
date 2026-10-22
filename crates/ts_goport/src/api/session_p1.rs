@@ -1643,7 +1643,7 @@ impl Session {
 }
 
 impl ipc::Handler for Session {
-    // Go: api/session.go:694 HandleRequest
+    // Go: api/session.go:868 HandleRequest
     // HandleRequest implements Handler.
     fn handle_request(
         &self,
@@ -2012,9 +2012,6 @@ impl ipc::Handler for Session {
             m if m == Method::PRINT_NODE.0 => self
                 .handle_print_node(ctx, assert_params(&parsed))
                 .map(to_any),
-            m if m == Method::FORMAT_NODE_FOR_INSERTION.0 => self
-                .handle_format_node_for_insertion(ctx, assert_params(&parsed))
-                .map(to_any),
             // tsgo#4699
             m if m == Method::EMIT.0 => self.handle_emit(ctx, assert_params(&parsed)).map(to_any),
             m if m == Method::EMIT_TO_STRING.0 => self
@@ -2228,6 +2225,10 @@ impl ipc::Handler for Session {
                 .map(to_any),
             m if m == Method::GET_COMPLETIONS_AT_POSITION.0 => self
                 .handle_get_completions_at_position(ctx, assert_params(&parsed))
+                .map(to_any),
+            // ts#64681
+            m if m == Method::FORMAT_NODE_FOR_INSERTION.0 => self
+                .handle_format_node_for_insertion(ctx, assert_params(&parsed))
                 .map(to_any),
             _ => Err(errors::errorf(format!("unknown method: {method}"), vec![])),
         }
