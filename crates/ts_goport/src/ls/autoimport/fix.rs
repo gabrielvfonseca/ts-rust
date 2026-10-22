@@ -301,7 +301,7 @@ fn file_edits(tracker: &mut change::Tracker, file: Node) -> (Vec<lsproto::TextEd
     (edits, unmappable.is_empty())
 }
 
-// Go: ls/autoimport/fix.go:138 addImportType
+// Go: ls/autoimport/fix.go:146 addImportType
 pub fn add_import_type(
     f: &Fix,
     file: Node,
@@ -313,13 +313,16 @@ pub fn add_import_type(
         crate::core::go_panic("UsagePosition must be set for JSDoc type import fix".to_string());
     };
     let quote_preference = lsutil::get_quote_preference(file, preferences);
-    let mut quote_char = "\"";
+    let mut quote_char = QuoteChar::DOUBLE_QUOTE;
     if quote_preference == lsutil::QuotePreference::SINGLE {
-        quote_char = "'";
+        quote_char = QuoteChar::SINGLE_QUOTE;
     }
+    // Go `fmt.Sprintf("import(%c%s%c).", ...)`: `%c` prints the quote rune.
     let import_type_prefix = format!(
         "import({}{}{}).",
-        quote_char, f.module_specifier, quote_char
+        quote_char.0,
+        escape_string(&f.module_specifier, quote_char),
+        quote_char.0
     );
     tracker.insert_text(file, usage_position, &import_type_prefix);
     crate::diagnostics_loc::message_localize(

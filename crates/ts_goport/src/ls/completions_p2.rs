@@ -461,7 +461,7 @@ pub fn completion_name_for_literal(
     }
 }
 
-// Go: ls/completions.go:2142 getInsertTextAndReplacementSpanForImportCompletion
+// Go: ls/completions.go:2143 getInsertTextAndReplacementSpanForImportCompletion
 pub fn get_insert_text_and_replacement_span_for_import_completion(
     fix: &autoimport::Fix,
     import_kind: lsproto::ImportKind,
@@ -471,8 +471,11 @@ pub fn get_insert_text_and_replacement_span_for_import_completion(
     preferences: &lsutil::UserPreferences,
     is_snippet: bool,
 ) -> (String, Option<lsproto::Range>) {
-    let quoted_module_specifier =
-        escape_snippet_text(&quote(file, preferences, &fix.module_specifier));
+    let mut quoted_module_specifier = quote(file, preferences, &fix.module_specifier);
+    if is_snippet {
+        quoted_module_specifier =
+            escape_snippet_text(&quoted_module_specifier.replace('\\', "\\\\"));
+    }
     let tab_stop = if is_snippet { "$1" } else { "" };
     let suffix = if use_semicolons { ";" } else { "" };
     let top_level_type_only_text = if import_statement_completion.is_top_level_type_only {
