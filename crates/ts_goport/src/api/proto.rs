@@ -538,6 +538,8 @@ impl Method {
     // Language service methods
     pub const GET_COMPLETIONS_AT_POSITION: Method =
         Method(Cow::Borrowed("getCompletionsAtPosition"));
+    // ts#64681
+    pub const FORMAT_NODE_FOR_INSERTION: Method = Method(Cow::Borrowed("formatNodeForInsertion"));
 
     // Diagnostic methods
     pub const GET_SYNTACTIC_DIAGNOSTICS: Method = Method(Cow::Borrowed("getSyntacticDiagnostics"));
@@ -554,7 +556,6 @@ impl Method {
 
     // Printer methods
     pub const PRINT_NODE: Method = Method(Cow::Borrowed("printNode"));
-    pub const FORMAT_NODE_FOR_INSERTION: Method = Method(Cow::Borrowed("formatNodeForInsertion"));
     // tsgo#4699
     pub const EMIT: Method = Method(Cow::Borrowed("emit"));
     pub const EMIT_TO_STRING: Method = Method(Cow::Borrowed("emitToString"));
@@ -1848,7 +1849,7 @@ proto_json!(marshal OpenedFileOperationResult {
 /// Go `func([]byte) (any, error)` in `unmarshalers`.
 pub type Unmarshaler = fn(&[u8]) -> Result<Option<Box<dyn AnyValue>>, GoError>;
 
-// Go: proto.go:569 unmarshalers
+// Go: proto.go:594 unmarshalers
 pub static UNMARSHALERS: LazyLock<FxHashMap<Method, Unmarshaler>> = LazyLock::new(|| {
     let mut m: FxHashMap<Method, Unmarshaler> = FxHashMap::default();
     // ts#63937
@@ -2439,11 +2440,11 @@ pub static UNMARSHALERS: LazyLock<FxHashMap<Method, Unmarshaler>> = LazyLock::ne
         Method::GET_COMPLETIONS_AT_POSITION,
         unmarshaller_for::<GetCompletionsAtPositionParams>,
     );
-    m.insert(Method::PRINT_NODE, unmarshaller_for::<PrintNodeParams>);
     m.insert(
         Method::FORMAT_NODE_FOR_INSERTION,
         unmarshaller_for::<FormatNodeForInsertionParams>,
     );
+    m.insert(Method::PRINT_NODE, unmarshaller_for::<PrintNodeParams>);
     // tsgo#4699
     m.insert(Method::EMIT, unmarshaller_for::<EmitParams>);
     m.insert(Method::EMIT_TO_STRING, unmarshaller_for::<EmitParams>);
@@ -3281,6 +3282,8 @@ proto_json!(both GetDefaultProjectForFileParams {
 });
 
 // Go: proto.go:1032 ProjectResponse
+// ts#64681: no deprecated `rootFiles` and `compilerOptions` (use
+// `parsedCommandLine.fileNames` and `parsedCommandLine.options`).
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ProjectResponse {
     pub id: project::ID,
@@ -3292,10 +3295,6 @@ pub struct ProjectResponse {
     // ts#64204
     pub dirty: bool,
     pub parsed_command_line: Option<ConfigFileResponse>,
-    // Deprecated: Use parsedCommandLine.fileNames.
-    pub root_files: Vec<String>,
-    // Deprecated: Use parsedCommandLine.options.
-    pub compiler_options: Option<CompilerOptions>,
 }
 
 impl MarshalerTo for ProjectResponse {
@@ -3312,23 +3311,16 @@ impl MarshalerTo for ProjectResponse {
             "parsedCommandLine",
             &self.parsed_command_line,
         )?;
-        marshal_field(enc, &mut first, "rootFiles", &self.root_files)?;
-        marshal_field(
-            enc,
-            &mut first,
-            "compilerOptions",
-            &self.compiler_options.as_ref().map(CompilerOptionsJSON),
-        )?;
         write_object_end(enc);
         Ok(())
     }
 }
 
-// Go: proto.go:983 NewConfigFileResponse
+// Go: proto.go:1040 NewConfigFileResponse
 // PORT: Go shares the `*core.CompilerOptions`, `*core.TypeAcquisition` and
-// project reference pointers; the response keeps copies (see
-// `new_project_response`). Go `Raw.(*collections.OrderedMap[string, any])`
-// is `CompilerOptionsValue::Map`.
+// project reference pointers; the response keeps copies (responses cross
+// into `Box<dyn AnyValue>`, which is `Send`). Go
+// `Raw.(*collections.OrderedMap[string, any])` is `CompilerOptionsValue::Map`.
 pub fn new_config_file_response(
     parsed_command_line: Option<&tsoptions::ParsedCommandLine>,
 ) -> Option<ConfigFileResponse> {
@@ -3362,9 +3354,7 @@ pub fn new_config_file_response(
 // Go: proto.go:1011 toProtocolJSONValue (at 673a5f17d713; removed by
 // ts#64457 with the watch options: Go N' passes `Raw` through).
 
-// Go: proto.go:1036 NewProjectResponse
-// PORT: Go shares the `*core.CompilerOptions` pointer; the response keeps
-// a copy (responses cross into `Box<dyn AnyValue>`, which is `Send`).
+// Go: proto.go:1068 NewProjectResponse
 pub fn new_project_response(p: &project::Project) -> ProjectResponse {
     let Some(command_line) = p.command_line.as_ref() else {
         panic!("NewProjectResponse called with unloaded project");
@@ -3383,8 +3373,6 @@ pub fn new_project_response(p: &project::Project) -> ProjectResponse {
         // PORT: Go `p.IsDirty()` returns this field.
         dirty: p.dirty,
         parsed_command_line: new_config_file_response(Some(command_line)),
-        root_files: command_line.file_names().to_vec(),
-        compiler_options: Some((**command_line.compiler_options()).clone()),
     }
 }
 
@@ -4322,7 +4310,7 @@ proto_json!(marshal SignatureUsageResponse {
 });
 
 // GetCompletionsAtPositionParams are the parameters for the getCompletionsAtPosition method.
-// Go: proto.go:1540 GetCompletionsAtPositionParams
+// Go: proto.go:1577 GetCompletionsAtPositionParams
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct GetCompletionsAtPositionParams {
     pub snapshot: SnapshotID,
@@ -4340,6 +4328,25 @@ proto_json!(both GetCompletionsAtPositionParams {
     position: "position" plain,
     trigger_character: "triggerCharacter" omitempty,
     include_symbol: "includeSymbol" omitempty,
+});
+
+// FormatNodeForInsertionParams are the parameters for the formatNodeForInsertion method.
+// Go: proto.go:1587 FormatNodeForInsertionParams (ts#64681)
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct FormatNodeForInsertionParams {
+    pub snapshot: SnapshotID,
+    pub project: project::ID,
+    pub file: DocumentIdentifier, // target file where the node will be inserted
+    pub position: u32, // UTF-16 code-unit offset of the insertion position in the target file
+    pub data: String,  // base64-encoded binary AST data for the synthesized node
+}
+
+proto_json!(both FormatNodeForInsertionParams {
+    snapshot: "snapshot" plain,
+    project: "project" plain,
+    file: "file" plain,
+    position: "position" plain,
+    data: "data" plain,
 });
 
 // CompletionEntryLabelDetailsResponse holds additional label display text for a completion entry.
@@ -4823,25 +4830,6 @@ proto_json!(marshal EmitOutputResponse {
     emit_skipped: "emitSkipped" plain,
     diagnostics: "diagnostics" plain,
     output_files: "outputFiles" plain,
-});
-
-// FormatNodeForInsertionParams are the parameters for the formatNodeForInsertion method.
-// Go: proto.go:1771 FormatNodeForInsertionParams
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct FormatNodeForInsertionParams {
-    pub snapshot: SnapshotID,
-    pub project: project::ID,
-    pub file: DocumentIdentifier, // target file where the node will be inserted
-    pub position: u32, // UTF-16 code-unit offset of the insertion position in the target file
-    pub data: String,  // base64-encoded binary AST data for the synthesized node
-}
-
-proto_json!(both FormatNodeForInsertionParams {
-    snapshot: "snapshot" plain,
-    project: "project" plain,
-    file: "file" plain,
-    position: "position" plain,
-    data: "data" plain,
 });
 
 // CheckerTypeParams are parameters for checker methods that operate on a type.
