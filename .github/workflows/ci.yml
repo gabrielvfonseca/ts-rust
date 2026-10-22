@@ -3,7 +3,7 @@
 # the revision pipeline (scripts/goport/candidate.sh). This workflow is a fast check that the tree
 # builds and its own tests pass on Linux (x64 and arm64), macOS and Windows (x64, MSVC), that
 # the tsc compiles for Intel macOS, and that the wasm module (npm/wasm) passes its package tests
-# and the wasm-only Rust tests of crates/ts_wasm.
+# and the wasm-only Rust tests of crates/ts_wasm and goport_util.
 name: CI
 
 on:
@@ -185,7 +185,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal -t wasm32-wasip1
+      - run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal -c clippy -t wasm32-wasip1
       - uses: Swatinem/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
@@ -202,8 +202,24 @@ jobs:
       - name: Package tests
         working-directory: npm/wasm
         run: npm test
-      # The wasm-only Rust tests of crates/ts_wasm (release_checker), in Node.
+      # The wasm-only Rust tests, in Node: release_checker in crates/ts_wasm, and the WASI case
+      # probe of goport_util's osvfs.rs (#89). The probe keeps its first answer, so its second test
+      # runs alone (--ignored).
       - name: wasm unit tests
-        run: cargo test --locked -p ts_wasm --target wasm32-wasip1
+        run: |
+          cargo test --locked -p ts_wasm --target wasm32-wasip1
+          cargo test --locked -p goport_util --lib --target wasm32-wasip1 -- osvfs::wasi_tests --nocapture
+          cargo test --locked -p goport_util --lib --target wasm32-wasip1 -- osvfs::wasi_tests --ignored --nocapture
         env:
           CARGO_TARGET_WASM32_WASIP1_RUNNER: node ${{ github.workspace }}/scripts/wasm/test-runner.mjs
+      # clippy for wasm32, where the wasm-gated code lives (the lint job builds the host target only):
+      # ts_wasm with its wasm-only tests and allocator, and the crates that it builds, without their
+      # default features, as ts_wasm builds them. ts_goport's tests/ are native only (they run tsgo),
+      # so ts_goport takes its lib, bins and examples, then its unit tests (--profile test). The
+      # goport crates allow clippy::all and pedantic at their roots, so for them this step checks
+      # rustc warnings and the workspace lints; full clippy applies to ts_wasm.
+      - name: clippy wasm32
+        run: |
+          cargo clippy --locked --target wasm32-wasip1 --no-default-features -p ts_wasm -p goport_core -p goport_util -p goport_lsproto --all-targets -- -D warnings
+          cargo clippy --locked --target wasm32-wasip1 --no-default-features -p ts_goport --lib --bins --examples -- -D warnings
+          cargo clippy --locked --target wasm32-wasip1 --no-default-features -p ts_goport --lib --profile test -- -D warnings

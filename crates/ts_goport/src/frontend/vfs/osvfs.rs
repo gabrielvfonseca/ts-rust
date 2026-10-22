@@ -1308,6 +1308,45 @@ fn win_cut_path(path: &[u8]) -> Option<(&[u8], &[u8])> {
     Some((&path[..i], &path[i + 1..]))
 }
 
+// PORT: not in Go (Go returns true for wasm). The WASI probe of
+// `is_file_system_case_sensitive` (#89) in a wasm32-wasip1 test binary.
+// scripts/wasm/test-runner.mjs runs it in Node with a new empty temp dir as
+// the root `/` (CI job `wasm`). The probe keeps its first answer, so each
+// test needs its own process: the second test is ignored, and CI runs it
+// alone with `--ignored`.
+#[cfg(all(test, target_os = "wasi"))]
+mod wasi_tests {
+    use super::*;
+
+    /// The probe stats the current directory under a swapped case
+    /// (`/CASE-PROBE`). Its answer is the host's: here a file in the
+    /// directory and its name in the other case. Linux CI is case-sensitive.
+    #[test]
+    fn case_probe_answers_for_the_host_file_system() {
+        std::fs::create_dir_all("/case-probe").unwrap();
+        std::fs::write("/case-probe/a.txt", "a").unwrap();
+        let host = std::fs::metadata("/case-probe/A.TXT").is_err();
+        std::env::set_current_dir("/case-probe").unwrap();
+        assert_eq!(os_current_dir().unwrap(), "/case-probe");
+        assert_eq!(is_file_system_case_sensitive(), host);
+        assert_eq!(osvfs_fs().use_case_sensitive_file_names(), host);
+    }
+
+    /// The current directory under a swapped case exists, as on a
+    /// case-insensitive file system: here a twin directory `/CASE-PROBE`.
+    /// Then the file system is case-insensitive. Without the probe, wasm
+    /// gives true.
+    #[test]
+    #[ignore = "run alone (--ignored): the probe keeps its first answer"]
+    fn case_probe_finds_the_current_directory_under_a_swapped_case() {
+        std::fs::create_dir_all("/case-probe").unwrap();
+        std::fs::create_dir_all("/CASE-PROBE").unwrap();
+        std::env::set_current_dir("/case-probe").unwrap();
+        assert!(!is_file_system_case_sensitive());
+        assert!(!osvfs_fs().use_case_sensitive_file_names());
+    }
+}
+
 #[cfg(all(test, windows))]
 mod windows_tests {
     use super::{is_reserved_name, windows_localize};
