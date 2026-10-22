@@ -24,7 +24,7 @@ use crate::gostd::{Context, GoError, unicode};
 use crate::ls::lsutil;
 use crate::lsp::lsproto;
 
-// Go: ls/completions.go:1801 keywordCompletionData
+// Go: ls/completions.go:1802 keywordCompletionData
 pub fn keyword_completion_data(
     keyword_filters: KeywordCompletionFilters,
     filter_out_ts_only_keywords: bool,
@@ -36,7 +36,7 @@ pub fn keyword_completion_data(
     }
 }
 
-// Go: ls/completions.go:1812 getDefaultCommitCharacters
+// Go: ls/completions.go:1813 getDefaultCommitCharacters
 pub fn get_default_commit_characters(is_new_identifier_location: bool) -> Vec<String> {
     if is_new_identifier_location {
         return Vec::new();
@@ -48,7 +48,7 @@ pub fn get_default_commit_characters(is_new_identifier_location: bool) -> Vec<St
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:1819 completionInfoFromData
+    // Go: ls/completions.go:1820 completionInfoFromData
     // PORT: Go mutates `data.symbols` through the pointer, so `data` is
     // `&mut`.
     pub fn completion_info_from_data(
@@ -221,7 +221,7 @@ impl LanguageService {
         }))
     }
 
-    // Go: ls/completions.go:1954 getCompletionEntriesFromSymbols
+    // Go: ls/completions.go:1955 getCompletionEntriesFromSymbols
     pub fn get_completion_entries_from_symbols(
         &self,
         ctx: &Context,
@@ -441,7 +441,7 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:2125 completionNameForLiteral
+// Go: ls/completions.go:2126 completionNameForLiteral
 pub fn completion_name_for_literal(
     file: Node,
     preferences: &lsutil::UserPreferences,
@@ -522,7 +522,7 @@ pub fn get_insert_text_and_replacement_span_for_import_completion(
     }
 }
 
-// Go: ls/completions.go:2164 createCompletionItemForLiteral
+// Go: ls/completions.go:2168 createCompletionItemForLiteral
 pub fn create_completion_item_for_literal(
     file: Node,
     preferences: &lsutil::UserPreferences,
@@ -538,7 +538,7 @@ pub fn create_completion_item_for_literal(
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:2177 createCompletionItem
+    // Go: ls/completions.go:2181 createCompletionItem
     // PORT: Go returns a nil `*lsproto.CompletionItem` when there is no dot
     // to convert; that is `None`. Go reassigns the `sortText` and `name`
     // parameters, so they are copied into locals.
@@ -936,7 +936,7 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:2466 memberCompletionEntry
+// Go: ls/completions.go:2470 memberCompletionEntry
 #[derive(Clone, Debug, Default)]
 pub struct MemberCompletionEntry {
     pub insert_text: String,
@@ -946,7 +946,7 @@ pub struct MemberCompletionEntry {
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:2473 getEntryForObjectLiteralMethodCompletion
+    // Go: ls/completions.go:2477 getEntryForObjectLiteralMethodCompletion
     // PORT: Go returns `*symbolOriginInfoObjectLiteralMethod`; nil is `None`.
     pub fn get_entry_for_object_literal_method_completion(
         &self,
@@ -1003,7 +1003,7 @@ impl LanguageService {
         })
     }
 
-    // Go: ls/completions.go:2498 createObjectLiteralMethod
+    // Go: ls/completions.go:2502 createObjectLiteralMethod
     pub fn create_object_literal_method(
         &self,
         snippet_printer: &SnippetPrinter,
@@ -1121,7 +1121,7 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:2572 isObjectLiteralMethodCompletionCandidateDeclaration
+// Go: ls/completions.go:2576 isObjectLiteralMethodCompletionCandidateDeclaration
 pub fn is_object_literal_method_completion_candidate_declaration(declaration: Node) -> bool {
     if declaration.is_nil() {
         return false;
@@ -1135,7 +1135,7 @@ pub fn is_object_literal_method_completion_candidate_declaration(declaration: No
     )
 }
 
-// Go: ls/completions.go:2584 objectLiteralMethodSymbol
+// Go: ls/completions.go:2588 objectLiteralMethodSymbol
 // PORT: Go `origin *symbolOriginInfo` is never nil here; it is held by value.
 #[derive(Clone, Debug, Default)]
 pub struct ObjectLiteralMethodSymbol {
@@ -1144,7 +1144,7 @@ pub struct ObjectLiteralMethodSymbol {
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:2589 collectObjectLiteralMethodSymbols
+    // Go: ls/completions.go:2593 collectObjectLiteralMethodSymbols
     pub fn collect_object_literal_method_symbols(
         &self,
         ctx: &Context,
@@ -1197,7 +1197,7 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:2619 isObjectLiteralMethodSymbol
+// Go: ls/completions.go:2623 isObjectLiteralMethodSymbol
 // PORT: Go reads `symbol.Flags` through the pointer; `symbols` is the arena
 // that holds `symbol`.
 pub fn is_object_literal_method_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
@@ -1208,7 +1208,7 @@ pub fn is_object_literal_method_symbol(symbols: &SymbolArena, symbol: SymbolId) 
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:2623 printObjectLiteralMethodLabelDetail
+    // Go: ls/completions.go:2627 printObjectLiteralMethodLabelDetail
     pub fn print_object_literal_method_label_detail(
         &self,
         method: Node,
@@ -1239,7 +1239,7 @@ impl LanguageService {
         signature_printer.emit(method_signature, file)
     }
 
-    // Go: ls/completions.go:2642 getEntryForMemberCompletion
+    // Go: ls/completions.go:2646 getEntryForMemberCompletion
     // PORT: Go returns `(*memberCompletionEntry, error)`; nil is `None`. The
     // missing member fixer borrows the change tracker, the checker and the
     // import adder; it is last used for `createMemberFromSymbol`, so the Go
@@ -1431,7 +1431,7 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:2759 presentMemberModifiers
+// Go: ls/completions.go:2763 presentMemberModifiers
 #[derive(Clone, Debug, Default)]
 pub struct PresentMemberModifiers {
     pub modifiers: ModifierFlags,
@@ -1440,7 +1440,7 @@ pub struct PresentMemberModifiers {
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:2765 getPresentMemberModifiers
+    // Go: ls/completions.go:2769 getPresentMemberModifiers
     pub fn get_present_member_modifiers(
         &self,
         context_token: Node,
@@ -1514,7 +1514,7 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:2818 modifierLikeKind
+// Go: ls/completions.go:2822 modifierLikeKind
 pub fn modifier_like_kind(node: Node) -> SyntaxKind {
     if node.is_nil() {
         return SyntaxKind::Unknown;
@@ -1531,7 +1531,7 @@ pub fn modifier_like_kind(node: Node) -> SyntaxKind {
     SyntaxKind::Unknown
 }
 
-// Go: ls/completions.go:2834 createModifierList
+// Go: ls/completions.go:2838 createModifierList
 // PORT: Go returns a nil `*ast.ModifierList` when there are no nodes; that is
 // `ModifierList::NIL`.
 pub fn create_modifier_list(
@@ -1552,7 +1552,7 @@ pub fn create_modifier_list(
     factory.new_modifier_list(&nodes)
 }
 
-// Go: ls/completions.go:2846 createSnippetTabStopBody
+// Go: ls/completions.go:2850 createSnippetTabStopBody
 pub fn create_snippet_tab_stop_body(factory: &NodeFactory, emit_context: &EmitContext) -> Node {
     let empty_statement = factory.new_empty_statement();
     emit_context.set_snippet_element(
@@ -1569,7 +1569,7 @@ pub fn create_snippet_tab_stop_body(factory: &NodeFactory, emit_context: &EmitCo
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:2855 createImportAdder
+    // Go: ls/completions.go:2859 createImportAdder
     // PORT: Go returns a nil-able `autoimport.ImportAdder` interface; here an
     // `Option<Box<dyn ImportAdder>>`. Go passes the checker; the Rust adder
     // does not store it (as in `getExhaustiveCaseSnippets`).
@@ -1598,7 +1598,7 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:2869 isRecommendedCompletionMatch
+// Go: ls/completions.go:2873 isRecommendedCompletionMatch
 pub fn is_recommended_completion_match(
     local_symbol: SymbolId,
     recommended_completion: SymbolId,
@@ -1612,7 +1612,7 @@ pub fn is_recommended_completion_match(
             && type_checker.get_export_symbol_of_symbol(local_symbol) == recommended_completion
 }
 
-// Go: ls/completions.go:2875 wordSeparators
+// Go: ls/completions.go:2879 wordSeparators
 // Ported from vscode.
 // PORT: Go `collections.Set[rune]`; a rune is an `i32`.
 pub static WORD_SEPARATORS: [i32; 29] = [
@@ -1647,7 +1647,7 @@ pub static WORD_SEPARATORS: [i32; 29] = [
     '?' as i32,
 ];
 
-// Go: ls/completions.go:2882 getWordLengthAndStart
+// Go: ls/completions.go:2886 getWordLengthAndStart
 // Finds the length and first rune of the word that ends at the given position.
 // e.g. for "abc def.ghi|jkl", the word length is 3 and the word start is 'g'.
 // PORT: Go cuts `text := sourceFile.Text()[:position]`. The decoders read the
@@ -1679,7 +1679,7 @@ pub fn get_word_length_and_start(source_file: Node, position: i32) -> (i32, i32)
     (total_size, first_rune)
 }
 
-// Go: ls/completions.go:2905 trimElementAccess
+// Go: ls/completions.go:2909 trimElementAccess
 // `["ab c"]` -> `ab c`
 // `['ab c']` -> `ab c`
 // `[123]` -> `123`
@@ -1697,7 +1697,7 @@ pub fn trim_element_access(text: &str) -> String {
     text.to_string()
 }
 
-// Go: ls/completions.go:2918 getFilterText
+// Go: ls/completions.go:2922 getFilterText
 // Ported from vscode ts extension: `getFilterText`.
 pub fn get_filter_text(
     file: Node,
@@ -1770,7 +1770,7 @@ pub fn get_filter_text(
     insert_text.to_string()
 }
 
-// Go: ls/completions.go:2992 getDotAccessor
+// Go: ls/completions.go:2996 getDotAccessor
 // Ported from vscode's `provideCompletionItems`.
 pub fn get_dot_accessor(file: Node, position: i32) -> String {
     let full_text = source_file_text(file);
@@ -1787,7 +1787,7 @@ pub fn get_dot_accessor(file: Node, position: i32) -> String {
     String::new()
 }
 
-// Go: ls/completions.go:3006 strPtrIsEmpty
+// Go: ls/completions.go:3010 strPtrIsEmpty
 pub fn str_ptr_is_empty(ptr: Option<String>) -> bool {
     match ptr {
         None => true,
@@ -1795,7 +1795,7 @@ pub fn str_ptr_is_empty(ptr: Option<String>) -> bool {
     }
 }
 
-// Go: ls/completions.go:3013 strPtrTo
+// Go: ls/completions.go:3017 strPtrTo
 pub fn str_ptr_to(v: &str) -> Option<String> {
     if v.is_empty() {
         return None;
@@ -1803,7 +1803,7 @@ pub fn str_ptr_to(v: &str) -> Option<String> {
     Some(v.to_string())
 }
 
-// Go: ls/completions.go:3020 boolToPtr
+// Go: ls/completions.go:3024 boolToPtr
 pub fn bool_to_ptr(v: bool) -> Option<bool> {
     if v {
         return Some(true);
@@ -1811,12 +1811,12 @@ pub fn bool_to_ptr(v: bool) -> Option<bool> {
     None
 }
 
-// Go: ls/completions.go:3027 getLineOfPosition
+// Go: ls/completions.go:3031 getLineOfPosition
 pub fn get_line_of_position(file: Node, pos: i32) -> i32 {
     get_ecma_line_of_position(file, pos)
 }
 
-// Go: ls/completions.go:3032 getLineEndOfPosition
+// Go: ls/completions.go:3036 getLineEndOfPosition
 pub fn get_line_end_of_position(file: Node, pos: i32) -> i32 {
     let line = get_line_of_position(file, pos);
     let line_starts = &*get_ecma_line_starts(file);
@@ -1837,7 +1837,7 @@ pub fn get_line_end_of_position(file: Node, pos: i32) -> i32 {
     last_char_pos
 }
 
-// Go: ls/completions.go:3048 isClassLikeMemberCompletion
+// Go: ls/completions.go:3052 isClassLikeMemberCompletion
 // PORT: Go reads `symbol.Flags` through the pointer; `symbols` is the arena
 // that holds `symbol`.
 pub fn is_class_like_member_completion(
@@ -1863,7 +1863,7 @@ pub fn is_class_like_member_completion(
                 && is_class_like(location.parent())))
 }
 
-// Go: ls/completions.go:3059 symbolAppearsToBeTypeOnly
+// Go: ls/completions.go:3063 symbolAppearsToBeTypeOnly
 pub fn symbol_appears_to_be_type_only(symbol: SymbolId, type_checker: &mut Checker) -> bool {
     let target = type_checker.skip_alias(symbol);
     let flags = type_checker
@@ -1876,7 +1876,7 @@ pub fn symbol_appears_to_be_type_only(symbol: SymbolId, type_checker: &mut Check
             || flags.intersects(SymbolFlags::TYPE))
 }
 
-// Go: ls/completions.go:3065 shouldIncludeSymbol
+// Go: ls/completions.go:3069 shouldIncludeSymbol
 pub fn should_include_symbol(
     symbol: SymbolId,
     data: &CompletionDataData,
@@ -1996,7 +1996,7 @@ pub fn should_include_symbol(
     all_flags.intersects(SymbolFlags::VALUE)
 }
 
-// Go: ls/completions.go:3157 getCompletionEntryDisplayNameForSymbol
+// Go: ls/completions.go:3161 getCompletionEntryDisplayNameForSymbol
 // PORT: `checker.IsKnownSymbol(symbol)` is `isLateBoundName(symbol.Name)`;
 // it reads the arena directly (the port has it as a `Checker` method).
 pub fn get_completion_entry_display_name_for_symbol(
@@ -2069,17 +2069,17 @@ pub fn get_completion_entry_display_name_for_symbol(
 }
 
 // !!! refactor symbolOriginInfo so that we can tell the difference between flags and the kind of data it has
-// Go: ls/completions.go:3219 originIsIgnore
+// Go: ls/completions.go:3223 originIsIgnore
 pub fn origin_is_ignore(origin: Option<&SymbolOriginInfo>) -> bool {
     origin.is_some_and(|origin| origin.kind.intersects(SymbolOriginInfoKind::IGNORE))
 }
 
-// Go: ls/completions.go:3223 originIncludesSymbolName
+// Go: ls/completions.go:3227 originIncludesSymbolName
 pub fn origin_includes_symbol_name(origin: Option<&SymbolOriginInfo>) -> bool {
     origin_is_computed_property_name(origin)
 }
 
-// Go: ls/completions.go:3227 originIsComputedPropertyName
+// Go: ls/completions.go:3231 originIsComputedPropertyName
 pub fn origin_is_computed_property_name(origin: Option<&SymbolOriginInfo>) -> bool {
     origin.is_some_and(|origin| {
         origin
@@ -2088,7 +2088,7 @@ pub fn origin_is_computed_property_name(origin: Option<&SymbolOriginInfo>) -> bo
     })
 }
 
-// Go: ls/completions.go:3231 originIsObjectLiteralMethod
+// Go: ls/completions.go:3235 originIsObjectLiteralMethod
 pub fn origin_is_object_literal_method(origin: Option<&SymbolOriginInfo>) -> bool {
     origin.is_some_and(|origin| {
         origin
@@ -2097,12 +2097,12 @@ pub fn origin_is_object_literal_method(origin: Option<&SymbolOriginInfo>) -> boo
     })
 }
 
-// Go: ls/completions.go:3235 originIsThisTypeNode
+// Go: ls/completions.go:3239 originIsThisTypeNode
 pub fn origin_is_this_type_node(origin: Option<&SymbolOriginInfo>) -> bool {
     origin.is_some_and(|origin| origin.kind.intersects(SymbolOriginInfoKind::THIS_TYPE))
 }
 
-// Go: ls/completions.go:3239 originIsTypeOnlyAlias
+// Go: ls/completions.go:3243 originIsTypeOnlyAlias
 pub fn origin_is_type_only_alias(origin: Option<&SymbolOriginInfo>) -> bool {
     origin.is_some_and(|origin| {
         origin
@@ -2111,22 +2111,22 @@ pub fn origin_is_type_only_alias(origin: Option<&SymbolOriginInfo>) -> bool {
     })
 }
 
-// Go: ls/completions.go:3243 originIsSymbolMember
+// Go: ls/completions.go:3247 originIsSymbolMember
 pub fn origin_is_symbol_member(origin: Option<&SymbolOriginInfo>) -> bool {
     origin.is_some_and(|origin| origin.kind.intersects(SymbolOriginInfoKind::SYMBOL_MEMBER))
 }
 
-// Go: ls/completions.go:3247 originIsNullableMember
+// Go: ls/completions.go:3251 originIsNullableMember
 pub fn origin_is_nullable_member(origin: Option<&SymbolOriginInfo>) -> bool {
     origin.is_some_and(|origin| origin.kind.intersects(SymbolOriginInfoKind::NULLABLE))
 }
 
-// Go: ls/completions.go:3251 originIsPromise
+// Go: ls/completions.go:3255 originIsPromise
 pub fn origin_is_promise(origin: Option<&SymbolOriginInfo>) -> bool {
     origin.is_some_and(|origin| origin.kind.intersects(SymbolOriginInfoKind::PROMISE))
 }
 
-// Go: ls/completions.go:3255 getSourceFromOrigin
+// Go: ls/completions.go:3259 getSourceFromOrigin
 pub fn get_source_from_origin(origin: Option<&SymbolOriginInfo>) -> String {
     if origin_is_this_type_node(origin) {
         return COMPLETION_SOURCE_THIS_PROPERTY.to_string();
@@ -2139,7 +2139,7 @@ pub fn get_source_from_origin(origin: Option<&SymbolOriginInfo>) -> String {
     String::new()
 }
 
-// Go: ls/completions.go:3270 getRelevantTokens
+// Go: ls/completions.go:3274 getRelevantTokens
 // In a scenarion such as `const x = 1 * |`, the context and previous tokens are both `*`.
 // In `const x = 1 * o|`, the context token is *, and the previous token is `o`.
 // `contextToken` and `previousToken` can both be nil if we are at the beginning of the file.
@@ -2156,11 +2156,11 @@ pub fn get_relevant_tokens(position: i32, file: Node) -> (Node, Node) {
     (previous_token, previous_token)
 }
 
-// Go: ls/completions.go:3280 CompletionsTriggerCharacter
+// Go: ls/completions.go:3284 CompletionsTriggerCharacter
 // "." | '"' | "'" | "`" | "/" | "@" | "<" | "#" | " " | "*"
 pub type CompletionsTriggerCharacter = String;
 
-// Go: ls/completions.go:3282 isValidTrigger
+// Go: ls/completions.go:3286 isValidTrigger
 // PORT: the `CompletionsTriggerCharacter` (Go string) parameter is `&str`.
 pub fn is_valid_trigger(
     file: Node,
@@ -2209,7 +2209,7 @@ pub fn is_valid_trigger(
     }
 }
 
-// Go: ls/completions.go:3317 isStringLiteralOrTemplate
+// Go: ls/completions.go:3321 isStringLiteralOrTemplate
 pub fn is_string_literal_or_template(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -2220,17 +2220,17 @@ pub fn is_string_literal_or_template(node: Node) -> bool {
     )
 }
 
-// Go: ls/completions.go:3326 binaryExpressionMayBeOpenTag
+// Go: ls/completions.go:3330 binaryExpressionMayBeOpenTag
 pub fn binary_expression_may_be_open_tag(binary_expression: Node) -> bool {
     node_is_missing(binary_expression.left())
 }
 
-// Go: ls/completions.go:3330 isCheckedFile
+// Go: ls/completions.go:3334 isCheckedFile
 pub fn is_checked_file(file: Node, compiler_options: &CompilerOptions) -> bool {
     !is_source_file_js(file) || is_check_js_enabled_for_file(file, compiler_options)
 }
 
-// Go: ls/completions.go:3334 isContextTokenValueLocation
+// Go: ls/completions.go:3338 isContextTokenValueLocation
 pub fn is_context_token_value_location(context_token: Node) -> bool {
     context_token.is_some()
         && ((context_token.kind() == SyntaxKind::TypeOfKeyword
@@ -2240,7 +2240,7 @@ pub fn is_context_token_value_location(context_token: Node) -> bool {
                 && context_token.parent().kind() == SyntaxKind::TypePredicate))
 }
 
-// Go: ls/completions.go:3340 isPossiblyTypeArgumentPosition
+// Go: ls/completions.go:3344 isPossiblyTypeArgumentPosition
 pub fn is_possibly_type_argument_position(
     token: Node,
     source_file: Node,
@@ -2262,7 +2262,7 @@ pub fn is_possibly_type_argument_position(
     }
 }
 
-// Go: ls/completions.go:3347 isContextTokenTypeLocation
+// Go: ls/completions.go:3351 isContextTokenTypeLocation
 pub fn is_context_token_type_location(context_token: Node) -> bool {
     if context_token.is_some() {
         let parent_kind = context_token.parent().kind();
@@ -2321,7 +2321,7 @@ fn symbol_id_set_add_if_absent(set: &mut SymbolIdSetValue, key: u64) -> bool {
     true
 }
 
-// Go: ls/completions.go:3375 symbolCanBeReferencedAtTypeLocation
+// Go: ls/completions.go:3379 symbolCanBeReferencedAtTypeLocation
 // True if symbol is a type or a module containing at least one type.
 pub fn symbol_can_be_referenced_at_type_location(
     symbol: SymbolId,
@@ -2341,7 +2341,7 @@ pub fn symbol_can_be_referenced_at_type_location(
     }
 }
 
-// Go: ls/completions.go:3386 nonAliasCanBeReferencedAtTypeLocation
+// Go: ls/completions.go:3390 nonAliasCanBeReferencedAtTypeLocation
 pub fn non_alias_can_be_referenced_at_type_location(
     symbol: SymbolId,
     type_checker: &mut Checker,
@@ -2373,7 +2373,7 @@ fn check_each_defined(s: Vec<SymbolId>, msg: &str) -> Vec<SymbolId> {
     s
 }
 
-// Go: ls/completions.go:3397 getPropertiesForCompletion
+// Go: ls/completions.go:3401 getPropertiesForCompletion
 // Gets all properties on a type, but if that type is a union of several types,
 // excludes array-like types or callable/constructable types.
 pub fn get_properties_for_completion(t: TypeId, type_checker: &mut Checker) -> Vec<SymbolId> {
@@ -2391,7 +2391,7 @@ pub fn get_properties_for_completion(t: TypeId, type_checker: &mut Checker) -> V
     }
 }
 
-// Go: ls/completions.go:3406 getLeftMostName
+// Go: ls/completions.go:3410 getLeftMostName
 // Given 'a.b.c', returns 'a'.
 pub fn get_left_most_name(e: Node) -> Node {
     if is_identifier(e) {
@@ -2403,7 +2403,7 @@ pub fn get_left_most_name(e: Node) -> Node {
     }
 }
 
-// Go: ls/completions.go:3416 getFirstSymbolInChain
+// Go: ls/completions.go:3420 getFirstSymbolInChain
 pub fn get_first_symbol_in_chain(
     symbol: SymbolId,
     enclosing_declaration: Node,
@@ -2428,7 +2428,7 @@ pub fn get_first_symbol_in_chain(
     SymbolId::NIL
 }
 
-// Go: ls/completions.go:3435 isModuleSymbol
+// Go: ls/completions.go:3439 isModuleSymbol
 pub fn is_module_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
     symbols
         .sym(symbol)
@@ -2437,7 +2437,7 @@ pub fn is_module_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
         .any(|decl| decl.kind() == SyntaxKind::SourceFile)
 }
 
-// Go: ls/completions.go:3439 getNullableSymbolOriginInfoKind
+// Go: ls/completions.go:3443 getNullableSymbolOriginInfoKind
 pub fn get_nullable_symbol_origin_info_kind(
     kind: SymbolOriginInfoKind,
     insert_question_dot: bool,
@@ -2449,7 +2449,7 @@ pub fn get_nullable_symbol_origin_info_kind(
     kind
 }
 
-// Go: ls/completions.go:3446 isStaticProperty
+// Go: ls/completions.go:3450 isStaticProperty
 pub fn is_static_property(symbols: &SymbolArena, symbol: SymbolId) -> bool {
     let value_declaration = symbols.sym(symbol).value_declaration;
     value_declaration.is_some()
@@ -2459,7 +2459,7 @@ pub fn is_static_property(symbols: &SymbolArena, symbol: SymbolId) -> bool {
         && is_class_like(value_declaration.parent())
 }
 
-// Go: ls/completions.go:3454 getContextualTypeForConditionalExpression
+// Go: ls/completions.go:3458 getContextualTypeForConditionalExpression
 // getContextualTypeForConditionalExpression handles completion within a conditional expression
 // (ternary operator) by using the parent expression to find the contextual type.
 pub fn get_contextual_type_for_conditional_expression(
@@ -2485,7 +2485,7 @@ pub fn get_contextual_type_for_conditional_expression(
     type_checker.get_contextual_type_exported(conditional_expr, ContextFlags::NONE)
 }
 
-// Go: ls/completions.go:3467 getContextualType
+// Go: ls/completions.go:3471 getContextualType
 pub fn get_contextual_type(
     previous_token: Node,
     position: i32,
@@ -2629,12 +2629,12 @@ pub fn get_contextual_type(
     }
 }
 
-// Go: ls/completions.go:3556 getSwitchedType
+// Go: ls/completions.go:3560 getSwitchedType
 pub fn get_switched_type(case_clause: Node, type_checker: &mut Checker) -> TypeId {
     type_checker.get_type_at_location(case_clause.parent().parent().expression())
 }
 
-// Go: ls/completions.go:3560 isEqualityOperatorKind
+// Go: ls/completions.go:3564 isEqualityOperatorKind
 pub fn is_equality_operator_kind(kind: SyntaxKind) -> bool {
     matches!(
         kind,
@@ -2645,7 +2645,7 @@ pub fn is_equality_operator_kind(kind: SyntaxKind) -> bool {
     )
 }
 
-// Go: ls/completions.go:3571 isLiteral
+// Go: ls/completions.go:3575 isLiteral
 // We disregard boolean literals for completion purposes.
 // PORT: Go reads the `*checker.Type`; the port reads the checker arena.
 pub fn is_literal(type_checker: &Checker, t: TypeId) -> bool {
@@ -2653,7 +2653,7 @@ pub fn is_literal(type_checker: &Checker, t: TypeId) -> bool {
     t.is_string_literal() || t.is_number_literal() || t.is_big_int_literal()
 }
 
-// Go: ls/completions.go:3575 getRecommendedCompletion
+// Go: ls/completions.go:3579 getRecommendedCompletion
 pub fn get_recommended_completion(
     previous_token: Node,
     contextual_type: TypeId,
@@ -2687,7 +2687,7 @@ pub fn get_recommended_completion(
     SymbolId::NIL
 }
 
-// Go: ls/completions.go:3598 isAbstractConstructorSymbol
+// Go: ls/completions.go:3602 isAbstractConstructorSymbol
 pub fn is_abstract_constructor_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
     if symbols.sym(symbol).flags.intersects(SymbolFlags::CLASS) {
         let declaration = get_class_like_declaration_of_symbol(symbols, symbol);
@@ -2697,13 +2697,13 @@ pub fn is_abstract_constructor_symbol(symbols: &SymbolArena, symbol: SymbolId) -
     false
 }
 
-// Go: ls/completions.go:3606 startsWithQuote
+// Go: ls/completions.go:3610 startsWithQuote
 pub fn starts_with_quote(s: &str) -> bool {
     let (r, _) = utf8_decode_rune_in_string(s, 0);
     r == '"' as i32 || r == '\'' as i32
 }
 
-// Go: ls/completions.go:3611 getClosestSymbolDeclaration
+// Go: ls/completions.go:3615 getClosestSymbolDeclaration
 pub fn get_closest_symbol_declaration(context_token: Node, location: Node) -> Node {
     if context_token.is_nil() {
         return Node::NIL;
@@ -2738,7 +2738,7 @@ pub fn get_closest_symbol_declaration(context_token: Node, location: Node) -> No
     closest_declaration
 }
 
-// Go: ls/completions.go:3643 isArrowFunctionBody
+// Go: ls/completions.go:3647 isArrowFunctionBody
 pub fn is_arrow_function_body(node: Node) -> bool {
     node.parent().is_some()
         && is_arrow_function(node.parent())
@@ -2747,7 +2747,7 @@ pub fn is_arrow_function_body(node: Node) -> bool {
             node.kind() == SyntaxKind::EqualsGreaterThanToken)
 }
 
-// Go: ls/completions.go:3650 isInTypeParameterDefault
+// Go: ls/completions.go:3654 isInTypeParameterDefault
 pub fn is_in_type_parameter_default(context_token: Node) -> bool {
     if context_token.is_nil() {
         return false;
@@ -2766,7 +2766,7 @@ pub fn is_in_type_parameter_default(context_token: Node) -> bool {
     false
 }
 
-// Go: ls/completions.go:3668 isDeprecated
+// Go: ls/completions.go:3672 isDeprecated
 pub fn is_deprecated(symbol: SymbolId, type_checker: &mut Checker) -> bool {
     let target = type_checker.skip_alias(symbol);
     let declarations: Vec<Node> = type_checker.sym(target).declarations.to_vec();
@@ -2777,7 +2777,7 @@ pub fn is_deprecated(symbol: SymbolId, type_checker: &mut Checker) -> bool {
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:3673 getReplacementRangeForContextToken
+    // Go: ls/completions.go:3677 getReplacementRangeForContextToken
     pub fn get_replacement_range_for_context_token(
         &self,
         file: Node,
@@ -2803,7 +2803,7 @@ impl LanguageService {
         }
     }
 
-    // Go: ls/completions.go:3691 createRangeFromStringLiteralLikeContent
+    // Go: ls/completions.go:3695 createRangeFromStringLiteralLikeContent
     pub fn create_range_from_string_literal_like_content(
         &self,
         file: Node,
@@ -2828,7 +2828,7 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:3708 quotePropertyName
+// Go: ls/completions.go:3712 quotePropertyName
 pub fn quote_property_name(
     file: Node,
     preferences: &lsutil::UserPreferences,
@@ -2843,7 +2843,7 @@ pub fn quote_property_name(
     quote(file, preferences, name)
 }
 
-// Go: ls/completions.go:3719 isStringAndEmptyAnonymousObjectIntersection
+// Go: ls/completions.go:3723 isStringAndEmptyAnonymousObjectIntersection
 // Checks whether type is `string & {}`, which is semantically equivalent to string but
 // is not reduced by the checker as a special case used for supporting string literal completions
 // for string type.
@@ -2861,7 +2861,7 @@ pub fn is_string_and_empty_anonymous_object_intersection(
             || are_intersected_types_avoiding_string_reduction(type_checker, types[1], types[0]))
 }
 
-// Go: ls/completions.go:3729 areIntersectedTypesAvoidingStringReduction
+// Go: ls/completions.go:3733 areIntersectedTypesAvoidingStringReduction
 pub fn are_intersected_types_avoiding_string_reduction(
     type_checker: &mut Checker,
     t1: TypeId,
@@ -2870,17 +2870,17 @@ pub fn are_intersected_types_avoiding_string_reduction(
     type_checker.ty(t1).is_string() && type_checker.is_empty_anonymous_object_type(t2)
 }
 
-// Go: ls/completions.go:3733 escapeSnippetText
+// Go: ls/completions.go:3737 escapeSnippetText
 pub fn escape_snippet_text(text: &str) -> String {
     text.replace('$', "\\$")
 }
 
-// Go: ls/completions.go:3737 isNamedImportsOrExports
+// Go: ls/completions.go:3741 isNamedImportsOrExports
 pub fn is_named_imports_or_exports(node: Node) -> bool {
     is_named_imports(node) || is_named_exports(node)
 }
 
-// Go: ls/completions.go:3741 generateIdentifierForArbitraryString
+// Go: ls/completions.go:3745 generateIdentifierForArbitraryString
 pub fn generate_identifier_for_arbitrary_string(text: &str) -> String {
     let mut needs_underscore = false;
     let mut identifier = String::new();
@@ -2919,7 +2919,7 @@ pub fn generate_identifier_for_arbitrary_string(text: &str) -> String {
     identifier
 }
 
-// Go: ls/completions.go:3781 getCompletionsSymbolKind
+// Go: ls/completions.go:3785 getCompletionsSymbolKind
 // Copied from vscode TS extension.
 pub fn get_completions_symbol_kind(kind: lsutil::ScriptElementKind) -> lsproto::CompletionItemKind {
     use lsutil::ScriptElementKind as K;
@@ -2965,7 +2965,7 @@ pub fn get_completions_symbol_kind(kind: lsutil::ScriptElementKind) -> lsproto::
     }
 }
 
-// Go: ls/completions.go:3836 CompareCompletionEntries
+// Go: ls/completions.go:3840 CompareCompletionEntries
 // Editors will use the `sortText` and then fall back to `name` for sorting, but leave ties in response order.
 // So, it's important that we sort those ties in the order we want them displayed if it matters. We don't
 // strictly need to sort by name or SortText here since clients are going to do it anyway, but we have to
@@ -2988,14 +2988,14 @@ pub fn compare_completion_entries(a: &lsproto::CompletionItem, b: &lsproto::Comp
 }
 
 thread_local! {
-    // Go: ls/completions.go:3846 keywordCompletionsCache
+    // Go: ls/completions.go:3850 keywordCompletionsCache
     // PORT: Go `collections.SyncMap[KeywordCompletionFilters, ...]`; the key
     // is the filter value. One map per thread (every request runs on the
     // dispatch thread).
     static KEYWORD_COMPLETIONS_CACHE: RefCell<FxHashMap<i32, Vec<lsproto::CompletionItem>>> =
         RefCell::new(FxHashMap::default());
 
-    // Go: ls/completions.go:3847 allKeywordCompletions (sync.OnceValue)
+    // Go: ls/completions.go:3851 allKeywordCompletions (sync.OnceValue)
     static ALL_KEYWORD_COMPLETIONS: Vec<lsproto::CompletionItem> = {
         let first = SyntaxKind::FIRST_KEYWORD as u16;
         let last = SyntaxKind::LAST_KEYWORD as u16;
@@ -3013,14 +3013,14 @@ thread_local! {
     };
 }
 
-// Go: ls/completions.go:3847 allKeywordCompletions
+// Go: ls/completions.go:3851 allKeywordCompletions
 // PORT: Go returns the shared slice; the port returns a copy. Callers copy
 // every item before they change it (`cloneItems`).
 pub fn all_keyword_completions() -> Vec<lsproto::CompletionItem> {
     ALL_KEYWORD_COMPLETIONS.with(|items| items.clone())
 }
 
-// Go: ls/completions.go:3860 cloneItems
+// Go: ls/completions.go:3864 cloneItems
 // PORT: Go returns nil for a nil input; a `Vec` has no nil, so both are empty.
 pub fn clone_items(items: &[lsproto::CompletionItem]) -> Vec<CompletionItem> {
     let mut entries = Vec::with_capacity(items.len());
@@ -3034,7 +3034,7 @@ pub fn clone_items(items: &[lsproto::CompletionItem]) -> Vec<CompletionItem> {
     entries
 }
 
-// Go: ls/completions.go:3872 getKeywordCompletions
+// Go: ls/completions.go:3876 getKeywordCompletions
 pub fn get_keyword_completions(
     keyword_filter: KeywordCompletionFilters,
     filter_out_ts_only_keywords: bool,
@@ -3058,7 +3058,7 @@ pub fn get_keyword_completions(
     clone_items(&result)
 }
 
-// Go: ls/completions.go:3891 getTypescriptKeywordCompletions
+// Go: ls/completions.go:3895 getTypescriptKeywordCompletions
 pub fn get_typescript_keyword_completions(
     keyword_filter: KeywordCompletionFilters,
 ) -> Vec<lsproto::CompletionItem> {
@@ -3110,7 +3110,7 @@ pub fn get_typescript_keyword_completions(
     result
 }
 
-// Go: ls/completions.go:3931 isTypeScriptOnlyKeyword
+// Go: ls/completions.go:3935 isTypeScriptOnlyKeyword
 pub fn is_type_script_only_keyword(kind: SyntaxKind) -> bool {
     matches!(
         kind,
@@ -3144,7 +3144,7 @@ pub fn is_type_script_only_keyword(kind: SyntaxKind) -> bool {
     )
 }
 
-// Go: ls/completions.go:3966 isFunctionLikeBodyKeyword
+// Go: ls/completions.go:3970 isFunctionLikeBodyKeyword
 pub fn is_function_like_body_keyword(kind: SyntaxKind) -> bool {
     kind == SyntaxKind::AsyncKeyword
         || kind == SyntaxKind::AwaitKeyword
@@ -3155,7 +3155,7 @@ pub fn is_function_like_body_keyword(kind: SyntaxKind) -> bool {
         || !is_contextual_keyword(kind) && !is_class_member_completion_keyword(kind)
 }
 
-// Go: ls/completions.go:3976 isClassMemberCompletionKeyword
+// Go: ls/completions.go:3980 isClassMemberCompletionKeyword
 pub fn is_class_member_completion_keyword(kind: SyntaxKind) -> bool {
     match kind {
         SyntaxKind::AbstractKeyword
@@ -3170,12 +3170,12 @@ pub fn is_class_member_completion_keyword(kind: SyntaxKind) -> bool {
     }
 }
 
-// Go: ls/completions.go:3986 isInterfaceOrTypeLiteralCompletionKeyword
+// Go: ls/completions.go:3990 isInterfaceOrTypeLiteralCompletionKeyword
 pub fn is_interface_or_type_literal_completion_keyword(kind: SyntaxKind) -> bool {
     kind == SyntaxKind::ReadonlyKeyword
 }
 
-// Go: ls/completions.go:3990 isContextualKeywordInAutoImportableExpressionSpace
+// Go: ls/completions.go:3994 isContextualKeywordInAutoImportableExpressionSpace
 pub fn is_contextual_keyword_in_auto_importable_expression_space(keyword: &str) -> bool {
     keyword == "abstract"
         || keyword == "async"
@@ -3188,7 +3188,7 @@ pub fn is_contextual_keyword_in_auto_importable_expression_space(keyword: &str) 
         || keyword == "as"
 }
 
-// Go: ls/completions.go:4002 getContextualKeywords
+// Go: ls/completions.go:4006 getContextualKeywords
 pub fn get_contextual_keywords(
     file: Node,
     context_token: Node,
@@ -3222,7 +3222,7 @@ pub fn get_contextual_keywords(
 }
 
 impl LanguageService {
-    // Go: ls/completions.go:4028 getJSCompletionEntries
+    // Go: ls/completions.go:4032 getJSCompletionEntries
     // PORT: Go ranges over the name table map in random order; the port
     // uses the map's own order. Clients sort by sort text and label.
     pub fn get_js_completion_entries(
@@ -3257,7 +3257,7 @@ impl LanguageService {
         sorted_entries
     }
 
-    // Go: ls/completions.go:4056 getOptionalReplacementSpan
+    // Go: ls/completions.go:4060 getOptionalReplacementSpan
     pub fn get_optional_replacement_span(
         &self,
         location: Node,
@@ -3279,14 +3279,14 @@ impl LanguageService {
     }
 }
 
-// Go: ls/completions.go:4068 isMemberCompletionKind
+// Go: ls/completions.go:4072 isMemberCompletionKind
 pub fn is_member_completion_kind(kind: CompletionKind) -> bool {
     kind == CompletionKind::OBJECT_PROPERTY_DECLARATION
         || kind == CompletionKind::MEMBER_LIKE
         || kind == CompletionKind::PROPERTY_ACCESS
 }
 
-// Go: ls/completions.go:4074 tryGetFunctionLikeBodyCompletionContainer
+// Go: ls/completions.go:4078 tryGetFunctionLikeBodyCompletionContainer
 pub fn try_get_function_like_body_completion_container(context_token: Node) -> Node {
     if context_token.is_nil() {
         return Node::NIL;

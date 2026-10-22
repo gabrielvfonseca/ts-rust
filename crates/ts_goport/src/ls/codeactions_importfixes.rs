@@ -115,7 +115,7 @@ fn get_import_code_actions(
     Ok(actions)
 }
 
-// Go: ls/codeactions_importfixes.go:97 getAllImportCodeActions
+// Go: ls/codeactions_importfixes.go:98 getAllImportCodeActions
 fn get_all_import_code_actions(
     ctx: &Context,
     fix_context: &CodeFixContext<'_>,
@@ -184,7 +184,7 @@ fn get_all_import_code_actions(
     }))
 }
 
-// Go: ls/codeactions_importfixes.go:154 addImportFromDiagnostic
+// Go: ls/codeactions_importfixes.go:155 addImportFromDiagnostic
 // addImportFromDiagnostic finds the best import fix for a diagnostic and adds it to the adder.
 fn add_import_from_diagnostic(
     ch: &mut Checker,
@@ -209,7 +209,7 @@ fn add_import_from_diagnostic(
     Ok(())
 }
 
-// Go: ls/codeactions_importfixes.go:173 getFixInfos
+// Go: ls/codeactions_importfixes.go:174 getFixInfos
 fn get_fix_infos(
     ch: &mut Checker,
     fix_context: &CodeFixContext<'_>,
@@ -306,7 +306,7 @@ fn get_fix_infos(
     Ok(sort_fix_info(info, fix_context, &view))
 }
 
-// Go: ls/codeactions_importfixes.go:243 getFixesInfoForUMDImport
+// Go: ls/codeactions_importfixes.go:244 getFixesInfoForUMDImport
 fn get_fixes_info_for_umd_import(
     token: Node,
     view: &autoimport::View,
@@ -340,7 +340,7 @@ fn get_fixes_info_for_umd_import(
     result
 }
 
-// Go: ls/codeactions_importfixes.go:267 getUmdSymbol
+// Go: ls/codeactions_importfixes.go:268 getUmdSymbol
 fn get_umd_symbol(token: Node, ch: &mut Checker) -> SymbolId {
     // try the identifier to see if it is the umd symbol
     let mut umd_symbol = SymbolId::NIL;
@@ -375,7 +375,7 @@ fn get_umd_symbol(token: Node, ch: &mut Checker) -> SymbolId {
     SymbolId::NIL
 }
 
-// Go: ls/codeactions_importfixes.go:296 isUMDExportSymbol
+// Go: ls/codeactions_importfixes.go:297 isUMDExportSymbol
 // PORT: Go reads the symbol through its pointer; here through the arena.
 fn is_umd_export_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
     symbol.is_some()
@@ -452,7 +452,7 @@ fn get_fixes_info_for_non_umd_import(
     all_info
 }
 
-// Go: ls/codeactions_importfixes.go:353 getTypeOnlyPromotionFix
+// Go: ls/codeactions_importfixes.go:355 getTypeOnlyPromotionFix
 fn get_type_only_promotion_fix(
     source_file: Node,
     symbol_token: Node,
@@ -488,13 +488,13 @@ fn get_type_only_promotion_fix(
     }))
 }
 
-// Go: ls/codeactions_importfixes.go:374 symbolNameInfo
+// Go: ls/codeactions_importfixes.go:376 symbolNameInfo
 struct SymbolNameInfo {
     name: String,
     is_type_only: bool, // whether the symbol currently resolves to a type-only import
 }
 
-// Go: ls/codeactions_importfixes.go:379 getSymbolNamesToImport
+// Go: ls/codeactions_importfixes.go:381 getSymbolNamesToImport
 fn get_symbol_names_to_import(
     source_file: Node,
     ch: &mut Checker,
@@ -566,7 +566,7 @@ fn get_symbol_names_to_import(
     }]
 }
 
-// Go: ls/codeactions_importfixes.go:410 needsJsxNamespaceFix
+// Go: ls/codeactions_importfixes.go:412 needsJsxNamespaceFix
 fn needs_jsx_namespace_fix(jsx_namespace: &str, symbol_token: Node, ch: &mut Checker) -> bool {
     if is_intrinsic_jsx_name(symbol_token.text()) {
         return true;
@@ -594,12 +594,12 @@ fn needs_jsx_namespace_fix(jsx_namespace: &str, symbol_token: Node, ch: &mut Che
     false
 }
 
-// Go: ls/codeactions_importfixes.go:424 jsxModeNeedsExplicitImport
+// Go: ls/codeactions_importfixes.go:426 jsxModeNeedsExplicitImport
 fn jsx_mode_needs_explicit_import(jsx: JsxEmit) -> bool {
     jsx == JsxEmit::REACT || jsx == JsxEmit::REACT_NATIVE
 }
 
-// Go: ls/codeactions_importfixes.go:428 sortFixInfo
+// Go: ls/codeactions_importfixes.go:430 sortFixInfo
 fn sort_fix_info(
     fixes: Vec<FixInfo>,
     fix_context: &CodeFixContext<'_>,
