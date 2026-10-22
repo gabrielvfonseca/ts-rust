@@ -610,12 +610,12 @@ impl Orchestrator {
         changed
     }
 
-    // Go: build/orchestrator.go:913 (*Orchestrator).rangeTask
+    // Go: build/orchestrator.go:917 (*Orchestrator).rangeTask
     pub(crate) fn range_task(&self, f: &mut dyn FnMut(&Path, &Rc<RefCell<BuildTask>>)) {
         self.range_tasks(&self.order, f);
     }
 
-    // Go: build/orchestrator.go:917 (*Orchestrator).rangeTasks (ts#64158)
+    // Go: build/orchestrator.go:921 (*Orchestrator).rangeTasks (ts#64158)
     // PORT: the build itself uses `build_all_tasks` (orchestrator.rs). The
     // other callers pass an `f` that touches only its own task and the host
     // caches, so the tasks run one at a time in `order`, the order in which
