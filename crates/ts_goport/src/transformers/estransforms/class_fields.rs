@@ -382,7 +382,10 @@ impl ClassFieldsTransformer {
             return self.visit_identifier(node);
         }
         if node.kind() == SyntaxKind::PropertyAccessExpression && is_identifier(node.name()) {
-            return self.visit_property_access_expression_for_substitution(node);
+            return self.visit_property_access_expression_for_substitution(
+                node,
+                Self::visit_for_substitution,
+            );
         }
         self.with_visitor(Self::visit_for_substitution, |v| v.visit_each_child(node))
     }
@@ -1441,7 +1444,7 @@ impl ClassFieldsTransformer {
         // Private identifier names are still visited through VisitEachChild so they can be
         // transformed by visitPrivateIdentifier.
         if is_identifier(node.name()) {
-            return self.visit_property_access_expression_for_substitution(node);
+            return self.visit_property_access_expression_for_substitution(node, Self::root_visit);
         }
         self.visit_each_child(node)
     }
@@ -1450,8 +1453,14 @@ impl ClassFieldsTransformer {
     /// visitPropertyAccessExpressionForSubstitution visits only the expression of a PropertyAccessExpression,
     /// leaving the name unchanged. This prevents the name from being treated as a standalone identifier
     /// reference and incorrectly substituted with a class alias.
-    pub(super) fn visit_property_access_expression_for_substitution(&mut self, node: Node) -> Node {
-        let expression = self.visit_node(node.expression());
+    /// `visitor` is the callback of Go's `visitor` argument: `Self::visit_for_substitution`
+    /// (Go `tx.substitutionVisitor`) or `Self::root_visit` (Go `tx.Visitor()`).
+    pub(super) fn visit_property_access_expression_for_substitution(
+        &mut self,
+        node: Node,
+        visitor: fn(&mut Self, Node) -> Node,
+    ) -> Node {
+        let expression = self.with_visitor(visitor, |v| v.visit_node(node.expression()));
         if expression != node.expression() {
             return self.ec().factory().update_property_access_expression(
                 node,
@@ -2116,13 +2125,13 @@ impl ClassFieldsTransformer {
     }
 }
 
-// Go: transformers/estransforms/classfields.go:3395 isStaticPropertyDeclarationOrClassStaticBlock
+// Go: transformers/estransforms/classfields.go:3396 isStaticPropertyDeclarationOrClassStaticBlock
 pub(super) fn is_static_property_declaration_or_class_static_block(node: Node) -> bool {
     is_class_static_block_declaration(node)
         || (is_property_declaration(node) && has_static_modifier(node))
 }
 
-// Go: transformers/estransforms/classfields.go:3547 flattenCommaList
+// Go: transformers/estransforms/classfields.go:3548 flattenCommaList
 /// flattenCommaList decomposes a comma expression tree into a sequence of expressions.
 // PORT: Go returns an `iter.Seq`; every caller consumes it fully, so this
 // returns the sequence as a `Vec`.
@@ -2135,7 +2144,7 @@ pub(super) fn flatten_comma_list(node: Node) -> Vec<Node> {
     result
 }
 
-// Go: transformers/estransforms/classfields.go:3553 flattenCommaListWorker
+// Go: transformers/estransforms/classfields.go:3554 flattenCommaListWorker
 fn flatten_comma_list_worker(node: Node, yield_: &mut dyn FnMut(Node) -> bool) -> bool {
     if is_parenthesized_expression(node) && node_is_synthesized(node) {
         flatten_comma_list_worker(node.expression(), yield_)
@@ -2147,7 +2156,7 @@ fn flatten_comma_list_worker(node: Node, yield_: &mut dyn FnMut(Node) -> bool) -
     }
 }
 
-// Go: transformers/estransforms/classfields.go:3564 findComputedPropertyNameCacheAssignment
+// Go: transformers/estransforms/classfields.go:3565 findComputedPropertyNameCacheAssignment
 pub(super) fn find_computed_property_name_cache_assignment(
     _emit_context: &EmitContext,
     name: Node,
@@ -2169,7 +2178,7 @@ pub(super) fn find_computed_property_name_cache_assignment(
     Node::NIL
 }
 
-// Go: transformers/estransforms/classfields.go:3580 expandPreOrPostfixIncrementOrDecrementExpression
+// Go: transformers/estransforms/classfields.go:3581 expandPreOrPostfixIncrementOrDecrementExpression
 pub(super) fn expand_pre_or_postfix_increment_or_decrement_expression(
     factory: &crate::printer::factory::NodeFactory,
     emit_context: &EmitContext,
