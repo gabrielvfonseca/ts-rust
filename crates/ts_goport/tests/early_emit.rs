@@ -222,8 +222,9 @@ fn build_task_with_syntax_errors_finishes_when_its_emit_ends() {
 /// times of one run, so a load moves both sides. On a testbox, also with 4
 /// times as many busy threads as cores, the check was 52 to 81% of the
 /// total time (before #91: 0 to 2%, up to 0.011s, so a fixed bound of 2 ms
-/// passed there), and the emit-only emit time was at least 0.064s more than
-/// its check time (#91 without its fixup: always less).
+/// passed there), and the emit-only emit time was more than its check time
+/// (by 0.024s or more idle, 0.064s or more under load; #91 without its
+/// fixup: always less).
 #[test]
 fn build_statistics_time_the_started_check_and_emit() {
     let config = |extra: &str| {
