@@ -29,7 +29,7 @@ use crate::gostd::GoError;
 // PORT: testing
 use crate::execute::tsc::CommandLineTesting;
 use std::sync::{Arc, Mutex, PoisonError};
-use std::time::SystemTime;
+use std::time::{Instant, SystemTime};
 
 // This file ports execute/build/buildtask.go.
 //
@@ -593,6 +593,57 @@ struct PendingCompile {
     deferred_writes: Option<DeferredWrites>,
     // `incremental_program.start_emit` ran (see `compile_and_emit_start`).
     emit_started: bool,
+    // When the started check and emit ended (outside tests).
+    started_times: Option<StartedTimes>,
+}
+
+/// PORT: not in Go (`--extendedDiagnostics`). When the check and the emit
+/// that `compile_and_emit_start` started on the checker threads ended.
+/// Outside tests the orchestrator finishes the task after both
+/// (`build_all_tasks`), so the calls of `EmitFilesAndReportErrors` find
+/// them done and time no wait. `compile_and_emit_finish` adds the spans
+/// instead: the check time runs to the end of the check, and the emit time
+/// from there to the end of the emit, as the waits of `tsc -p` do.
+struct StartedTimes {
+    /// `start_check` returned: it sent the check.
+    sent: Instant,
+    /// The last checker ended the check: a checker barrier sent behind it.
+    check_end: Arc<Mutex<Option<Instant>>>,
+    /// The emit behind the check ended too: the barrier of
+    /// `notify_when_compiled`.
+    emit_end: Arc<Mutex<Option<Instant>>>,
+}
+
+impl StartedTimes {
+    /// Right after `start_check`, before the emit starts: sends the barrier
+    /// that marks the end of the check.
+    fn check_sent() -> Self {
+        let sent = Instant::now();
+        let check_end = Arc::default();
+        crate::program::send_checker_barrier(|| EndMark(Arc::clone(&check_end)));
+        StartedTimes {
+            sent,
+            check_end,
+            emit_end: Arc::default(),
+        }
+    }
+}
+
+/// A value of a checker barrier (`program::send_checker_barrier`). Its drop
+/// keeps the latest time at which a value of its barrier dropped.
+struct EndMark(Arc<Mutex<Option<Instant>>>);
+
+impl Drop for EndMark {
+    fn drop(&mut self) {
+        let now = Instant::now();
+        let mut end = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        *end = Some(end.map_or(now, |end| end.max(now)));
+    }
+}
+
+/// The time in `end`, the latest drop of an `EndMark`.
+fn end_time(end: &Mutex<Option<Instant>>) -> Option<Instant> {
+    *end.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
 impl BuildTask {
@@ -813,11 +864,18 @@ impl BuildTask {
     /// the task's program started (`program::send_checker_barrier`), and
     /// returns how many there are. When all have dropped, those jobs are
     /// done. 0 when the program has no checker pool, so no job runs (no
-    /// check and no early emit started).
+    /// check and no early emit started). Each value also marks the end of
+    /// the emit (`StartedTimes`): the mark drops first, so it is set when
+    /// the last value of `signal` drops.
     pub fn notify_when_compiled<T: Send + 'static>(&self, signal: impl Fn() -> T) -> usize {
         let compile = self.compile.as_ref().expect("compile_and_emit_start ran");
         let _scope = crate::core::enter_program(Some(compile.program));
-        crate::program::send_checker_barrier(signal)
+        match &compile.started_times {
+            Some(times) => crate::program::send_checker_barrier(|| {
+                (EndMark(Arc::clone(&times.emit_end)), signal())
+            }),
+            None => crate::program::send_checker_barrier(signal),
+        }
     }
 
     // Go: build/buildtask.go:147 (*BuildTask).buildProject, from the emit
@@ -1050,7 +1108,7 @@ impl BuildTask {
         );
         let emit_started = testing.is_none();
         let changes_compute_start = sys.now();
-        let incremental_program = {
+        let (incremental_program, started_times) = {
             let _scope = crate::core::enter_program(Some(program));
             // Go: orchestrator.opts.Sys.Now
             let nested_emit_now: NestedEmitNow = {
@@ -1080,21 +1138,25 @@ impl BuildTask {
             // end, or in build order when tasks share outputs, see
             // `build_all_tasks`), and a task that runs beside others reads
             // the file system before they write. The statistics' check time
-            // is the time of the wait for the check plus the time that
-            // `start_check` spent on the affected files
-            // (`Program::take_started_check_time`).
+            // is the time that `start_check` spent on the affected files
+            // (`Program::take_started_check_time`) plus the time to the end
+            // of the check, and the emit time adds the time from there to
+            // the end of the emit (`StartedTimes`).
             // PORT: testing. A test finishes the task at once, and its emit
-            // starts there, as without the early start.
+            // starts there, as without the early start. Its waits time the
+            // check and the emit.
             incremental_program.start_check();
-            if emit_started {
+            let started_times = emit_started.then(|| {
+                let times = StartedTimes::check_sent();
                 buffer_early_emit_writes(|| {
                     incremental_program.start_emit(EmitOptions {
                         write_file: Some(write_file.clone()),
                         ..EmitOptions::default()
                     });
                 });
-            }
-            incremental_program
+                times
+            });
+            (incremental_program, started_times)
         };
         self.compile = Some(PendingCompile {
             program,
@@ -1108,6 +1170,7 @@ impl BuildTask {
             written_build_info,
             deferred_writes,
             emit_started,
+            started_times,
         });
         true
     }
@@ -1127,6 +1190,7 @@ impl BuildTask {
             written_build_info,
             deferred_writes,
             emit_started,
+            started_times,
         } = self.compile.take().expect("compile_and_emit_start ran");
         let sys = orchestrator.sys();
         let host = orchestrator.host();
@@ -1145,6 +1209,20 @@ impl BuildTask {
                     write_file: Some(write_file.clone()),
                     ..EmitOptions::default()
                 });
+            }
+            // Both times are final: the orchestrator finishes the task after
+            // the values of `notify_when_compiled` dropped, and those of the
+            // check's barrier dropped before them. No barrier value (no
+            // checker pool) adds nothing.
+            if let Some(times) = &started_times
+                && let Some(check_end) = end_time(&times.check_end)
+            {
+                incremental_program
+                    .add_started_check_time(check_end.saturating_duration_since(times.sent));
+                if let Some(emit_end) = end_time(&times.emit_end) {
+                    compile_times.borrow_mut().emit_time +=
+                        emit_end.saturating_duration_since(check_end);
+                }
             }
             let emit = || {
                 emit_and_report_statistics(&EmitInput {
