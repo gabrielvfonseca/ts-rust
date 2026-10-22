@@ -416,6 +416,12 @@ mod tests {
         } else {
             std::env::current_exe().expect("test binary")
         };
+        // The child has copies of this process's descriptors until its exec
+        // closes them, and the spawn can return before that, so the lock
+        // stays until the child exits (`SPAWN_LOCK`).
+        let spawn = crate::ipc::transport::SPAWN_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let output = std::process::Command::new(&exe)
             .args([
                 "--exact",
@@ -428,6 +434,7 @@ mod tests {
             .stdin(std::process::Stdio::null())
             .output()
             .expect("run the helper process");
+        drop(spawn);
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
         assert!(

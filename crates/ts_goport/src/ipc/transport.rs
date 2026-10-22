@@ -52,6 +52,16 @@ impl Write for ConnWriter {
 pub static ERR_NET_CLOSED: LazyLock<GoError> =
     LazyLock::new(|| errors::new("use of closed network connection"));
 
+/// PORT: no Go counterpart. Tests in this binary that spawn a process hold
+/// this lock until the child exits, and a test that needs the last copy of a
+/// pipe end to close holds it for its whole body. A spawned child has a copy
+/// of every descriptor of this process until its exec closes the
+/// close-on-exec ones, and the spawn can return before that (Linux wakes the
+/// parent of a vfork-style spawn before the exec closes them), so a pipe
+/// would still have a reader.
+#[cfg(test)]
+pub(crate) static SPAWN_LOCK: Mutex<()> = Mutex::new(());
+
 /// Go `func() error`, the `cleanup` of a `PipeTransport` (ts#64818).
 pub type PipeCleanup = Box<dyn Fn() -> Result<(), GoError> + Send + Sync>;
 
@@ -617,6 +627,11 @@ mod tests {
     fn stdio_close_does_not_wait_for_a_read() {
         use std::sync::mpsc;
         use std::time::Duration;
+
+        // A child that another test spawns would keep the read end open.
+        let _spawn = SPAWN_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
 
         // Tells the test when the read of the pipe starts.
         struct Entered(std::io::PipeReader, mpsc::Sender<()>);
