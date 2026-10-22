@@ -1656,8 +1656,9 @@ test("the oracle base of a pin bump is the base bins measured again at the new p
     [g => { g.state.batch.oracleRebase.lsp.runs[0].resultsSha256 = "e".repeat(64); rebind(g); }, /rebase run lsp-r131-atB \(lsp\/lsp-r131-atB\) has resultsSha256 /],
     [g => { g.state.batch.oracleRebase.lsp.knownDiffs = [{ key: "b1/t1#1", reason: "r" }]; rebind(g); }, /knownDiffs must list each \{key, reason\} once; the LSP has none/],
     // bump C ruling 1 item 1: the API rebase runs are --wire 3 (or, at a protocol 5 pin, --wire 4) runs of one API
-    // tool, and the entry says so.
-    [g => { delete g.state.batch.oracleRebase.api.wire; rebind(g); }, /batch.oracleRebase.api needs "wire": 3 or 4 and toolSha256, the api_oracle.py sha256 of its runs/],
+    // tool, and the entry says so. An entry without a wire (bump E ruling item 2) refuses the wire 3 batteries.
+    [g => { delete g.state.batch.oracleRebase.api.wire; rebind(g); },
+      /rebase run api-r131-atB \(api\/api-r131-atB\) has batteries with a wire \(the entry has none\) or without api_oracle.py c3c3.*: qc/],
     [g => { g.state.batch.oracleRebase.api.toolSha256 = "c3"; rebind(g); }, /batch.oracleRebase.api needs "wire": 3 or 4 and toolSha256/],
     [g => { g.state.batch.oracleRebase.api.wire = 5; g.files["api/api-r131-atB/manifest.json"].value.batteries.qc.wire = 5; resultsShas(g); },
       /batch.oracleRebase.api needs "wire": 3 or 4 and toolSha256/],
@@ -1699,6 +1700,69 @@ test("the oracle base of a pin bump is the base bins measured again at the new p
   f.files["api/api-r131-atB/manifest.json"].value.batteries.qc.wire = 3;
   resultsShas(f);
   stopped(f, /rebase run api-r131-atB \(api\/api-r131-atB\) has batteries without "wire": 4 or api_oracle.py c3c3.*: qc/);
+});
+
+// bump E ruling item 2: when the base pin and the batch pin have the same API protocol, the base bins need no wire. The
+// entry then has no "wire" key, no battery has a wire, and every battery still has toolSha256 as its scriptSha. Runs
+// that mix wire and no wire stop, with or without a wire in the entry.
+test("an API rebase has no wire when the API protocol does not change (bump E ruling item 2)", () => {
+  const manifest = run => `api/${run}/manifest.json`;
+  // withRebase with no wire in the entry and in the manifest of api-r131-atB.
+  const noWire = g => {
+    withRebase(g);
+    delete g.state.batch.oracleRebase.api.wire;
+    delete g.files[manifest("api-r131-atB")].value.batteries.qc.wire;
+    resultsShas(g);
+  };
+  // A second API rebase run api-r131-atB2 whose battery qc has this wire (none when undefined).
+  const secondRun = (g, wire) => {
+    g.oracle["api/api-r131-atB2"] = [trace("qc", "a1", ["same", "goport_error"])];
+    g.put(manifest("api-r131-atB2"), "0",
+      { batteries: { qc: { goportSha: BASE_TSGO, oracleSha: GOLDEN_B, traces: 1, ...(wire !== undefined && { wire }), scriptSha: API_TOOL } } });
+    g.state.batch.oracleRebase.api.runs.push({ label: "api-r131-atB2", dir: "api/api-r131-atB2" });
+    resultsShas(g);
+  };
+  const passes = change => {
+    const g = goportFixture();
+    change(g);
+    const result = check(g);
+    assert.equal(result.verdict, "PASS", result.reasons.join(" "));
+    assert.equal(result.oracles.api.base, g.state.batch.oracleRebase.api.runs.map(run => run.label).join(","));
+  };
+  // No wire: one run and two runs pass.
+  passes(noWire);
+  passes(g => { noWire(g); secondRun(g, undefined); });
+  // Wire 3 and wire 4 with two runs pass as before.
+  passes(g => { withRebase(g); secondRun(g, 3); });
+  passes(g => {
+    withRebase(g);
+    g.state.batch.oracleRebase.api.wire = 4;
+    g.files[manifest("api-r131-atB")].value.batteries.qc.wire = 4;
+    secondRun(g, 4);
+  });
+  const noWireBattery = /rebase run api-r131-atB \(api\/api-r131-atB\) has batteries with a wire \(the entry has none\) or without api_oracle.py c3c3.*: qc/;
+  for (const [change, pattern] of [
+    // No wire in the entry: a battery with a wire, or another api_oracle.py, stops.
+    [g => { noWire(g); g.files[manifest("api-r131-atB")].value.batteries.qc.wire = 3; resultsShas(g); }, noWireBattery],
+    [g => { noWire(g); g.files[manifest("api-r131-atB")].value.batteries.qc.wire = 4; resultsShas(g); }, noWireBattery],
+    [g => { noWire(g); g.files[manifest("api-r131-atB")].value.batteries.qc.scriptSha = "d".repeat(64); resultsShas(g); }, noWireBattery],
+    // The entry still needs toolSha256, and "wire": null is not an absent wire.
+    [g => { noWire(g); g.state.batch.oracleRebase.api.toolSha256 = "c3"; rebind(g); }, /batch.oracleRebase.api needs "wire": 3 or 4 and toolSha256/],
+    [g => { noWire(g); g.state.batch.oracleRebase.api.wire = null; rebind(g); }, /batch.oracleRebase.api needs "wire": 3 or 4 and toolSha256/],
+    // Runs that mix wire and no wire stop: across runs with and without a wire in the entry, and inside one run.
+    [g => { noWire(g); secondRun(g, 3); },
+      /the rebase runs mix wire and no wire \(wire: api-r131-atB2\/qc; no wire: api-r131-atB\/qc\)/],
+    [g => { withRebase(g); secondRun(g, undefined); },
+      /the rebase runs mix wire and no wire \(wire: api-r131-atB\/qc; no wire: api-r131-atB2\/qc\)/],
+    [g => {
+      withRebase(g);
+      g.files[manifest("api-r131-atB")].value.batteries.qc2 = { goportSha: BASE_TSGO, oracleSha: GOLDEN_B, traces: 0, scriptSha: API_TOOL };
+      resultsShas(g);
+    }, /the rebase runs mix wire and no wire \(wire: api-r131-atB\/qc; no wire: api-r131-atB\/qc2\)/]]) {
+    const g = goportFixture();
+    change(g);
+    stopped(g, pattern);
+  }
 });
 
 test("with oracleRebase the new runs must match Go at the batch pin (ruling 10 condition 3)", () => inTemp(dir => {
