@@ -40,11 +40,13 @@ use ts_goport::gostd::{Context, GoError, context};
 use ts_goport::ipc;
 use ts_goport::locale::Locale;
 
-use crate::support::child::{ChildHooks, new_in_process_test_sys, run_test_in_child};
+use crate::support::child::{
+    ChildHooks, new_in_process_test_sys, run_command_in_child, run_test_in_child,
+};
 use crate::support::contentmappertest::{self, ProjectLifecycle};
 use crate::support::mock_watch_backend::MockWatchBackend;
 use crate::support::runner::{FileMap, TscInput};
-use crate::support::test_sys::TestSys;
+use crate::support::test_sys::{TestSys, new_test_sys};
 use crate::support::vfstest::{MapFile, symlink};
 
 /// How long a test waits for a mapper process close that Go waits for
@@ -59,7 +61,7 @@ fn file_map<const N: usize>(entries: [(&str, MapFile); N]) -> FileMap {
         .collect()
 }
 
-// Go: contentmapper_watch_test.go:21 recordingContentMapperSystem
+// Go: contentmapper_watch_test.go:22 recordingContentMapperSystem
 // PORT: Go embeds `*TestSys`; every method but `Spawn` calls the test
 // system.
 struct RecordingContentMapperSystem {
@@ -92,7 +94,7 @@ impl System for RecordingContentMapperSystem {
     fn get_environment_variable(&self, name: &str) -> (String, bool) {
         System::get_environment_variable(&*self.test_sys, name)
     }
-    // Go: contentmapper_watch_test.go:26 recordingContentMapperSystem.Spawn
+    // Go: contentmapper_watch_test.go:27 recordingContentMapperSystem.Spawn
     fn spawn(
         &self,
         command: &[String],
@@ -109,7 +111,7 @@ impl System for RecordingContentMapperSystem {
     }
 }
 
-// Go: contentmapper_watch_test.go:30 recordingContentMapperSpawner
+// Go: contentmapper_watch_test.go:31 recordingContentMapperSpawner
 // PORT: Go `closed chan<- struct{}` (nil when no test waits) is an
 // `Option` of the sender of a bounded channel.
 struct RecordingContentMapperSpawner {
@@ -139,7 +141,7 @@ impl RecordingContentMapperSpawner {
 }
 
 impl contentmapper::Spawner for RecordingContentMapperSpawner {
-    // Go: contentmapper_watch_test.go:37 recordingContentMapperSpawner.Spawn
+    // Go: contentmapper_watch_test.go:38 recordingContentMapperSpawner.Spawn
     fn spawn(
         &self,
         command: &[String],
@@ -157,7 +159,7 @@ impl contentmapper::Spawner for RecordingContentMapperSpawner {
     }
 }
 
-// Go: contentmapper_watch_test.go:46 recordingContentMapperProcess
+// Go: contentmapper_watch_test.go:47 recordingContentMapperProcess
 // PORT: Go embeds the `io.ReadWriteCloser`, which has no `ExitCode`
 // method, so the host sees no exit state: the default `exit_code`.
 struct RecordingContentMapperProcess {
@@ -180,7 +182,7 @@ impl ipc::ReadWriteCloser for RecordingContentMapperProcess {
         ipc::ReadWriteCloser::flush(&*self.inner)
     }
 
-    // Go: contentmapper_watch_test.go:53 recordingContentMapperProcess.Close
+    // Go: contentmapper_watch_test.go:54 recordingContentMapperProcess.Close
     fn close(&self) -> Result<(), GoError> {
         let mut result = Ok(());
         self.once.call_once(|| {
@@ -251,7 +253,7 @@ fn wait_closed(closed: &Receiver<()>) {
         .expect("a content mapper process close");
 }
 
-// Go: contentmapper_watch_test.go:65 TestContentMapperBuildLifecycle
+// Go: contentmapper_watch_test.go:66 TestContentMapperBuildLifecycle
 #[test]
 fn content_mapper_build_lifecycle() {
     run_test_in_child(
@@ -293,7 +295,105 @@ fn content_mapper_build_lifecycle() {
     );
 }
 
-// Go: contentmapper_watch_test.go:85 TestContentMapperSupplementalDiagnosticUsesOriginalFileName (ts#63936)
+// Go: contentmapper_watch_test.go:86 TestContentMapperOutputExtensionsIncrementalEmit (ts#64581)
+// PORT: a plain `tsc` installs one program for its process, so each
+// command runs in a command child of its own (`run_command_in_child`), on
+// the test system's state. Go's recording system only counts the spawns of
+// the test system's spawner, and this test does not read the counts, so the
+// child uses the test system's spawner. Go's 4 subtests are 4 tests here.
+fn content_mapper_output_extensions_incremental_emit(build: bool, r#override: bool) {
+    const ROOT: &str = "/home/src/workspaces/project/";
+    let mut config = r#"{
+					"compilerOptions": {
+						"composite": true, "module": "preserve",
+						"rewriteRelativeImportExtensions": true, "outDir": "dist"
+					},
+					"contentMappers": [{ "package": "mapper", "extensions": [".vue"]"#
+        .to_string();
+    if r#override {
+        config += r#", "outputExtensions": {".vue": ".js"}"#;
+    }
+    config += r#"}]
+				}"#;
+    let manifest = contentmappertest::package_json(contentmappertest::VERBATIM_MAPPER).replacen(
+        r#""exec":"#,
+        r#""outputExtensions": {".vue": ".js"}, "exec":"#,
+        1,
+    );
+    let tsconfig = format!("{ROOT}tsconfig.json");
+    let mapper_package_json = format!("{ROOT}node_modules/mapper/package.json");
+    let input = TscInput {
+        files: file_map([
+            (tsconfig.as_str(), config.as_str().into()),
+            (&format!("{ROOT}app.vue"), "export const app = 1;".into()),
+            (
+                &format!("{ROOT}main.ts"),
+                r#"export { app } from "./app.vue";"#.into(),
+            ),
+            (mapper_package_json.as_str(), manifest.as_str().into()),
+        ]),
+        ..Default::default()
+    };
+    let test_sys = new_test_sys(&input, false);
+    let mut args: Vec<String> = ["--pretty", "false", "--runExternalCode"]
+        .map(String::from)
+        .to_vec();
+    if build {
+        args.insert(0, "--build".to_string());
+    }
+    let run = |extension: &str| {
+        let result =
+            run_command_in_child(&test_sys, &args).unwrap_or_else(|err| panic!("tsgo: {err}"));
+        assert_eq!(
+            result.status,
+            ExitStatus::Success,
+            "{}",
+            test_sys.output_text()
+        );
+        for file in ["main.js", "main.d.ts"] {
+            let (text, ok) = test_sys.fs().read_file(&format!("{ROOT}dist/{file}"));
+            assert!(ok);
+            assert!(text.contains(&format!("\"./app{extension}\"")), "{text}");
+        }
+    };
+    run(".js");
+    test_sys.clear_output();
+    if r#override {
+        test_sys.write_file_no_error(&tsconfig, &config.replacen(r#"".js""#, r#"".jsx""#, 1));
+    } else {
+        test_sys.write_file_no_error(
+            &mapper_package_json,
+            &manifest.replacen(r#"".js""#, r#"".jsx""#, 1),
+        );
+    }
+    run(".jsx");
+}
+
+// Go: contentmapper_watch_test.go:86 TestContentMapperOutputExtensionsIncrementalEmit, subtest "incremental manifest"
+#[test]
+fn content_mapper_output_extensions_incremental_emit_incremental_manifest() {
+    content_mapper_output_extensions_incremental_emit(false, false);
+}
+
+// Go: contentmapper_watch_test.go:86 TestContentMapperOutputExtensionsIncrementalEmit, subtest "incremental override"
+#[test]
+fn content_mapper_output_extensions_incremental_emit_incremental_override() {
+    content_mapper_output_extensions_incremental_emit(false, true);
+}
+
+// Go: contentmapper_watch_test.go:86 TestContentMapperOutputExtensionsIncrementalEmit, subtest "build manifest"
+#[test]
+fn content_mapper_output_extensions_incremental_emit_build_manifest() {
+    content_mapper_output_extensions_incremental_emit(true, false);
+}
+
+// Go: contentmapper_watch_test.go:86 TestContentMapperOutputExtensionsIncrementalEmit, subtest "build override"
+#[test]
+fn content_mapper_output_extensions_incremental_emit_build_override() {
+    content_mapper_output_extensions_incremental_emit(true, true);
+}
+
+// Go: contentmapper_watch_test.go:151 TestContentMapperSupplementalDiagnosticUsesOriginalFileName (ts#63936)
 #[test]
 fn content_mapper_supplemental_diagnostic_uses_original_file_name() {
     run_test_in_child(
@@ -343,7 +443,7 @@ fn content_mapper_supplemental_diagnostic_uses_original_file_name() {
     );
 }
 
-// Go: contentmapper_watch_test.go:109 TestContentMapperBuildDetectsNewPhysicalSupplementalFile (ts#63936)
+// Go: contentmapper_watch_test.go:175 TestContentMapperBuildDetectsNewPhysicalSupplementalFile (ts#63936)
 #[test]
 fn content_mapper_build_detects_new_physical_supplemental_file() {
     run_test_in_child(
@@ -401,7 +501,7 @@ fn content_mapper_build_detects_new_physical_supplemental_file() {
     );
 }
 
-// Go: contentmapper_watch_test.go:138 TestContentMapperBuildIdentityFailureExitStatus
+// Go: contentmapper_watch_test.go:204 TestContentMapperBuildIdentityFailureExitStatus
 #[test]
 fn content_mapper_build_identity_failure_exit_status() {
     run_test_in_child(
@@ -451,7 +551,7 @@ fn content_mapper_build_identity_failure_exit_status() {
     );
 }
 
-// Go: contentmapper_watch_test.go:167 TestContentMapperWatchLifecycle
+// Go: contentmapper_watch_test.go:233 TestContentMapperWatchLifecycle
 fn content_mapper_watch_lifecycle(args: &[&str]) {
     const CONFIG_FILE_NAME: &str = "/home/src/workspaces/project/tsconfig.json";
     let input = TscInput {
@@ -536,7 +636,7 @@ fn content_mapper_watch_lifecycle(args: &[&str]) {
     assert_eq!(sys.spawner.closes(), 3);
 }
 
-// Go: contentmapper_watch_test.go:167 TestContentMapperWatchLifecycle, subtest "watch"
+// Go: contentmapper_watch_test.go:233 TestContentMapperWatchLifecycle, subtest "watch"
 #[test]
 fn content_mapper_watch_lifecycle_watch() {
     run_test_in_child(
@@ -545,7 +645,7 @@ fn content_mapper_watch_lifecycle_watch() {
     );
 }
 
-// Go: contentmapper_watch_test.go:167 TestContentMapperWatchLifecycle, subtest "build watch"
+// Go: contentmapper_watch_test.go:233 TestContentMapperWatchLifecycle, subtest "build watch"
 #[test]
 fn content_mapper_watch_lifecycle_build_watch() {
     run_test_in_child(
@@ -554,7 +654,7 @@ fn content_mapper_watch_lifecycle_build_watch() {
     );
 }
 
-// Go: contentmapper_watch_test.go:241 TestContentMapperSupplementalCollisionWatch
+// Go: contentmapper_watch_test.go:307 TestContentMapperSupplementalCollisionWatch
 #[test]
 fn content_mapper_supplemental_collision_watch() {
     run_test_in_child(
@@ -621,7 +721,7 @@ fn content_mapper_supplemental_collision_watch() {
     );
 }
 
-// Go: contentmapper_watch_test.go:273 TestDynamicContentMapperWatchDependency
+// Go: contentmapper_watch_test.go:339 TestDynamicContentMapperWatchDependency
 #[test]
 fn dynamic_content_mapper_watch_dependency() {
     run_test_in_child(
@@ -682,7 +782,7 @@ fn dynamic_content_mapper_watch_dependency() {
     );
 }
 
-// Go: contentmapper_watch_test.go:307 TestContentMapperMixedWatchBatchForcesFullRebuild
+// Go: contentmapper_watch_test.go:373 TestContentMapperMixedWatchBatchForcesFullRebuild
 #[test]
 fn content_mapper_mixed_watch_batch_forces_full_rebuild() {
     run_test_in_child(
@@ -757,7 +857,7 @@ fn content_mapper_mixed_watch_batch_forces_full_rebuild() {
     );
 }
 
-// Go: contentmapper_watch_test.go:348 TestDynamicContentMapperBuildWatchDependency
+// Go: contentmapper_watch_test.go:414 TestDynamicContentMapperBuildWatchDependency
 #[test]
 fn dynamic_content_mapper_build_watch_dependency() {
     run_test_in_child(
@@ -813,7 +913,7 @@ fn dynamic_content_mapper_build_watch_dependency() {
     );
 }
 
-// Go: contentmapper_watch_test.go:380 TestContentMapperBuildWatchSymlinkedManifestChange (ts#63936)
+// Go: contentmapper_watch_test.go:446 TestContentMapperBuildWatchSymlinkedManifestChange (ts#63936)
 #[test]
 fn content_mapper_build_watch_symlinked_manifest_change() {
     run_test_in_child(
@@ -870,7 +970,7 @@ fn content_mapper_build_watch_symlinked_manifest_change() {
     );
 }
 
-// Go: contentmapper_watch_test.go:411 TestContentMapperWatchManifestChangeIgnoresCase (ts#64544)
+// Go: contentmapper_watch_test.go:477 TestContentMapperWatchManifestChangeIgnoresCase (ts#64544)
 #[test]
 fn content_mapper_watch_manifest_change_ignores_case() {
     run_test_in_child(
@@ -927,7 +1027,7 @@ fn content_mapper_watch_manifest_change_ignores_case() {
     );
 }
 
-// Go: contentmapper_watch_test.go:447 TestContentMapperBuildWatchSymlinkedManifestDelete (ts#63936)
+// Go: contentmapper_watch_test.go:513 TestContentMapperBuildWatchSymlinkedManifestDelete (ts#63936)
 #[test]
 fn content_mapper_build_watch_symlinked_manifest_delete() {
     run_test_in_child(
@@ -992,7 +1092,7 @@ fn content_mapper_build_watch_symlinked_manifest_delete() {
     );
 }
 
-// Go: contentmapper_watch_test.go:479 TestContentMapperBuildWatchSharedLifecycle
+// Go: contentmapper_watch_test.go:545 TestContentMapperBuildWatchSharedLifecycle
 #[test]
 fn content_mapper_build_watch_shared_lifecycle() {
     run_test_in_child(
