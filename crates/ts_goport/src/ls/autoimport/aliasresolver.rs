@@ -347,6 +347,13 @@ impl AliasResolver {
         Vec::new()
     }
 
+    // Go: ls/autoimport/aliasresolver.go:169 ContentMapperExtensionRewrites (ts#64581)
+    // PORT: the Go nil slice is an empty `Vec`. As for
+    // `content_mapper_extensions`, no port code calls it on an alias resolver.
+    pub fn content_mapper_extension_rewrites(&self) -> Vec<tspath::ExtensionRewrite> {
+        Vec::new()
+    }
+
     // Go: ls/autoimport/aliasresolver.go:163 FileExists
     // FileExists implements checker.Program.
     pub fn file_exists(&self, file_name: &str) -> bool {

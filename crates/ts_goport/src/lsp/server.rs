@@ -5523,7 +5523,7 @@ impl Server {
     }
 }
 
-// Go: server.go:2536 parseContentMapperContributions (tsgo#4712)
+// Go: server.go:2534 parseContentMapperContributions (tsgo#4712, ts#64581)
 // PORT: Go `json.Marshal` of the options map (`LSPObject`) writes the keys in Go map
 // order (random); `IndexMap` writes them in the order the client sent them.
 pub fn parse_content_mapper_contributions(
@@ -5577,6 +5577,21 @@ pub fn parse_content_mapper_contributions(
                 )));
             }
         }
+        // ts#64581. PORT: Go ranges over the map in random order, so with more
+        // than one bad mapping it names any one of them; here it is the first
+        // that the client sent.
+        for (source, output) in manifest.output_extensions.iter().flatten() {
+            if !contentmapper::is_valid_extension(source)
+                || !contentmapper::is_valid_extension(output)
+            {
+                return Err(errors::new(format!(
+                    "content mapper contribution {} has invalid output extension mapping from {} to {}",
+                    gostd::strconv::quote(&identity),
+                    gostd::strconv::quote(source),
+                    gostd::strconv::quote(output)
+                )));
+            }
+        }
         for extension in &valid_extensions {
             // ts#63936: Go `strings.ToLower` (rune by rune).
             let lowered: String = extension
@@ -5608,7 +5623,6 @@ pub fn parse_content_mapper_contributions(
                 package: identity.clone(),
                 extensions: valid_extensions,
                 options: json_ext::JsonValue(options),
-                // ts#64581: the contribution's outputExtensions (wave 2b).
                 ..Default::default()
             },
             manifest: contentmapper::Manifest {
@@ -5622,6 +5636,12 @@ pub fn parse_content_mapper_contributions(
             contribution_id: identity.clone(),
             ..Default::default()
         };
+        // ts#64581: Go `maps.Clone` keeps a nil map nil and an empty map empty.
+        mapper.manifest.default_output_extensions = manifest
+            .output_extensions
+            .as_ref()
+            .map(|extensions| extensions.clone().into_iter().collect());
+        mapper.definition.output_extensions = mapper.manifest.default_output_extensions.clone();
         if let Some(cwd) = &manifest.cwd {
             if !tspath::path_is_absolute(cwd) {
                 return Err(errors::new(format!(
@@ -5639,24 +5659,14 @@ pub fn parse_content_mapper_contributions(
     Ok(result)
 }
 
-// Go: server.go:2599 isValidContributedContentMapperExtension (tsgo#4712)
+// Go: server.go:2604 isValidContributedContentMapperExtension (tsgo#4712, ts#64581)
 pub fn is_valid_contributed_content_mapper_extension(extension: &str) -> bool {
-    if extension.len() <= 1
-        || !extension.starts_with('.')
-        || tspath::get_any_extension_from_path(&format!("file{extension}"), &[], false) != extension
-    {
+    // ts#64581: compound extensions (`.y.z`) are valid; one that ends with a
+    // built-in extension is not.
+    if !contentmapper::is_valid_extension(extension) {
         return false;
     }
-    // ts#63936: Go `strings.EqualFold`.
-    !tspath::ALL_SUPPORTED_EXTENSIONS_WITH_JSON
-        .iter()
-        .flat_map(|group| group.iter())
-        .any(|native_extension| {
-            crate::frontend::stringutil_ls::equate_string_case_insensitive(
-                native_extension,
-                extension,
-            )
-        })
+    !contentmapper::has_reserved_source_extension(extension)
 }
 
 #[cfg(test)]
