@@ -258,8 +258,9 @@ impl Program {
     }
 
     /// PORT: not in Go. Adds `wait` to the time that `take_started_check_time`
-    /// takes (`tsc -b`: the orchestrator waits for the started check before
-    /// the emit call, see `BuildTask::add_compile_wait`).
+    /// takes. `tsc -b` adds the time from `start_check` to the end of the
+    /// check, because its orchestrator waits for the check before the emit
+    /// call (build/build_task.rs `StartedTimes`).
     pub fn add_started_check_time(&self, wait: Duration) {
         self.started_check_time
             .set(self.started_check_time.get() + wait);
