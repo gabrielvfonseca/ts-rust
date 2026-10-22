@@ -1477,6 +1477,14 @@
         "kind": "setup",
         "ruling": "w5 (new; the reviewer judges it in the R222 verdict)",
         "go": "GP lsp/lsproto/lsp_generated.go:9134 ContentMapperManifest.OutputExtensions *map[string]string (ts#64581); GP lsp/server_contentmapper_internal_test.go:105 (literal without it: nil)"
+      },
+      {
+        "row": "P1",
+        "suite": "early_emit",
+        "test": "build_statistics_time_the_started_check_and_emit",
+        "kind": "assert (port-only test)",
+        "ruling": "auditor R222 STOP (target/continuation-r222-auditor-verdict.txt); the reviewer judges it in the R222 verdict",
+        "go": "port-only test of #100 (#88: Go prints a real tsc -b check time; execute/tsc/emit.go:99-121 and build/buildtask.go:223, :261 at both pins). First bound changes from check >= 0.002 to check > 0.0 && check * 5.0 >= total (same run), commit e5c67e307 (followups70, PR #101, merged after R221 by the light path, main 4969bf26a): the old fixed bound passed on the pre-#91 code under load (3 of 72 runs reached 0.011 s); the new bound passes 160 of 160 under stress, main before #91 (06b32bdce) and #91 without its fixup (bad050328) fail 20 of 20; followups70 skeptic PASS (target/continuation-r97-goport/oct22/followups70-skeptic/report.md); state note followups70-result-2026-10-22. The test is ok in R221 and in R222."
       }
     ],
     "verdictHistory": [],
