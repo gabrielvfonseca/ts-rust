@@ -22,7 +22,7 @@ This work stopped on Theo's request (state note `theo-winddown-2026-10-14`). Ano
 
 - **Last accepted revision: R220** (batch 101, `main` 21f48ab67 and later docs commits). Pin N prime fed0bf24149f (`typescript@7.1.0-dev.20261008.1`). Tests 184,773 retained, gate 0 regressions, LSP and API 0 lost, np-suite 954 of 954.
 - **Not landed:**
-  - `goport-followups68` 84e0c707c: panic-in-bind reset test, `remove_node_flags` against Go binder.go:1555 and :1600, the `npm/wasm` `node --test` worker fix. The lane is done but has no skeptic review.
+  - `goport-followups68` 84e0c707c: landed in R221 (2026-10-22) after its skeptic.
   - Dropped below the bar because they cost st Bind time in integration timing: nodeinline1 (`goport-nodeinline1`) and propaccess2 (`goport-propaccess2`).
 - **Next pin move (bump E):** survey in `target/continuation-r97-goport/upstream/bumpE/survey.md` (state note `bumpE-survey-2026-10-14`). About 85 port functions and 2.3k to 2.8k Rust lines; target the newest nightly gitHead; no Go test renames.
 - **Open reviewer items:** see the `reviewerItems` of R219 and R220 in `docs/typechecker-batches/` (Go cite fixes, the ci.yml push paths for the wasm job, `release_checker` tests, TypeORM default bind recheck).
