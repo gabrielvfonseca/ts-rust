@@ -1274,7 +1274,7 @@ pub fn parse_json_config_file_content_worker(
                 continue;
             }
             // ts#64832
-            if is_network_path_value(&r.reference.path, &base_path) {
+            if is_network_path_value(&r.reference.path, &base_path_for_file_names) {
                 errors.push(create_diagnostic_at_project_reference_property(
                     source_file.as_ref(),
                     index,

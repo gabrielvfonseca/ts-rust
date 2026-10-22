@@ -300,6 +300,102 @@ fn parse_json_config_file_content_defaults_compile_on_save_to_false() {
     assert_eq!(parsed.compile_on_save, Some(false));
 }
 
+// PORT: no Go test. The project reference network check (ts#64832) resolves
+// the path against the config file's directory, not the base path: Go calls
+// getProjectReferences(basePathForFileNames) (tsconfigparsing.go:1478, check
+// at :1449). The expected values are the Go N' (3e9236361fa9) output of the
+// same calls (a `go test -overlay` probe, bump E L1 round 2):
+//   base /apath, config /apath/sub/tsconfig.json: no error, reference
+//     /apath/??/UNC/server/share/project
+//   base /apath/sub, config /apath/tsconfig.json: TS5116 (JSON API at -1..-1,
+//     source file API at 50..82), no reference
+#[test]
+fn project_reference_network_check_uses_config_directory() {
+    const TEXT: &str = "{\n  \"files\": [\"a.ts\"],\n  \"references\": [{ \"path\": \"../??/UNC/server/share/project\" }]\n}";
+    const REFERENCE: &str = "../??/UNC/server/share/project";
+    // (base path, config file, file names, (JSON API, source file API) error ranges, reference)
+    let cases = [
+        (
+            "/apath",
+            "/apath/sub/tsconfig.json",
+            "/apath/sub/a.ts",
+            None,
+            Some("/apath/??/UNC/server/share/project"),
+        ),
+        (
+            "/apath/sub",
+            "/apath/tsconfig.json",
+            "/apath/a.ts",
+            Some([(-1, -1), (50, 82)]),
+            None,
+        ),
+    ];
+    for (base_path, config_file_name, file_name, error_ranges, reference) in cases {
+        let files = file_map(&[
+            ("/apath/a.ts", ""),
+            ("/apath/sub/a.ts", ""),
+            (config_file_name, TEXT),
+        ]);
+        let host =
+            new_vfs_parse_config_host(&files, base_path, true /*useCaseSensitiveFileNames*/);
+        let path = to_path(config_file_name, base_path, true);
+        let (json, _) =
+            tsoptions::parse_config_file_text_to_json(config_file_name, path.clone(), TEXT);
+        let via_json = tsoptions::parse_json_config_file_content(
+            &json,
+            &host,
+            base_path,
+            None,
+            config_file_name,
+            &[],
+            None,
+        );
+        let via_source_file = tsoptions::parse_json_source_file_config_file_content(
+            new_tsconfig_source_file_from_file_path(config_file_name, path, TEXT),
+            &host,
+            base_path,
+            None,
+            None,
+            config_file_name,
+            &[],
+            None,
+        );
+        for (api, parsed) in [via_json, via_source_file].iter().enumerate() {
+            let context = format!("base {base_path}, config {config_file_name}, api {api}");
+            assert_eq!(parsed.parsed_config.file_names, [file_name], "{context}");
+            let errors: Vec<_> = parsed
+                .errors
+                .iter()
+                .map(|d| (d.code, d.pos, d.end, d.message_args.clone()))
+                .collect();
+            let expected_errors: Vec<_> = error_ranges
+                .map(|ranges| {
+                    (
+                        5116,
+                        ranges[api].0,
+                        ranges[api].1,
+                        vec![REFERENCE.to_string()],
+                    )
+                })
+                .into_iter()
+                .collect();
+            assert_eq!(errors, expected_errors, "{context}");
+            let references: Vec<_> = parsed
+                .parsed_config
+                .project_references
+                .iter()
+                .flatten()
+                .map(|r| (r.path.as_str(), r.original_path.as_str()))
+                .collect();
+            let expected_references: Vec<_> = reference
+                .map(|path| (path, REFERENCE))
+                .into_iter()
+                .collect();
+            assert_eq!(references, expected_references, "{context}");
+        }
+    }
+}
+
 // Go: tsconfigparsing_test.go:818 getParsedWithJsonApi
 fn get_parsed_with_json_api(
     config: &TestConfig,
