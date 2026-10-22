@@ -152,7 +152,7 @@ remote() {
   retry run blacksmith testbox run --id "$id" "(echo $start_marker >&2; . ~/testbox.env && $remote_cmd)"
 }
 
-# ssh_route: sets host and ssh for rsync over the CLI's own SSH route (port 64000 and the key that warmup
+# ssh_route: sets host and ssh for rsync over the CLI's own SSH route (the port in connection.json and the key that warmup
 # saves in ~/.blacksmith/testboxes/<id>; CLI 0.4.70, see `run --debug`). The login dir is /home/runner.
 # Commands over this route do not source the testbox env, and they read stdin: give them < /dev/null.
 ssh_route() {
@@ -163,7 +163,13 @@ ssh_route() {
   key="$HOME/.blacksmith/testboxes/$id/id_ed25519"
   # A host with a / would make rsync copy to a local path.
   [[ -n "$host" && $host != */* && -f "$key" ]] || { echo "no SSH route to $id (host '$host', key $key)" >&2; exit 1; }
-  ssh="ssh -p 64000 -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o Compression=no -o ConnectTimeout=20"
+  # The CLI saves the testbox's SSH port in connection.json. It is not always 64000: on 2026-10-22 some
+  # testboxes listened on 64001 and 64002, and the fixed port reached another testbox or nothing.
+  local port
+  port="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("ssh_port") or 64000)' \
+    "$HOME/.blacksmith/testboxes/$id/connection.json" 2> /dev/null)" || port=64000
+  [[ $port =~ ^[0-9]+$ ]] || port=64000
+  ssh="ssh -p $port -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o Compression=no -o ConnectTimeout=20"
 }
 
 # push_paths <path>...: rsync each path to the same path on the testbox.
