@@ -74,6 +74,16 @@ Protocol 5 (every pin after 673a5f17d713; bump D N' = microsoft/TypeScript fed0b
   event is the event of the protocol 4 pin's trace. The 7 new methods go as they are. Answers are normalized as
   protocol 5 answers, so a protocol 4 symbol answer is never `same`. As for --wire 3, it needs a reviewer ruling
   before its results are used; the result meta and manifest record "wire": 4.
+LSP API sessions (transport "lsp"): up to D_PIN (bump D N' fed0bf24149f) the server listens on the pipe path that
+custom/initializeAPISession requests, and the run connects to that path. From #64818 (every pin after D_PIN; bump E
+N' = microsoft/TypeScript 3e9236361fa9) the Unix server makes the requested path a private directory, listens on
+<path>/socket and answers that path in "pipe" (ipc/transport_unix.go newPipeListener, lsp/server.go
+handleInitializeAPISession). The run then connects to the answer's pipe, as the client does
+(packages/vscode-typescript/src/session.ts initializeAPISession). The answer itself is an @lsp record, so a
+server that answers another path is a diff.
+From #64681 (every pin after D_PIN) a ProjectResponse has no rootFiles and compilerOptions. `build` then reads
+parsedCommandLine.fileNames and parsedCommandLine.options, which hold the same values up to D_PIN (Go
+NewProjectResponse), so the traces do not change.
 `build` writes traces of the run's protocol. Normalization reads the escaped names from protocol 2 on.
 Build the traces at each pin: they hold positions from the pin's encoded AST (UTF-16 offsets after the
 O pin, UTF-8 at O; they differ in files with non-ASCII text). With GOPORT_PIN unset the run uses the
@@ -182,6 +192,7 @@ O_PIN = "dc37b5249ab6"  # the last pin with API protocol 1
 A_PIN = "52168999f3dc"  # the last pin with API protocol 2
 B_PIN = "16c25522e123"  # the last pin with API protocol 3
 C_PIN = "673a5f17d713"  # the last pin with API protocol 4
+D_PIN = "fed0bf24149f"  # the last pin whose LSP API session listens on the requested pipe path (#64818)
 
 
 def run_pin():
@@ -199,6 +210,8 @@ def run_pin():
 PIN = run_pin()
 PROTOCOL = 1 if PIN == O_PIN else 2 if PIN == A_PIN else 3 if PIN == B_PIN else 4 if PIN == C_PIN else 5
 PROTOCOL2 = PROTOCOL >= 2
+# Connect an LSP API session to the pipe of the initializeAPISession answer (see the LSP API sessions note above).
+ANSWER_PIPE = PIN not in (O_PIN, A_PIN, B_PIN, C_PIN, D_PIN)
 DEFAULT_OUT_ROOT = REPO + "/target/continuation-r97-goport/tests2/api"
 DEFAULT_ORACLE = os.path.expanduser("~/.local/bin/tsgo-oracle")
 GO_REPO = "/home/theo/.explore/repos/microsoft__typescript-go"
@@ -1116,6 +1129,10 @@ class Server:
         self.lsp_records.append(("custom/initializeAPISession", st, res))
         if st != "ok":
             raise HarnessError(f"custom/initializeAPISession: {st} {res}")
+        if ANSWER_PIPE:
+            pipe = res.get("pipe") if isinstance(res, dict) else None
+            if not isinstance(pipe, str) or not pipe:
+                raise HarnessError(f"custom/initializeAPISession: no pipe in the answer {res}")
         deadline = time.time() + 10
         while True:
             try:
@@ -2522,7 +2539,8 @@ def oracle_session(oracle, pdir, tsconfig, files, tmp_root, project_out=None):
         proj = next((p for p in snap["projects"] if p.get("configFileName") == want), snap["projects"][0])
         if project_out is not None:
             project_out.update(proj)
-        roots = set(proj["rootFiles"])
+        # #64681 (every pin after D_PIN) drops the deprecated rootFiles; up to D_PIN it equals parsedCommandLine.fileNames.
+        roots = set(proj["rootFiles"] if "rootFiles" in proj else proj["parsedCommandLine"]["fileNames"])
         encoded = {}
         for n, rel in enumerate(files):
             st, ans = srv.api.request(3 + n, "getSourceFile", {"snapshot": snap["snapshot"], "project": proj["id"],
@@ -3036,7 +3054,11 @@ class ExtPlan:
         self.jsx = spread(glob_files(pdir, cfg["jsx"], []), 5) if cfg.get("jsx") else []
         self.fixture = cfg.get("fixture") or []
         # The project's own compilerOptions (the bundler-plugin use of transpile), project dir as @PROJECT_DIR@.
-        self.options = Normalizer([(pdir, "@PROJECT_DIR@")]).strings(project.get("compilerOptions") or {})
+        # #64681 (every pin after D_PIN) drops the deprecated compilerOptions; up to D_PIN it equals
+        # parsedCommandLine.options.
+        options = project["compilerOptions"] if "compilerOptions" in project else \
+            (project.get("parsedCommandLine") or {}).get("options")
+        self.options = Normalizer([(pdir, "@PROJECT_DIR@")]).strings(options or {})
 
     def summary(self):
         return {"extFiles": self.ext_files, "adder": self.adder, "temp": self.temp, "emitFiles": self.emit_files,
