@@ -1361,7 +1361,7 @@ pub(crate) struct AccessibleSymbolChainContext {
     pub visited_symbol_tables_map: Rc<RefCell<FxHashMap<SymbolId, FxHashSet<SymbolTableID>>>>,
 }
 
-// Go: checker/symbolaccessibility.go:402 symbolTableID constants
+// Go: checker/symbolaccessibility.go:468 symbolTableID constants
 // The high 3 bits encode the kind, and the remaining bits encode the
 // NodeId or SymbolId of the source.
 impl SymbolTableID {
@@ -1372,8 +1372,8 @@ impl SymbolTableID {
     pub const KIND_GLOBALS: Self = Self(3 << Self::KIND_SHIFT);
     /// Resolved/derived exports from getExportsOfSymbol, distinct from raw sym.Exports.
     pub const KIND_RESOLVED_EXPORTS: Self = Self(4 << Self::KIND_SHIFT);
-    /// Go `stKindMask = (iota - 1) << stKindShift`, with iota = 5.
-    pub const KIND_MASK: Self = Self(4 << Self::KIND_SHIFT);
+    /// Go `stKindMask = ^symbolTableID(1<<stKindShift - 1)`: every kind bit.
+    pub const KIND_MASK: Self = Self(!((1 << Self::KIND_SHIFT) - 1));
 
     /// Go `tableId & stKindMask`.
     #[must_use]
