@@ -77,7 +77,7 @@ pub fn get_completion_documentation_format(ctx: &Context) -> lsproto::MarkupKind
 }
 
 impl LanguageService {
-    // Go: completions.go:5516 getCompletionItemDetails
+    // Go: completions.go:5520 getCompletionItemDetails
     #[allow(clippy::too_many_arguments)]
     pub fn get_completion_item_details(
         &self,
@@ -123,6 +123,7 @@ impl LanguageService {
                 &self.format_options(),
                 &self.converters,
                 &self.user_preferences(),
+                false, /*includeSymbolNameInDescription*/
             );
             // Go `&edits`: a `[]*lsproto.TextEdit` of non-nil edits.
             item.additional_text_edits = Some(edits.into_iter().map(Some).collect());

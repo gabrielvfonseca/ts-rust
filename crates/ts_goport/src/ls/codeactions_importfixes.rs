@@ -95,6 +95,7 @@ fn get_import_code_actions(
             &fix_context.ls.format_options(),
             &fix_context.ls.converters,
             &fix_context.ls.user_preferences(),
+            fix_info.symbol_name != fix_info.error_identifier_text,
         );
 
         if ok {
@@ -383,7 +384,7 @@ fn is_umd_export_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
         && is_namespace_export_declaration(symbols.sym(symbol).declarations[0])
 }
 
-// Go: ls/codeactions_importfixes.go:302 getFixesInfoForNonUMDImport
+// Go: ls/codeactions_importfixes.go:303 getFixesInfoForNonUMDImport
 fn get_fixes_info_for_non_umd_import(
     fix_context: &CodeFixContext<'_>,
     symbol_token: Node,
@@ -441,7 +442,7 @@ fn get_fixes_info_for_non_umd_import(
                 all_info.push(FixInfo {
                     fix,
                     symbol_name: symbol_name.clone(),
-                    error_identifier_text: String::new(),
+                    error_identifier_text: symbol_token.text().to_string(),
                     is_jsx_namespace_fix: symbol_name != symbol_token.text(),
                 });
             }

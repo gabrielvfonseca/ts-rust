@@ -76,7 +76,7 @@ pub struct AddToExistingImportFix {
 }
 
 impl Fix {
-    // Go: ls/autoimport/fix.go:56 Edits
+    // Go: ls/autoimport/fix.go:57 Edits
     // Edits produces the text edits and a human-readable description for the fix. The returned bool is false
     // when the fix targets a content-mapped file and any edit could not be placed within a single verbatim
     // span, meaning it cannot be safely applied to the original text and the caller should discard it.
@@ -88,6 +88,7 @@ impl Fix {
         format_options: &lsutil::FormatCodeSettings,
         converters: &Rc<lsconv::Converters>,
         preferences: &lsutil::UserPreferences,
+        include_symbol_name_in_description: bool,
     ) -> (Vec<lsproto::TextEdit>, String, bool) {
         let f = self;
         let locale = locale::from_context(ctx);
@@ -120,6 +121,17 @@ impl Fix {
                     preferences,
                 );
                 let (edits, safe) = file_edits(&mut tracker, file);
+                if include_symbol_name_in_description {
+                    return (
+                        edits,
+                        crate::diagnostics_loc::message_localize(
+                            diag::Import_0_from_1,
+                            &locale,
+                            &args![f.name, f.module_specifier],
+                        ),
+                        safe,
+                    );
+                }
                 (
                     edits,
                     crate::diagnostics_loc::message_localize(
@@ -210,6 +222,17 @@ impl Fix {
                     add_namespace_qualifier(f, &mut tracker, file, &locale);
                 }
                 let (edits, safe) = file_edits(&mut tracker, file);
+                if include_symbol_name_in_description {
+                    return (
+                        edits,
+                        crate::diagnostics_loc::message_localize(
+                            diag::Import_0_from_1,
+                            &locale,
+                            &args![f.name, f.module_specifier],
+                        ),
+                        safe,
+                    );
+                }
                 (
                     edits,
                     crate::diagnostics_loc::message_localize(
