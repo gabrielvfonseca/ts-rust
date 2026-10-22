@@ -971,7 +971,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:29105 checkExternalEmitHelpers
+    // Go: checker/checker.go:29196 checkExternalEmitHelpers
     pub fn check_external_emit_helpers(&mut self, location: Node, helpers: ExternalEmitHelpers) {
         if !self.compiler_options.import_helpers.is_true() {
             return;
@@ -1019,6 +1019,20 @@ impl Checker {
                                     location,
                                     diag::This_syntax_requires_an_imported_helper_named_1_with_2_parameters_which_is_not_compatible_with_the_one_in_0_Consider_upgrading_your_version_of_0,
                                     args![EXTERNAL_HELPERS_MODULE_NAME_TEXT, name, 5],
+                                );
+                            }
+                        } else if helper
+                            .intersects(ExternalEmitHelpers::REWRITE_RELATIVE_IMPORT_EXTENSION)
+                            && !crate::program::ls_program::content_mapper_extension_rewrites()
+                                .is_empty()
+                        {
+                            // ts#64581 (checker.go:29227): the helper takes the
+                            // output extensions as a 4th parameter.
+                            if !self.has_signature_with_arity_greater_than(symbol, 3) {
+                                self.error(
+                                    location,
+                                    diag::This_syntax_requires_an_imported_helper_named_1_with_2_parameters_which_is_not_compatible_with_the_one_in_0_Consider_upgrading_your_version_of_0,
+                                    args![EXTERNAL_HELPERS_MODULE_NAME_TEXT, name, 4],
                                 );
                             }
                         }
