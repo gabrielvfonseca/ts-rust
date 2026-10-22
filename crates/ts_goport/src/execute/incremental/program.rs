@@ -982,7 +982,7 @@ fn normalize_package_jsons(mut package_jsons: Vec<String>) -> Vec<String> {
     package_jsons
 }
 
-// Go: compiler/program.go:1999 HandleNoEmitOptions
+// Go: compiler/program.go:2012 HandleNoEmitOptions
 // HandleNoEmitOptions mirrors tsc's handleNoEmitOptions.
 // PORT: #4407 replaced Go `HandleNoEmitOnError`.
 // `emitter::program_emit::handle_no_emit_options` is the plain program form
@@ -1034,7 +1034,7 @@ pub fn handle_no_emit_options(
     Some(EmitResult::default())
 }
 
-// Go: compiler/program.go:1980 ProgramLike (var _ compiler.ProgramLike = (*Program)(nil))
+// Go: compiler/program.go:1993 ProgramLike (var _ compiler.ProgramLike = (*Program)(nil))
 impl ProgramLike for Program {
     fn options(&self) -> &'static CompilerOptions {
         Program::options(self)

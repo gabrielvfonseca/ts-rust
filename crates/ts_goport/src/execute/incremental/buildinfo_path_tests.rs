@@ -23,7 +23,7 @@ use crate::program::{go_frontend_program, new_program_version, release_program};
 use std::collections::BTreeMap;
 use std::sync::Mutex;
 
-// Go: execute/incremental/buildinfo_path_test.go:47 deletionTestLib
+// Go: execute/incremental/buildinfo_path_test.go:48 deletionTestLib
 const DELETION_TEST_LIB: &str = "interface Array<T> {}
 interface Boolean {}
 interface CallableFunction {}

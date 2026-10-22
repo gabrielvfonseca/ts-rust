@@ -543,7 +543,7 @@ pub fn file_affects_global_scope(file: Node) -> bool {
         .any(|stmt| !is_module_with_string_literal_name(stmt))
 }
 
-// Go: incremental/programtosnapshot.go:286 addReferencedFilesFromSymbol
+// Go: incremental/programtosnapshot.go:286 addReferencedFilesFromSymbol (ts#64691)
 // PORT: the symbol belongs to the checker, so its arena is a parameter.
 fn add_referenced_files_from_symbol(
     checker: &Checker,
