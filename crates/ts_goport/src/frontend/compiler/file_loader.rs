@@ -1798,13 +1798,73 @@ impl FileLoader {
             // The load reads the worker's names (`preps_named`).
             let named = !self.keeps_import_names && kept.is_some();
             let mut file_emit_mode = None;
+            let kept_names = &kept;
+            let name_at = move |index: usize, entry: Node| match (
+                kept_names,
+                index.checked_sub(imports_start as usize),
+            ) {
+                (Some(kept), Some(kept_index)) => kept.get(kept_index),
+                _ => (entry.text(), import_usage(entry), None, None),
+            };
+
+            // PERF (loadcost): with no prep, the file's parse worker may
+            // still resolve these names, first to last. Going the same way,
+            // the loader waited at each lookup for the worker's load of the
+            // same path, so the whole resolution sat on the loader (with
+            // ts#64491 the 114 names of @types/node `process.d.ts` are
+            // cold: no other file resolves them first). The loader resolves
+            // them last to first here, so the two threads meet halfway; the
+            // pass below takes the answers in name order. The order changes
+            // no answer: the loader has worker answers (`shared_resolution`)
+            // only with the default resolver and no resolution trace.
+            // PORT: not in Go, where each parse task resolves on its own
+            // goroutine.
+            #[allow(clippy::type_complexity)]
+            let mut resolved_ahead: Vec<
+                Option<(
+                    Option<Arc<ResolvedModule>>,
+                    Vec<DiagAndArgs>,
+                    Option<GoError>,
+                )>,
+            > = Vec::new();
+            if prep.is_none()
+                && self.shared_resolution.is_some()
+                && crate::tracing::get().is_none()
+                && !options_for_file.trace_resolution.is_true()
+            {
+                resolved_ahead.resize_with(module_names.len(), || None);
+                for (index, entry) in module_names.iter().copied().enumerate().rev() {
+                    let (module_name, usage, _, source_phase) = name_at(index, entry);
+                    if module_name.is_empty()
+                        || source_phase.unwrap_or_else(|| is_source_phase_import(entry.parent()))
+                    {
+                        continue;
+                    }
+                    let mode = mode_for_import_usage(
+                        usage,
+                        file.file_name(),
+                        &meta,
+                        Some(&options_for_file),
+                        &mut file_emit_mode,
+                    );
+                    if file
+                        .ambient_module_names
+                        .iter()
+                        .any(|name| name == module_name)
+                    {
+                        continue;
+                    }
+                    resolved_ahead[index] = Some(self.resolver().resolve_module_name(
+                        module_name,
+                        &file_name,
+                        mode,
+                        redirect_ref,
+                    ));
+                }
+            }
 
             for (index, entry) in module_names.iter().copied().enumerate() {
-                let (module_name, usage, adds, source_phase) =
-                    match (&kept, index.checked_sub(imports_start as usize)) {
-                        (Some(kept), Some(kept_index)) => kept.get(kept_index),
-                        _ => (entry.text(), import_usage(entry), None, None),
-                    };
+                let (module_name, usage, adds, source_phase) = name_at(index, entry);
                 // ts#63915: a source phase import is not resolved
                 // (fileloader.go:880).
                 if module_name.is_empty()
@@ -1856,24 +1916,31 @@ impl FileLoader {
                         self.note_worker_logs(&answer.package_jsons, &answer.lookups);
                         answer.value.clone()
                     });
-                let resolved_module =
-                    match taken {
-                        Some(resolved_module) => {
-                            names_taken += 1;
-                            resolved_module
+                let resolved_module = match taken {
+                    Some(resolved_module) => {
+                        names_taken += 1;
+                        resolved_module
+                    }
+                    None => {
+                        names_own += 1;
+                        let (resolved_module, trace, err) = resolved_ahead
+                            .get_mut(index)
+                            .and_then(Option::take)
+                            .unwrap_or_else(|| {
+                                self.resolver().resolve_module_name(
+                                    module_name,
+                                    &file_name,
+                                    mode,
+                                    redirect_ref,
+                                )
+                            });
+                        if let Some(err) = err {
+                            self.note_module_resolution_error(err);
                         }
-                        None => {
-                            names_own += 1;
-                            let (resolved_module, trace, err) = self
-                                .resolver()
-                                .resolve_module_name(module_name, &file_name, mode, redirect_ref);
-                            if let Some(err) = err {
-                                self.note_module_resolution_error(err);
-                            }
-                            resolutions_trace.extend(trace);
-                            resolved_module.unwrap_or_else(|| Arc::new(ResolvedModule::default()))
-                        }
-                    };
+                        resolutions_trace.extend(trace);
+                        resolved_module.unwrap_or_else(|| Arc::new(ResolvedModule::default()))
+                    }
+                };
                 resolutions_in_file.insert(
                     ModeAwareCacheKey {
                         name: module_name.to_string(),
