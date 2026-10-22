@@ -1005,7 +1005,15 @@ impl RuntimeSyntaxTransformer {
                     self.compiler_options.experimental_decorators.is_true(),
                     node,
                     Node::NIL,
-                ))
+                )
+                || (node.modifier_flags() & ModifierFlags::EXPORT_DEFAULT
+                    != ModifierFlags::EXPORT_DEFAULT
+                    && node_is_decorated(
+                        self.compiler_options.experimental_decorators.is_true(),
+                        node,
+                        Node::NIL,
+                        Node::NIL,
+                    )))
         {
             name = f.new_generated_name_for_node(node);
         }
@@ -1031,7 +1039,7 @@ impl RuntimeSyntaxTransformer {
         updated
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:718 RuntimeSyntaxTransformer.visitClassExpression
+    // Go: transformers/tstransforms/runtimesyntax.go:721 RuntimeSyntaxTransformer.visitClassExpression
     fn visit_class_expression(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
         let f = ec.factory();
@@ -1055,7 +1063,7 @@ impl RuntimeSyntaxTransformer {
         )
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:750 RuntimeSyntaxTransformer.visitConstructorDeclaration
+    // Go: transformers/tstransforms/runtimesyntax.go:753 RuntimeSyntaxTransformer.visitConstructorDeclaration
     fn visit_constructor_declaration(&mut self, node: Node) -> Node {
         let modifiers = self.visit_modifiers(node.modifiers());
         let parameters = self.visit_parameters(node.parameter_list());
@@ -1071,7 +1079,7 @@ impl RuntimeSyntaxTransformer {
         )
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:757 RuntimeSyntaxTransformer.visitConstructorBody
+    // Go: transformers/tstransforms/runtimesyntax.go:760 RuntimeSyntaxTransformer.visitConstructorBody
     fn visit_constructor_body(&mut self, body: Node, constructor: Node) -> Node {
         let parameter_properties = self.get_parameter_properties(constructor);
         if parameter_properties.is_empty() {
@@ -1163,7 +1171,7 @@ impl RuntimeSyntaxTransformer {
         updated
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:832 RuntimeSyntaxTransformer.transformConstructorBodyWorker
+    // Go: transformers/tstransforms/runtimesyntax.go:835 RuntimeSyntaxTransformer.transformConstructorBodyWorker
     fn transform_constructor_body_worker(
         &mut self,
         statements_in: &[Node],
@@ -1237,7 +1245,7 @@ impl RuntimeSyntaxTransformer {
         statements_out
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:885 RuntimeSyntaxTransformer.visitShorthandPropertyAssignment
+    // Go: transformers/tstransforms/runtimesyntax.go:888 RuntimeSyntaxTransformer.visitShorthandPropertyAssignment
     fn visit_shorthand_property_assignment(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
         let f = ec.factory();
@@ -1284,7 +1292,7 @@ impl RuntimeSyntaxTransformer {
         )
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:921 RuntimeSyntaxTransformer.visitIdentifier
+    // Go: transformers/tstransforms/runtimesyntax.go:924 RuntimeSyntaxTransformer.visitIdentifier
     fn visit_identifier(&mut self, node: Node) -> Node {
         if is_identifier_reference(node, self.parent_node) {
             return self.visit_expression_identifier(node);
@@ -1292,7 +1300,7 @@ impl RuntimeSyntaxTransformer {
         node
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:928 RuntimeSyntaxTransformer.visitExpressionIdentifier
+    // Go: transformers/tstransforms/runtimesyntax.go:931 RuntimeSyntaxTransformer.visitExpressionIdentifier
     fn visit_expression_identifier(&mut self, node: Node) -> Node {
         let ec = self.emit_context.clone();
         if (self.current_enum.is_some() || self.current_namespace.is_some())
@@ -1330,7 +1338,7 @@ impl RuntimeSyntaxTransformer {
         node
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:946 RuntimeSyntaxTransformer.createExportStatementForDeclaration
+    // Go: transformers/tstransforms/runtimesyntax.go:949 RuntimeSyntaxTransformer.createExportStatementForDeclaration
     fn create_export_statement_for_declaration(&self, node: Node) -> Node {
         let ec = &self.emit_context;
         let f = ec.factory();
@@ -1355,7 +1363,7 @@ impl RuntimeSyntaxTransformer {
         statement
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:962 RuntimeSyntaxTransformer.createExportAssignment
+    // Go: transformers/tstransforms/runtimesyntax.go:965 RuntimeSyntaxTransformer.createExportAssignment
     fn create_export_assignment(
         &self,
         name: Node,
@@ -1376,7 +1384,7 @@ impl RuntimeSyntaxTransformer {
         export_assignment
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:970 RuntimeSyntaxTransformer.createExportStatement
+    // Go: transformers/tstransforms/runtimesyntax.go:973 RuntimeSyntaxTransformer.createExportStatement
     fn create_export_statement(
         &self,
         name: Node,
@@ -1399,12 +1407,12 @@ impl RuntimeSyntaxTransformer {
         export_statement
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:977 RuntimeSyntaxTransformer.shouldEmitEnumDeclaration
+    // Go: transformers/tstransforms/runtimesyntax.go:980 RuntimeSyntaxTransformer.shouldEmitEnumDeclaration
     fn should_emit_enum_declaration(&self, node: Node) -> bool {
         !is_enum_const(node) || self.compiler_options.should_preserve_const_enums()
     }
 
-    // Go: transformers/tstransforms/runtimesyntax.go:981 RuntimeSyntaxTransformer.shouldEmitModuleDeclaration
+    // Go: transformers/tstransforms/runtimesyntax.go:984 RuntimeSyntaxTransformer.shouldEmitModuleDeclaration
     fn should_emit_module_declaration(&self, node: Node) -> bool {
         let pn = self.emit_context.parse_node(node);
         if pn.is_nil() {
@@ -1420,7 +1428,7 @@ fn coalesce(a: Node, b: Node) -> Node {
     if a.is_some() { a } else { b }
 }
 
-// Go: transformers/tstransforms/runtimesyntax.go:990 getInnermostModuleDeclarationFromDottedModule
+// Go: transformers/tstransforms/runtimesyntax.go:993 getInnermostModuleDeclarationFromDottedModule
 pub(crate) fn get_innermost_module_declaration_from_dotted_module(
     module_declaration: Node,
 ) -> Node {
