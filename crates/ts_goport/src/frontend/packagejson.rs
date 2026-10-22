@@ -1051,7 +1051,7 @@ impl VersionPaths {
     }
 }
 
-// Go: cache.go:123 InfoCacheEntry
+// Go: cache.go:182 InfoCacheEntry
 // PORT: Go `*InfoCacheEntry` is `Rc<InfoCacheEntry>`; a nil entry is `None`
 // at the call site, so the nil-receiver checks are gone.
 #[derive(Clone, Debug, Default)]
@@ -1062,25 +1062,25 @@ pub struct InfoCacheEntry {
 }
 
 impl InfoCacheEntry {
-    // Go: cache.go:129 Exists
+    // Go: cache.go:188 Exists
     #[must_use]
     pub fn exists(&self) -> bool {
         self.contents.is_some()
     }
 
-    // Go: cache.go:133 GetContents
+    // Go: cache.go:192 GetContents
     #[must_use]
     pub fn get_contents(&self) -> Option<&Rc<PackageJson>> {
         self.contents.as_ref()
     }
 
-    // Go: cache.go:140 GetDirectory
+    // Go: cache.go:140 GetDirectory (at 673a5f17d713; removed by ts#64159)
     #[must_use]
     pub fn get_directory(&self) -> &str {
         &self.package_directory
     }
 
-    // Go: cache.go:158 WithPackageDirectory
+    // Go: cache.go:208 WithPackageDirectory
     // WithPackageDirectory returns an entry whose PackageDirectory matches the
     // caller's value. The package.json info cache is keyed by the canonical
     // path of the package.json file, but multiple callers may look up the same
@@ -1140,7 +1140,7 @@ impl PendingInfo {
     }
 }
 
-// Go: cache.go:169 InfoCache
+// Go: cache.go:219 InfoCache
 // PORT: Go `collections.SyncMap` is a `RefCell` map. The cache is shared as
 // `Rc<InfoCache>`, so its methods take `&self`.
 #[derive(Debug, Default)]
@@ -1154,7 +1154,7 @@ pub struct InfoCache {
     use_case_sensitive_file_names: bool,
 }
 
-// Go: cache.go:175 NewInfoCache
+// Go: cache.go:224 NewInfoCache
 #[must_use]
 pub fn new_info_cache(current_directory: &str, use_case_sensitive_file_names: bool) -> InfoCache {
     InfoCache {
@@ -1182,7 +1182,7 @@ impl Clone for InfoCache {
 }
 
 impl InfoCache {
-    // Go: cache.go:182 Get
+    // Go: cache.go:247 Get
     // PORT: a pending read of the key (`add_pending`) becomes its entry
     // here, as Go's cache holds the first read of the load.
     #[must_use]
@@ -1230,7 +1230,7 @@ impl InfoCache {
         self.cache.borrow().contains_key(key)
     }
 
-    // Go: cache.go:190 Set
+    // Go: cache.go:254 Set
     // PORT: Go `LoadOrStore`: the first stored entry wins and is returned.
     // A pending read of the key (`add_pending`) is a parse worker's read
     // from earlier in the load, which Go's shared cache stored first, so it
@@ -1258,7 +1258,7 @@ impl InfoCache {
         .clone()
     }
 
-    // Go: cache.go:196 Range
+    // Go: cache.go:259 Range
     // PORT: Go `SyncMap.Range` allows writes to the map from `f`. The entries
     // are copied first, so `f` can call `set` without a `RefCell` panic. The
     // order is not defined, as in Go. The cache holds no nil entry.

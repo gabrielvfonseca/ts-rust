@@ -359,9 +359,9 @@ fn start_cpu_profile() -> Result<ProfileBuilder, &'static str> {
         return Err("cpu profiling already in use");
     }
 
-    // Go: pprof.go:919 profileWriter: b := newProfileBuilder(w)
+    // Go: runtime/pprof/pprof.go:919 profileWriter: b := newProfileBuilder(w)
     let mut b = ProfileBuilder::new();
-    // Go: proto.go:278 addCPUData, for the header record that
+    // Go: runtime/pprof/proto.go:278 addCPUData, for the header record that
     // `runtime.SetCPUProfileRate(hz)` writes first. The port has no other
     // record (see the module comment).
     // data[2] is sampling rate in Hz. Convert to sampling

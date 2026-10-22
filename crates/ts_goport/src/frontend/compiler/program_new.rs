@@ -117,7 +117,7 @@ impl<T> Default for LazyValue<T> {
 }
 
 impl<T: Clone> LazyValue<T> {
-    // Go: program.go:62 (*lazyValue[T]).getValue
+    // Go: program.go:75 (*lazyValue[T]).getValue
     pub fn get_value(&self, compute: impl FnOnce() -> T) -> &T {
         self.value.get_or_init(compute)
     }
@@ -128,7 +128,7 @@ impl<T: Clone> LazyValue<T> {
         self.value.get()
     }
 
-    // Go: program.go:72 (*lazyValue[T]).tryReuse
+    // Go: program.go:85 (*lazyValue[T]).tryReuse
     pub fn try_reuse(&mut self, from: &LazyValue<T>) {
         if let Some(value) = from.value.get() {
             self.value = OnceCell::from(value.clone());
@@ -136,7 +136,7 @@ impl<T: Clone> LazyValue<T> {
     }
 }
 
-// Go: fileloader.go:109 (*redirectsFile).FileName, fileloader.go:82 (*redirectsFile).Path
+// Go: fileloader.go:109 (*redirectsFile).FileName, fileloader.go:113 (*redirectsFile).PathKey
 // PORT: Go `*redirectsFile` implements `ast.HasFileName`. The inherent
 // methods are in file_loader.rs; no other unit adds the trait impl.
 impl HasFileName for RedirectsFile {

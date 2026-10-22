@@ -3264,7 +3264,7 @@ pub fn start_default_lib_prefetch(
     }
     let default_library_path =
         get_normalized_absolute_path(default_library_path, current_directory);
-    // Go: fileloader.go:153 (root lib tasks)
+    // Go: fileloader.go:213 (root lib tasks)
     let mut names: Vec<String> = match &options.lib {
         Some(libs) => libs
             .iter()

@@ -213,7 +213,7 @@ impl ConfigFileSpecs {
     }
 }
 
-// Go: tsoptions/tsconfigparsing.go:148 FileExtensionInfo
+// Go: tsoptions/tsconfigparsing.go:148 FileExtensionInfo (at dc37b5249ab6)
 // tsgo#4712 removes it: extra extensions are plain strings now.
 
 // Go: tsoptions/tsconfigparsing.go:70 ExtendedConfigCache

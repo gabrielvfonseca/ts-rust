@@ -243,7 +243,7 @@ impl std::fmt::Display for Glob {
     }
 }
 
-// Go: glob/glob.go:197-213 element String methods
+// Go: glob/glob.go:197-212 String methods of the element types
 // PORT: like Go, a negated range prints without the `!`.
 impl std::fmt::Display for GlobElement {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -535,7 +535,7 @@ pub struct SourceOutputAndProjectReference {
     pub resolved: Weak<ParsedCommandLine>,
 }
 
-// Go: tsoptions/parsedcommandline.go:80 interface assertions
+// Go: tsoptions/parsedcommandline.go:138 interface assertions
 // PORT: `module.ResolvedProjectReference` and `outputpaths.OutputPathsHost`
 // are satisfied by the methods below; there is no Rust trait to assert.
 

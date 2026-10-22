@@ -20,7 +20,7 @@ pub struct PackageNamesInfo {
 pub type ResolutionCallback<'f, T> = dyn FnMut(&T, &str, ResolutionMode, &Path) + 'f;
 
 impl NewProgram {
-    // Go: program.go:2067 (*Program).toPath (at 673a5f17d713; ts#64159 makes it PathKeyForFileName, compiler/program.go:2090)
+    // Go: program.go:2067 (*Program).toPath (at 673a5f17d713; ts#64159 makes it PathKeyForFileName, compiler/program.go:2103)
     // PORT: the host's current directory, as the loader's keys
     // (`FileLoader::to_path`). Go N' keys a rooted name with no directory.
     pub fn to_path(&self, filename: &str) -> Path {
@@ -183,7 +183,7 @@ impl NewProgram {
             .iter()
             .flat_map(|m| m.values())
             .collect();
-        // Go: compiler/program.go:2164 slices.SortFunc(redirectFiles, a.index - b.index)
+        // Go: compiler/program.go:2177 slices.SortFunc(redirectFiles, a.index - b.index)
         crate::gostd::slices::sort_func(&mut redirect_files, |a, b| a.index.cmp(&b.index) as i32);
 
         let files = self.get_source_files();
@@ -471,7 +471,7 @@ impl NewProgram {
 
     /// The value that Go `GetSymlinkCache` computes on first use, without
     /// storing it in the program.
-    // Go: program.go:2331 (the getValue callback)
+    // Go: program.go:2344 (the getValue callback)
     pub fn build_symlink_cache(&self) -> KnownSymlinks {
         let resolver = self
             .processed_files
@@ -490,7 +490,7 @@ impl NewProgram {
 
     /// The part of `build_symlink_cache` that reads the program and makes
     /// no file system call (`SymlinkCacheSeed`).
-    // Go: program.go:2331 (the getValue callback, up to the
+    // Go: program.go:2344 (the getValue callback, up to the
     // ResolvePackageDirectory calls)
     // PORT: the host's current directory, as the program's path keys
     // (`to_path`). Go N' KnownSymlinks has no directory (program.go:2333).
@@ -1156,7 +1156,7 @@ impl SymlinkCacheSeed {
     /// The cache: the seed's symlinks and those of the dependencies that
     /// `resolve(dependency, package_json_name)` finds, as Go
     /// `ResolvePackageDirectory` in CommonJS mode with no redirect.
-    // Go: program.go:2345 (the loop over the dependencies)
+    // Go: program.go:2367 (the loop over the dependencies)
     pub fn finish(self, resolve: impl Fn(&str, &str) -> Option<ResolvedModule>) -> KnownSymlinks {
         let SymlinkCacheSeed {
             mut known_symlinks,

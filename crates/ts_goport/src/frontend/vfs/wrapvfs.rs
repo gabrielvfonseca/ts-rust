@@ -3,7 +3,7 @@
 use crate::frontend::prelude::*;
 use std::time::SystemTime;
 
-// Go: wrapvfs.go:9 Replacements
+// Go: wrapvfs.go:10 Replacements
 // PORT: nil Go funcs are `None`. `time.Time` is `Option<SystemTime>`
 // (`None` is the Go zero time), as in the `Fs` trait.
 #[derive(Default)]
@@ -22,20 +22,20 @@ pub struct Replacements {
     pub realpath: Option<Box<dyn Fn(&str) -> String>>,
 }
 
-// Go: wrapvfs.go:23 Wrap
+// Go: wrapvfs.go:24 Wrap
 // PORT: the Go package function `wrapvfs.Wrap` is `wrapvfs_wrap`.
 pub fn wrapvfs_wrap(fs: Rc<dyn Fs>, replacements: Replacements) -> Rc<dyn Fs> {
     Rc::new(WrappedFs { fs, replacements })
 }
 
-// Go: wrapvfs.go:30 wrappedFS
+// Go: wrapvfs.go:31 wrappedFS
 struct WrappedFs {
     fs: Rc<dyn Fs>,
     replacements: Replacements,
 }
 
 impl Fs for WrappedFs {
-    // Go: wrapvfs.go:36 UseCaseSensitiveFileNames
+    // Go: wrapvfs.go:36 UseCaseSensitiveFileNames (at 673a5f17d713; ts#64159 makes it CaseSensitivity, vfs/wrapvfs/wrapvfs.go:37)
     // UseCaseSensitiveFileNames implements [vfs.FS].
     fn use_case_sensitive_file_names(&self) -> bool {
         if let Some(f) = &self.replacements.use_case_sensitive_file_names {

@@ -169,7 +169,7 @@ impl RedirectsFile {
         self.file_name.clone()
     }
 
-    // Go: fileloader.go:109 (*redirectsFile).Path (at 673a5f17d713; ts#64159 renames it PathKey, compiler/fileloader.go:112)
+    // Go: fileloader.go:109 (*redirectsFile).Path (at 673a5f17d713; ts#64159 renames it PathKey, compiler/fileloader.go:113)
     pub fn path(&self) -> Path {
         self.path.clone()
     }
@@ -4605,7 +4605,7 @@ export const a: T | Dep | number = x + (h as never);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    // Go: compiler/program.go:396 (ts#64519): a program whose module resolver
+    // Go: compiler/program.go:397 (ts#64519): a program whose module resolver
     // failed is never reused; it is built again.
     #[test]
     fn module_resolution_error_blocks_reuse() {
@@ -4700,7 +4700,7 @@ export const a: T | Dep | number = x + (h as never);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
-    // Go: compiler/program_test.go:482 TestImportSourceProgram (ts#63915)
+    // Go: compiler/program_test.go:483 TestImportSourceProgram (ts#63915)
     #[test]
     fn import_source_program() {
         for (name, source, evaluation) in [
