@@ -30,7 +30,9 @@ signal-hook = "=0.4.4"
 # jemalloc does not build for Windows (msvc, or gnu through zig) or wasm; the
 # `jemalloc` feature does nothing there.
 [target.'cfg(not(any(windows, target_family = "wasm")))'.dependencies]
-tikv-jemallocator = { version = "=0.7.0", optional = true }
+# `stats`: jemalloc keeps the statistics that `--diagnostics` prints
+# (execute/tsc/statistics.rs `read_mem_stats`).
+tikv-jemallocator = { version = "=0.7.0", optional = true, features = ["stats"] }
 # `thread.arena` through its safe `Access` API (program.rs
 # `jemalloc_thread_arena`): the one checker of `--singleThreaded` allocates
 # in the arena of the loading thread.

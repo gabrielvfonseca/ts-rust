@@ -95,14 +95,52 @@ pub struct MemStats {
 }
 
 /// Go `runtime.GC(); runtime.GC(); runtime.ReadMemStats(&memStats)`.
-// PORT: Rust has no heap statistics, and the crate forbids the `unsafe` a
-// counting global allocator needs. `alloc` is the resident set size
-// (`VmRSS` in /proc/self/status; on macOS, which has no /proc, the `rss` of
-// `ps`, see `macos_resident_bytes`; 0 elsewhere), and `mallocs` is 0. Both
-// are process values that never match Go anyway.
+// PORT: Rust has no garbage collector. With jemalloc as the allocator (the
+// default `jemalloc` feature: every release build but Windows), `alloc` is
+// jemalloc's `stats.allocated`, the bytes that the process allocated and
+// did not free (Go `Alloc`), and `mallocs` the allocation requests of all
+// arenas (Go `Mallocs`; jemalloc adds the requests of a thread cache when
+// it flushes the cache). Elsewhere `alloc` is the resident set size
+// (`VmRSS` in /proc/self/status, 0 where that file does not exist), and
+// `mallocs` is 0: the crate forbids the `unsafe` of a counting global
+// allocator. These are process values that never match Go anyway.
 #[must_use]
 pub fn read_mem_stats() -> MemStats {
-    let alloc = std::fs::read_to_string("/proc/self/status")
+    jemalloc_mem_stats().unwrap_or_else(|| MemStats {
+        alloc: resident_bytes(),
+        mallocs: 0,
+    })
+}
+
+/// jemalloc's statistics (see `read_mem_stats`), through the safe `Access`
+/// API of tikv-jemalloc-ctl. None when jemalloc keeps no statistics (built
+/// without `stats`) or is not the allocator (nothing allocated).
+#[cfg(all(feature = "jemalloc", not(windows)))]
+fn jemalloc_mem_stats() -> Option<MemStats> {
+    use tikv_jemalloc_ctl::{Access, AsName, epoch};
+    // The statistics are a snapshot that a new epoch takes.
+    epoch::advance().ok()?;
+    let alloc: usize = b"stats.allocated\0".name().read().ok()?;
+    // Arena 4096 (`MALLCTL_ARENAS_ALL`) sums all arenas.
+    let requests = |name: &[u8]| Access::<u64>::read(name.name()).ok();
+    let mallocs = requests(b"stats.arenas.4096.small.nrequests\0")?
+        + requests(b"stats.arenas.4096.large.nrequests\0")?;
+    Some(MemStats {
+        alloc: u64::try_from(alloc).ok()?,
+        mallocs,
+    })
+    .filter(|stats| stats.alloc != 0)
+}
+
+#[cfg(not(all(feature = "jemalloc", not(windows))))]
+fn jemalloc_mem_stats() -> Option<MemStats> {
+    None
+}
+
+/// The resident set size of this process in bytes (`VmRSS` in
+/// /proc/self/status), 0 where that file does not exist.
+fn resident_bytes() -> u64 {
+    std::fs::read_to_string("/proc/self/status")
         .ok()
         .and_then(|status| {
             status.lines().find_map(|line| {
@@ -110,28 +148,7 @@ pub fn read_mem_stats() -> MemStats {
                 kib.trim().parse::<u64>().ok()
             })
         })
-        .map_or_else(macos_resident_bytes, |kib| kib * 1024);
-    MemStats { alloc, mallocs: 0 }
-}
-
-/// The resident set size of this process in bytes, from `ps -o rss=` (KiB).
-/// macOS has no /proc, and the crate forbids the `unsafe` of `task_info`.
-/// 0 when `ps` fails.
-#[cfg(target_os = "macos")]
-fn macos_resident_bytes() -> u64 {
-    std::process::Command::new("ps")
-        .args(["-o", "rss=", "-p", &std::process::id().to_string()])
-        .output()
-        .ok()
-        .filter(|output| output.status.success())
-        .and_then(|output| String::from_utf8(output.stdout).ok())
-        .and_then(|text| text.trim().parse::<u64>().ok())
         .map_or(0, |kib| kib * 1024)
-}
-
-#[cfg(not(target_os = "macos"))]
-fn macos_resident_bytes() -> u64 {
-    0
 }
 
 // Go: execute/tsc/statistics.go:72 statisticsFromProgram
