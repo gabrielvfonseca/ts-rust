@@ -23,8 +23,8 @@ use crate::declarations::transform::{
     DeclarationTransformer, ThisPropertyAssignmentKey, get_this_property_assignment_key,
 };
 use crate::declarations::util::{
-    can_have_literal_initializer, can_produce_diagnostics, get_effective_base_type_node,
-    has_scope_marker, is_declaration_and_not_visible, is_enclosing_declaration,
+    can_have_literal_initializer, can_produce_diagnostics, has_scope_marker,
+    is_declaration_and_not_visible, is_enclosing_declaration,
 };
 use crate::prelude::*;
 use crate::printer::{
@@ -705,7 +705,7 @@ impl DeclarationTransformer {
         ec.factory().new_node_list(&member_nodes)
     }
 
-    // Go: transformers/declarations/transform.go:1990 DeclarationTransformer.transformClassDeclaration
+    // Go: transformers/declarations/transform.go:2010 DeclarationTransformer.transformClassDeclaration
     pub(crate) fn transform_class_declaration(&mut self, input: Node) -> Node {
         let previous_enclosing_declaration = self.enclosing_declaration;
         self.enclosing_declaration = input;
@@ -728,7 +728,7 @@ impl DeclarationTransformer {
 
             let members = self.build_class_members(input, &extra_members);
 
-            let extends_clause = get_effective_base_type_node(input);
+            let extends_clause = get_class_extends_heritage_element(input);
 
             if extends_clause.is_some()
                 && !is_entity_name_expression(extends_clause.expression())
