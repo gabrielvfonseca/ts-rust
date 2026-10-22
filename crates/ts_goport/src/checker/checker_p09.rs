@@ -11,12 +11,12 @@ fn info_has_inference_candidates(info: &InferenceInfo) -> bool {
 }
 
 impl Checker {
-    // Go: checker/checker.go:7755 checkExpression
+    // Go: checker/checker.go:7751 checkExpression
     pub fn check_expression(&mut self, node: Node) -> TypeId {
         self.check_expression_ex(node, CheckMode::NORMAL)
     }
 
-    // Go: checker/checker.go:7759 checkExpressionEx
+    // Go: checker/checker.go:7755 checkExpressionEx
     pub fn check_expression_ex(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         let _trace = self.tracer.map(|tr| {
             tr.push(
@@ -42,7 +42,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:7775 checkConstEnumAccess
+    // Go: checker/checker.go:7771 checkConstEnumAccess
     pub fn check_const_enum_access(&mut self, node: Node, t: TypeId) {
         // enum object type for const enums are only permitted in:
         // - 'left' in property access
@@ -110,7 +110,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7801 instantiateTypeWithSingleGenericCallSignature
+    // Go: checker/checker.go:7797 instantiateTypeWithSingleGenericCallSignature
     pub fn instantiate_type_with_single_generic_call_signature(
         &mut self,
         node: Node,
@@ -288,7 +288,7 @@ impl Checker {
         self.get_or_create_type_from_signature(instantiated)
     }
 
-    // Go: checker/checker.go:7873 getOuterInferenceTypeParameters
+    // Go: checker/checker.go:7869 getOuterInferenceTypeParameters
     pub fn get_outer_inference_type_parameters(&self) -> Vec<TypeId> {
         let mut result: Vec<TypeId> = Vec::new();
         for i in 0..self.inference_context_infos.len() {
@@ -302,7 +302,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:7886 getUniqueTypeParameters
+    // Go: checker/checker.go:7882 getUniqueTypeParameters
     pub fn get_unique_type_parameters(
         &mut self,
         context: InferenceContextId,
@@ -344,14 +344,14 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:7913 hasTypeParameterByName
+    // Go: checker/checker.go:7909 hasTypeParameterByName
     pub fn has_type_parameter_by_name(&self, type_parameters: &[TypeId], name: &str) -> bool {
         type_parameters
             .iter()
             .any(|&tp| self.sym(self.ty(tp).symbol).name == name)
     }
 
-    // Go: checker/checker.go:7919 getUniqueTypeParameterName
+    // Go: checker/checker.go:7915 getUniqueTypeParameterName
     pub fn get_unique_type_parameter_name(
         &self,
         type_parameters: &[TypeId],
@@ -374,7 +374,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:7933 checkExpressionWorker
+    // Go: checker/checker.go:7929 checkExpressionWorker
     pub fn check_expression_worker(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         match node.kind() {
             SyntaxKind::Identifier => return self.check_identifier(node, check_mode),
@@ -477,7 +477,7 @@ impl Checker {
         self.error_type
     }
 
-    // Go: checker/checker.go:8039 checkPrivateIdentifierExpression
+    // Go: checker/checker.go:8035 checkPrivateIdentifierExpression
     pub fn check_private_identifier_expression(&mut self, node: Node) -> TypeId {
         self.check_grammar_private_identifier_expression(node);
         let symbol = self.get_symbol_for_private_identifier_expression(node);
@@ -491,7 +491,7 @@ impl Checker {
         self.any_type
     }
 
-    // Go: checker/checker.go:8048 getSymbolForPrivateIdentifierExpression
+    // Go: checker/checker.go:8044 getSymbolForPrivateIdentifierExpression
     pub fn get_symbol_for_private_identifier_expression(&mut self, node: Node) -> SymbolId {
         if self.symbol_node_links.get(node).resolved_symbol.is_nil() {
             let resolved = self.lookup_symbol_for_private_identifier_declaration(node.text(), node);
@@ -500,7 +500,7 @@ impl Checker {
         self.symbol_node_links.get(node).resolved_symbol
     }
 
-    // Go: checker/checker.go:8056 checkSuperExpression
+    // Go: checker/checker.go:8052 checkSuperExpression
     pub fn check_super_expression(&mut self, node: Node) -> TypeId {
         let is_call_expression =
             is_call_expression(node.parent()) && node.parent().expression() == node;
@@ -675,7 +675,7 @@ impl Checker {
         self.get_type_with_this_argument(base_class_type, this_type, false)
     }
 
-    // Go: checker/checker.go:8166 isInConstructorArgumentInitializer
+    // Go: checker/checker.go:8162 isInConstructorArgumentInitializer
     pub fn is_in_constructor_argument_initializer(
         &mut self,
         node: Node,
@@ -693,7 +693,7 @@ impl Checker {
         .is_some()
     }
 
-    // Go: checker/checker.go:8178 checkTemplateExpression
+    // Go: checker/checker.go:8174 checkTemplateExpression
     pub fn check_template_expression(&mut self, node: Node) -> TypeId {
         let template_spans = node.template_spans().nodes().to_vec();
         let length = template_spans.len();
@@ -746,14 +746,14 @@ impl Checker {
         self.string_type
     }
 
-    // Go: checker/checker.go:8205 isTemplateLiteralContext
+    // Go: checker/checker.go:8201 isTemplateLiteralContext
     pub fn is_template_literal_context(&mut self, node: Node) -> bool {
         let parent = node.parent();
         is_parenthesized_expression(parent) && self.is_template_literal_context(parent)
             || is_element_access_expression(parent) && parent.argument_expression() == node
     }
 
-    // Go: checker/checker.go:8210 isTemplateLiteralContextualType
+    // Go: checker/checker.go:8206 isTemplateLiteralContextualType
     pub fn is_template_literal_contextual_type(&mut self, t: TypeId) -> bool {
         let flags = self.ty(t).flags;
         flags.intersects(TypeFlags::STRING_LITERAL | TypeFlags::TEMPLATE_LITERAL)
@@ -768,7 +768,7 @@ impl Checker {
             }
     }
 
-    // Go: checker/checker.go:8214 checkRegularExpressionLiteral
+    // Go: checker/checker.go:8210 checkRegularExpressionLiteral
     pub fn check_regular_expression_literal(&mut self, node: Node) -> TypeId {
         if !self
             .node_links
@@ -782,7 +782,7 @@ impl Checker {
         self.global_reg_exp_type
     }
 
-    // Go: checker/checker.go:8223 checkArrayLiteral
+    // Go: checker/checker.go:8219 checkArrayLiteral
     pub fn check_array_literal(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         let elements = node.elements();
         let mut element_types: Vec<TypeId> = vec![TypeId::NIL; elements.len()];
@@ -937,7 +937,7 @@ impl Checker {
         self.create_array_literal_type(array_type)
     }
 
-    // Go: checker/checker.go:8305 createArrayLiteralType
+    // Go: checker/checker.go:8301 createArrayLiteralType
     pub fn create_array_literal_type(&mut self, t: TypeId) -> TypeId {
         if !self.ty(t).object_flags.intersects(ObjectFlags::REFERENCE) {
             return t;
@@ -957,14 +957,14 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:8319 isSpreadIntoCallOrNew
+// Go: checker/checker.go:8315 isSpreadIntoCallOrNew
 pub fn is_spread_into_call_or_new(node: Node) -> bool {
     let parent = walk_up_parenthesized_expressions(node.parent());
     is_spread_element(parent) && is_call_or_new_expression(parent.parent())
 }
 
 impl Checker {
-    // Go: checker/checker.go:8324 checkQualifiedName
+    // Go: checker/checker.go:8320 checkQualifiedName
     pub fn check_qualified_name(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         let left = node.left();
         let left_type;
@@ -984,7 +984,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:8335 checkIndexedAccess
+    // Go: checker/checker.go:8331 checkIndexedAccess
     pub fn check_indexed_access(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         if node.flags().intersects(NodeFlags::OPTIONAL_CHAIN) {
             return self.check_element_access_chain(node, check_mode);
@@ -993,7 +993,7 @@ impl Checker {
         self.check_element_access_expression(node, expr_type, check_mode)
     }
 
-    // Go: checker/checker.go:8342 checkElementAccessChain
+    // Go: checker/checker.go:8338 checkElementAccessChain
     pub fn check_element_access_chain(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         let expr_type = self.check_expression(node.expression());
         let non_optional_type = self.get_optional_expression_type(expr_type, node.expression());
@@ -1002,7 +1002,7 @@ impl Checker {
         self.propagate_optional_type_marker(access_type, node, non_optional_type != expr_type)
     }
 
-    // Go: checker/checker.go:8348 checkElementAccessExpression
+    // Go: checker/checker.go:8344 checkElementAccessExpression
     pub fn check_element_access_expression(
         &mut self,
         node: Node,
@@ -1073,7 +1073,7 @@ impl Checker {
 
     // Return true if given node is an expression consisting of an identifier (possibly parenthesized)
     // that references a for-in variable for an object with numeric property names.
-    // Go: checker/checker.go:8381 isForInVariableForNumericPropertyNames
+    // Go: checker/checker.go:8377 isForInVariableForNumericPropertyNames
     pub fn is_for_in_variable_for_numeric_property_names(&mut self, expr: Node) -> bool {
         let e = skip_parentheses(expr);
         if is_identifier(e) {
@@ -1101,7 +1101,7 @@ impl Checker {
     }
 
     // Return the symbol of the for-in variable declared or referenced by the given for-in statement.
-    // Go: checker/checker.go:8401 getForInVariableSymbol
+    // Go: checker/checker.go:8397 getForInVariableSymbol
     pub fn get_for_in_variable_symbol(&mut self, node: Node) -> SymbolId {
         let initializer = node.initializer();
         if is_variable_declaration_list(initializer) {
@@ -1119,7 +1119,7 @@ impl Checker {
     }
 
     // Return true if the given type is considered to have numeric property names.
-    // Go: checker/checker.go:8418 hasNumericPropertyNames
+    // Go: checker/checker.go:8414 hasNumericPropertyNames
     pub fn has_numeric_property_names(&mut self, t: TypeId) -> bool {
         self.get_index_infos_of_type(t).len() == 1
             && self.get_index_info_of_type(t, self.number_type).is_some()
@@ -1188,7 +1188,7 @@ impl Checker {
         self.error_type
     }
 
-    // Go: checker/checker.go:8459 getConstituentProperty
+    // Go: checker/checker.go:8448 getConstituentProperty
     pub fn get_constituent_property(
         &mut self,
         object_type: TypeId,
@@ -1418,7 +1418,7 @@ impl Checker {
         return_type
     }
 
-    // Go: checker/checker.go:8571 checkDeprecatedSignature
+    // Go: checker/checker.go:8568 checkDeprecatedSignature
     pub fn check_deprecated_signature(&mut self, sig: SignatureId, node: Node) {
         if self
             .sig(sig)
@@ -1442,7 +1442,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:8582 addDeprecatedSuggestionWithSignature
+    // Go: checker/checker.go:8579 addDeprecatedSuggestionWithSignature
     pub fn add_deprecated_suggestion_with_signature(
         &mut self,
         location: Node,
@@ -1463,7 +1463,7 @@ impl Checker {
         self.add_deprecated_suggestion_worker(&[declaration], diagnostic)
     }
 
-    // Go: checker/checker.go:8588 isSymbolOrSymbolForCall
+    // Go: checker/checker.go:8585 isSymbolOrSymbolForCall
     pub fn is_symbol_or_symbol_for_call(&mut self, node: Node) -> bool {
         if !is_call_expression(node) {
             return false;
@@ -1498,7 +1498,7 @@ impl Checker {
      *    the function will fill it up with appropriate candidate signatures
      * @return a signature of the call-like expression or undefined if one can't be found
      */
-    // Go: checker/checker.go:8614 getResolvedSignature
+    // Go: checker/checker.go:8611 getResolvedSignature
     pub fn get_resolved_signature(
         &mut self,
         node: Node,
@@ -1552,7 +1552,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:8660 resolveSignature
+    // Go: checker/checker.go:8657 resolveSignature
     pub fn resolve_signature(
         &mut self,
         node: Node,

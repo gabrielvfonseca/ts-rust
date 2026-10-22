@@ -38,7 +38,7 @@ impl Checker {
         })
     }
 
-    // Go: checker/emitresolver.go:693 isConstEnumOrConstEnumOnlyModule
+    // Go: checker/emitresolver.go:383 isConstEnumOrConstEnumOnlyModule
     pub fn is_const_enum_or_const_enum_only_module(&self, s: SymbolId) -> bool {
         self.is_const_enum_symbol(s)
             || self
@@ -47,7 +47,7 @@ impl Checker {
                 .intersects(SymbolFlags::CONST_ENUM_ONLY_MODULE)
     }
 
-    // Go: checker/symbolaccessibility.go:595 compareSymbolChainsWorker
+    // Go: checker/symbolaccessibility.go:657 compareSymbolChainsWorker
     pub fn compare_symbol_chains_worker(&mut self, a: &[SymbolId], b: &[SymbolId]) -> i32 {
         let chain_len = a.len() as i32 - b.len() as i32;
         if chain_len != 0 {

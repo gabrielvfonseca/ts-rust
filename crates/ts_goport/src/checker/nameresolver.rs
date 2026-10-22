@@ -943,7 +943,7 @@ impl NameResolver {
     }
 }
 
-// Go: binder/nameresolver.go:450 GetLocalSymbolForExportDefault
+// Go: binder/nameresolver.go:452 GetLocalSymbolForExportDefault
 pub fn get_local_symbol_for_export_default(symbols: &SymbolArena, symbol: SymbolId) -> SymbolId {
     if !is_export_default_symbol(symbols, symbol) || symbols.sym(symbol).declarations.is_empty() {
         return SymbolId::NIL;
@@ -957,14 +957,14 @@ pub fn get_local_symbol_for_export_default(symbols: &SymbolArena, symbol: Symbol
     SymbolId::NIL
 }
 
-// Go: binder/nameresolver.go:463 isExportDefaultSymbol
+// Go: binder/nameresolver.go:465 isExportDefaultSymbol
 pub fn is_export_default_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
     symbol.is_some()
         && !symbols.sym(symbol).declarations.is_empty()
         && has_syntactic_modifier(symbols.sym(symbol).declarations[0], ModifierFlags::DEFAULT)
 }
 
-// Go: binder/nameresolver.go:467 getIsDeferredContext
+// Go: binder/nameresolver.go:469 getIsDeferredContext
 // PERF: `kind` is `location.kind()`, which the caller has read (see
 // `resolve_name`). `location` is not nil.
 pub fn get_is_deferred_context(location: Node, kind: SyntaxKind, last_location: Node) -> bool {
@@ -996,7 +996,7 @@ pub fn get_is_deferred_context(location: Node, kind: SyntaxKind, last_location: 
     get_immediately_invoked_function_expression(location).is_nil()
 }
 
-// Go: binder/nameresolver.go:485 isTypeParameterSymbolDeclaredInContainer
+// Go: binder/nameresolver.go:487 isTypeParameterSymbolDeclaredInContainer
 pub fn is_type_parameter_symbol_declared_in_container(
     symbols: &SymbolArena,
     symbol: SymbolId,
@@ -1051,7 +1051,7 @@ pub fn is_locals_container_kind(kind: SyntaxKind) -> bool {
     )
 }
 
-// Go: binder/nameresolver.go:497 isSelfReferenceLocation
+// Go: binder/nameresolver.go:499 isSelfReferenceLocation
 // PERF: `kind` is `node.kind()`, which the caller has read.
 pub fn is_self_reference_location(node: Node, kind: SyntaxKind, last_location: Node) -> bool {
     match kind {

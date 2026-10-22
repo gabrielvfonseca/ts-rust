@@ -20,7 +20,7 @@ fn msg_eq(m: Option<&'static Message>, target: &'static Message) -> bool {
 }
 
 impl Checker {
-    // Go: checker/relater.go:3935 typeArgumentsRelatedTo
+    // Go: checker/relater.go:3936 typeArgumentsRelatedTo
     pub fn type_arguments_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -154,7 +154,7 @@ impl Checker {
     // A type [P in S]: X is related to a type [Q in T]: Y if T is related to S and X' is
     // related to Y, where X' is an instantiation of X in which P is replaced with Q. Notice
     // that S and T are contra-variant whereas X and Y are co-variant.
-    // Go: checker/relater.go:4004 mappedTypeRelatedTo
+    // Go: checker/relater.go:4005 mappedTypeRelatedTo
     pub fn mapped_type_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -211,7 +211,7 @@ impl Checker {
         Ternary::FALSE
     }
 
-    // Go: checker/relater.go:4021 typeRelatedToDiscriminatedType
+    // Go: checker/relater.go:4022 typeRelatedToDiscriminatedType
     pub fn type_related_to_discriminated_type(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -386,7 +386,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:4132 propertiesRelatedTo
+    // Go: checker/relater.go:4133 propertiesRelatedTo
     pub fn properties_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -693,7 +693,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:4302 propertyRelatedTo
+    // Go: checker/relater.go:4303 propertyRelatedTo
     pub fn property_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -843,7 +843,7 @@ impl Checker {
         related
     }
 
-    // Go: checker/relater.go:4366 isPropertySymbolTypeRelated
+    // Go: checker/relater.go:4367 isPropertySymbolTypeRelated
     pub fn is_property_symbol_type_related(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -883,7 +883,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/relater.go:4377 reportUnmatchedProperty
+    // Go: checker/relater.go:4378 reportUnmatchedProperty
     pub fn report_unmatched_property(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -969,7 +969,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/relater.go:4411 tryElaborateArrayLikeErrors
+    // Go: checker/relater.go:4412 tryElaborateArrayLikeErrors
     pub fn try_elaborate_array_like_errors(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1017,7 +1017,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/relater.go:4440 tryElaborateErrorsForPrimitivesAndObjects
+    // Go: checker/relater.go:4441 tryElaborateErrorsForPrimitivesAndObjects
     pub fn try_elaborate_errors_for_primitives_and_objects(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1042,7 +1042,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/relater.go:4449 propertiesIdenticalTo
+    // Go: checker/relater.go:4450 propertiesIdenticalTo
     pub fn properties_identical_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1082,7 +1082,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:4473 signaturesRelatedTo
+    // Go: checker/relater.go:4474 signaturesRelatedTo
     pub fn signatures_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1217,7 +1217,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:4550 constructorVisibilitiesAreCompatible
+    // Go: checker/relater.go:4551 constructorVisibilitiesAreCompatible
     pub fn constructor_visibilities_are_compatible(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1262,7 +1262,7 @@ impl Checker {
     }
 
     // See signatureAssignableTo, compareSignaturesIdentical
-    // Go: checker/relater.go:4575 signatureRelatedTo
+    // Go: checker/relater.go:4576 signatureRelatedTo
     pub fn signature_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1320,7 +1320,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/relater.go:4593 signaturesIdenticalTo
+    // Go: checker/relater.go:4594 signaturesIdenticalTo
     pub fn signatures_identical_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1351,7 +1351,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:4610 indexSignaturesRelatedTo
+    // Go: checker/relater.go:4611 indexSignaturesRelatedTo
     pub fn index_signatures_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1405,7 +1405,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:4635 typeRelatedToIndexInfo
+    // Go: checker/relater.go:4636 typeRelatedToIndexInfo
     pub fn type_related_to_index_info(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1461,7 +1461,7 @@ impl Checker {
     //   - an object literal, object type literal, enum type, or a value module and has no call or construct signatures, or
     //   - a JS expando object literal or a rest type, or
     //   - a reverse mapped type with a source for which one of the above is true.
-    // Go: checker/relater.go:4656 isObjectTypeWithInferableIndex
+    // Go: checker/relater.go:4657 isObjectTypeWithInferableIndex
     pub fn is_object_type_with_inferable_index(&mut self, t: TypeId) -> bool {
         if self.ty(t).flags.intersects(TypeFlags::INTERSECTION) {
             return (0..self.ty(t).types().len())
@@ -1485,7 +1485,7 @@ impl Checker {
             }
     }
 
-    // Go: checker/relater.go:4666 membersRelatedToIndexInfo
+    // Go: checker/relater.go:4667 membersRelatedToIndexInfo
     pub fn members_related_to_index_info(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1567,7 +1567,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:4710 indexInfoRelatedTo
+    // Go: checker/relater.go:4711 indexInfoRelatedTo
     pub fn index_info_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1610,7 +1610,7 @@ impl Checker {
         related
     }
 
-    // Go: checker/relater.go:4722 indexSignaturesIdenticalTo
+    // Go: checker/relater.go:4723 indexSignaturesIdenticalTo
     pub fn index_signatures_identical_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1644,7 +1644,7 @@ impl Checker {
         Ternary::TRUE
     }
 
-    // Go: checker/relater.go:4737 reportErrorResults
+    // Go: checker/relater.go:4738 reportErrorResults
     pub fn report_error_results(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1767,7 +1767,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/relater.go:4783 reportRelationError
+    // Go: checker/relater.go:4784 reportRelationError
     pub fn report_relation_error(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1929,7 +1929,7 @@ impl Checker {
         self.report_error(r, message, args![generalized_source_type, target_type]);
     }
 
-    // Go: checker/relater.go:4864 reportError
+    // Go: checker/relater.go:4865 reportError
     pub fn report_error(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -2025,7 +2025,7 @@ impl Checker {
     }
 }
 
-// Go: checker/relater.go:4912 addToDottedName
+// Go: checker/relater.go:4913 addToDottedName
 pub fn add_to_dotted_name(head: &str, tail: &str) -> String {
     let mut head = head.to_string();
     if head.starts_with("new ") {
@@ -2050,7 +2050,7 @@ pub fn add_to_dotted_name(head: &str, tail: &str) -> String {
 }
 
 impl Checker {
-    // Go: checker/relater.go:4934 getChainMessage
+    // Go: checker/relater.go:4935 getChainMessage
     pub fn get_chain_message(
         &self,
         r: &Rc<RefCell<Relater>>,
@@ -2073,7 +2073,7 @@ impl Checker {
     // given arguments (where nil acts as a wildcard).
     // PORT: Go `args ...any` holds strings or nil; a nil wildcard is `None`.
     // Go panics on a nil chain or a short args list; so does this port.
-    // Go: checker/relater.go:4950 chainArgsMatch
+    // Go: checker/relater.go:4951 chainArgsMatch
     pub fn chain_args_match(&self, r: &Rc<RefCell<Relater>>, args: &[Option<&str>]) -> bool {
         let rb = r.borrow();
         let chain = rb.error_chain.as_ref().unwrap();
@@ -2090,7 +2090,7 @@ impl Checker {
 
 // PORT: Go takes `arg any` and asserts a string; diagnostic args are
 // `String` in this port.
-// Go: checker/relater.go:4959 getPropertyNameArg
+// Go: checker/relater.go:4960 getPropertyNameArg
 pub fn get_property_name_arg(arg: &str) -> String {
     let s = arg.as_bytes();
     if !s.is_empty() && (s[0] == b'"' || s[0] == b'\'' || s[0] == b'`') {
@@ -2099,7 +2099,7 @@ pub fn get_property_name_arg(arg: &str) -> String {
     arg.to_string()
 }
 
-// Go: checker/relater.go:4967 isConversionOrInterfaceImplementationMessage
+// Go: checker/relater.go:4968 isConversionOrInterfaceImplementationMessage
 pub fn is_conversion_or_interface_implementation_message(message: &'static Message) -> bool {
     std::ptr::eq(message, diag::Class_0_incorrectly_implements_interface_1)
         || std::ptr::eq(message, diag::Class_0_incorrectly_implements_class_1_Did_you_mean_to_extend_1_and_inherit_its_members_as_a_subclass)
@@ -2109,7 +2109,7 @@ pub fn is_conversion_or_interface_implementation_message(message: &'static Messa
         || std::ptr::eq(message, diag::Its_element_type_0_is_not_a_valid_JSX_element)
 }
 
-// Go: checker/relater.go:4976 chainDepth
+// Go: checker/relater.go:4977 chainDepth
 pub fn chain_depth(chain: &Option<Rc<ErrorChain>>) -> i32 {
     let mut depth = 0;
     let mut chain = chain.clone();
@@ -2131,7 +2131,7 @@ impl Checker {
     // T occurs directly or indirectly in an 'extends' clause of S.
     // Note that this check ignores type parameters and only considers the
     // inheritance hierarchy.
-    // Go: checker/relater.go:4995 isTypeDerivedFrom
+    // Go: checker/relater.go:4996 isTypeDerivedFrom
     pub fn is_type_derived_from(&mut self, source: TypeId, target: TypeId) -> bool {
         let source_flags = self.ty(source).flags;
         let target_flags = self.ty(target).flags;
@@ -2167,7 +2167,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/relater.go:5026 isDistributionDependent
+    // Go: checker/relater.go:5027 isDistributionDependent
     // PERF: the root keeps the answer of the first walk
     // (`ConditionalRoot::distribution_dependent`), and a repeat call returns
     // it. Go walks the result type nodes on every call (vue-macros: 590,519
@@ -2200,7 +2200,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:5030 traceUnionsOrIntersectionsTooLarge
+    // Go: checker/relater.go:5031 traceUnionsOrIntersectionsTooLarge
     pub fn trace_unions_or_intersections_too_large(
         &mut self,
         _r: &Rc<RefCell<Relater>>,

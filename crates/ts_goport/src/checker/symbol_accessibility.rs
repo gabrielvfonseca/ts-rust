@@ -4,7 +4,7 @@ use crate::prelude::*;
 use crate::printer::{SymbolAccessibility, SymbolAccessibilityResult};
 
 impl Checker {
-    // Go: checker/symbolaccessibility.go:11 IsTypeSymbolAccessible
+    // Go: checker/symbolaccessibility.go:13 IsTypeSymbolAccessible
     pub fn is_type_symbol_accessible(
         &mut self,
         type_symbol: SymbolId,
@@ -20,7 +20,7 @@ impl Checker {
         access.accessibility == SymbolAccessibility::ACCESSIBLE
     }
 
-    // Go: checker/symbolaccessibility.go:16 IsValueSymbolAccessible
+    // Go: checker/symbolaccessibility.go:18 IsValueSymbolAccessible
     pub fn is_value_symbol_accessible(
         &mut self,
         symbol: SymbolId,
@@ -36,7 +36,7 @@ impl Checker {
         access.accessibility == SymbolAccessibility::ACCESSIBLE
     }
 
-    // Go: checker/symbolaccessibility.go:21 IsSymbolAccessibleByFlags
+    // Go: checker/symbolaccessibility.go:23 IsSymbolAccessibleByFlags
     pub fn is_symbol_accessible_by_flags(
         &mut self,
         symbol: SymbolId,
@@ -48,7 +48,7 @@ impl Checker {
         access.accessibility == SymbolAccessibility::ACCESSIBLE
     }
 
-    // Go: checker/symbolaccessibility.go:26 IsAnySymbolAccessible
+    // Go: checker/symbolaccessibility.go:28 IsAnySymbolAccessible
     // PORT: Go returns a `*printer.SymbolAccessibilityResult`; nil is `None`.
     pub fn is_any_symbol_accessible(
         &mut self,
@@ -155,7 +155,7 @@ impl Checker {
         None
     }
 
-    // Go: checker/symbolaccessibility.go:117 getWithAlternativeContainers
+    // Go: checker/symbolaccessibility.go:118 getWithAlternativeContainers
     pub fn get_with_alternative_containers(
         &mut self,
         container: SymbolId,
@@ -238,7 +238,7 @@ impl Checker {
         res
     }
 
-    // Go: checker/symbolaccessibility.go:168 getAlternativeContainingModules
+    // Go: checker/symbolaccessibility.go:169 getAlternativeContainingModules
     pub fn get_alternative_containing_modules(
         &mut self,
         symbol: SymbolId,
@@ -426,7 +426,7 @@ impl Checker {
         containers
     }
 
-    // Go: checker/symbolaccessibility.go:226 getVariableDeclarationOfObjectLiteral
+    // Go: checker/symbolaccessibility.go:288 getVariableDeclarationOfObjectLiteral
     pub fn get_variable_declaration_of_object_literal(
         &mut self,
         symbol: SymbolId,
@@ -456,7 +456,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/symbolaccessibility.go:253 getExternalModuleContainer
+    // Go: checker/symbolaccessibility.go:315 getExternalModuleContainer
     pub fn get_external_module_container(&mut self, declaration: Node) -> SymbolId {
         let node = find_ancestor(declaration, has_external_module_symbol);
         if node.is_nil() {
@@ -465,7 +465,7 @@ impl Checker {
         self.get_symbol_of_declaration(node)
     }
 
-    // Go: checker/symbolaccessibility.go:261 getFileSymbolIfFileSymbolExportEqualsContainer
+    // Go: checker/symbolaccessibility.go:323 getFileSymbolIfFileSymbolExportEqualsContainer
     pub fn get_file_symbol_if_file_symbol_export_equals_container(
         &mut self,
         d: Node,
@@ -493,7 +493,7 @@ impl Checker {
 
     /// Attempts to find the symbol corresponding to the container a symbol is in - usually this
     /// is just its' `.parent`, but for locals, this value is `undefined`
-    // Go: checker/symbolaccessibility.go:280 getContainersOfSymbol
+    // Go: checker/symbolaccessibility.go:342 getContainersOfSymbol
     pub fn get_containers_of_symbol(
         &mut self,
         symbol: SymbolId,
@@ -596,7 +596,7 @@ impl Checker {
         best_containers
     }
 
-    // Go: checker/symbolaccessibility.go:342 getAliasForSymbolInContainer
+    // Go: checker/symbolaccessibility.go:404 getAliasForSymbolInContainer
     pub fn get_alias_for_symbol_in_container(
         &mut self,
         container: SymbolId,
@@ -643,7 +643,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/symbolaccessibility.go:373 getAccessibleSymbolChain
+    // Go: checker/symbolaccessibility.go:435 getAccessibleSymbolChain
     pub fn get_accessible_symbol_chain(
         &mut self,
         symbol: SymbolId,
@@ -660,7 +660,7 @@ impl Checker {
         })
     }
 
-    // Go: checker/symbolaccessibility.go:382 GetAccessibleSymbolChain
+    // Go: checker/symbolaccessibility.go:444 GetAccessibleSymbolChain
     pub fn get_accessible_symbol_chain_exported(
         &mut self,
         symbol: SymbolId,
@@ -676,7 +676,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/symbolaccessibility.go:441 getAccessibleSymbolChainEx
+    // Go: checker/symbolaccessibility.go:503 getAccessibleSymbolChainEx
     pub(crate) fn get_accessible_symbol_chain_ex(
         &mut self,
         ctx: &AccessibleSymbolChainContext,
@@ -733,7 +733,7 @@ impl Checker {
     }
 
     /// `ignore_qualification` is set when a symbol is being looked for through the exports of another symbol (meaning we have a route to qualify it already)
-    // Go: checker/symbolaccessibility.go:481 getAccessibleSymbolChainFromSymbolTable
+    // Go: checker/symbolaccessibility.go:543 getAccessibleSymbolChainFromSymbolTable
     pub(crate) fn get_accessible_symbol_chain_from_symbol_table(
         &mut self,
         ctx: &AccessibleSymbolChainContext,
@@ -770,7 +770,7 @@ impl Checker {
 
     /// Returns only the alias symbols from a symbol table, caching the result by
     /// table id to avoid repeated iteration over large tables.
-    // Go: checker/symbolaccessibility.go:505 getSymbolTableAliases
+    // Go: checker/symbolaccessibility.go:567 getSymbolTableAliases
     pub(crate) fn get_symbol_table_aliases(
         &mut self,
         symbols: SymbolTable,
@@ -804,7 +804,7 @@ impl Checker {
         aliases
     }
 
-    // Go: checker/symbolaccessibility.go:535 trySymbolTable
+    // Go: checker/symbolaccessibility.go:597 trySymbolTable
     pub(crate) fn try_symbol_table(
         &mut self,
         ctx: &AccessibleSymbolChainContext,
@@ -869,7 +869,7 @@ impl Checker {
 
         if !candidate_chains.is_empty() {
             // pick first, shortest
-            // Go: checker/symbolaccessibility.go:584 slices.SortStableFunc(candidateChains, c.compareSymbolChains)
+            // Go: checker/symbolaccessibility.go:646 slices.SortStableFunc(candidateChains, c.compareSymbolChains)
             // PORT: compareSymbolChains calls compareSymbols, which is not a
             // total order, so this uses Go's stable sort to get Go's order.
             crate::gostd::slices::sort_stable_func(&mut candidate_chains, |a, b| {
@@ -894,7 +894,7 @@ impl Checker {
     // PORT: Go checker/symbolaccessibility.go:618 compareSymbolChainsWorker is
     // ported in checker/extras.rs.
 
-    // Go: checker/symbolaccessibility.go:620 getCandidateListForSymbol
+    // Go: checker/symbolaccessibility.go:682 getCandidateListForSymbol
     pub(crate) fn get_candidate_list_for_symbol(
         &mut self,
         ctx: &AccessibleSymbolChainContext,
@@ -941,7 +941,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/symbolaccessibility.go:647 isAccessible
+    // Go: checker/symbolaccessibility.go:709 isAccessible
     pub(crate) fn is_accessible(
         &mut self,
         ctx: &AccessibleSymbolChainContext,
@@ -1007,7 +1007,7 @@ impl Checker {
             })
     }
 
-    // Go: checker/symbolaccessibility.go:677 canQualifySymbol
+    // Go: checker/symbolaccessibility.go:750 canQualifySymbol
     pub(crate) fn can_qualify_symbol(
         &mut self,
         ctx: &AccessibleSymbolChainContext,
@@ -1029,7 +1029,7 @@ impl Checker {
                 .is_empty()
     }
 
-    // Go: checker/symbolaccessibility.go:688 needsQualification
+    // Go: checker/symbolaccessibility.go:761 needsQualification
     pub fn needs_qualification(
         &mut self,
         symbol: SymbolId,
@@ -1088,7 +1088,7 @@ impl Checker {
         qualify
     }
 
-    // Go: checker/symbolaccessibility.go:746 someSymbolTableInScope
+    // Go: checker/symbolaccessibility.go:819 someSymbolTableInScope
     // PORT: the Go callback is a closure over `c`; here it takes the checker
     // as its first argument.
     pub(crate) fn some_symbol_table_in_scope(
@@ -1213,7 +1213,7 @@ impl Checker {
     /// binding. Class expression names are bound via bindAnonymousDeclaration and
     /// aren't stored in any container's locals, so this synthesized table lets
     /// some_symbol_table_in_scope expose them during accessibility checks.
-    // Go: checker/symbolaccessibility.go:810 getClassExpressionNameTable
+    // Go: checker/symbolaccessibility.go:883 getClassExpressionNameTable
     pub(crate) fn get_class_expression_name_table(&mut self, location: Node) -> SymbolTable {
         // PORT: Go keys by `ast.GetNodeId(location)`; the `Node` handle has the same identity.
         if let Some(&table) = self.class_expression_name_tables.get(&location) {
@@ -1231,7 +1231,7 @@ impl Checker {
     }
 
     /// Check if the given symbol in given enclosing declaration is accessible and mark all associated alias to be visible if requested
-    // Go: checker/symbolaccessibility.go:839 IsSymbolAccessible
+    // Go: checker/symbolaccessibility.go:912 IsSymbolAccessible
     pub fn is_symbol_accessible(
         &mut self,
         symbol: SymbolId,
@@ -1248,7 +1248,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/symbolaccessibility.go:843 isSymbolAccessibleWorker
+    // Go: checker/symbolaccessibility.go:916 isSymbolAccessibleWorker
     pub fn is_symbol_accessible_worker(
         &mut self,
         symbol: SymbolId,
@@ -1326,14 +1326,14 @@ impl Checker {
     }
 }
 
-// Go: checker/symbolaccessibility.go:105 hasNonGlobalAugmentationExternalModuleSymbol
+// Go: checker/symbolaccessibility.go:106 hasNonGlobalAugmentationExternalModuleSymbol
 pub fn has_non_global_augmentation_external_module_symbol(declaration: Node) -> bool {
     is_module_with_string_literal_name(declaration)
         || (declaration.kind() == SyntaxKind::SourceFile
             && is_external_or_common_js_module(declaration))
 }
 
-// Go: checker/symbolaccessibility.go:109 getQualifiedLeftMeaning
+// Go: checker/symbolaccessibility.go:110 getQualifiedLeftMeaning
 pub fn get_qualified_left_meaning(right_meaning: SymbolFlags) -> SymbolFlags {
     // If we are looking in value space, the parent meaning is value, other wise it is namespace
     if right_meaning == SymbolFlags::VALUE {
@@ -1342,14 +1342,14 @@ pub fn get_qualified_left_meaning(right_meaning: SymbolFlags) -> SymbolFlags {
     SymbolFlags::NAMESPACE
 }
 
-// Go: checker/symbolaccessibility.go:249 hasExternalModuleSymbol
+// Go: checker/symbolaccessibility.go:311 hasExternalModuleSymbol
 pub fn has_external_module_symbol(declaration: Node) -> bool {
     is_ambient_module(declaration)
         || (declaration.kind() == SyntaxKind::SourceFile
             && is_external_or_common_js_module(declaration))
 }
 
-// Go: checker/symbolaccessibility.go:391 accessibleSymbolChainContext
+// Go: checker/symbolaccessibility.go:453 accessibleSymbolChainContext
 // PORT: Go shares `visitedSymbolTablesMap` by map reference between contexts.
 // Here the map is an `Rc<RefCell<..>>` so clones share it the same way.
 #[derive(Clone)]
@@ -1361,7 +1361,7 @@ pub(crate) struct AccessibleSymbolChainContext {
     pub visited_symbol_tables_map: Rc<RefCell<FxHashMap<SymbolId, FxHashSet<SymbolTableID>>>>,
 }
 
-// Go: checker/symbolaccessibility.go:468 symbolTableID constants
+// Go: checker/symbolaccessibility.go:464 symbolTableID constants
 // The high 3 bits encode the kind, and the remaining bits encode the
 // NodeId or SymbolId of the source.
 impl SymbolTableID {
@@ -1381,38 +1381,38 @@ impl SymbolTableID {
         Self(self.0 & Self::KIND_MASK.0)
     }
 
-    // Go: checker/symbolaccessibility.go:417 symbolTableIDFromLocals
+    // Go: checker/symbolaccessibility.go:479 symbolTableIDFromLocals
     #[must_use]
     pub fn from_locals(node: Node) -> Self {
         Self(Self::KIND_LOCALS.0 | get_node_id(node))
     }
 
-    // Go: checker/symbolaccessibility.go:421 symbolTableIDFromExports
+    // Go: checker/symbolaccessibility.go:483 symbolTableIDFromExports
     #[must_use]
     pub fn from_exports(symbols: &SymbolArena, sym: SymbolId) -> Self {
         Self(Self::KIND_EXPORTS.0 | get_symbol_id(symbols, sym))
     }
 
-    // Go: checker/symbolaccessibility.go:429 symbolTableIDFromResolvedExports
+    // Go: checker/symbolaccessibility.go:491 symbolTableIDFromResolvedExports
     #[must_use]
     pub fn from_resolved_exports(symbols: &SymbolArena, sym: SymbolId) -> Self {
         Self(Self::KIND_RESOLVED_EXPORTS.0 | get_symbol_id(symbols, sym))
     }
 
-    // Go: checker/symbolaccessibility.go:433 symbolTableIDFromMembers
+    // Go: checker/symbolaccessibility.go:495 symbolTableIDFromMembers
     #[must_use]
     pub fn from_members(symbols: &SymbolArena, sym: SymbolId) -> Self {
         Self(Self::KIND_MEMBERS.0 | get_symbol_id(symbols, sym))
     }
 
-    // Go: checker/symbolaccessibility.go:437 symbolTableIDFromGlobals
+    // Go: checker/symbolaccessibility.go:499 symbolTableIDFromGlobals
     #[must_use]
     pub fn from_globals() -> Self {
         Self::KIND_GLOBALS
     }
 }
 
-// Go: checker/symbolaccessibility.go:612 isUMDExportSymbol
+// Go: checker/symbolaccessibility.go:674 isUMDExportSymbol
 pub fn is_umd_export_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
     symbol.is_some()
         && symbols
@@ -1422,12 +1422,12 @@ pub fn is_umd_export_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
             .is_some_and(|&d| d.is_some() && is_namespace_export_declaration(d))
 }
 
-// Go: checker/symbolaccessibility.go:616 isNamespaceReexportDeclaration
+// Go: checker/symbolaccessibility.go:678 isNamespaceReexportDeclaration
 pub fn is_namespace_reexport_declaration(node: Node) -> bool {
     is_namespace_export(node) && node.parent().module_specifier().is_some()
 }
 
-// Go: checker/symbolaccessibility.go:728 isPropertyOrMethodDeclarationSymbol
+// Go: checker/symbolaccessibility.go:801 isPropertyOrMethodDeclarationSymbol
 pub fn is_property_or_method_declaration_symbol(symbols: &SymbolArena, symbol: SymbolId) -> bool {
     let decls = &symbols.sym(symbol).declarations;
     if !decls.is_empty() {
