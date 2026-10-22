@@ -490,7 +490,7 @@ impl DeclarationTransformer {
         )
     }
 
-    // Go: transformers/declarations/transform.go:1090 DeclarationTransformer.omitPrivateMethodType
+    // Go: transformers/declarations/transform.go:1091 DeclarationTransformer.omitPrivateMethodType
     pub(super) fn omit_private_method_type(&mut self, input: Node) -> Node {
         let symbol = input.symbol();
         if symbol.is_some() {

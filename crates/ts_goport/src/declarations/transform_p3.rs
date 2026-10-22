@@ -957,7 +957,7 @@ impl DeclarationTransformer {
     }
 }
 
-// Go: transformers/declarations/transform.go:1563 isCommonJSAliasExport
+// Go: transformers/declarations/transform.go:1564 isCommonJSAliasExport
 pub(crate) fn is_common_js_alias_export(node: Node) -> bool {
     if is_binary_expression(node) && is_identifier(node.right()) {
         let symbol = node.symbol();
