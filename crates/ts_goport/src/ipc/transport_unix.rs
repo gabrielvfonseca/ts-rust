@@ -178,16 +178,34 @@ fn next_random() -> String {
 
 /// Go `net.Listen("unix", path)`.
 fn listen(path: &str) -> Result<UnixPipeListener, GoError> {
-    match listen_unix(path) {
+    // PORT: the wake pair of `UnixPipeListener` (no Go step) comes first,
+    // so its failure leaves no socket file. Its text is Go's for a failed
+    // `socket` call.
+    let (wake, wake_writer) = UnixStream::pair().map_err(|err| {
+        errors::new(format!(
+            "listen unix {path}: socket: {}",
+            io_error_text(&err)
+        ))
+    })?;
+    let listener = listen_unix(path).and_then(|listener| {
+        listener.set_nonblocking(true)?;
+        Ok(listener)
+    });
+    match listener {
         Ok(listener) => Ok(UnixPipeListener {
-            listener: Mutex::new(Some(listener)),
+            state: Mutex::new(Some(UnixListenerState {
+                listener: Arc::new(listener),
+                wake: wake_writer,
+            })),
+            wake,
             path: path.to_string(),
         }),
         // Go: net/sock_posix.go listenStream, `os.NewSyscallError("bind",
         // err)`, in `&OpError{Op: "listen", Net: "unix", Addr: laddr}`.
         // PORT: std checks the name length before the socket call and
         // fails with no errno, where Go's `syscall.Bind` gives EINVAL. A
-        // `socket` or `listen` failure also prints "bind" here.
+        // `socket` or `listen` failure (and the port's `set_nonblocking`)
+        // also prints "bind" here.
         Err(err) => {
             let text = match err.raw_os_error() {
                 None if err.kind() == std::io::ErrorKind::InvalidInput => {
@@ -257,50 +275,113 @@ const ACCEPT_CALL: &str = "accept4";
 const ACCEPT_CALL: &str = "accept";
 
 /// Go `*net.UnixListener` from `net.Listen("unix", path)`.
-/// PORT: the listener sits in a mutex so `close` can drop it through `&self`.
+/// PORT: Go's `Accept` waits in the netpoller, and `Close` (internal/poll
+/// fd_unix.go FD.Close) wakes it (`evict`); the descriptor closes when the
+/// woken `Accept` drops its reference (`decref`). Here the listener is
+/// non-blocking and `accept` waits in `poll` on the listener and on `wake`,
+/// which `close` makes readable. `state` is `None` after `close`. An
+/// `accept` holds its own reference to the listener, so the descriptor
+/// closes when it returns. Go's `Close` waits for that; the port's does not
+/// (the LSP server's `stop` joins its accept thread).
 struct UnixPipeListener {
-    listener: Mutex<Option<UnixListener>>,
+    state: Mutex<Option<UnixListenerState>>,
+    /// The read end of the wake pair.
+    wake: UnixStream,
     path: String,
 }
 
+struct UnixListenerState {
+    listener: Arc<UnixListener>,
+    /// The write end of the wake pair.
+    wake: UnixStream,
+}
+
+impl UnixPipeListener {
+    /// Go `pd.waitRead`: waits until the listener has a connection or
+    /// `close` ran. A signal (EINTR) waits again, as in Go.
+    fn wait(&self, listener: &UnixListener) -> Result<(), GoError> {
+        use rustix::event::{PollFd, PollFlags, poll};
+        let mut fds = [
+            PollFd::new(listener, PollFlags::IN),
+            PollFd::new(&self.wake, PollFlags::IN),
+        ];
+        loop {
+            match poll(&mut fds, None) {
+                Ok(_) => return Ok(()),
+                Err(rustix::io::Errno::INTR) => continue,
+                // PORT: no Go error (the netpoller does not fail here).
+                Err(errno) => {
+                    return Err(errors::new(format!(
+                        "accept unix {}: poll: {}",
+                        self.path,
+                        io_error_text(&errno.into())
+                    )));
+                }
+            }
+        }
+    }
+}
+
 impl NetListener for UnixPipeListener {
-    // Go net.UnixListener.Accept
+    // Go net.UnixListener.Accept (internal/poll/fd_unix.go FD.Accept)
     fn accept(&self) -> Result<Arc<dyn ReadWriteCloser>, GoError> {
-        let guard = self
-            .listener
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let Some(listener) = guard.as_ref() else {
-            return Err(closed_error("accept", &self.path));
-        };
-        // Go: net/fd_unix.go accept, `wrapSyscallError(errcall, err)`: std
-        // and Go call accept4 on Linux and the BSDs, accept on darwin.
-        match listener.accept() {
-            Ok((stream, _)) => Ok(Arc::new(UnixConn { stream })),
-            Err(err) => Err(errors::new(format!(
+        loop {
+            // Go: `fd.readLock()` fails after Close.
+            let listener = self
+                .state
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .as_ref()
+                .map(|state| state.listener.clone());
+            let Some(listener) = listener else {
+                return Err(closed_error("accept", &self.path));
+            };
+            // Go: net/fd_unix.go accept, `wrapSyscallError(errcall, err)`: std
+            // and Go call accept4 on Linux and the BSDs, accept on darwin.
+            let err = match listener.accept() {
+                // PORT: macOS and the BSDs give the new socket the
+                // listener's O_NONBLOCK; Go's connection waits in the
+                // netpoller, the port's blocks.
+                Ok((stream, _)) => match stream.set_nonblocking(false) {
+                    Ok(()) => return Ok(Arc::new(UnixConn { stream })),
+                    Err(err) => err,
+                },
+                Err(err) if err.kind() == ErrorKind::WouldBlock => {
+                    self.wait(&listener)?;
+                    continue;
+                }
+                // Go: a connection that closed in the queue; try again.
+                Err(err) if err.kind() == ErrorKind::ConnectionAborted => continue,
+                Err(err) => err,
+            };
+            return Err(errors::new(format!(
                 "accept unix {}: {ACCEPT_CALL}: {}",
                 self.path,
                 io_error_text(&err)
-            ))),
+            )));
         }
     }
 
-    // Go net.UnixListener.Close: closes the socket and unlinks the socket
-    // file (listeners made by `net.Listen` unlink on close; abstract names
-    // starting with '@' have no file).
+    // Go net.UnixListener.Close: unlinks the socket file (listeners made by
+    // `net.Listen` do; abstract names starting with '@' have no file), then
+    // closes the socket, which wakes a waiting `Accept`.
     fn close(&self) -> Result<(), GoError> {
-        let listener = self
-            .listener
+        let state = self
+            .state
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
-        let Some(listener) = listener else {
+        let Some(state) = state else {
             return Err(closed_error("close", &self.path));
         };
-        drop(listener);
         if !self.path.starts_with('@') {
             let _ = std::fs::remove_file(&self.path);
         }
+        // Go `evict`. The byte wakes the `poll` also while a child that
+        // another thread spawns still has a copy of the write end.
+        let _ = std::io::Write::write(&mut &state.wake, &[0]);
+        // Go `decref`: the last reference closes the socket.
+        drop(state);
         Ok(())
     }
 
@@ -397,6 +478,48 @@ mod tests {
             .unwrap_or_else(|err| panic!("replacement socket is unreachable: {err}"));
         drop(conn);
         let _ = replacement.close();
+    }
+
+    // PORT: no Go test. Go's Close wakes an Accept that waits on another
+    // goroutine (internal/poll/fd_unix.go FD.Close, `evict`): the Accept
+    // fails with net.ErrClosed, and the cleanup removes the socket and its
+    // directory (bump E L5 round 2, B2).
+    #[test]
+    fn close_ends_a_waiting_accept() {
+        use std::sync::mpsc;
+        use std::time::Duration;
+
+        let transport = Arc::new(
+            new_private_pipe_transport("tsgo-api-test")
+                .unwrap_or_else(|err| panic!("{}", err.error())),
+        );
+        let socket_path = transport.path();
+        let (accepted_tx, accepted) = mpsc::channel();
+        let accept_transport = transport.clone();
+        std::thread::spawn(move || {
+            let _ = accepted_tx.send(accept_transport.accept().map(|_| ()));
+        });
+        // Gives the accept time to wait in poll. When it has not started
+        // yet, it fails the same way.
+        std::thread::sleep(Duration::from_millis(100));
+        if let Err(err) = transport.close() {
+            panic!("{}", err.error());
+        }
+
+        let err = accepted
+            .recv_timeout(Duration::from_secs(10))
+            .expect("close ended the accept")
+            .expect_err("accept after close");
+        assert!(errors::is(&err, &ERR_NET_CLOSED), "{}", err.error());
+        assert_eq!(
+            err.error(),
+            format!("accept unix {socket_path}: use of closed network connection")
+        );
+        let dir = dir_of(&socket_path);
+        match std::fs::metadata(&dir) {
+            Err(err) if err.kind() == ErrorKind::NotFound => {}
+            other => panic!("socket directory still exists after close: {other:?}"),
+        }
     }
 
     // Go: ipc/transport_unix_test.go:47 TestPipeTransportPermissions

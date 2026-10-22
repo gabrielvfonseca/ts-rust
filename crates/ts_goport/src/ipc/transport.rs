@@ -414,9 +414,10 @@ pub fn generate_pipe_path(name: &str) -> String {
 // (`lsp/server.rs` `start_api_reader`). miow opens the pipe with
 // `FILE_FLAG_OVERLAPPED` and each read and write waits on its own thread's
 // event, so a read that waits does not hold a write on another thread.
-// `Close` does not end an `Accept` that waits on another thread. The LSP
-// server's `api-accept` thread closes the transport after its `Accept`; if
-// the server ends first, the process exit ends the wait, as in Go.
+// PORT divergence: `Close` does not end an `Accept` that waits on another
+// thread (winio's does). The LSP server's `stop` closes the transport and
+// does not wait for its `api-accept` thread: a client that connects later
+// is closed, and without one the process exit ends the wait.
 #[cfg(windows)]
 pub fn new_pipe_listener(path: &str) -> Result<PipeListener, GoError> {
     let first = new_pipe_instance(path, true)
