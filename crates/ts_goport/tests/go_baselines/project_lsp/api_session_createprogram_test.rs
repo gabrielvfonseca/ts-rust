@@ -590,3 +590,70 @@ child_test! {
         project_session.close();
     }
 }
+
+// Go: session_createprogram_test.go:320 TestCreateSnapshotResolvesPathsRelativeToParsedConfigDirectory (ts#64843)
+child_test! {
+    fn create_snapshot_resolves_paths_relative_to_parsed_config_directory() {
+        const MAIN_FILE: &str = "/project/main.ts";
+        const LIB_FILE: &str = "/project/types/lib.d.ts";
+        let (mut init, _) = projecttestutil::get_session_init_options(
+            files(&[
+                (MAIN_FILE, r#"import { x } from "lib"; export const y: number = x;"#),
+                (LIB_FILE, "export declare const x: number;"),
+            ]),
+            None,
+            TypingsInstallerOptions::default(),
+        );
+        // Go: init.Options.CurrentDirectory = "/somewhere-else"
+        Rc::get_mut(&mut init.options)
+            .expect("the init options are not shared yet")
+            .current_directory = "/somewhere-else".to_string();
+        let session = api::new_standalone_session(&init, None);
+
+        let mut parse_params = api::ParseJsonConfigFileContentParams::default();
+        json_unmarshal(
+            br#"{
+		"json": {
+			"compilerOptions": {
+				"module": "esnext",
+				"moduleResolution": "bundler",
+				"noLib": true,
+				"types": [],
+				"paths": { "lib": ["./types/lib.d.ts"] }
+			}
+		},
+		"configDirectory": "/project"
+	}"#,
+            &mut parse_params,
+            &[],
+        )
+        .unwrap_or_else(|err| panic!("unmarshal: {err:?}"));
+        let parsed = nil_error(session.handle_parse_json_config_file_content(&bg(), &parse_params))
+            .expect("a config file response");
+
+        // Round-trip the parsed options through JSON as an API client would.
+        let encoded_options = json_marshal(
+            &parsed
+                .options
+                .as_ref()
+                .map(ts_goport::options_json::CompilerOptionsJSON),
+            &[],
+        )
+        .unwrap_or_else(|err| panic!("marshal: {err:?}"));
+        let create_params = CreateSnapshotParams {
+            snapshot_request_changes_params: unmarshal_changes(&format!(
+                r#"{{"createPrograms":[{{"rootFiles":["{MAIN_FILE}"],"compilerOptions":{encoded_options}}}]}}"#
+            )),
+            ..Default::default()
+        };
+
+        let response = nil_error(session.handle_create_snapshot(&bg(), &create_params));
+        let snapshot = nil_error(session.get_snapshot_data(response.snapshot));
+        let program = nil_error(snapshot.get_program(&response.projects[0].id));
+        assert!(
+            program.get_source_file(LIB_FILE).is_some(),
+            "expected 'lib' to resolve via paths relative to /project"
+        );
+        session.close();
+    }
+}

@@ -780,3 +780,43 @@ child_test! {
         project_session.close();
     }
 }
+
+// Go: session_apistate_test.go:500 TestOpenProjectsWithCircularExtendsReportCircularity (ts#64755)
+child_test! {
+    fn open_projects_with_circular_extends_report_circularity() {
+        const FIRST: &str = "/home/projects/p1/tsconfig.json";
+        const SECOND: &str = "/home/projects/p2/tsconfig.json";
+        let (project_session, _) = projecttestutil::setup(files(&[
+            (FIRST, r#"{ "extends": "../shared/base.json" }"#),
+            (SECOND, r#"{ "extends": "../shared/base.json" }"#),
+            (
+                "/home/projects/shared/base.json",
+                r#"{ "extends": "../p2/tsconfig.json" }"#,
+            ),
+            ("/home/projects/p1/a.ts", "export const a = 1;"),
+            ("/home/projects/p2/b.ts", "export const b = 1;"),
+        ]));
+        let session = api::new_lsp_session(project_session.clone(), None);
+
+        let open_project = |name: &str| api::CreateSnapshotParams {
+            snapshot_request_changes_params: SnapshotRequestChangesParams {
+                open_projects: vec![doc(name)],
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        nil_error(session.handle_create_snapshot(&bg(), &open_project(FIRST)));
+        let response = nil_error(session.handle_create_snapshot(&bg(), &open_project(SECOND)));
+        let diagnostics = nil_error(session.handle_get_config_file_parsing_diagnostics(
+            &bg(),
+            &api::GetProjectDiagnosticsParams {
+                snapshot: response.snapshot,
+                project: configured_project_id(SECOND),
+            },
+        ));
+        let codes: Vec<i32> = diagnostics.iter().map(|diagnostic| diagnostic.code).collect();
+        assert_eq!(codes, [18000]);
+        session.close();
+        project_session.close();
+    }
+}

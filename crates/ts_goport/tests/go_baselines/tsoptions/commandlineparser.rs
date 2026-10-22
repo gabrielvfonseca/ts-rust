@@ -224,7 +224,7 @@ fn response_file_does_not_panic() {
     t.finish();
 }
 
-// Go: commandlineparser_test.go:108 TestResponseFileParsing
+// Go: commandlineparser_test.go:123 TestResponseFileParsing (ts#64832)
 #[test]
 fn response_file_parsing() {
     let mut t = Subtests::new("TestResponseFileParsing");
@@ -253,6 +253,27 @@ fn response_file_parsing() {
         let parsed = parse_command_line(&strs(&["@a.txt"]), &host);
         assert_eq!(parsed.errors.len(), 0);
         assert!(parsed.compiler_options().strict.is_true());
+        assert_eq!(parsed.compiler_options().out_dir, "/project/dist");
+        Ok(())
+    });
+
+    // Go: commandlineparser_test.go:149 (ts#64832)
+    t.run("network path", || {
+        let host = new_vfs_parse_config_host(
+            &file_map(&[(
+                "/project/args.txt",
+                r"--pprofDir \\server\share --outDir dist",
+            )]),
+            "/project",
+            true,
+        );
+        let parsed = parse_command_line(&strs(&["@args.txt"]), &host);
+        assert_eq!(parsed.errors.len(), 1);
+        assert_eq!(
+            parsed.errors[0].code(),
+            diag::Network_path_0_is_not_supported.code() as i32
+        );
+        assert_eq!(parsed.compiler_options().pprof_dir, "");
         assert_eq!(parsed.compiler_options().out_dir, "/project/dist");
         Ok(())
     });

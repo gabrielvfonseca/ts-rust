@@ -5,6 +5,7 @@
 //! struct rules the tests need (names match exactly, unknown members are
 //! skipped). Go `OrderedMap.GetOrZero` is `get(..).cloned().unwrap_or_default()`.
 
+use rustc_hash::FxHashMap;
 use ts_goport::frontend::json::{
     JsonDecoder, JsonError, JsonToken, UnmarshalerFrom, json_unmarshal, json_unmarshal_decode,
 };
@@ -266,6 +267,7 @@ type ContentMapperExported = (
     (bool, bool, Vec<String>),
     (bool, bool, Vec<String>),
     (bool, bool, bool),
+    (bool, bool, FxHashMap<String, String>),
 );
 
 fn exported_content_mapper(e: &Expected<ContentMapperFields>) -> ContentMapperExported {
@@ -275,6 +277,7 @@ fn exported_content_mapper(e: &Expected<ContentMapperFields>) -> ContentMapperEx
         exported(&e.value.exec),
         exported(&e.value.compiler_options),
         exported(&e.value.dynamic_config),
+        exported(&e.value.output_extensions),
     )
 }
 
@@ -313,7 +316,7 @@ fn assert_parse_result(
     );
 }
 
-// Go: packagejson_test.go:63 TestParse
+// Go: packagejson_test.go:118 TestParse (ts#64581)
 #[test]
 fn test_parse() {
     let zero: Expected<String> = Expected::default();
@@ -333,11 +336,11 @@ fn test_parse() {
         &no_content_mapper,
     );
 
-    // content mapper (tsgo#4712)
+    // content mapper (tsgo#4712, ts#64581)
     let content = r#"{
 				"name": "test-package",
 				"typescript": {
-					"contentMapper": { "exec": ["mapper"], "dynamicConfig": true }
+					"contentMapper": { "exec": ["mapper"], "dynamicConfig": true, "outputExtensions": { ".astro": ".js" } }
 				}
 			}"#;
     let got = packagejson::parse(content.as_bytes()).expect("Parse");
@@ -348,6 +351,11 @@ fn test_parse() {
         &packagejson::expected_of(ContentMapperFields {
             exec: packagejson::expected_of(vec!["mapper".to_string()]),
             dynamic_config: packagejson::expected_of(true),
+            output_extensions: packagejson::expected_of(
+                [(".astro".to_string(), ".js".to_string())]
+                    .into_iter()
+                    .collect(),
+            ),
             ..Default::default()
         }),
     );

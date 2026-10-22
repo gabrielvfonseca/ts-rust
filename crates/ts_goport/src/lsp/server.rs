@@ -5608,6 +5608,8 @@ pub fn parse_content_mapper_contributions(
                 package: identity.clone(),
                 extensions: valid_extensions,
                 options: json_ext::JsonValue(options),
+                // ts#64581: the contribution's outputExtensions (wave 2b).
+                ..Default::default()
             },
             manifest: contentmapper::Manifest {
                 name: manifest.name.clone(),
@@ -5615,6 +5617,7 @@ pub fn parse_content_mapper_contributions(
                 exec: manifest.exec.clone(),
                 compiler_options: manifest.compiler_options.clone().unwrap_or_default(),
                 dynamic_config: manifest.dynamic_config.unwrap_or_default(),
+                ..Default::default()
             },
             contribution_id: identity.clone(),
             ..Default::default()

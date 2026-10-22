@@ -1,4 +1,4 @@
-//! Go: `internal/tspath/{path,ignoredpaths,startsWithDirectory,untitled}_test.go`.
+//! Go: `internal/tspath/{path,ignoredpaths,startsWithDirectory,untitled,extensionrewrite}_test.go`.
 //!
 //! Blocked: `TestReducePathComponents` (Go `reducePathComponents`; the Rust
 //! `reduce_path_components` in `src/frontend/tspath/path.rs` is private).
@@ -1330,6 +1330,109 @@ fn test_untitled_path_edge_cases() {
             &format!("IsRootedDiskPath {path}"),
             tspath::is_rooted_disk_path(path),
             *is_rooted,
+        );
+    }
+    failures.finish();
+}
+
+/// Go `[]tspath.ExtensionRewrite{{Source: ..., Target: ...}, ...}`.
+fn extension_rewrites(entries: &[(&str, &str)]) -> Vec<tspath::ExtensionRewrite> {
+    entries
+        .iter()
+        .map(|(source, target)| tspath::ExtensionRewrite {
+            source: (*source).to_string(),
+            target: (*target).to_string(),
+        })
+        .collect()
+}
+
+// Go: extensionrewrite_test.go:10 TestRewriteExtension (ts#64581)
+// PORT: Go `CaseSensitive` is `true` (`use_case_sensitive_file_names`), Go
+// `CaseInsensitive` is `false`. A Go `(value, false)` result is `None`, and
+// its unchanged value is the input.
+#[test]
+fn test_rewrite_extension() {
+    let mut rewrites = extension_rewrites(&[(".z", ".js"), (".y.z", ".mjs")]);
+
+    assert_eq!(
+        tspath::rewrite_module_specifier_extension("./Widget.y.z", &rewrites, true).as_deref(),
+        Some("./Widget.mjs")
+    );
+    assert_eq!(
+        tspath::rewrite_module_specifier_extension("./Widget.Y.Z", &rewrites, false).as_deref(),
+        Some("./Widget.mjs")
+    );
+    assert_eq!(
+        tspath::rewrite_module_specifier_extension(".y", &rewrites, true),
+        None
+    );
+
+    rewrites.extend(extension_rewrites(&[(".identity.y.z", ".identity.y.z")]));
+    assert_eq!(
+        tspath::rewrite_module_specifier_extension("./Widget.IDENTITY.Y.Z", &rewrites, false),
+        None
+    );
+    assert!(!tspath::should_rewrite_module_specifier_extension(
+        "./Widget.identity.y.z",
+        &rewrites,
+        true
+    ));
+}
+
+// Go: extensionrewrite_test.go:36 TestRootedFilePathRewriteExtension (ts#64581)
+#[test]
+fn test_rooted_file_path_rewrite_extension() {
+    let rewrites = extension_rewrites(&[
+        (".z", ".js"),
+        (".y.z", ".mjs"),
+        (".identity.y.z", ".identity.y.z"),
+    ]);
+    let cases: &[(&str, &str, bool, bool)] = &[
+        ("/src/Widget.y.z", "/src/Widget.mjs", true, true),
+        ("/src/Widget.Y.Z", "/src/Widget.mjs", false, true),
+        ("/src/Widget.Y.Z", "/src/Widget.Y.Z", true, false),
+        (
+            "/src/Widget.IDENTITY.Y.Z",
+            "/src/Widget.IDENTITY.Y.Z",
+            false,
+            false,
+        ),
+        ("/src/Widget.txt", "/src/Widget.txt", true, false),
+    ];
+    let mut failures = Failures::new("TestRootedFilePathRewriteExtension");
+    for (path, expected, use_case_sensitive_file_names, changed) in cases {
+        let rewritten =
+            tspath::rewrite_file_extension(path, &rewrites, *use_case_sensitive_file_names);
+        failures.check_eq(&format!("changed {path}"), rewritten.is_some(), *changed);
+        failures.check_eq(
+            &format!("RewriteExtension {path}"),
+            rewritten.unwrap_or_else(|| (*path).to_string()),
+            (*expected).to_string(),
+        );
+    }
+    failures.finish();
+}
+
+// Go: extensionrewrite_test.go:61 TestModuleSpecifierShouldRewriteExtension (ts#64581)
+#[test]
+fn test_module_specifier_should_rewrite_extension() {
+    let rewrites = extension_rewrites(&[(".astro", ".js")]);
+    let cases: &[(&str, bool)] = &[
+        ("./Card.astro", true),
+        ("../Card.astro", true),
+        ("./file.ts", true),
+        ("./file.d.ts", false),
+        ("./file.d.astro.ts", false),
+        ("./file.js", false),
+        ("package.astro", false),
+        ("/Card.astro", false),
+    ];
+    let mut failures = Failures::new("TestModuleSpecifierShouldRewriteExtension");
+    for (specifier, expected) in cases {
+        failures.check_eq(
+            &format!("ShouldRewriteExtension {specifier}"),
+            tspath::should_rewrite_module_specifier_extension(specifier, &rewrites, true),
+            *expected,
         );
     }
     failures.finish();
