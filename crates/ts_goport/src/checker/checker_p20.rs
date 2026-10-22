@@ -1303,10 +1303,9 @@ impl Checker {
         context.borrow().siblings.clone()
     }
 
-    // Go: checker/checker.go:18900 getUndefinedProperty
+    // Go: checker/checker.go:18929 getUndefinedProperty
     pub fn get_undefined_property(&mut self, prop: SymbolId) -> SymbolId {
-        let name = self.sym(prop).name.to_string();
-        if let Some(&cached) = self.undefined_properties.get(&name) {
+        if let Some(&cached) = self.undefined_properties.get(&prop) {
             if cached.is_some() {
                 return cached;
             }
@@ -1314,7 +1313,7 @@ impl Checker {
         let undefined_or_missing_type = self.undefined_or_missing_type;
         let result = self.create_symbol_with_type(prop, undefined_or_missing_type);
         self.sym_mut(result).flags |= SymbolFlags::OPTIONAL;
-        self.undefined_properties.insert(name, result);
+        self.undefined_properties.insert(prop, result);
         result
     }
 
