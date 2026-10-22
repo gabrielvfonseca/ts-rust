@@ -9,13 +9,7 @@ pub trait OutputPathsHost {
     fn content_mapper_extensions(&self) -> Vec<String>;
     /// ts#64581: the output extension rewrites of the configured content
     /// mappers (Go `ContentMapperExtensionRewrites`).
-    // PORT: Go has no default. This one (no rewrites, the result for a
-    // program whose mappers map no extension) stays until wave 2b of bump E
-    // ports the hosts outside the config lane: `program::EmitHost`
-    // (compiler/emitHost.go:118) and `modulespecifiers::ProgramHost`.
-    fn content_mapper_extension_rewrites(&self) -> Vec<ExtensionRewrite> {
-        Vec::new()
-    }
+    fn content_mapper_extension_rewrites(&self) -> Vec<ExtensionRewrite>;
     fn get_current_directory(&self) -> String;
     fn use_case_sensitive_file_names(&self) -> bool;
 }

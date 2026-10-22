@@ -35,6 +35,8 @@ pub trait OutputPaths {
 // only the bool.
 pub trait DeclarationEmitHost {
     fn get_current_directory(&self) -> String;
+    /// ts#64581: the output extension rewrites of the content mappers.
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite>;
     fn use_case_sensitive_file_names(&self) -> bool;
     /// `Node::NIL` is Go nil.
     fn get_source_file_from_reference(&self, origin: Node, r#ref: &FileReference) -> Node;

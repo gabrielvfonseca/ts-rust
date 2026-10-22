@@ -2038,7 +2038,7 @@ fn get_module_specifier_with_preferences(
 mod tests {
     use super::*;
 
-    // Go: modulespecifiers/specifiers_test.go:328 TestIsPackageMainFilePreservesDirectoryIntent (ts#64159)
+    // Go: modulespecifiers/specifiers_test.go:332 TestIsPackageMainFilePreservesDirectoryIntent (ts#64159)
     #[test]
     fn is_package_main_file_preserves_directory_intent() {
         let package_root = "/project/node_modules/pkg";

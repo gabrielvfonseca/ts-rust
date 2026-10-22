@@ -306,14 +306,19 @@ impl OutputPathsHost for ProgramHost {
         crate::program::use_case_sensitive_file_names()
     }
 
-    // tsgo#4712: Go `Program.ContentMapperExtensions` (program.go:508).
+    // tsgo#4712: Go `Program.ContentMapperExtensions` (program.go:550).
     fn content_mapper_extensions(&self) -> Vec<String> {
         crate::program::content_mapper_extensions()
+    }
+
+    // Go: compiler/program.go:552 ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite> {
+        crate::program::content_mapper_extension_rewrites()
     }
 }
 
 impl ModuleSpecifierGenerationHost for ProgramHost {
-    // Go: compiler/program.go:2330 GetSymlinkCache
+    // Go: compiler/program.go:2343 GetSymlinkCache
     fn get_symlink_cache(&self) -> Option<Rc<KnownSymlinks>> {
         if let Some(cached) = with_program_caches(|c| c.known_symlinks.clone()) {
             return Some(cached);
@@ -328,12 +333,17 @@ impl ModuleSpecifierGenerationHost for ProgramHost {
         crate::program::common_source_directory().to_string()
     }
 
-    // Go: compiler/program.go:549 ContentMapperExtensions (tsgo#4712)
+    // Go: compiler/program.go:550 ContentMapperExtensions (tsgo#4712)
     fn content_mapper_extensions(&self) -> Vec<String> {
         crate::program::content_mapper_extensions()
     }
 
-    // Go: compiler/program.go:163 GetGlobalTypingsCacheLocation
+    // Go: compiler/program.go:552 ContentMapperExtensionRewrites (ts#64581)
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite> {
+        crate::program::content_mapper_extension_rewrites()
+    }
+
+    // Go: compiler/program.go:164 GetGlobalTypingsCacheLocation
     fn get_global_typings_cache_location(&self) -> String {
         typings_location().to_string()
     }
@@ -346,7 +356,7 @@ impl ModuleSpecifierGenerationHost for ProgramHost {
         crate::program::get_current_directory().to_string()
     }
 
-    // Go: compiler/program.go:214 GetProjectReferenceFromSource
+    // Go: compiler/program.go:215 GetProjectReferenceFromSource
     fn get_project_reference_from_source(
         &self,
         path: &tspath::Path,
@@ -354,12 +364,12 @@ impl ModuleSpecifierGenerationHost for ProgramHost {
         crate::program::get_project_reference_from_source(path)
     }
 
-    // Go: compiler/program.go:198 GetRedirectTargets
+    // Go: compiler/program.go:199 GetRedirectTargets
     fn get_redirect_targets(&self, path: &tspath::Path) -> Vec<String> {
         crate::program::get_redirect_targets(path)
     }
 
-    // Go: compiler/program.go:206 GetSourceOfProjectReferenceIfOutputIncluded
+    // Go: compiler/program.go:207 GetSourceOfProjectReferenceIfOutputIncluded
     fn get_source_of_project_reference_if_output_included(&self, file: Node) -> String {
         crate::program::get_source_of_project_reference_if_output_included(file)
     }
@@ -368,7 +378,7 @@ impl ModuleSpecifierGenerationHost for ProgramHost {
         crate::program::file_exists(path)
     }
 
-    // Go: compiler/program.go:168 GetNearestAncestorDirectoryWithPackageJson
+    // Go: compiler/program.go:169 GetNearestAncestorDirectoryWithPackageJson
     // PORT: on the loading thread, the frontend program asks its resolver,
     // as Go does: its cache holds the package.json files of the program
     // load, and it reads the program host's file system (in the language
@@ -385,7 +395,7 @@ impl ModuleSpecifierGenerationHost for ProgramHost {
         }
     }
 
-    // Go: compiler/program.go:177 GetPackageJsonInfo
+    // Go: compiler/program.go:178 GetPackageJsonInfo
     // PORT: see `get_nearest_ancestor_directory_with_package_json`.
     fn get_package_json_info(&self, pkg_json_path: &str) -> Option<Arc<InfoCacheEntry>> {
         if let Some(frontend) = crate::program::loading_thread_frontend() {
