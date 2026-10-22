@@ -168,6 +168,12 @@
         "version": "Version 7.1.0-beta",
         "build": "CGO_ENABLED=0 GOAMD64=v1 go build ./cmd/tsc (in tsc/)"
       },
+      "typesymDumper": {
+        "path": "/home/theo/Code/sandbox/ts-rust/target/continuation-r97-goport/pins/3e9236361fa9/target/continuation-r97-goport/typesyms/typesymdump-go",
+        "sha256": "17225ac619f80211db04f21c01430f2862f4f564b6e898642d4db884cab7a0c8",
+        "go": "go1.27.1",
+        "build": "scripts/upstream/record.py typesyms: go build -overlay with typesyms/tools/typesymdump-main-fed0bf24149f.go (sha256 b9163914f101), unchanged: the latest main by pin date, and it builds at 3e9236361fa9; module path rewritten to github.com/microsoft/TypeScript/tsc"
+      },
       "note": "Bump E target N': the gitHead of npm typescript@7.1.0-beta, the release-7.1 merge of main d7d39da5c4 (#64874); tsc/ equals d7d39da5c4 except internal/core/version.go. Not current yet."
     }
   }
