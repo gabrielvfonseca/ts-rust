@@ -446,7 +446,7 @@ impl Checker {
         decl
     }
 
-    // Go: checker/checker.go:15453 resolveExternalModule
+    // Go: checker/checker.go:15458 resolveExternalModule
     pub fn resolve_external_module(
         &mut self,
         location: Node,
@@ -573,9 +573,28 @@ impl Checker {
                 );
             }
 
-            // ts#64638 (Go N' checker.go:15540): no disk-layout import
+            // ts#64638 (checker.go:15545): no disk-layout import
             // diagnostics for a custom (API) resolution.
             if error_node.is_some() && !rm.is_custom_resolution {
+                // ts#64581 (checker.go:15546): the content mapper output
+                // extensions. A relative specifier that one rewrites is
+                // checked in an ambient or type-only import too, when the
+                // declaration emit keeps it.
+                let rewrites = crate::program::ls_program::content_mapper_extension_rewrites();
+                let case_sensitive = use_case_sensitive_file_names();
+                let specifier = module_reference;
+                let mapped_specifier = tspath::rewrite_module_specifier_extension(
+                    specifier,
+                    &rewrites,
+                    case_sensitive,
+                )
+                .is_some();
+                let check_declaration_rewrite = self.compiler_options.get_emit_declarations()
+                    && mapped_specifier
+                    && tspath_p17::path_is_relative(module_reference)
+                    && !with_source_file_info(importing_source_file, |info| {
+                        info.is_declaration_file
+                    });
                 if rm.resolved_using_ts_extension
                     && tspath_p17::is_declaration_file_name(module_reference)
                 {
@@ -628,17 +647,37 @@ impl Checker {
                     .compiler_options
                     .rewrite_relative_import_extensions
                     .is_true()
-                    && !location.flags().intersects(NodeFlags::AMBIENT)
+                    && (!location.flags().intersects(NodeFlags::AMBIENT)
+                        || check_declaration_rewrite)
                     && !tspath_p17::is_declaration_file_name(module_reference)
-                    && !is_literal_import_type_node(location)
-                    && !is_part_of_type_only_import_or_export_declaration(location)
+                    && (!is_literal_import_type_node(location)
+                        && !is_part_of_type_only_import_or_export_declaration(location)
+                        || check_declaration_rewrite)
                 {
-                    let should_rewrite = core_p17::should_rewrite_module_specifier(
-                        module_reference,
-                        self.compiler_options,
+                    let should_rewrite = tspath::should_rewrite_module_specifier_extension(
+                        specifier,
+                        &rewrites,
+                        case_sensitive,
                     );
-                    if !rm.resolved_using_ts_extension && should_rewrite {
-                        // ts#64159 (checker.go:15583): the path relative to the importing
+                    let source_content_mapper = source_file_content_mapper(source_file);
+                    let mut mapped_source = false;
+                    if !source_content_mapper.is_empty() {
+                        mapped_source = tspath::rewrite_file_extension(
+                            source_file_file_name(source_file),
+                            &rewrites,
+                            case_sensitive,
+                        )
+                        .is_some();
+                    }
+                    // ts#64581 (checker.go:15597): a content mapped file
+                    // whose output extension is rewritten resolves like a
+                    // TS extension.
+                    let resolved_using_rewritable_extension = rm.resolved_using_ts_extension
+                        || rm.resolved_using_extra_extensions
+                            && !source_content_mapper.is_empty()
+                            && mapped_source;
+                    if !resolved_using_rewritable_extension && should_rewrite {
+                        // ts#64159 (checker.go:15600): the path relative to the importing
                         // file, or the resolved name when the two have different roots.
                         let relative_to_source_file = tspath_p17::relative_path_from_file(
                             source_file_file_name(importing_source_file),
@@ -654,23 +693,34 @@ impl Checker {
                             diag::This_relative_import_path_is_unsafe_to_rewrite_because_it_looks_like_a_file_name_but_actually_resolves_to_0,
                             args![relative_to_source_file],
                         );
-                    } else if rm.resolved_using_ts_extension
+                    } else if resolved_using_rewritable_extension
                         && !should_rewrite
-                        && source_file_may_be_emitted(source_file, false)
+                        && (mapped_source || source_file_may_be_emitted(source_file, false))
                     {
+                        let mut extension =
+                            tspath_p17::get_any_extension_from_path(module_reference, &[], false);
+                        if mapped_source
+                            && let Some(rewrite) = tspath::get_file_extension_rewrite(
+                                source_file_file_name(source_file),
+                                &rewrites,
+                                case_sensitive,
+                            )
+                        {
+                            extension = rewrite.source.clone();
+                        }
                         self.error(
                             error_node,
                             diag::This_import_uses_a_0_extension_to_resolve_to_an_input_TypeScript_file_but_will_not_be_rewritten_during_emit_because_it_is_not_a_relative_path,
-                            args![tspath_p17::get_any_extension_from_path(module_reference, &[], false)],
+                            args![extension],
                         );
-                    } else if rm.resolved_using_ts_extension && should_rewrite {
+                    } else if resolved_using_rewritable_extension && should_rewrite {
                         if let Some(redirect) = get_redirect_for_resolution(source_file) {
                             let own_root_dir = common_source_directory().to_string();
                             let other_root_dir = redirect.common_source_directory().to_string();
 
                             let case_sensitive = use_case_sensitive_file_names();
 
-                            // ts#64159 (checker.go:15609): `None` is Go `rootsCompatible == false`.
+                            // ts#64159 (checker.go:15631): `None` is Go `rootsCompatible == false`.
                             let root_dir_path = tspath_p17::relative_path_from_directory(
                                 &own_root_dir,
                                 &other_root_dir,
@@ -692,7 +742,7 @@ impl Checker {
                                 case_sensitive,
                             );
 
-                            // ts#64159 (checker.go:15628): other roots (R4) are a mismatch.
+                            // ts#64159 (checker.go:15650): other roots (R4) are a mismatch.
                             if root_dir_path.is_none()
                                 || out_dir_path.is_none()
                                 || root_dir_path != out_dir_path
@@ -2085,19 +2135,6 @@ mod core_p17 {
         let unprefixed = name.strip_prefix("node:").unwrap_or(name);
         UNPREFIXED_NODE_CORE_MODULES.contains(&unprefixed)
             || EXCLUSIVELY_PREFIXED_NODE_CORE_MODULES.contains(&name)
-    }
-
-    // Go: core/core.go:724 ShouldRewriteModuleSpecifier
-    pub fn should_rewrite_module_specifier(
-        specifier: &str,
-        compiler_options: &CompilerOptions,
-    ) -> bool {
-        compiler_options
-            .rewrite_relative_import_extensions
-            .is_true()
-            && super::tspath_p17::path_is_relative(specifier)
-            && !super::tspath_p17::is_declaration_file_name(specifier)
-            && super::tspath_p17::has_ts_file_extension(specifier)
     }
 
     // Go: core/pattern.go FindBestPatternMatch

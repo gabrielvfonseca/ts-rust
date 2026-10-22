@@ -483,16 +483,20 @@ impl Checker {
         String::new()
     }
 
-    // Go: checker/nodecopy.go:270 rewriteModuleSpecifier
+    // Go: checker/nodecopy.go:271 rewriteModuleSpecifier
     pub fn rewrite_module_specifier(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,
         parent: Node,
         lit: Node,
     ) -> Node {
-        let new_name = self.get_module_specifier_override(b, parent, lit);
+        let mut new_name = self.get_module_specifier_override(b, parent, lit);
         if new_name.is_empty() {
-            return lit;
+            // ts#64581 (nodecopy.go:274)
+            new_name = self.rewrite_content_mapped_module_specifier(b, lit.text().to_string());
+            if new_name == lit.text() {
+                return lit;
+            }
         }
         let e = nb_e(b);
         let res = e.factory().new_string_literal(new_name, TokenFlags::NONE);

@@ -1205,7 +1205,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:8469 checkImportCallExpression
+    // Go: checker/checker.go:8458 checkImportCallExpression
     pub fn check_import_call_expression(&mut self, node: Node) -> TypeId {
         // Check grammar of dynamic import
         self.check_grammar_import_call_expression(node);
@@ -1215,6 +1215,19 @@ impl Checker {
             return self.create_promise_return_type(node, self.any_type);
         }
         let specifier = args[0];
+        // ts#64581 (checker.go:8472): a computed specifier is rewritten at
+        // run time by the imported helper.
+        if self
+            .compiler_options
+            .rewrite_relative_import_extensions
+            .is_true()
+            && !is_string_literal_like(specifier)
+        {
+            self.check_external_emit_helpers(
+                node,
+                ExternalEmitHelpers::REWRITE_RELATIVE_IMPORT_EXTENSION,
+            );
+        }
         let specifier_type = self.check_expression_cached(specifier);
         let mut options_type = TypeId::NIL;
         if args.len() > 1 {
@@ -1262,7 +1275,7 @@ impl Checker {
             }
             import_attributes_type = self.get_type_of_property_of_type(options_type, "with");
         }
-        // ts#63915, Go N' checker.go:8506
+        // ts#63915 (checker.go:8498)
         if is_source_phase_import_call(node) {
             let abstract_module_source_type = self.get_global_abstract_module_source_type();
             return self.create_promise_return_type(node, abstract_module_source_type);
@@ -1306,8 +1319,23 @@ impl Checker {
      * @param node The call/new expression to be checked.
      * @returns On success, the expression's signature's return type. On failure, anyType.
      */
-    // Go: checker/checker.go:8529 checkCallExpression
+    // Go: checker/checker.go:8521 checkCallExpression
     pub fn check_call_expression(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
+        // ts#64581 (checker.go:8522): a computed `require` specifier in JS is
+        // rewritten at run time by the imported helper.
+        if self
+            .compiler_options
+            .rewrite_relative_import_extensions
+            .is_true()
+            && is_in_js_file(node)
+            && is_require_call(node, false /*requireStringLiteralLikeArgument*/)
+            && !is_string_literal_like(node.arguments().get(0))
+        {
+            self.check_external_emit_helpers(
+                node,
+                ExternalEmitHelpers::REWRITE_RELATIVE_IMPORT_EXTENSION,
+            );
+        }
         self.check_grammar_type_arguments(node, node.type_argument_list());
         let signature =
             self.get_resolved_signature(node, None /*candidatesOutArray*/, check_mode);

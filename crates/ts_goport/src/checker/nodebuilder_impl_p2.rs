@@ -548,7 +548,44 @@ impl Checker {
         {
             result.import_attributes_type = import_attributes_type;
         }
+        result.specifier = self.rewrite_content_mapped_module_specifier(b, result.specifier);
         result
+    }
+
+    // Go: checker/nodebuilderimpl.go:1349 rewriteContentMappedModuleSpecifier (ts#64581)
+    /// `specifier` with its content mapper output extension, when the node
+    /// builder rewrites module specifiers (declaration emit) and
+    /// `rewriteRelativeImportExtensions` is on.
+    // PORT: Go reads the rewrites and the case sensitivity of `b.ctx.host`.
+    // The host is the program (see `get_specifier_for_module_symbol`), so
+    // this reads the current program's.
+    pub fn rewrite_content_mapped_module_specifier(&self, b: &Nb, specifier: String) -> String {
+        if nb_ctx(b)
+            .borrow()
+            .internal_flags
+            .intersects(InternalNodeBuilderFlags::REWRITE_MODULE_SPECIFIERS)
+            && self
+                .compiler_options
+                .rewrite_relative_import_extensions
+                .is_true()
+        {
+            let rewrites = crate::program::ls_program::content_mapper_extension_rewrites();
+            let case_sensitive = crate::program::use_case_sensitive_file_names();
+            if crate::frontend::tspath::should_rewrite_module_specifier_extension(
+                &specifier,
+                &rewrites,
+                case_sensitive,
+            ) && let Some(rewritten) =
+                crate::frontend::tspath::rewrite_module_specifier_extension(
+                    &specifier,
+                    &rewrites,
+                    case_sensitive,
+                )
+            {
+                return rewritten;
+            }
+        }
+        specifier
     }
 
     // Go: checker/nodebuilderimpl.go:1348 moduleSpecifierResolvesToSymbol
