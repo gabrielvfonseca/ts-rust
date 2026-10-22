@@ -43,7 +43,10 @@ const COARSE_MTIME_FIXTURE: &str = concat!(
 /// `expected-app.tsbuildinfo.json` are from `tsgo-oracle-fed0bf24149f` for
 /// the same steps (3 of 3 runs). At that pin only the `lib.dom.d.ts` and
 /// `lib.es2022.array.d.ts` versions differ from `tsgo-oracle-673a5f17d713`
-/// (16 of 16 runs): Go changed those two libs (#64604, #64536).
+/// (16 of 16 runs): Go changed those two libs (#64604, #64536). At the bump
+/// E pin the build info is from `tsgo-oracle-3e9236361fa9` (3 of 3 runs):
+/// only the version (`7.1.0-beta`) and the versions of the changed libs
+/// `lib.decorators.d.ts` and `lib.es2023.intl.d.ts` differ.
 // PORT: no Go counterpart; the output is Go's.
 #[test]
 fn build_watch_keeps_the_first_json_parse_of_a_cycle() {
