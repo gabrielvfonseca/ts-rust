@@ -173,19 +173,19 @@ impl AliasResolver {
         bind_alias_resolver_source_file(self.host.get_current_directory(), file);
     }
 
-    // Go: ls/autoimport/aliasresolver.go:53 BindSourceFiles
+    // Go: ls/autoimport/aliasresolver.go:52 BindSourceFiles
     // BindSourceFiles implements checker.Program.
     pub fn bind_source_files(&self) {
         // We will bind as we parse
     }
 
-    // Go: ls/autoimport/aliasresolver.go:58 SourceFiles
+    // Go: ls/autoimport/aliasresolver.go:57 SourceFiles
     // SourceFiles implements checker.Program.
     pub fn source_files(&self) -> Vec<Node> {
         self.root_files.clone()
     }
 
-    // Go: ls/autoimport/aliasresolver.go:63 Options
+    // Go: ls/autoimport/aliasresolver.go:62 Options
     // Options implements checker.Program.
     pub fn options(&self) -> CompilerOptions {
         CompilerOptions {
@@ -212,7 +212,7 @@ impl AliasResolver {
         self.host.fs().use_case_sensitive_file_names()
     }
 
-    // Go: ls/autoimport/aliasresolver.go:80 GetSourceFile
+    // Go: ls/autoimport/aliasresolver.go:79 GetSourceFile
     // GetSourceFile implements checker.Program.
     pub fn get_source_file(&self, file_name: &str) -> Node {
         self.get_source_file_at(file_name, &(self.to_path)(file_name))
@@ -229,19 +229,19 @@ impl AliasResolver {
         file
     }
 
-    // Go: ls/autoimport/aliasresolver.go:91 GetDefaultResolutionModeForFile
+    // Go: ls/autoimport/aliasresolver.go:98 GetDefaultResolutionModeForFile
     // GetDefaultResolutionModeForFile implements checker.Program.
     pub fn get_default_resolution_mode_for_file(&self, file: &dyn HasFileName) -> ResolutionMode {
         ModuleKind::ES_NEXT
     }
 
-    // Go: ls/autoimport/aliasresolver.go:96 GetEmitModuleFormatOfFile
+    // Go: ls/autoimport/aliasresolver.go:103 GetEmitModuleFormatOfFile
     // GetEmitModuleFormatOfFile implements checker.Program.
     pub fn get_emit_module_format_of_file(&self, source_file: &dyn HasFileName) -> ModuleKind {
         ModuleKind::ES_NEXT
     }
 
-    // Go: ls/autoimport/aliasresolver.go:101 GetEmitSyntaxForUsageLocation
+    // Go: ls/autoimport/aliasresolver.go:108 GetEmitSyntaxForUsageLocation
     // GetEmitSyntaxForUsageLocation implements checker.Program.
     pub fn get_emit_syntax_for_usage_location(
         &self,
@@ -251,13 +251,13 @@ impl AliasResolver {
         ModuleKind::ES_NEXT
     }
 
-    // Go: ls/autoimport/aliasresolver.go:106 GetImpliedNodeFormatForEmit
+    // Go: ls/autoimport/aliasresolver.go:113 GetImpliedNodeFormatForEmit
     // GetImpliedNodeFormatForEmit implements checker.Program.
     pub fn get_implied_node_format_for_emit(&self, source_file: &dyn HasFileName) -> ModuleKind {
         ModuleKind::ES_NEXT
     }
 
-    // Go: ls/autoimport/aliasresolver.go:111 GetModeForUsageLocation
+    // Go: ls/autoimport/aliasresolver.go:118 GetModeForUsageLocation
     // GetModeForUsageLocation implements checker.Program.
     pub fn get_mode_for_usage_location(
         &self,
@@ -267,7 +267,7 @@ impl AliasResolver {
         ModuleKind::ES_NEXT
     }
 
-    // Go: ls/autoimport/aliasresolver.go:116 GetResolvedModule
+    // Go: ls/autoimport/aliasresolver.go:123 GetResolvedModule
     // GetResolvedModule implements checker.Program.
     pub fn get_resolved_module(
         &self,
@@ -322,25 +322,25 @@ impl AliasResolver {
 
     // ---
 
-    // Go: ls/autoimport/aliasresolver.go:143 GetSymlinkCache
+    // Go: ls/autoimport/aliasresolver.go:150 GetSymlinkCache
     // GetSymlinkCache implements checker.Program.
     pub fn get_symlink_cache(&self) -> Rc<KnownSymlinks> {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:148 GetSourceFileMetaData
+    // Go: ls/autoimport/aliasresolver.go:155 GetSourceFileMetaData
     // GetSourceFileMetaData implements checker.Program.
     pub fn get_source_file_meta_data(&self, path: &tspath::Path) -> SourceFileMetaData {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:153 CommonSourceDirectory
+    // Go: ls/autoimport/aliasresolver.go:160 CommonSourceDirectory
     // CommonSourceDirectory implements checker.Program.
     pub fn common_source_directory(&self) -> String {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:158 ContentMapperExtensions
+    // Go: ls/autoimport/aliasresolver.go:165 ContentMapperExtensions
     // ContentMapperExtensions implements checker.Program.
     // PORT: the Go nil slice is an empty `Vec`.
     pub fn content_mapper_extensions(&self) -> Vec<String> {
@@ -354,37 +354,37 @@ impl AliasResolver {
         Vec::new()
     }
 
-    // Go: ls/autoimport/aliasresolver.go:163 FileExists
+    // Go: ls/autoimport/aliasresolver.go:174 FileExists
     // FileExists implements checker.Program.
     pub fn file_exists(&self, file_name: &str) -> bool {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:168 GetGlobalTypingsCacheLocation
+    // Go: ls/autoimport/aliasresolver.go:179 GetGlobalTypingsCacheLocation
     // GetGlobalTypingsCacheLocation implements checker.Program.
     pub fn get_global_typings_cache_location(&self) -> String {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:173 GetImportHelpersImportSpecifier
+    // Go: ls/autoimport/aliasresolver.go:184 GetImportHelpersImportSpecifier
     // GetImportHelpersImportSpecifier implements checker.Program.
     pub fn get_import_helpers_import_specifier(&self, path: &tspath::Path) -> Node {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:178 GetJSXRuntimeImportSpecifier
+    // Go: ls/autoimport/aliasresolver.go:189 GetJSXRuntimeImportSpecifier
     // GetJSXRuntimeImportSpecifier implements checker.Program.
     pub fn get_jsx_runtime_import_specifier(&self, path: &tspath::Path) -> (String, Node) {
         (String::new(), Node::NIL)
     }
 
-    // Go: ls/autoimport/aliasresolver.go:183 GetNearestAncestorDirectoryWithPackageJson
+    // Go: ls/autoimport/aliasresolver.go:194 GetNearestAncestorDirectoryWithPackageJson
     // GetNearestAncestorDirectoryWithPackageJson implements checker.Program.
     pub fn get_nearest_ancestor_directory_with_package_json(&self, dirname: &str) -> String {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:188 GetPackageJsonInfo
+    // Go: ls/autoimport/aliasresolver.go:199 GetPackageJsonInfo
     // GetPackageJsonInfo implements checker.Program.
     pub fn get_package_json_info(
         &self,
@@ -393,7 +393,7 @@ impl AliasResolver {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:193 GetProjectReferenceFromOutputDts
+    // Go: ls/autoimport/aliasresolver.go:204 GetProjectReferenceFromOutputDts
     // GetProjectReferenceFromOutputDts implements checker.Program.
     pub fn get_project_reference_from_output_dts(
         &self,
@@ -402,7 +402,7 @@ impl AliasResolver {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:198 GetProjectReferenceFromSource
+    // Go: ls/autoimport/aliasresolver.go:209 GetProjectReferenceFromSource
     // GetProjectReferenceFromSource implements checker.Program.
     pub fn get_project_reference_from_source(
         &self,
@@ -411,7 +411,7 @@ impl AliasResolver {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:203 GetRedirectForResolution
+    // Go: ls/autoimport/aliasresolver.go:214 GetRedirectForResolution
     // GetRedirectForResolution implements checker.Program.
     pub fn get_redirect_for_resolution(
         &self,
@@ -420,13 +420,13 @@ impl AliasResolver {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:208 GetRedirectTargets
+    // Go: ls/autoimport/aliasresolver.go:219 GetRedirectTargets
     // GetRedirectTargets implements checker.Program.
     pub fn get_redirect_targets(&self, path: &tspath::Path) -> Vec<String> {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:213 GetResolvedModuleFromModuleSpecifier
+    // Go: ls/autoimport/aliasresolver.go:224 GetResolvedModuleFromModuleSpecifier
     // GetResolvedModuleFromModuleSpecifier implements checker.Program.
     pub fn get_resolved_module_from_module_specifier(
         &self,
@@ -436,7 +436,7 @@ impl AliasResolver {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:218 GetSourceOfProjectReferenceIfOutputIncluded
+    // Go: ls/autoimport/aliasresolver.go:229 GetSourceOfProjectReferenceIfOutputIncluded
     // GetSourceOfProjectReferenceIfOutputIncluded implements checker.Program.
     pub fn get_source_of_project_reference_if_output_included(
         &self,
@@ -445,7 +445,7 @@ impl AliasResolver {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:223 IsSourceFileDefaultLibrary
+    // Go: ls/autoimport/aliasresolver.go:234 IsSourceFileDefaultLibrary
     // IsSourceFileDefaultLibrary implements checker.Program.
     pub fn is_source_file_default_library(&self, path: &tspath::Path) -> bool {
         false
@@ -461,26 +461,26 @@ impl AliasResolver {
         false
     }
 
-    // Go: ls/autoimport/aliasresolver.go:228 IsSourceFromProjectReference
+    // Go: ls/autoimport/aliasresolver.go:239 IsSourceFromProjectReference
     // IsSourceFromProjectReference implements checker.Program.
     pub fn is_source_from_project_reference(&self, path: &tspath::Path) -> bool {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:233 SourceFileMayBeEmitted
+    // Go: ls/autoimport/aliasresolver.go:244 SourceFileMayBeEmitted
     // SourceFileMayBeEmitted implements checker.Program.
     pub fn source_file_may_be_emitted(&self, source_file: Node, force_dts_emit: bool) -> bool {
         go_panic("unimplemented".to_string())
     }
 
-    // Go: ls/autoimport/aliasresolver.go:237 GetPackagesMap
+    // Go: ls/autoimport/aliasresolver.go:248 GetPackagesMap
     // PORT: the Go nil map is an empty map.
     pub fn get_packages_map(&self) -> FxHashMap<String, bool> {
         FxHashMap::default()
     }
 }
 
-// Go: ls/autoimport/aliasresolver.go:241 var _ checker.Program = (*aliasResolver)(nil)
+// Go: ls/autoimport/aliasresolver.go:252 var _ checker.Program = (*aliasResolver)(nil)
 // PORT: the lazy `checker.Program` methods, which the alias resolver
 // program calls (see the file header).
 impl AliasResolverProgram for AliasResolver {
