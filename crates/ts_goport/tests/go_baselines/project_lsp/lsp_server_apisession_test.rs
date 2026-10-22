@@ -8,7 +8,7 @@ use std::os::unix::net::UnixStream as ApiStream;
 // The API pipe is a named pipe on Windows; a client opens it as a file.
 #[cfg(windows)]
 use std::fs::File as ApiStream;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::TryRecvError;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -95,15 +95,18 @@ fn hover(client: &LspClient) {
     assert!(hover.is_some_and(|hover| hover.hover.is_some()), "no hover");
 }
 
-/// Sends `custom/initializeAPISession` with a pipe in the temp dir (a socket
-/// file on Unix, a name under `\\.\pipe\` on Windows, which has no files
-/// for pipes).
+/// Sends `custom/initializeAPISession` with a pipe in the temp dir and
+/// returns the pipe that the server answers. On Unix the path must not
+/// exist: the server makes it a private directory and listens on
+/// `<path>/socket`, which it answers (ts#64818, Go server.go:2347 and
+/// :2405). On Windows it is a name under `\\.\pipe\` (no files), which the
+/// server answers as it is.
 fn init_api_session(client: &LspClient) -> PathBuf {
     #[cfg(unix)]
-    let pipe = std::env::temp_dir().join(format!("goport-apisess-{}.sock", std::process::id()));
+    let pipe = std::env::temp_dir().join(format!("goport-apisess-{}", std::process::id()));
     #[cfg(windows)]
     let pipe = PathBuf::from(format!(r"\\.\pipe\goport-apisess-{}", std::process::id()));
-    let _ = std::fs::remove_file(&pipe);
+    remove_api_pipe(&pipe.join("socket"));
     let (session_msg, session) = client.send_request(
         &lsproto::CUSTOM_INITIALIZE_API_SESSION_INFO,
         lsproto::InitializeAPISessionParams {
@@ -111,8 +114,18 @@ fn init_api_session(client: &LspClient) -> PathBuf {
         },
     );
     assert!(session_msg.error.is_none(), "initializeAPISession failed");
-    assert!(session.is_some_and(|session| session.is_some()));
-    pipe
+    let session = session.flatten().expect("an API session");
+    PathBuf::from(session.pipe)
+}
+
+/// Removes what a session left of the API pipe `pipe`: the socket and its
+/// private directory on Unix (Go removes both when the transport closes).
+fn remove_api_pipe(pipe: &Path) {
+    let _ = std::fs::remove_file(pipe);
+    #[cfg(unix)]
+    if let Some(dir) = pipe.parent() {
+        let _ = std::fs::remove_dir(dir);
+    }
 }
 
 /// How long a read of the API pipe waits for the server.
@@ -268,7 +281,7 @@ child_test! {
 
         shutdown_and_exit(&client);
         drop(api);
-        let _ = std::fs::remove_file(&pipe);
+        remove_api_pipe(&pipe);
     }
 }
 
@@ -358,6 +371,6 @@ child_test! {
             "the hover was answered"
         );
         drop(api);
-        let _ = std::fs::remove_file(&pipe);
+        remove_api_pipe(&pipe);
     }
 }

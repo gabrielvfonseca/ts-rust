@@ -9,24 +9,180 @@ use crate::ipc::prelude::*;
 
 use crate::fswatch::syscall::io_error_text;
 use crate::gostd::{GoError, errors};
-use crate::ipc::transport::{NetListener, ReadWriteCloser};
+use crate::ipc::transport::{ERR_NET_CLOSED, NetListener, PipeListener, ReadWriteCloser};
+use std::io::ErrorKind;
 use std::net::Shutdown;
+use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::sync::{Arc, Mutex};
 
-// Go: ipc/transport_unix.go:12 newPipeListener
-// newPipeListener creates a Unix domain socket listener.
-pub fn new_pipe_listener(path: &str) -> Result<Box<dyn NetListener>, GoError> {
-    // Remove any existing socket file
-    // PORT: Go `os.Remove` unlinks a file or removes an empty directory.
-    if std::fs::remove_file(path).is_err() {
-        let _ = std::fs::remove_dir(path);
+// Go: ipc/transport_unix.go:14 newPipeListener (ts#64818)
+// PORT: Go's doc comment is gone at N'. `dir` must not exist: it becomes a
+// private directory with the socket "socket" in it.
+pub fn new_pipe_listener(dir: &str) -> Result<PipeListener, GoError> {
+    if let Err(err) = os_mkdir(dir, 0o700) {
+        return Err(wrap("create private socket directory", err));
     }
+    listen_in_private_pipe_directory(dir.to_string())
+}
+
+// Go: ipc/transport_unix.go:21 newPrivatePipeListener (ts#64818)
+// PORT: Go ignores the name on Unix; the directory is a new temp directory.
+pub fn new_private_pipe_listener(_name: &str) -> Result<PipeListener, GoError> {
+    let dir = match mkdir_temp("tsgo-api-") {
+        Ok(dir) => dir,
+        Err(err) => return Err(wrap("create private socket directory", err)),
+    };
+    listen_in_private_pipe_directory(dir)
+}
+
+// Go: ipc/transport_unix.go:29 listenInPrivatePipeDirectory (ts#64818)
+fn listen_in_private_pipe_directory(dir: String) -> Result<PipeListener, GoError> {
+    let socket_path = path_join(&dir, "socket");
+    let cleanup = {
+        let (socket_path, dir) = (socket_path.clone(), dir.clone());
+        move || -> Result<(), GoError> {
+            // Go: errors.Is(err, fs.ErrNotExist) is a nil error.
+            let remove = |path: &str| match os_remove(path) {
+                Err(err) if err.kind() != ErrorKind::NotFound => {
+                    Some(path_error("remove", path, &err))
+                }
+                _ => None,
+            };
+            let socket_err = remove(&socket_path);
+            let dir_err = remove(&dir);
+            errors::join([socket_err, dir_err]).map_or(Ok(()), Err)
+        }
+    };
+
+    if let Err(err) = os_chmod(&dir, 0o700) {
+        return Err(join_errors([
+            Some(wrap("set private socket directory permissions", err)),
+            cleanup().err(),
+        ]));
+    }
+
+    let listener = match listen(&socket_path) {
+        Ok(listener) => listener,
+        Err(err) => {
+            return Err(join_errors([
+                Some(wrap("listen on private socket", err)),
+                cleanup().err(),
+            ]));
+        }
+    };
+    if let Err(err) = os_chmod(&socket_path, 0o600) {
+        return Err(join_errors([
+            Some(wrap("set private socket permissions", err)),
+            listener.close().err(),
+            cleanup().err(),
+        ]));
+    }
+    Ok((Box::new(listener), Some(Box::new(cleanup))))
+}
+
+/// Go `fmt.Errorf(text + ": %w", err)`.
+fn wrap(text: &str, err: GoError) -> GoError {
+    errors::errorf(format!("{text}: {}", err.error()), vec![err])
+}
+
+/// Go `errors.Join(errs...)` where the first error is not nil.
+fn join_errors<const N: usize>(errs: [Option<GoError>; N]) -> GoError {
+    errors::join(errs).expect("the first error is not nil")
+}
+
+/// Go `&PathError{Op: op, Path: path, Err: errno}.Error()`.
+fn path_error(op: &str, path: &str, err: &std::io::Error) -> GoError {
+    errors::new(format!("{op} {path}: {}", io_error_text(err)))
+}
+
+// Go `os.Mkdir(name, perm)` (go1.27.1 os/file.go): the mode is masked by
+// the umask.
+fn os_mkdir(name: &str, perm: u32) -> Result<(), GoError> {
+    std::fs::DirBuilder::new()
+        .mode(perm)
+        .create(name)
+        .map_err(|err| path_error("mkdir", name, &err))
+}
+
+// Go `os.Chmod(name, mode)` (go1.27.1 os/file_posix.go).
+fn os_chmod(name: &str, mode: u32) -> Result<(), GoError> {
+    std::fs::set_permissions(name, std::fs::Permissions::from_mode(mode))
+        .map_err(|err| path_error("chmod", name, &err))
+}
+
+// Go `os.Remove(name)` (go1.27.1 os/file_unix.go): unlink, then rmdir.
+// When both fail, rmdir of a file gives ENOTDIR, and the unlink error is
+// the real one.
+fn os_remove(name: &str) -> std::io::Result<()> {
+    let Err(err) = std::fs::remove_file(name) else {
+        return Ok(());
+    };
+    let Err(dir_err) = std::fs::remove_dir(name) else {
+        return Ok(());
+    };
+    if dir_err.kind() != ErrorKind::NotADirectory {
+        return Err(dir_err);
+    }
+    Err(err)
+}
+
+// Go `os.MkdirTemp("", pattern)` (go1.27.1 os/tempfile.go) for a pattern
+// with no '*' and no separator: the directory `<os.TempDir()>/<pattern><n>`,
+// mode 0o700, with a new random `uint32` n until the name is free.
+fn mkdir_temp(pattern: &str) -> Result<String, GoError> {
+    let dir = os_temp_dir();
+    // Go joinPath
+    let prefix = if dir.ends_with('/') {
+        format!("{dir}{pattern}")
+    } else {
+        format!("{dir}/{pattern}")
+    };
+    let mut tries = 0;
+    loop {
+        let name = format!("{prefix}{}", next_random());
+        let err = match std::fs::DirBuilder::new().mode(0o700).create(&name) {
+            Ok(()) => return Ok(name),
+            Err(err) => err,
+        };
+        if err.kind() == ErrorKind::AlreadyExists {
+            tries += 1;
+            if tries < 10000 {
+                continue;
+            }
+            // Go `fs.ErrExist`
+            return Err(errors::new(format!(
+                "mkdirtemp {prefix}*: file already exists"
+            )));
+        }
+        if err.kind() == ErrorKind::NotFound
+            && let Err(stat_err) = std::fs::metadata(&dir)
+            && stat_err.kind() == ErrorKind::NotFound
+        {
+            return Err(path_error("stat", &dir, &stat_err));
+        }
+        return Err(path_error("mkdir", &name, &err));
+    }
+}
+
+// Go `os.nextRandom`: a random `uint32` in decimal.
+// PORT: Go `runtime_rand()`; the port has no rand crate and takes the bits
+// from std's randomly keyed hasher (as `generate_api_pipe_name`).
+fn next_random() -> String {
+    use std::hash::{BuildHasher, Hasher};
+    let bits = std::collections::hash_map::RandomState::new()
+        .build_hasher()
+        .finish();
+    (bits as u32).to_string()
+}
+
+/// Go `net.Listen("unix", path)`.
+fn listen(path: &str) -> Result<UnixPipeListener, GoError> {
     match listen_unix(path) {
-        Ok(listener) => Ok(Box::new(UnixPipeListener {
+        Ok(listener) => Ok(UnixPipeListener {
             listener: Mutex::new(Some(listener)),
             path: path.to_string(),
-        })),
+        }),
         // Go: net/sock_posix.go listenStream, `os.NewSyscallError("bind",
         // err)`, in `&OpError{Op: "listen", Net: "unix", Addr: laddr}`.
         // PORT: std checks the name length before the socket call and
@@ -59,8 +215,10 @@ fn listen_unix(path: &str) -> std::io::Result<UnixListener> {
     UnixListener::bind(path)
 }
 
-// Go: ipc/transport_unix.go:19 GeneratePipePath
+// Go: ipc/transport_unix.go:58 GeneratePipePath
 // GeneratePipePath returns a platform-appropriate pipe path for the given name.
+// PORT: no caller on Unix since ts#64818 (`newPrivatePipeListener` makes a
+// temp directory), as in Go.
 pub fn generate_pipe_path(name: &str) -> String {
     path_join(&os_temp_dir(), name)
 }
@@ -73,8 +231,8 @@ fn os_temp_dir() -> String {
     }
 }
 
-// Go `path.Join(dir, name)`: the non-empty elements joined by "/", then
-// cleaned.
+// Go `filepath.Join(dir, name)` on Unix (`path.Join` before ts#64818):
+// the non-empty elements joined by "/", then cleaned.
 fn path_join(dir: &str, name: &str) -> String {
     let mut buf = String::new();
     for e in [dir, name] {
@@ -113,10 +271,7 @@ impl NetListener for UnixPipeListener {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let Some(listener) = guard.as_ref() else {
-            return Err(errors::new(format!(
-                "accept unix {}: use of closed network connection",
-                self.path
-            )));
+            return Err(closed_error("accept", &self.path));
         };
         // Go: net/fd_unix.go accept, `wrapSyscallError(errcall, err)`: std
         // and Go call accept4 on Linux and the BSDs, accept on darwin.
@@ -140,10 +295,7 @@ impl NetListener for UnixPipeListener {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
         let Some(listener) = listener else {
-            return Err(errors::new(format!(
-                "close unix {}: use of closed network connection",
-                self.path
-            )));
+            return Err(closed_error("close", &self.path));
         };
         drop(listener);
         if !self.path.starts_with('@') {
@@ -156,6 +308,14 @@ impl NetListener for UnixPipeListener {
     fn addr(&self) -> String {
         self.path.clone()
     }
+}
+
+/// Go `&net.OpError{Op: op, Net: "unix", Addr: laddr, Err: net.ErrClosed}`.
+fn closed_error(op: &str, path: &str) -> GoError {
+    errors::errorf(
+        format!("{op} unix {path}: {}", ERR_NET_CLOSED.error()),
+        vec![ERR_NET_CLOSED.clone()],
+    )
 }
 
 /// Go `*net.UnixConn`.
@@ -189,5 +349,132 @@ impl ReadWriteCloser for UnixConn {
             }
             _ => Ok(()),
         }
+    }
+}
+
+// Go: ipc/transport_unix_test.go (ts#64818)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ipc::transport::{new_pipe_transport, new_private_pipe_transport};
+
+    // Go: ipc/transport_unix_test.go:17 privatePipeHelperEnv
+    const PRIVATE_PIPE_HELPER_ENV: &str = "TSGO_PRIVATE_PIPE_HELPER";
+    const PERMISSIONS_TEST: &str = "ipc::transport_unix::tests::test_pipe_transport_permissions";
+
+    /// Go `filepath.Dir(path)` of a socket path.
+    fn dir_of(path: &str) -> String {
+        std::path::Path::new(path)
+            .parent()
+            .expect("a parent directory")
+            .to_string_lossy()
+            .into_owned()
+    }
+
+    // Go: ipc/transport_unix_test.go:19 TestPipeTransportClosePreservesReplacement
+    #[test]
+    fn test_pipe_transport_close_preserves_replacement() {
+        let transport = new_private_pipe_transport("tsgo-api-test")
+            .unwrap_or_else(|err| panic!("{}", err.error()));
+        let socket_path = transport.path();
+        if let Err(close_err) = transport.close() {
+            panic!("{}", close_err.error());
+        }
+
+        let replacement = new_pipe_transport(&dir_of(&socket_path))
+            .unwrap_or_else(|err| panic!("{}", err.error()));
+
+        match transport.close() {
+            Err(close_err) if errors::is(&close_err, &ERR_NET_CLOSED) => {}
+            other => panic!(
+                "second Close returned {:?}, want net.ErrClosed",
+                other.map_err(|err| err.error())
+            ),
+        }
+        // Go `net.DialTimeout("unix", socketPath, time.Second)`: a Unix
+        // socket connects at once or fails.
+        let conn = UnixStream::connect(&socket_path)
+            .unwrap_or_else(|err| panic!("replacement socket is unreachable: {err}"));
+        drop(conn);
+        let _ = replacement.close();
+    }
+
+    // Go: ipc/transport_unix_test.go:47 TestPipeTransportPermissions
+    // The umask is per process, so a helper process of this test binary
+    // runs the test with umask 002.
+    #[test]
+    fn test_pipe_transport_permissions() {
+        if std::env::var(PRIVATE_PIPE_HELPER_ENV).as_deref() == Ok("1") {
+            test_pipe_transport_permissions_helper();
+            return;
+        }
+
+        // `/proc/self/exe` still names this binary when a build replaces it.
+        let proc_exe = std::path::Path::new("/proc/self/exe");
+        let exe = if proc_exe.exists() {
+            proc_exe.to_path_buf()
+        } else {
+            std::env::current_exe().expect("test binary")
+        };
+        let output = std::process::Command::new(&exe)
+            .args([
+                "--exact",
+                PERMISSIONS_TEST,
+                "--nocapture",
+                "--test-threads",
+                "1",
+            ])
+            .env(PRIVATE_PIPE_HELPER_ENV, "1")
+            .stdin(std::process::Stdio::null())
+            .output()
+            .expect("run the helper process");
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            output.status.success(),
+            "helper process failed: {}\n{stdout}{stderr}",
+            output.status
+        );
+        // PORT: not in Go. A filter that matches no test also succeeds.
+        assert!(stdout.contains("running 1 test"), "{stdout}{stderr}");
+    }
+
+    // Go: ipc/transport_unix_test.go:62 testPipeTransportPermissions
+    fn test_pipe_transport_permissions_helper() {
+        rustix::process::umask(rustix::fs::Mode::from_raw_mode(0o002));
+
+        let transport = new_private_pipe_transport("tsgo-api-test")
+            .unwrap_or_else(|err| panic!("{}", err.error()));
+
+        let socket_path = transport.path();
+        assert_mode(&dir_of(&socket_path), 0o700);
+        assert_mode(&socket_path, 0o600);
+
+        let explicit_dir = path_join(&os_temp_dir(), &format!("tsgo-api-{}", std::process::id()));
+        let explicit_transport =
+            new_pipe_transport(&explicit_dir).unwrap_or_else(|err| panic!("{}", err.error()));
+        assert_mode(&explicit_dir, 0o700);
+        assert_mode(&path_join(&explicit_dir, "socket"), 0o600);
+
+        assert!(
+            new_pipe_transport(&explicit_dir).is_err(),
+            "NewPipeTransport succeeded with an existing directory"
+        );
+        if let Err(err) = explicit_transport.close() {
+            panic!("{}", err.error());
+        }
+        match std::fs::metadata(&explicit_dir) {
+            Err(err) if err.kind() == ErrorKind::NotFound => {}
+            other => panic!("socket directory still exists after close: {other:?}"),
+        }
+        // Go: defer transport.Close()
+        let _ = transport.close();
+    }
+
+    // Go: ipc/transport_unix_test.go:94 assertMode
+    fn assert_mode(path: &str, want: u32) {
+        let info = std::fs::metadata(path).unwrap_or_else(|err| panic!("{err}"));
+        let got = info.permissions().mode() & 0o777;
+        assert_eq!(got, want, "{path} mode = {got:04o}, want {want:04o}");
     }
 }

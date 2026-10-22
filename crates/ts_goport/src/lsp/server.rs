@@ -413,7 +413,7 @@ pub struct ApiAccepted {
     rwc: Option<Arc<dyn ipc::ReadWriteCloser>>,
 }
 
-// Go: server.go:255 apiSessionState (ts#64544)
+// Go: server.go:256 apiSessionState (ts#64544)
 // PORT: `mu` is dropped (dispatch thread). Go's `transport` stays with the
 // accept thread, which closes it after `Accept` (see `stop`). The rest of
 // the accept goroutine runs on the dispatch thread (`serve_api_connection`),
@@ -433,7 +433,7 @@ pub struct ApiSessionState {
 }
 
 impl ApiSessionState {
-    // Go: server.go:266 apiSessionState.attachConnection
+    // Go: server.go:267 apiSessionState.attachConnection
     fn attach_connection(&self, connection: Arc<dyn ipc::ReadWriteCloser>) -> bool {
         if self.stopped.get() {
             let _ = connection.close();
@@ -443,13 +443,15 @@ impl ApiSessionState {
         true
     }
 
-    // Go: server.go:277 apiSessionState.stop
-    // PORT: Go also closes the transport, which ends a pending `Accept`. The
-    // port's listener holds its lock while it waits in accept, so a close
-    // from the dispatch thread would wait for a client. When no client has
-    // connected yet, the accept thread waits until the process exits; the
-    // connection it may still accept finds no session
-    // (`serve_api_connection`) and is closed. Go then waits for `done`:
+    // Go: server.go:278 apiSessionState.stop
+    // PORT: Go also closes the transport, which ends a pending `Accept` and
+    // removes the socket and its private directory (ts#64818). The port's
+    // listener holds its lock while it waits in accept, so a close from the
+    // dispatch thread would wait for a client. When no client has connected
+    // yet, the accept thread waits until the process exits, and the socket
+    // and its directory stay; the connection it may still accept finds no
+    // session (`serve_api_connection`) and is closed. Go then waits for
+    // `done`:
     // - Without a connection, the port runs the end of the goroutine here
     //   (`apiSession.Close()`; the caller removed the session). Go also logs
     //   the accept error of the closed transport; the port does not.
@@ -4837,7 +4839,7 @@ impl Server {
         ls.provide_semantic_tokens_range(ctx, &params.text_document.uri, params.range)
     }
 
-    // Go: server.go:2333 handleInitializeAPISession
+    // Go: server.go:2334 handleInitializeAPISession
     // PORT: `apiSessionsMu` is dropped (dispatch thread).
     pub fn handle_initialize_api_session(
         self: &Rc<Self>,
@@ -4852,14 +4854,14 @@ impl Server {
         // ts#64163
         let api_session = api::new_lsp_session(self.session_ref(), None);
 
-        // Use provided pipe path or generate a unique one
+        // ts#64818: a requested path is the private socket directory on
+        // Unix; with none, the transport makes its own.
         let params = params.unwrap_or_else(|| crate::core::go_nil_dereference());
-        let pipe_path = match &params.pipe {
-            Some(pipe) if !pipe.is_empty() => pipe.clone(),
-            _ => self.generate_api_pipe_path(),
+        let transport = match &params.pipe {
+            Some(pipe) if !pipe.is_empty() => ipc::new_pipe_transport(pipe),
+            _ => ipc::new_private_pipe_transport(&self.generate_api_pipe_name()),
         };
-
-        let transport = match ipc::new_pipe_transport(&pipe_path) {
+        let transport = match transport {
             Ok(transport) => transport,
             Err(err) => {
                 return Err(errors::errorf(
@@ -4885,6 +4887,12 @@ impl Server {
             .as_mut()
             .expect("created above")
             .insert(api_session.id(), state);
+
+        // PORT: Go reads `transport.Path()` for the result after it starts
+        // the goroutine. The transport moves to the accept thread, so the
+        // port reads it first; `Path` does not change when the transport
+        // closes.
+        let pipe = transport.path();
 
         // Start accepting connections in the background
         // PORT: `transport.Accept()` runs on its own thread. The connection
@@ -4918,7 +4926,8 @@ impl Server {
 
         Ok(Some(lsproto::InitializeAPISessionResult {
             session_id: api_session.id(),
-            pipe: pipe_path,
+            // ts#64818: Go `transport.Path()`, the socket on Unix.
+            pipe,
         }))
     }
 
@@ -5046,12 +5055,12 @@ impl Server {
         lsp_panic.take()
     }
 
-    // Go: server.go:2410 generateAPIPipePath
+    // Go: server.go:2409 generateAPIPipeName (ts#64818; generateAPIPipePath
+    // before)
     // PORT: Go `rand.Uint64()`; the port has no rand crate and takes 64
     // random bits from std's randomly keyed hasher.
-    pub fn generate_api_pipe_path(&self) -> String {
+    pub fn generate_api_pipe_name(&self) -> String {
         use std::hash::{BuildHasher, Hasher};
-        // Generate a high-entropy path using time and random source
         let now = match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(d) => d.as_nanos() as i64,
             Err(e) => -(e.duration().as_nanos() as i64),
@@ -5059,17 +5068,17 @@ impl Server {
         let rnd = std::collections::hash_map::RandomState::new()
             .build_hasher()
             .finish();
-        ipc::generate_pipe_path(&format!("tsgo-api-{now:x}-{rnd:x}"))
+        format!("tsgo-api-{now:x}-{rnd:x}")
     }
 
-    // Go: server.go:2417 removeAPISession
+    // Go: server.go:2415 removeAPISession
     pub fn remove_api_session(&self, id: &str) {
         if let Some(api_sessions) = self.api_sessions.borrow_mut().as_mut() {
             api_sessions.remove(id);
         }
     }
 
-    // Go: server.go:2423 closeAPISessions (ts#64544)
+    // Go: server.go:2421 closeAPISessions (ts#64544)
     // PORT: Go ranges over the map (random order); the port stops the
     // sessions in ID order.
     pub fn close_api_sessions(&self) {
