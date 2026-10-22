@@ -78,13 +78,22 @@ npx tsc-rs -p tsconfig.json
 ```
 
 `tsc-rs` takes the same options as `tsc`. The npm package is `tsc-rs` so that it does not clash
-with the `typescript` package. Each [release](https://github.com/pingdotgg/ts-rust/releases) also
-has a standalone archive per platform: the `tsc` binary with the lib files next to it.
+with the `typescript` package. To use tsc-rs as the `typescript` package (its `tsc` bin, its JS API
+and the TypeScript 7 VS Code extension), install
+[@tsc-rs/typescript](npm/typescript-readme.md) under that name (from the first release after
+0.7.0):
+
+```json
+{ "devDependencies": { "typescript": "npm:@tsc-rs/typescript@<version>" } }
+```
+
+Each [release](https://github.com/pingdotgg/ts-rust/releases) also has a standalone archive per
+platform: the `tsc` binary with the lib files next to it.
 
 Platforms: Linux x64 and arm64 (static, any distribution), macOS arm64, and (from the first
 release after 0.2.0) macOS x64, Windows x64 and Windows arm64.
 
-To use it in VS Code, see the [npm package README](npm/tsc-rs-readme.md#vs-code).
+To use it in VS Code, see [@tsc-rs/typescript](npm/typescript-readme.md#vs-code).
 
 ## Effect diagnostics
 
@@ -123,8 +132,8 @@ goes away when the port moves to a newer pin. tsc-rs 0.3.0 and earlier used the 
 (`typescript@7.1.0-dev.20260929.1`).
 
 - **Same results.** TanStack Query core and Hono check with diagnostics identical to Go's. All
-  184,749 ported Go tests pass. The language server and API answers match Go on the oracle test
-  sets.
+  184,776 tests pass (ported Go tests and our own). The language server and API answers match Go
+  on the oracle test sets. See [Conformance](#conformance).
 - **Faster.** On 60 open-source projects, type checking takes about half of Go's time (geometric
   mean). The npm packages from 0.2.0 on are built in CI with PGO but without BOLT (0.1.0 has
   neither), so they are slower than that measured build.
@@ -171,6 +180,31 @@ Four switches make some projects faster or use less memory. They are off by defa
   test project: 8.9 s to 1.6 s). The `--extendedDiagnostics` counts are then lower than Go's.
   Diagnostics and emit stay the same as Go's, except near the TS2589 limit (5,000,000 type
   instantiations): there, a TS2589 that Go reports can go away.
+
+## Conformance
+
+Results of the last accepted revision, R220 (2026-10-14), against Go at the pin `fed0bf24149f`
+(`typescript@7.1.0-dev.20261008.1`). Every revision runs these checks on our own machines
+(Blacksmith testboxes and a LAN host), not in GitHub CI. We accept it only with no lost result.
+
+| Check | Compared with Go | Result |
+| --- | --- | --- |
+| Compiler test corpus | 13,571 configurations of 12,782 `compiler` and `conformance` cases | Diagnostics 13,571 of 13,571 and emit 13,497 of 13,497 match byte for byte |
+| Test suite | Go's tests and baselines (ported), and our own tests | 184,776 pass, 0 fail |
+| np-suite | API client tests of `packages/typescript` | 954 of 954 pass |
+| Language server | 257,808 requests in 6 batteries | 243,663 match, 0 differ |
+| API | 112,740 requests in 13 batteries | 112,677 match, 4 differ |
+| Gate | `tsc-rs` and `tsgo` on corpus samples, real projects, build mode and editor sessions | 3,951 of 3,952 match, 1 allowed |
+| Query core and Hono | Full check (2 runs) and emit | Same as Go (Hono has 2 TS7031 errors in both) |
+
+- The corpus is all of Go's `testdata/tests/cases/compiler` and `conformance`, except what Go
+  skips too (44 files, 1,720 configurations, 8 emit checks). Types, symbols and source maps match.
+- The test suite skips 3,635 names: the 1,728 above, 1,904 Go baseline files that no ported test
+  compares (1,761 are fourslash, see the language server row) and 3 others.
+- Requests in neither column: Go's own answer changed on a second run (378 LSP, 59 API), or the
+  request had no item to resolve (13,767 LSP).
+- The 4 API differences are in the list of file-system callbacks that `tsc-rs` makes, not in the
+  answers. The allowed gate item is a resolution trace whose order changes between threaded Go runs.
 
 ## Benchmark: T3 Code
 

@@ -1908,12 +1908,12 @@ thread_local! {
     /// (`bind_thread_count`), in place of `GOPORT_BIND_THREADS` and the
     /// thread budget. A test sets it to compare a parallel bind with a
     /// serial one on any machine.
-    static TEST_BIND_THREADS: std::cell::Cell<Option<usize>> =
+    pub(crate) static TEST_BIND_THREADS: std::cell::Cell<Option<usize>> =
         const { std::cell::Cell::new(None) };
     /// The files that `bind_all` bound serially on this thread, in order:
     /// every file of a serial bind, and after a parallel bind the files
     /// from the first one that it did not bind (`bind_files_parallel`).
-    static TEST_SERIAL_BINDS: std::cell::RefCell<Vec<Node>> =
+    pub(crate) static TEST_SERIAL_BINDS: std::cell::RefCell<Vec<Node>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
@@ -2500,7 +2500,7 @@ fn bind_files_parallel(lineage: &mut Lineage) {
         // thread builds it while they bind, not before they start. A later
         // seed (the checker pool) finds it built. It took 3.6 to 5.7 ms of
         // this thread before the first bind thread started (colyseus,
-        // outline, umami). Go builds it on first use (program.go:2300).
+        // outline, umami). Go builds it on first use (program.go:2330).
         go_frontend::build_lazy_shared_state();
         // Join the files in order as they arrive.
         let mut pending = FxHashMap::default();

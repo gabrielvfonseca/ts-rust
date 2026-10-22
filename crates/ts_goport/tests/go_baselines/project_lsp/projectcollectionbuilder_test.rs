@@ -788,7 +788,7 @@ child_test! {
 }
 
 child_test! {
-    // PORT: Go builds the symlink cache on first use (compiler/program.go:2300),
+    // PORT: Go builds the symlink cache on first use (compiler/program.go:2330),
     // after the project host is frozen (project/compilerhost.go:57), so the
     // resolution of a package.json dependency that is not installed is not
     // tracked. A Created event for node_modules/<dependency> then does not
