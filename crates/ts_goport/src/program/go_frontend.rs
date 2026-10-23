@@ -1503,7 +1503,7 @@ fn common_source_directory_of(p: &NewProgram) -> String {
                 .filter(|file| {
                     p.source_file_may_be_emitted(file, false) && !file.is_declaration_file
                 })
-                .map(|file| file.file_name())
+                .map(|file| file.file_name().to_string())
                 .collect()
         },
         &p.get_current_directory(),

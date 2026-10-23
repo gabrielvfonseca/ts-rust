@@ -901,7 +901,7 @@ impl NewProgram {
     pub fn common_source_directory(&self) -> String {
         self.common_source_directory
             .get_or_init(|| {
-                let files = || -> Vec<&str> {
+                let files = || -> Vec<String> {
                     self.processed_files
                         .files
                         .iter()
@@ -911,10 +911,10 @@ impl NewProgram {
                             source_file_may_be_emitted(file, self, false, false)
                                 && !file.is_declaration_file
                         })
-                        .map(|file| file.file_name())
+                        .map(|file| file.file_name().to_string())
                         .collect()
                 };
-                let mut check = |source_files: &[&str], root_directory: &str| -> bool {
+                let mut check = |source_files: &[String], root_directory: &str| -> bool {
                     self.check_source_files_belong_to_path(source_files, root_directory)
                 };
                 get_common_source_directory(
@@ -1098,7 +1098,7 @@ impl NewProgram {
     // work). Same result and diagnostics.
     pub fn check_source_files_belong_to_path(
         &self,
-        source_files: &[&str],
+        source_files: &[String],
         root_directory: &str,
     ) -> bool {
         let mut all_files_belong_to_path = true;
@@ -1120,7 +1120,7 @@ impl NewProgram {
                         file: Path(absolute_source_file_path),
                         diagnostic_reason: None,
                         message: diag::File_0_is_not_under_rootDir_1_rootDir_is_expected_to_contain_all_source_files,
-                        args: vec![file.to_string(), root_directory.to_string()],
+                        args: vec![file.clone(), root_directory.to_string()],
                     }),
                 }));
                 all_files_belong_to_path = false;
