@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs every protected goport test suite from prebuilt test binaries and writes per-name results.
 #
-# usage: scripts/goport/goport-tests.sh <testbin-dir> <out-dir> [--pin PIN]
+# usage: scripts/goport/goport-tests.sh <testbin-dir> <out-dir> [--pin PIN] [--jobs N]
 #
 # <testbin-dir> is a dir from build-goport-tests.sh: the test binaries, SUITES, relbin/, COMMIT,
 # BUILD_ROOT, BUILD_TARGET and bins.sha256 (checked first; it must cover SUITES). Every test binary
@@ -15,6 +15,11 @@
 #   typescript-go  (microsoft/typescript-go) TestSubmodule; TestLocal runs in the default go_baselines run.
 #   typescript     (microsoft/TypeScript, tsc/) no TypeScript submodule: TestLocal runs every case (about
 #                  12,700), so it runs in the shards and the default go_baselines run skips it.
+#
+# --jobs N (1 to 5; default GOPORT_TESTS_JOBS, else 1): the default go_baselines run and the 4 shards
+# (5 processes of the go_baselines binary, each with its own COMPILER_RUNNER_TMP and results files) run
+# N at a time. Every other suite runs alone, before or after them, as with 1. 5 needs about 33 cores
+# (8 jobs per shard) and room for 5 of the 24 GB caps: the testbox env sets it, zbook keeps 1.
 #
 # The script runs in a clean environment: it starts itself again under `env -i` with only PATH, HOME,
 # USER, XDG_RUNTIME_DIR, DBUS_SESSION_BUS_ADDRESS and LANG=C.UTF-8. So no setting of the caller
@@ -71,14 +76,15 @@ set -uo pipefail
 fail() { echo "goport-tests.sh: $2" >&2; echo "FAIL rc=$1"; exit "$1"; }
 usage() { sed -n '2,/^set -uo/p' "$0" | sed '$d'; echo "FAIL rc=2"; exit 2; }
 
-# The clean environment (see the header). GOPORT_PIN of the caller becomes --pin, before the
-# arguments, so an explicit --pin wins.
+# The clean environment (see the header). GOPORT_PIN and GOPORT_TESTS_JOBS of the caller become --pin
+# and --jobs, before the arguments, so an explicit --pin or --jobs wins.
 allow='PATH|HOME|LANG|USER|XDG_RUNTIME_DIR|DBUS_SESSION_BUS_ADDRESS|GOPORT_TESTS_CLEAN|PWD|OLDPWD|SHLVL|_'
 if compgen -e | grep -qvxE "$allow"; then
   [[ -z ${GOPORT_TESTS_CLEAN:-} ]] || fail 2 "GOPORT_TESTS_CLEAN is set, but the environment has $(compgen -e | grep -vxE "$allow" | tr '\n' ' ')"
   keep=(GOPORT_TESTS_CLEAN=1 PATH="$PATH" HOME="$HOME")
   for v in USER XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS; do [[ -z ${!v:-} ]] || keep+=("$v=${!v}"); done
-  exec env -i "${keep[@]}" "$BASH" "${BASH_SOURCE[0]}" ${GOPORT_PIN:+--pin "$GOPORT_PIN"} "$@"
+  exec env -i "${keep[@]}" "$BASH" "${BASH_SOURCE[0]}" ${GOPORT_PIN:+--pin "$GOPORT_PIN"} \
+    ${GOPORT_TESTS_JOBS:+--jobs "$GOPORT_TESTS_JOBS"} "$@"
 fi
 export LANG=C.UTF-8
 
@@ -86,10 +92,12 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 ROOT=$(dirname "$(git -C "$here" rev-parse --path-format=absolute --git-common-dir)")
 
 pin=
+par_jobs=1
 args=()
 while (($#)); do
   case $1 in
   --pin) (($# >= 2)) || usage; pin=$2; shift 2 ;;
+  --jobs) (($# >= 2)) && [[ $2 =~ ^[1-5]$ ]] || fail 2 "--jobs takes 1 to 5"; par_jobs=$2; shift 2 ;;
   -h | --help) usage ;;
   *) args+=("$1"); shift ;;
   esac
@@ -168,6 +176,14 @@ suite() {
   echo "$name exit=$rc $(grep -m1 '^test result:' "$O/logs/$name.log") $(date -u +%FT%TZ)"
 }
 
+# par <command...>: with --jobs 1, runs the command. Else runs it in the background, at most --jobs
+# at a time; the caller waits for the last ones.
+par() {
+  ((par_jobs > 1)) || { "$@"; return; }
+  while (($(jobs -rp | wc -l) >= par_jobs)); do wait -n; done
+  "$@" &
+}
+
 echo "== goport tests: $TB (${COMMIT:0:9}, crates tree ${tree:0:12}), pin $pin, Go $GO, out $O"
 [[ $layout == typescript-go ]] || echo "layout $layout: $shard_test runs in 4 shards"
 state before
@@ -186,13 +202,15 @@ for s in "${suites[@]}"; do
   [[ $layout == typescript-go ]] || skip=(--exact --skip "$shard_test")
   COMPILER_RUNNER_TMP=$O/tmp/local COMPILER_RUNNER_RESULTS=$O/go_baselines_local.tsv \
     TRANSPILE_RUNNER_RESULTS=$O/go_baselines_transpile.tsv TS_GOPORT_BASELINE_TRACK=$O/go_baselines.track \
-    suite go_baselines go_baselines 3600 "${skip[@]}"
+    par suite go_baselines go_baselines 3600 "${skip[@]}"
   for i in 0 1 2 3; do
     mkdir -p "$O/tmp/sub$i"
     COMPILER_RUNNER_TMP=$O/tmp/sub$i COMPILER_RUNNER_SHARD=$i/4 COMPILER_RUNNER_JOBS=8 \
       COMPILER_RUNNER_RESULTS=$O/$shard_suite-$i.tsv \
-      suite "$shard_suite-$i" go_baselines 3600 --exact "$shard_test" --include-ignored
+      par suite "$shard_suite-$i" go_baselines 3600 --exact "$shard_test" --include-ignored
   done
+  # The next suite must not run beside them.
+  wait
 done
 state after
 
