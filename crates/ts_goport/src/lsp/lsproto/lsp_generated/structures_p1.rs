@@ -4183,7 +4183,7 @@ pub struct WorkspaceEdit {
     // Whether clients honor this property depends on the client capability `workspace.changeAnnotationSupport`.
     //
     // Since: 3.16.0
-    pub change_annotations: Option<IndexMap<String, ChangeAnnotation>>,
+    pub change_annotations: Option<IndexMap<String, Option<ChangeAnnotation>>>,
 }
 
 impl UnmarshalerFrom for WorkspaceEdit {

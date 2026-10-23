@@ -221,6 +221,12 @@ pub enum ErrorPos {
     /// Just after the closing token of an object or array that was read token
     /// by token (where = -1; the offset is that of the closing token).
     AfterEnd,
+    /// Inside a value that the method read in part (Go `where` = 0 in
+    /// `newSemanticErrorWithPosition`): the pointer names the last member of
+    /// the innermost object only while that member's value is unread. The
+    /// offset is the start of the last token or value read (Go
+    /// `PreviousTokenOrValue`), which the method sets in `byte_offset`.
+    Ambiguous,
 }
 
 /// Go v2 `*json.SemanticError` of an unmarshal (errors.go:73).
@@ -311,8 +317,7 @@ impl SemanticError {
 
 // Go: errors.go:356 (*SemanticError).Error
 // PORT: Go picks "cannot" or "unable to" at random once per process; the
-// port always writes "cannot". Go prints only the kind of a type whose name
-// is longer than 100 bytes; no port type has such a name.
+// port always writes "cannot".
 impl std::fmt::Display for SemanticError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if !self.wrapped {
@@ -334,7 +339,13 @@ impl std::fmt::Display for SemanticError {
         }
         if !self.go_type.is_empty() {
             sb.push_str(" into Go ");
-            sb.push_str(&self.go_type);
+            // Go prints only the kind of a type whose name is longer than 100
+            // bytes (the lsproto telemetry union).
+            if self.go_type.len() > 100 {
+                sb.push_str(go_kind_of_type_name(&self.go_type));
+            } else {
+                sb.push_str(&self.go_type);
+            }
         }
         match self.pointer.as_deref() {
             Some(ptr) if !ptr.is_empty() => {
@@ -355,6 +366,19 @@ impl std::fmt::Display for SemanticError {
             sb.push_str(&self.err);
         }
         f.write_str(&sb)
+    }
+}
+
+/// Go `reflect.Kind.String()` of the type that `go_type_name` names.
+// PORT: the port keeps only the type name. A named type with a long name is
+// an lsproto union, a struct.
+fn go_kind_of_type_name(name: &str) -> &'static str {
+    match name.as_bytes() {
+        [b'm', b'a', b'p', b'[', ..] => "map",
+        [b'[', b']', ..] => "slice",
+        [b'[', ..] => "array",
+        [b'*', ..] => "ptr",
+        _ => "struct",
     }
 }
 
@@ -462,6 +486,19 @@ pub fn unmarshal_root<T: UnmarshalerFrom + ?Sized>(
     let end = dec.input_offset();
     s.pointer = Some(stack_pointer(&stack_at(data, end), s.pos));
     s.byte_offset = match s.pos {
+        // Go `cmp.Or(serr.ByteOffset, offset)`: the method set the start of
+        // its last token.
+        ErrorPos::Ambiguous if s.byte_offset > 0 => s.byte_offset,
+        pos => error_offset(data, end, pos),
+    };
+    Err(s.into_json_error())
+}
+
+/// The byte offset that `unmarshal_root` gives an error at `end` of `data`
+/// (the text shows it only when the pointer is empty).
+#[must_use]
+pub fn error_offset(data: &[u8], end: usize, pos: ErrorPos) -> usize {
+    match pos {
         // Go `CountNextDelimWhitespace`: the next token.
         ErrorPos::Before => {
             let p = skip_ws(data, end);
@@ -472,10 +509,17 @@ pub fn unmarshal_root<T: UnmarshalerFrom + ?Sized>(
             }
         }
         // The text shows the offset only for the root value itself.
-        ErrorPos::After => skip_ws(data, 0),
+        ErrorPos::After | ErrorPos::Ambiguous => skip_ws(data, 0),
         ErrorPos::AfterEnd => end.saturating_sub(1),
-    };
-    Err(s.into_json_error())
+    }
+}
+
+/// The JSON pointer that `unmarshal_root` gives an error at `end` of `data`.
+/// PORT: not in Go; Go keeps the decoder state. The lsproto union decoder
+/// finds the pointer of an error in a member that it read earlier.
+#[must_use]
+pub fn error_pointer(data: &[u8], end: usize, pos: ErrorPos) -> String {
+    stack_pointer(&stack_at(data, end), pos)
 }
 
 /// Go `json.Unmarshal(data, v)` inside an `UnmarshalJSONFrom` method, where
@@ -602,15 +646,21 @@ fn stack_at(data: &[u8], end: usize) -> Vec<StackEntry> {
 }
 
 // Go: jsontext/state.go:180 appendStackPointer, with where = +1 for
-// `Before` and -1 otherwise.
+// `Before`, 0 for `Ambiguous` and -1 otherwise.
 fn stack_pointer(stack: &[StackEntry], pos: ErrorPos) -> String {
     let before = pos == ErrorPos::Before;
+    let ambiguous = pos == ErrorPos::Ambiguous;
     let mut b = String::new();
     for (i, e) in stack.iter().enumerate() {
         // By default point to the previous array element.
         let mut index = e.len.wrapping_sub(1);
         if i == stack.len() - 1 {
-            if (!before && e.len == 0) || (before && e.is_object && e.len.is_multiple_of(2)) {
+            // Go `needObjectValue`: an object whose last member has no value yet.
+            let need_object_value = e.is_object && !e.len.is_multiple_of(2);
+            if (!before && !ambiguous && e.len == 0)
+                || (ambiguous && !need_object_value)
+                || (before && e.is_object && e.len.is_multiple_of(2))
+            {
                 return b;
             }
             if before && !e.is_object {
