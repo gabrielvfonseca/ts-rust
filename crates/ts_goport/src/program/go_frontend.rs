@@ -764,7 +764,7 @@ pub(crate) fn cached_lazy_js_doc(node: Node) -> Option<&'static [Node]> {
     LAZY_JSDOC.with(|cache| cache.borrow().get(&node).copied())
 }
 
-// Go: compiler/program.go:145 FileExists (the Go frontend program)
+// Go: compiler/program.go:146 FileExists (the Go frontend program)
 // PORT: the loading thread asks the program host (with its cache). Another
 // thread (a checker worker) cannot read that cache. It asks the program's
 // thread-safe cache (Go `cachedvfs.FS`, compiler/host.go:49), which asks

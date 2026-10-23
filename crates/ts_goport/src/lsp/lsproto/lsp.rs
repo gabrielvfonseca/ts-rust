@@ -93,7 +93,7 @@ impl DocumentUri {
         )
     }
 
-    // Go: lsp.go:19 Path (at 673a5f17d713; ts#64159 renames it PathKey,
+    // Go: lsp.go:52 Path (at 673a5f17d713; ts#64159 renames it PathKey,
     // lsp.go:81)
     // ts#64544: an encoded dynamic file name keeps its case, and its bare
     // root ends with "/" (Go `canonicalDynamicFileName`, removed by ts#64159;

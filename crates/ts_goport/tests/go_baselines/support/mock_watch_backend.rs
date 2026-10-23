@@ -93,7 +93,7 @@ impl fswatch::Watch for MockWatchCloser {
 }
 
 impl WatchBackend for MockWatchBackend {
-    // Go: mock_watch_backend.go:57 MockWatchBackend.WatchDirectory (at 673a5f17d713; removed by ts#64159)
+    // Go: mock_watch_backend.go:59 MockWatchBackend.WatchDirectory (at 673a5f17d713; removed by ts#64159)
     fn watch_directory(
         &self,
         dir: &str,

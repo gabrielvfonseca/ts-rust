@@ -405,7 +405,7 @@ const IMPORT_ELISION: &[(&str, &str, &str, &str, bool)] = &[
     ("ExportAssignment#2", "type x = any; export default x;", "", "", false),
 ];
 
-// Go: transformers/tstransforms/importelision_test.go:185 TestImportElision
+// Go: transformers/tstransforms/importelision_test.go:189 TestImportElision
 // PORT: Go makes a checker for a fake `checker.Program` that holds the
 // parsed files and resolves "other" to the other file. The port has no such
 // seam, so each row is a real program on a map file system, in one child

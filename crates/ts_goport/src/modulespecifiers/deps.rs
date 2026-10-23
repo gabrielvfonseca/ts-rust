@@ -220,7 +220,7 @@ pub fn index_after(s: &str, pattern: &str, start_index: usize) -> isize {
     }
 }
 
-// Go: core/core.go:866 CompareBooleans
+// Go: core/core.go:862 CompareBooleans
 // CompareBooleans treats true as greater than false.
 pub fn compare_booleans(a: bool, b: bool) -> i32 {
     if a && !b {

@@ -34,7 +34,7 @@ fn test_content_mapper_output_extension_case_insensitive_paths() {
     );
 }
 
-// Go: outputpaths/outputpaths_test.go:29 TestGetSourceFileNameInNewDirSourceMatchesCommonDirectory
+// Go: outputpaths/outputpaths_test.go:47 TestGetSourceFileNameInNewDirSourceMatchesCommonDirectory
 // (ts#64159 renames TestGetSourceFilePathInNewDirSourceMatchesCommonDirectory)
 #[test]
 fn test_get_source_file_name_in_new_dir_source_matches_common_directory() {
@@ -48,7 +48,7 @@ fn test_get_source_file_name_in_new_dir_source_matches_common_directory() {
     assert_eq!(actual, "/project/src");
 }
 
-// Go: outputpaths/outputpaths_test.go:41 TestGetSourceFileNameInNewDirCanonicalizationShrinksCommonDirectory
+// Go: outputpaths/outputpaths_test.go:59 TestGetSourceFileNameInNewDirCanonicalizationShrinksCommonDirectory
 // (ts#64159 renames TestGetSourceFilePathInNewDirCanonicalizationShrinksCommonDirectory)
 #[test]
 fn test_get_source_file_name_in_new_dir_canonicalization_shrinks_common_directory() {
@@ -142,7 +142,7 @@ impl OutputPathsHost for TestOutputPathsHost {
     }
 }
 
-// Go: outputpaths/outputpaths_test.go:152 TestGetOutputFileNameAcrossRoots (ts#64159)
+// Go: outputpaths/outputpaths_test.go:170 TestGetOutputFileNameAcrossRoots (ts#64159)
 #[test]
 fn test_get_output_file_name_across_roots() {
     let options = CompilerOptions {
@@ -164,7 +164,7 @@ fn test_get_output_file_name_across_roots() {
     );
 }
 
-// Go: outputpaths/outputpaths_test.go:167 TestOutputFileNamesPreserveEmptyAndDotStems (ts#64159)
+// Go: outputpaths/outputpaths_test.go:185 TestOutputFileNamesPreserveEmptyAndDotStems (ts#64159)
 #[test]
 fn test_output_file_names_preserve_empty_and_dot_stems() {
     let host = TestOutputPathsHost {

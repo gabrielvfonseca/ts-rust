@@ -1097,7 +1097,7 @@ impl CompilationResult {
             .collect()
     }
 
-    // Go: compiler/program.go:538 (*Program).GetContentMapper (tsgo#4712)
+    // Go: compiler/program.go:539 (*Program).GetContentMapper (tsgo#4712)
     // PORT: in Go only the compiler runner and the content mapper baseline
     // call it, so the port keeps it with them. `p.opts.Config` is the
     // command line that the program was made with.

@@ -1830,7 +1830,7 @@ impl ModuleSpecifierGenerationHost for MockModuleSpecifierGenerationHost {
     fn get_source_of_project_reference_if_output_included(&self, file: Node) -> String {
         ts_goport::ast::source_file_file_name(file).to_string()
     }
-    // Go: modulespecifiers/specifiers_test.go:147 FileExists
+    // Go: modulespecifiers/specifiers_test.go:151 FileExists
     fn file_exists(&self, path: &str) -> bool {
         self.file_exists_calls.borrow_mut().push(path.to_string());
         if let Some(existing_files) = &self.existing_files {
@@ -1968,7 +1968,7 @@ fn test_get_each_file_name_of_module_with_symlinks() {
     );
 }
 
-// Go: modulespecifiers/specifiers_test.go:288 TestModuleSpecifierContainsNodeModules (ts#64159
+// Go: modulespecifiers/specifiers_test.go:292 TestModuleSpecifierContainsNodeModules (ts#64159
 // renames TestContainsNodeModules; ContainsNodeModules is moduleSpecifierContainsNodeModules)
 #[test]
 fn test_module_specifier_contains_node_modules() {
@@ -2049,7 +2049,7 @@ fn get_module_specifier_prefers_relative_over_dot_dot_paths_result() {
     t.finish();
 }
 
-// Go: modulespecifiers/specifiers_test.go:407 TestProcessEndingChecksRootedFilePath (ts#64159)
+// Go: modulespecifiers/specifiers_test.go:411 TestProcessEndingChecksRootedFilePath (ts#64159)
 // PORT: `processEnding` is private, so the test asks `get_module_specifier`
 // for the same specifier ("./lib/index.ts" from /project/src, minimal
 // ending). It runs in a child process, because the importing file must be
