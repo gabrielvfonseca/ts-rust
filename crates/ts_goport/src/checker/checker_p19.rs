@@ -33,6 +33,9 @@ impl Checker {
             match name.kind() {
                 SyntaxKind::ObjectBindingPattern => {
                     if self.is_object_literal_type(t) {
+                        if contextual_type.is_some() {
+                            return contextual_type;
+                        }
                         return self.pad_object_literal_type(t, name);
                     }
                 }
