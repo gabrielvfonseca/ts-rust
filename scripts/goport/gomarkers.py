@@ -299,7 +299,7 @@ def comment_lines(src):
     form = None
     for idx, line in enumerate(src):
         s = line.strip()
-        if '// Go:' in line and s.startswith('//'):
+        if re.match(r'\s*//[/!]?\s*Go:', line):
             form = 'marker'
         elif form and s.startswith('//'):
             form = 'cont'

@@ -3,7 +3,7 @@
 //! (`compiler.NewProgram`: scanner, parser, module resolution, file order)
 //! and the `GoProgram` built from its node stores.
 //!
-//! Go: execute/tsc.go:213 (config), tsc.go:293 (host), tsc.go:301 (program).
+//! Go: execute/tsc.go:219 (config), tsc.go:307 (host), tsc.go:321 (program).
 
 use super::*;
 use crate::ast::store::{
@@ -1219,7 +1219,7 @@ fn replaced_files<'a>(
         // The `redirect_files_by_path` half (Go :391) cannot hold here, and
         // stays as in Go. A redirect path is the path of a package copy that
         // the loader leaves out of the program files (Go
-        // filesparser.go:462-491, the `continue`), and `old_file` is a
+        // filesparser.go:455-484, the `continue`), and `old_file` is a
         // program file. A changed copy at a redirect path takes the full
         // build in `reuse_program` (frontend/compiler/program_new.rs, Go
         // program.go:391), so no reused version gets here with it. Test:

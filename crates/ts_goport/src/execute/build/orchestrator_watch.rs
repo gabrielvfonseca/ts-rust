@@ -1,7 +1,7 @@
 //! Go: execute/build/orchestrator.go:264-658, the watch part of the build
 //! orchestrator (`Watch`, `updateWatch`, `resetCaches`,
 //! `checkTasksForEventChanges`, `computeDesiredWatches`, `DoCycle`), with
-//! `rangeTask` (orchestrator.go:688) for these callers, and
+//! `rangeTask` (orchestrator.go:917) for these callers, and
 //! execute/build/buildtask.go:825-844 (`updateWatch`, `resetConfig`).
 //!
 //! PORT: Go runs `DoCycle` from `WatchManager.RunLoop` on the goroutine

@@ -5650,7 +5650,7 @@ fn compact_and_merge_related_infos(
             // PORT: Go tests `relatedInfos != nil`; appending empty slices
             // keeps it nil, so an empty list means "leave d alone".
             if !related_infos.is_empty() {
-                // Go: compiler/program.go:1690 slices.SortFunc(relatedInfos, ast.CompareDiagnostics)
+                // Go: compiler/program.go:1714 slices.SortFunc(relatedInfos, ast.CompareDiagnostics)
                 crate::gostd::slices::sort_func(&mut related_infos, compare_diagnostics);
                 related_infos.dedup_by(|b, a| equal_diagnostics(a, b));
             }
