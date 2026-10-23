@@ -354,6 +354,12 @@ impl Checker {
     }
 
     // Go: checker/checker.go:12572 checkBinaryLikeExpression
+    // PORT: issue #99. Go checks each operand with checkExpressionEx, which
+    // recurses for an operand that is a BinaryExpression (4 frames for each
+    // level of a chain). A long chain overflows a small host stack (wasm).
+    // When an operand is a BinaryExpression, the binary frames
+    // (`CheckBinaryFrame`) check the chain instead: the same calls in Go's
+    // order, with a heap frame for each BinaryExpression operand.
     pub fn check_binary_like_expression(
         &mut self,
         left: Node,
@@ -362,21 +368,71 @@ impl Checker {
         check_mode: CheckMode,
         error_node: Node,
     ) -> TypeId {
-        let operator = operator_token.kind();
-        if operator == SyntaxKind::EqualsToken
-            && (left.kind() == SyntaxKind::ObjectLiteralExpression
-                || left.kind() == SyntaxKind::ArrayLiteralExpression)
-        {
-            let right_checked = self.check_expression_ex(right, check_mode);
-            return self.check_destructuring_assignment(
-                left,
-                right_checked,
-                check_mode,
-                right.kind() == SyntaxKind::ThisKeyword,
-            );
+        if is_destructuring_binary(operator_token, left) {
+            return self.check_binary_destructuring(left, right, check_mode);
         }
-        let mut left_type = self.check_expression_ex(left, check_mode);
-        let mut right_type = self.check_expression_ex(right, check_mode);
+        if left.kind() == SyntaxKind::BinaryExpression
+            || right.kind() == SyntaxKind::BinaryExpression
+        {
+            let mut frames = CheckFrames::new(self);
+            frames.c.binary_frames.push(CheckBinaryFrame {
+                left,
+                operator_token,
+                right,
+                check_mode,
+                error_node,
+                stage: CheckStage::Left,
+                left_type: TypeId::NIL,
+                right_type: TypeId::NIL,
+                entered: None,
+            });
+            return frames.run();
+        }
+        let left_type = self.check_expression_ex(left, check_mode);
+        let right_type = self.check_expression_ex(right, check_mode);
+        self.check_binary_like_expression_worker(
+            left,
+            operator_token,
+            right,
+            left_type,
+            right_type,
+            check_mode,
+            error_node,
+        )
+    }
+
+    /// The destructuring arm of `check_binary_like_expression` (Go
+    /// checker.go:12574-12576), for `is_destructuring_binary` operands.
+    fn check_binary_destructuring(
+        &mut self,
+        left: Node,
+        right: Node,
+        check_mode: CheckMode,
+    ) -> TypeId {
+        let right_checked = self.check_expression_ex(right, check_mode);
+        self.check_destructuring_assignment(
+            left,
+            right_checked,
+            check_mode,
+            right.kind() == SyntaxKind::ThisKeyword,
+        )
+    }
+
+    /// `check_binary_like_expression` after both operands are checked (Go
+    /// checker.go:12579-12785): the truthiness checks of a logical operator,
+    /// then the operator's checks and type.
+    #[allow(clippy::too_many_arguments)]
+    pub fn check_binary_like_expression_worker(
+        &mut self,
+        left: Node,
+        operator_token: Node,
+        right: Node,
+        mut left_type: TypeId,
+        mut right_type: TypeId,
+        check_mode: CheckMode,
+        error_node: Node,
+    ) -> TypeId {
+        let operator = operator_token.kind();
         if is_logical_or_coalescing_binary_operator(operator) {
             let mut parent = left.parent().parent();
             while is_parenthesized_expression(parent)
@@ -1560,60 +1616,77 @@ impl Checker {
     }
 
     // Go: checker/checker.go:13189 getSyntacticNullishnessSemantics
+    // PORT: issue #99. Go recurses on the Right of `,` and `=` (a tail
+    // call) and on the Left of `??` and `??=`, so a long `??` chain
+    // recurses once for each level. Here both are a loop: `coalesce_rights`
+    // keeps the Right of each `??` level on the way down, and the way up
+    // combines them from the deepest level, as Go's returns do. The calls
+    // with effects (`get_resolved_symbol`) come in Go's order.
     pub fn get_syntactic_nullishness_semantics(&mut self, node: Node) -> PredicateSemantics {
-        let node = skip_outer_expressions(node, OuterExpressionKinds::OEK_ALL);
-        match node.kind() {
-            SyntaxKind::AwaitExpression
-            | SyntaxKind::CallExpression
-            | SyntaxKind::TaggedTemplateExpression
-            | SyntaxKind::ElementAccessExpression
-            | SyntaxKind::MetaProperty
-            | SyntaxKind::NewExpression
-            | SyntaxKind::PropertyAccessExpression
-            | SyntaxKind::YieldExpression
-            | SyntaxKind::ThisKeyword => PredicateSemantics::SOMETIMES,
-            SyntaxKind::BinaryExpression => {
-                // List of operators that can produce null/undefined:
-                // || ||= && &&= ?? ??=
-                match node.operator_token().kind() {
-                    SyntaxKind::BarBarToken
-                    | SyntaxKind::BarBarEqualsToken
-                    | SyntaxKind::AmpersandAmpersandToken
-                    | SyntaxKind::AmpersandAmpersandEqualsToken => PredicateSemantics::SOMETIMES,
-                    // For these operator kinds, the right operand is effectively controlling
-                    SyntaxKind::CommaToken | SyntaxKind::EqualsToken => {
-                        self.get_syntactic_nullishness_semantics(node.right())
-                    }
-                    // For nullish coalescing: result is the left operand when left is non-null,
-                    // or the right operand when left is null/undefined. The nullishness of the
-                    // result combines both paths: the left's non-null path contributes Never,
-                    // and when left can be null, the right's semantics are also included.
-                    SyntaxKind::QuestionQuestionToken | SyntaxKind::QuestionQuestionEqualsToken => {
-                        let left_semantics = self.get_syntactic_nullishness_semantics(node.left());
-                        // The non-null path (left is non-null): left branch taken, result has Never bit
-                        let mut result = left_semantics & PredicateSemantics::NEVER;
-                        // The null path (left is null/undefined): right branch taken, result inherits right's semantics
-                        if left_semantics.intersects(PredicateSemantics::ALWAYS) {
-                            result |= self.get_syntactic_nullishness_semantics(node.right());
+        let mut coalesce_rights: Vec<Node> = Vec::new();
+        let mut node = node;
+        let mut result = loop {
+            node = skip_outer_expressions(node, OuterExpressionKinds::OEK_ALL);
+            match node.kind() {
+                SyntaxKind::AwaitExpression
+                | SyntaxKind::CallExpression
+                | SyntaxKind::TaggedTemplateExpression
+                | SyntaxKind::ElementAccessExpression
+                | SyntaxKind::MetaProperty
+                | SyntaxKind::NewExpression
+                | SyntaxKind::PropertyAccessExpression
+                | SyntaxKind::YieldExpression
+                | SyntaxKind::ThisKeyword => break PredicateSemantics::SOMETIMES,
+                SyntaxKind::BinaryExpression => {
+                    // List of operators that can produce null/undefined:
+                    // || ||= && &&= ?? ??=
+                    match node.operator_token().kind() {
+                        SyntaxKind::BarBarToken
+                        | SyntaxKind::BarBarEqualsToken
+                        | SyntaxKind::AmpersandAmpersandToken
+                        | SyntaxKind::AmpersandAmpersandEqualsToken => {
+                            break PredicateSemantics::SOMETIMES;
                         }
-                        result
+                        // For these operator kinds, the right operand is effectively controlling
+                        SyntaxKind::CommaToken | SyntaxKind::EqualsToken => node = node.right(),
+                        // For nullish coalescing: result is the left operand when left is non-null,
+                        // or the right operand when left is null/undefined. The nullishness of the
+                        // result combines both paths: the left's non-null path contributes Never,
+                        // and when left can be null, the right's semantics are also included.
+                        SyntaxKind::QuestionQuestionToken
+                        | SyntaxKind::QuestionQuestionEqualsToken => {
+                            coalesce_rights.push(node.right());
+                            node = node.left();
+                        }
+                        _ => break PredicateSemantics::NEVER,
                     }
-                    _ => PredicateSemantics::NEVER,
                 }
-            }
-            SyntaxKind::ConditionalExpression => {
-                self.get_syntactic_nullishness_semantics(node.when_true())
-                    | self.get_syntactic_nullishness_semantics(node.when_false())
-            }
-            SyntaxKind::NullKeyword => PredicateSemantics::ALWAYS,
-            SyntaxKind::Identifier => {
-                if self.get_resolved_symbol(node) == self.undefined_symbol {
-                    return PredicateSemantics::ALWAYS;
+                SyntaxKind::ConditionalExpression => {
+                    break self.get_syntactic_nullishness_semantics(node.when_true())
+                        | self.get_syntactic_nullishness_semantics(node.when_false());
                 }
-                PredicateSemantics::SOMETIMES
+                SyntaxKind::NullKeyword => break PredicateSemantics::ALWAYS,
+                SyntaxKind::Identifier => {
+                    if self.get_resolved_symbol(node) == self.undefined_symbol {
+                        break PredicateSemantics::ALWAYS;
+                    }
+                    break PredicateSemantics::SOMETIMES;
+                }
+                _ => break PredicateSemantics::NEVER,
             }
-            _ => PredicateSemantics::NEVER,
+        };
+        // The `??` levels, from the deepest: `result` is the semantics of
+        // the level's Left.
+        while let Some(right) = coalesce_rights.pop() {
+            let left_semantics = result;
+            // The non-null path (left is non-null): left branch taken, result has Never bit
+            result = left_semantics & PredicateSemantics::NEVER;
+            // The null path (left is null/undefined): right branch taken, result inherits right's semantics
+            if left_semantics.intersects(PredicateSemantics::ALWAYS) {
+                result |= self.get_syntactic_nullishness_semantics(right);
+            }
         }
+        result
     }
 
     // This is a *shallow* check: An expression is side-effect-free if the
@@ -1623,8 +1696,39 @@ impl Checker {
     // The intent is to "smell test" an expression for correctness in positions where
     // its value is discarded (e.g. the left side of the comma operator).
     // Go: checker/checker.go:13252 isSideEffectFree
+    // PORT: issue #99. Go recurses on both operands of a BinaryExpression
+    // and both branches of a ConditionalExpression, so a long comma chain
+    // recurses once for each level. The function has no effects, so here
+    // the first operand (Right, WhenTrue) is checked first and the loop goes
+    // on with the other: the same result, with no recursion down a Left
+    // spine.
     pub fn is_side_effect_free(&self, node: Node) -> bool {
-        let node = skip_parentheses(node);
+        let mut node = node;
+        loop {
+            node = skip_parentheses(node);
+            match node.kind() {
+                SyntaxKind::ConditionalExpression => {
+                    if !self.is_side_effect_free(node.when_true()) {
+                        return false;
+                    }
+                    node = node.when_false();
+                }
+                SyntaxKind::BinaryExpression => {
+                    if is_assignment_operator(node.operator_token().kind())
+                        || !self.is_side_effect_free(node.right())
+                    {
+                        return false;
+                    }
+                    node = node.left();
+                }
+                _ => return self.is_side_effect_free_leaf(node),
+            }
+        }
+    }
+
+    /// `is_side_effect_free` of `node` (no parentheses), when it is no
+    /// BinaryExpression or ConditionalExpression.
+    fn is_side_effect_free_leaf(&self, node: Node) -> bool {
         match node.kind() {
             SyntaxKind::Identifier
             | SyntaxKind::StringLiteral
@@ -1647,16 +1751,6 @@ impl Checker {
             | SyntaxKind::NonNullExpression
             | SyntaxKind::JsxSelfClosingElement
             | SyntaxKind::JsxElement => true,
-            SyntaxKind::ConditionalExpression => {
-                self.is_side_effect_free(node.when_true())
-                    && self.is_side_effect_free(node.when_false())
-            }
-            SyntaxKind::BinaryExpression => {
-                if is_assignment_operator(node.operator_token().kind()) {
-                    return false;
-                }
-                self.is_side_effect_free(node.left()) && self.is_side_effect_free(node.right())
-            }
             SyntaxKind::PrefixUnaryExpression => {
                 // Unary operators ~, !, +, and - have no side effects.
                 // The rest do.
@@ -1738,5 +1832,158 @@ impl Checker {
             Some(diag::An_object_s_Symbol_hasInstance_method_must_return_a_boolean_value_for_it_to_be_used_on_the_right_hand_side_of_an_instanceof_expression),
         );
         self.boolean_type
+    }
+}
+
+/// Go `operator == ast.KindEqualsToken && (left.Kind == ast.KindObjectLiteralExpression || left.Kind == ast.KindArrayLiteralExpression)`
+/// (checker.go:12574): the destructuring arm of `checkBinaryLikeExpression`.
+#[inline]
+fn is_destructuring_binary(operator_token: Node, left: Node) -> bool {
+    operator_token.kind() == SyntaxKind::EqualsToken
+        && matches!(
+            left.kind(),
+            SyntaxKind::ObjectLiteralExpression | SyntaxKind::ArrayLiteralExpression
+        )
+}
+
+/// A binary operation on the checker's work stack (`Checker::binary_frames`,
+/// issue #99). The frames check a chain of BinaryExpressions with the calls
+/// of Go's recursion, in Go's order: for an operand that is a
+/// BinaryExpression, `checkExpressionEx` (its trace event, `currentNode` and
+/// `instantiationCount`, then after the operation the single generic call
+/// signature and the const enum check), `checkExpressionWorker`,
+/// `checkBinaryExpression` and `checkBinaryLikeExpression` (Left, then Right,
+/// then `check_binary_like_expression_worker`). Only an operand that is a
+/// BinaryExpression gets a frame; any other operand is checked by
+/// `check_expression_ex`.
+pub struct CheckBinaryFrame {
+    left: Node,
+    operator_token: Node,
+    right: Node,
+    check_mode: CheckMode,
+    /// Go `errorNode`: the BinaryExpression of an operand frame.
+    error_node: Node,
+    stage: CheckStage,
+    left_type: TypeId,
+    right_type: TypeId,
+    /// What `enter_check_expression` saved for an operand frame. None for
+    /// the frame of the operands that `check_binary_like_expression` got.
+    entered: Option<EnteredExpression>,
+}
+
+/// The next step of a `CheckBinaryFrame`.
+#[derive(Clone, Copy)]
+enum CheckStage {
+    /// Check Left (Go checker.go:12577).
+    Left,
+    /// Left is checked: check Right (checker.go:12578).
+    Right,
+    /// Both are checked: the operation, then for an operand frame the end of
+    /// `checkExpressionEx`.
+    End,
+}
+
+/// The checker with its binary frames from `base` up. A drop pops the frames
+/// down to `base`, the last first, so a panic (the LSP catches one for each
+/// request) leaves none behind, and their trace events end in order.
+struct CheckFrames<'a> {
+    c: &'a mut Checker,
+    base: usize,
+}
+
+impl Drop for CheckFrames<'_> {
+    fn drop(&mut self) {
+        while self.c.binary_frames.len() > self.base {
+            self.c.binary_frames.pop();
+        }
+    }
+}
+
+impl<'a> CheckFrames<'a> {
+    fn new(c: &'a mut Checker) -> Self {
+        let base = c.binary_frames.len();
+        Self { c, base }
+    }
+
+    /// Runs the frames above `base` and returns the type of the first one.
+    fn run(&mut self) -> TypeId {
+        loop {
+            let top = self.c.binary_frames.len() - 1;
+            let frame = &self.c.binary_frames[top];
+            let (stage, check_mode, left, right) =
+                (frame.stage, frame.check_mode, frame.left, frame.right);
+            match stage {
+                CheckStage::Left => {
+                    self.c.binary_frames[top].stage = CheckStage::Right;
+                    if let Some(t) = self.check_operand(left, check_mode) {
+                        self.c.binary_frames[top].left_type = t;
+                    }
+                }
+                CheckStage::Right => {
+                    self.c.binary_frames[top].stage = CheckStage::End;
+                    if let Some(t) = self.check_operand(right, check_mode) {
+                        self.c.binary_frames[top].right_type = t;
+                    }
+                }
+                CheckStage::End => {
+                    let frame = self.c.binary_frames.pop().expect("binary frame");
+                    let mut t = self.c.check_binary_like_expression_worker(
+                        frame.left,
+                        frame.operator_token,
+                        frame.right,
+                        frame.left_type,
+                        frame.right_type,
+                        check_mode,
+                        frame.error_node,
+                    );
+                    if let Some(entered) = frame.entered {
+                        t = self
+                            .c
+                            .exit_check_expression(frame.error_node, t, check_mode, entered);
+                    }
+                    if self.c.binary_frames.len() == self.base {
+                        return t;
+                    }
+                    let parent = self.c.binary_frames.last_mut().expect("parent frame");
+                    match parent.stage {
+                        CheckStage::Right => parent.left_type = t,
+                        CheckStage::End => parent.right_type = t,
+                        CheckStage::Left => unreachable!("binary frame above an unstarted one"),
+                    }
+                }
+            }
+        }
+    }
+
+    /// Go `checkExpressionEx(operand, checkMode)`: the type of `operand`, or
+    /// None when `operand` got a frame. A BinaryExpression operand runs the
+    /// start of `checkExpressionEx` and gets a frame, unless it is a
+    /// destructuring assignment, which is checked at once.
+    fn check_operand(&mut self, operand: Node, check_mode: CheckMode) -> Option<TypeId> {
+        let c = &mut *self.c;
+        if operand.kind() != SyntaxKind::BinaryExpression {
+            return Some(c.check_expression_ex(operand, check_mode));
+        }
+        let entered = c.enter_check_expression(operand);
+        // Go `checkExpressionWorker` (checker.go:8007) to `checkBinaryExpression`
+        // (checker.go:12567) to `checkBinaryLikeExpression`.
+        let (left, operator_token, right) =
+            (operand.left(), operand.operator_token(), operand.right());
+        if is_destructuring_binary(operator_token, left) {
+            let t = c.check_binary_destructuring(left, right, check_mode);
+            return Some(c.exit_check_expression(operand, t, check_mode, entered));
+        }
+        c.binary_frames.push(CheckBinaryFrame {
+            left,
+            operator_token,
+            right,
+            check_mode,
+            error_node: operand,
+            stage: CheckStage::Left,
+            left_type: TypeId::NIL,
+            right_type: TypeId::NIL,
+            entered: Some(entered),
+        });
+        None
     }
 }

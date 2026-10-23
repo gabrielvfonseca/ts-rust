@@ -10,6 +10,13 @@ fn info_has_inference_candidates(info: &InferenceInfo) -> bool {
     !info.candidates().is_empty() || !info.contra_candidates().is_empty()
 }
 
+/// What `enter_check_expression` saved for `exit_check_expression`: the
+/// trace event (it ends when this drops) and Go `saveCurrentNode`.
+pub struct EnteredExpression {
+    _trace: Option<crate::tracing::Pop>,
+    save_current_node: Node,
+}
+
 impl Checker {
     // Go: checker/checker.go:7751 checkExpression
     pub fn check_expression(&mut self, node: Node) -> TypeId {
@@ -17,8 +24,20 @@ impl Checker {
     }
 
     // Go: checker/checker.go:7755 checkExpressionEx
+    // PORT: the steps before and after `check_expression_worker` are
+    // `enter_check_expression` and `exit_check_expression`, which the binary
+    // frames (`check_binary_like_expression`) also run for an operand.
     pub fn check_expression_ex(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
-        let _trace = self.tracer.map(|tr| {
+        let saved = self.enter_check_expression(node);
+        let uninstantiated_type = self.check_expression_worker(node, check_mode);
+        self.exit_check_expression(node, uninstantiated_type, check_mode, saved)
+    }
+
+    /// The start of `check_expression_ex` (Go checker.go:7756-7761): the
+    /// trace event, `currentNode`, and `instantiationCount = 0`.
+    #[inline(always)]
+    pub fn enter_check_expression(&mut self, node: Node) -> EnteredExpression {
+        let trace = self.tracer.map(|tr| {
             tr.push(
                 crate::tracing::Phase::Check,
                 "checkExpression",
@@ -29,7 +48,23 @@ impl Checker {
         let save_current_node = self.current_node;
         self.current_node = node;
         self.instantiation_count = 0;
-        let uninstantiated_type = self.check_expression_worker(node, check_mode);
+        EnteredExpression {
+            _trace: trace,
+            save_current_node,
+        }
+    }
+
+    /// The end of `check_expression_ex` (Go checker.go:7763-7768) for the
+    /// type that `check_expression_worker` gave. The trace event ends last
+    /// (Go `defer`).
+    #[inline(always)]
+    pub fn exit_check_expression(
+        &mut self,
+        node: Node,
+        uninstantiated_type: TypeId,
+        check_mode: CheckMode,
+        saved: EnteredExpression,
+    ) -> TypeId {
         let t = self.instantiate_type_with_single_generic_call_signature(
             node,
             uninstantiated_type,
@@ -38,7 +73,8 @@ impl Checker {
         if self.is_const_enum_object_type(t) {
             self.check_const_enum_access(node, t);
         }
-        self.current_node = save_current_node;
+        self.current_node = saved.save_current_node;
+        drop(saved);
         t
     }
 

@@ -1279,6 +1279,10 @@ pub struct Checker {
     /// the relation errors of each source file, for Effect rules. Kept only
     /// when the program has Effect diagnostics options.
     pub effect_relation_errors: FxHashMap<Node, Vec<crate::effect::RelationError>>,
+    /// Rust-only: the work stack of `check_binary_like_expression` (issue
+    /// #99). Go checks each operand that is a BinaryExpression by
+    /// recursion; here it gets a frame. Empty between checks.
+    pub binary_frames: Vec<CheckBinaryFrame>,
 }
 
 // Arena accessors (PORTING.md "Checker data"). Handles index their arena
@@ -1760,6 +1764,7 @@ impl Checker {
             tracer: crate::tracing::new_checker_tracer(checker_index),
             effect_links: None,
             effect_relation_errors: FxHashMap::default(),
+            binary_frames: Vec::new(),
         };
         // Closure optimization
         c.compare_symbols = Rc::new(|c: &mut Checker, s1: SymbolId, s2: SymbolId| -> i32 {
