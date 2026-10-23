@@ -8,9 +8,9 @@ Each item: one line of goal, the files or worktree it owns, and what it waits fo
 
 Theo restarted the work on 2026-10-22 (state note `goal-2026-10-22`): maintain and build ts-rust, handle public issues as before.
 
-- **Accepted:** R221 (int89: followups68, followups69, #100) and R222 (bump E: pin 3e9236361fa9 = typescript@7.1.0-beta; batch 103). main CI green on every platform after R222.
-- **Running:** int90 (main R222 + stack99c #99 option C + followups71 Go refs and the effect-tsgo recipe; becomes R223); after-r222b: markers2 (int2 marker pass, one gomarkers.py tool, the lsproto map error text), effgold1 (effect-tsgo goldens for b3z-effect), perfscan6 (R222 against Go 3e9236361fa9, next perf lanes).
-- **Next:** R223 from int90 (batch 104, new auditor and reviewer); then int91 with markers2 and the perfscan6 lanes. Later: #99 option D only if a user needs emit at that depth; bump F when upstream moves on (watch #64788, #64789, #64808).
+- **Accepted:** R221 (int89), R222 (bump E: pin 3e9236361fa9 = typescript@7.1.0-beta; batch 103) and R223 (int90: #99 option C binder and checker work stacks, followups71; batch 104). main fd19c5c46.
+- **Running:** after-r222b (markers2: int2 marker pass, scripts/goport/gomarkers.py, lsproto map error text; effgold1: effect-tsgo goldens for b3z-effect; perfscan6: R222 against Go 3e9236361fa9, next perf lanes) and after-r223 (followups72: R223 reviewer items 4 to 8, #99 README shapes, binary_frames shrink, loop tests, lib-blobs.sh stale gap; candfix1: candidate.sh oracleRebase and gate id map reuse fix, protected, held).
+- **Next:** int91 with markers2, followups72 and the first perfscan6 lanes, then R224. candfix1 lands with the next batch that lists scripts/goport/candidate.sh (bump F) or with Theo's approval. Later: #99 option D (emit) and the other recursing shapes only if a user hits them; bump F when upstream moves on (watch #64788, #64789, #64808).
 - **Waits for Theo:** a release with the 7.1 beta pin (tsc-rs 0.9.0; the release job publishes to npm); PR #81 (TypeScript JS API library); honorec1 (batch.latestHono constants); a side run that refuses empty testbox inputs (protected); a Go-backed edit-sequence check for the #96 fallback in the protected set (rule change); gatecounts1; PRs #93 and #95 (lust; his own sessions).
 - **Waits for authors:** PR #85 (changes requested).
 - **Done 2026-10-22:** merged #98, #94, #44, #89, #100 (with #91 and #92), #101; closed #90, #97, #74, #86, #87, #88; filed #99 and documented its stack limits; testbox inputs disk reseeded; testbox.sh SSH port fixes.
