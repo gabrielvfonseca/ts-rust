@@ -93,7 +93,7 @@ impl DocumentUri {
         )
     }
 
-    // Go: lsp.go:19 Path (at 673a5f17d713; ts#64159 renames it PathKey,
+    // Go: lsp.go:52 Path (at 673a5f17d713; ts#64159 renames it PathKey,
     // lsp.go:81)
     // ts#64544: an encoded dynamic file name keeps its case, and its bare
     // root ends with "/" (Go `canonicalDynamicFileName`, removed by ts#64159;
@@ -573,7 +573,9 @@ pub fn json_object_raw_field(data: &[u8], field: &str) -> JsonValue {
 ///
 /// PORT: Go keeps each earlier member as its name and raw value
 /// (`deferredStructField`); here each is the raw name (with quotes) and the
-/// raw value.
+/// raw value. `disc_start` and `disc_end` are the decoder offsets of the
+/// discriminator value: an error that Go makes while its decoder stands just
+/// after that value gets them (Go keeps the decoder state).
 #[derive(Debug, Default)]
 pub struct DiscriminatedStructDecoder {
     type_name: &'static str,
@@ -582,6 +584,8 @@ pub struct DiscriminatedStructDecoder {
     has_discriminator: bool,
     deferred: Vec<(Vec<u8>, Vec<u8>)>,
     closed: bool,
+    disc_start: usize,
+    disc_end: usize,
 }
 
 // Go: structcodec.go:184 scanDiscriminatedStruct
@@ -608,6 +612,8 @@ pub fn scan_discriminated_struct(
         if json_key_check(&raw_name, discriminator) {
             state.discriminator_value = dec.read_value()?.to_vec();
             state.has_discriminator = true;
+            state.disc_end = dec.input_offset();
+            state.disc_start = state.disc_end - state.discriminator_value.len();
             return Ok(state);
         }
 
@@ -635,16 +641,107 @@ impl DiscriminatedStructDecoder {
                 ),
             );
         }
-        SemanticError::method(
-            ErrorPos::After,
-            format!(
-                "invalid {} discriminator {}: {}",
-                self.type_name,
-                gostd::strconv::quote(self.discriminator),
-                String::from_utf8_lossy(&self.discriminator_value)
-            ),
-        )
+        // Go's method read a part of the object (`where` = 0), last the
+        // discriminator value.
+        self.error_after_discriminator(format!(
+            "invalid {} discriminator {}: {}",
+            self.type_name,
+            gostd::strconv::quote(self.discriminator),
+            String::from_utf8_lossy(&self.discriminator_value)
+        ))
     }
+
+    /// A plain error of the union method `err`, made while Go's decoder
+    /// stands just after the discriminator value.
+    fn error_after_discriminator(&self, err: String) -> JsonError {
+        SemanticError {
+            wrapped: false,
+            json_kind: 0,
+            json_value: String::new(),
+            go_type: String::new(),
+            pointer: None,
+            byte_offset: self.disc_start,
+            pos: ErrorPos::Ambiguous,
+            err,
+        }
+        .into_json_error()
+    }
+
+    /// Go's position of `err`, an error of the arm decoder at offset `end` of
+    /// the joined object `object` (see `unmarshal_discriminated_arm`). Go
+    /// decodes the discriminator and each member before it with
+    /// `json.Unmarshal(value)`: an error keeps its pointer inside the value,
+    /// and an error at the value itself gets the position of Go's decoder,
+    /// just after the discriminator value. Go decodes each later member on
+    /// its decoder: the pointer starts at the root of `input`. A missing
+    /// property (after the closing `}`) keeps its place: `dec` stands there.
+    fn arm_error(
+        &self,
+        err: JsonError,
+        end: usize,
+        object: &[u8],
+        members: &[ArmMember],
+        input: &[u8],
+    ) -> JsonError {
+        let Some(mut s) = SemanticError::of(&err) else {
+            return err;
+        };
+        if s.pos == ErrorPos::AfterEnd && !s.wrapped {
+            return err;
+        }
+        let Some(m) = members.iter().rev().find(|m| m.name_start < end) else {
+            return err;
+        };
+        if !s.wrapped {
+            // Go `errNull` from `structDecoder.field`, after the member name.
+            return match m.outer {
+                None => self.error_after_discriminator(s.err),
+                Some((name_end, _)) => {
+                    s.pointer = Some(error_pointer(input, name_end, ErrorPos::Ambiguous));
+                    s.pos = ErrorPos::Ambiguous;
+                    s.into_json_error()
+                }
+            };
+        }
+        if s.pointer.is_some() {
+            return err;
+        }
+        match m.outer {
+            None => {
+                let value = &object[m.value_start..m.value_end];
+                let inner = end.clamp(m.value_start, m.value_end) - m.value_start;
+                let pointer = error_pointer(value, inner, s.pos);
+                if pointer.is_empty() {
+                    // Go `cmp.Or(serr.ByteOffset, offset)` and the pointer
+                    // of its decoder.
+                    let offset = error_offset(value, inner, s.pos);
+                    s.byte_offset = if offset > 0 { offset } else { self.disc_start };
+                    s.pointer = Some(error_pointer(input, self.disc_end, ErrorPos::Ambiguous));
+                } else {
+                    s.pointer = Some(pointer);
+                }
+            }
+            Some((name_end, value_start)) => {
+                let at = if end < m.value_start {
+                    name_end
+                } else {
+                    value_start + (end.min(m.value_end) - m.value_start)
+                };
+                s.pointer = Some(error_pointer(input, at, s.pos));
+            }
+        }
+        s.into_json_error()
+    }
+}
+
+/// A member of the object that `unmarshal_discriminated_arm` joins: its
+/// offsets there, and for a member read after the discriminator, the end of
+/// its name and the start of its value in the decoder input.
+struct ArmMember {
+    name_start: usize,
+    value_start: usize,
+    value_end: usize,
+    outer: Option<(usize, usize)>,
 }
 
 // Go: structcodec.go:235 unmarshalDiscriminatedArm
@@ -653,41 +750,58 @@ impl DiscriminatedStructDecoder {
 // PORT: Go feeds the discriminator, the retained fields and then the rest of
 // the object to one reflective struct decoder. Rust has no reflection: the
 // members are joined, in that order, into one object that the arm's
-// generated decoder reads. The caller assigns the arm.
+// generated decoder reads, and an error gets the position that Go gives it
+// (`arm_error`). Go's struct decoder is not the arm's method, so a plain
+// error names the union (the caller's type). The caller assigns the arm.
 pub fn unmarshal_discriminated_arm<T: UnmarshalerFrom + Default>(
     state: &DiscriminatedStructDecoder,
     dec: &mut JsonDecoder<'_>,
 ) -> Result<T, JsonError> {
     let mut object = vec![b'{'];
-    let mut push = |name: &[u8], value: &[u8]| {
+    let mut members: Vec<ArmMember> = Vec::new();
+    let mut push = |name: &[u8], value: &[u8], outer: Option<(usize, usize)>| {
         if object.len() > 1 {
             object.push(b',');
         }
+        let name_start = object.len();
         object.extend_from_slice(name);
         object.push(b':');
+        let value_start = object.len();
         object.extend_from_slice(value);
+        members.push(ArmMember {
+            name_start,
+            value_start,
+            value_end: object.len(),
+            outer,
+        });
     };
     if state.has_discriminator {
         push(
             format!("\"{}\"", state.discriminator).as_bytes(),
             &state.discriminator_value,
+            None,
         );
     }
     for (name, value) in &state.deferred {
-        push(name, value);
+        push(name, value, None);
     }
     if !state.closed {
         while dec.peek_kind() != b'}' {
             let name = dec.read_value()?.to_vec();
+            let name_end = dec.input_offset();
             let value = dec.read_value()?;
-            push(&name, value);
+            let value_start = dec.input_offset() - value.len();
+            push(&name, value, Some((name_end, value_start)));
         }
         dec.read_token()?;
     }
     object.push(b'}');
     let mut target = T::default();
-    json_unmarshal(&object, &mut target, &[])?;
-    Ok(target)
+    let mut arm = json_new_decoder(&object);
+    match target.unmarshal_json_from(&mut arm) {
+        Ok(()) => Ok(target),
+        Err(err) => Err(state.arm_error(err, arm.input_offset(), &object, &members, dec.input())),
+    }
 }
 
 // Go: lsp.go:248 jsonObjectHasKey
@@ -1125,6 +1239,243 @@ mod unmarshal_error_tests {
             ),
             within("number", string_map, "/properties"),
         );
+    }
+
+    /// The text of `unmarshal_params::<T>` for raw params `data`: the error,
+    /// or `ok ` and the marshaled value.
+    fn params_result_text<
+        T: UnmarshalerFrom + MarshalerTo + Default + std::fmt::Debug + 'static,
+    >(
+        data: &str,
+    ) -> String {
+        let req = RequestMessage {
+            params: Some(Box::new(JsonValue(data.as_bytes().to_vec()))),
+            ..RequestMessage::default()
+        };
+        match unmarshal_params::<T>(&req) {
+            Ok(v) => format!("ok {}", json_marshal(&v, &[]).expect("the value marshals")),
+            Err(err) => err.error(),
+        }
+    }
+
+    /// The rows of `cases` whose text differs from Go's.
+    fn go_mismatches(cases: &[(&str, &str, String)], text: impl Fn(&str) -> String) -> Vec<String> {
+        cases
+            .iter()
+            .filter_map(|(name, data, want)| {
+                let got = text(data);
+                (got != *want).then(|| format!("{name}: {data}\n  got  {got}\n  want {want}"))
+            })
+            .collect()
+    }
+
+    // A Go `map[string]*T` value may be null (Go's pointer arshaler sets a nil
+    // pointer); a field error inside a `documentChanges` union element keeps
+    // Go's JSON pointer. Expected texts come from Go at 3e9236361fa9: a probe
+    // test in package lsproto that calls `UnmarshalParams[T]()` and
+    // `json.Marshal` of the value.
+    #[test]
+    fn workspace_edit_map_values_match_go() {
+        let invalid = |s: &str| format!("InvalidParams: {s}");
+        let ok = |s: &str| format!("ok {s}");
+        let workspace_edit = [
+            (
+                "we-null-value",
+                r#"{"changeAnnotations":{"a":null}}"#,
+                ok(r#"{"changeAnnotations":{"a":null}}"#),
+            ),
+            (
+                "we-null-and-value",
+                r#"{"changeAnnotations":{"a":null,"b":{"label":"x"},"a":{"label":"y"}}}"#,
+                invalid(
+                    r#"jsontext: duplicate object member name "a" within "/changeAnnotations""#,
+                ),
+            ),
+            (
+                "we-value-then-null",
+                r#"{"changeAnnotations":{"b":{"label":"x"},"b":null}}"#,
+                invalid(
+                    r#"jsontext: duplicate object member name "b" within "/changeAnnotations""#,
+                ),
+            ),
+            (
+                "we-bad-value",
+                r#"{"changeAnnotations":{"a":5}}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go lsproto.ChangeAnnotation within "/changeAnnotations/a": expected object start, but encountered number"#,
+                ),
+            ),
+        ];
+        let code_action = [
+            (
+                "ca-null-value",
+                r#"{"title":"t","edit":{"changeAnnotations":{"a":null}}}"#,
+                ok(r#"{"title":"t","edit":{"changeAnnotations":{"a":null}}}"#),
+            ),
+            (
+                "ca-docchange-after",
+                r#"{"title":"t","edit":{"documentChanges":[{"kind":"create","uri":5}]}}"#,
+                invalid(
+                    r#"json: cannot unmarshal JSON number into Go lsproto.DocumentUri within "/edit/documentChanges/0/uri""#,
+                ),
+            ),
+            (
+                "ca-docchange-deferred",
+                r#"{"title":"t","edit":{"documentChanges":[{"uri":5,"kind":"create"}]}}"#,
+                invalid(
+                    r#"json: cannot unmarshal JSON number into Go lsproto.DocumentUri within "/edit/documentChanges/0""#,
+                ),
+            ),
+        ];
+        let mut bad = go_mismatches(&workspace_edit, params_result_text::<WorkspaceEdit>);
+        bad.extend(go_mismatches(
+            &code_action,
+            params_result_text::<CodeAction>,
+        ));
+        assert!(bad.is_empty(), "{}", bad.join("\n"));
+    }
+
+    // Field errors inside a discriminated union arm (structcodec.go:235
+    // unmarshalDiscriminatedArm): a field before the discriminator decodes on
+    // its own (its JSON pointer starts at the field value, or the error has
+    // the offset in that value), a field after it on the request decoder; a
+    // missing or null field errors at the union. Expected texts come from the
+    // same Go probe.
+    #[test]
+    fn discriminated_union_field_errors_match_go() {
+        let invalid = |s: &str| format!("InvalidParams: {s}");
+        let ok = |s: &str| format!("ok {s}");
+        let telemetry = [
+            (
+                "t-missing",
+                r#"{"eventName":"languageServer.projectInfo"}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go struct after offset 41: missing required properties: telemetryPurpose, properties, measurements"#,
+                ),
+            ),
+            (
+                "t-missing-deferred",
+                r#"{"telemetryPurpose":"usage","eventName":"languageServer.projectInfo"}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go struct after offset 68: missing required properties: properties, measurements"#,
+                ),
+            ),
+            (
+                "t-closed-missing",
+                r#"{"telemetryPurpose":"usage","properties":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go struct after offset 43: invalid RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull: missing discriminator "eventName""#,
+                ),
+            ),
+            (
+                "t-after-kind",
+                r#"{"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","properties":5,"measurements":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal JSON number into Go map[string]string within "/properties""#,
+                ),
+            ),
+            (
+                "t-deferred-kind",
+                r#"{"properties":5,"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","measurements":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal JSON number into Go map[string]string after offset 28"#,
+                ),
+            ),
+            (
+                "t-after-mapvalue",
+                r#"{"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","properties":{"a":5},"measurements":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal JSON number into Go string within "/properties/a""#,
+                ),
+            ),
+            (
+                "t-deferred-mapvalue",
+                r#"{"properties":{"a":5},"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","measurements":{}}"#,
+                invalid(r#"json: cannot unmarshal JSON number into Go string within "/a""#),
+            ),
+            (
+                "t-after-null",
+                r#"{"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","properties":null,"measurements":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go struct within "/properties": null value is not allowed for field "properties""#,
+                ),
+            ),
+            (
+                "t-deferred-null",
+                r#"{"properties":null,"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","measurements":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go struct after offset 31: null value is not allowed for field "properties""#,
+                ),
+            ),
+            (
+                "t-after-purpose",
+                r#"{"eventName":"languageServer.projectInfo","telemetryPurpose":5,"properties":{},"measurements":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go lsproto.StringLiteralUsage within "/telemetryPurpose": expected StringLiteralUsage value "usage", got 5"#,
+                ),
+            ),
+            (
+                "t-deferred-purpose",
+                r#"{"telemetryPurpose":"x","eventName":"languageServer.projectInfo","properties":{},"measurements":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go lsproto.StringLiteralUsage after offset 36: expected StringLiteralUsage value "usage", got "x""#,
+                ),
+            ),
+            (
+                "t-after-measure",
+                r#"{"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","properties":{},"measurements":{"jsFileCount":"x"}}"#,
+                invalid(
+                    r#"json: cannot unmarshal JSON string into Go float64 within "/measurements/jsFileCount""#,
+                ),
+            ),
+            (
+                "t-deferred-measure",
+                r#"{"measurements":{"jsFileCount":"x"},"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","properties":{}}"#,
+                invalid(
+                    r#"json: cannot unmarshal JSON string into Go float64 within "/jsFileCount""#,
+                ),
+            ),
+            (
+                "t-err-props",
+                r#"{"eventName":"languageServer.errorResponse","telemetryPurpose":"error","properties":{"errorCode":5}}"#,
+                invalid(
+                    r#"json: cannot unmarshal JSON number into Go string within "/properties/errorCode""#,
+                ),
+            ),
+            (
+                "t-err-props-deferred",
+                r#"{"properties":{"errorCode":5},"eventName":"languageServer.errorResponse","telemetryPurpose":"error"}"#,
+                invalid(r#"json: cannot unmarshal JSON number into Go string within "/errorCode""#),
+            ),
+            (
+                "t-ok",
+                r#"{"telemetryPurpose":"usage","eventName":"languageServer.projectInfo","properties":{"a":"b"},"measurements":{"jsFileCount":1},"extra":1}"#,
+                ok(
+                    r#"{"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","properties":{"a":"b"},"measurements":{"jsFileCount":1}}"#,
+                ),
+            ),
+            (
+                "t-bad-disc",
+                r#"{"eventName":"x"}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go struct after offset 13: invalid RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull discriminator "eventName": "x""#,
+                ),
+            ),
+            (
+                "t-no-disc",
+                r#"{"a":1}"#,
+                invalid(
+                    r#"json: cannot unmarshal into Go struct after offset 6: invalid RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull: missing discriminator "eventName""#,
+                ),
+            ),
+        ];
+        let bad = go_mismatches(
+            &telemetry,
+            params_result_text::<
+                RequestFailureTelemetryEventOrPerformanceStatsTelemetryEventOrProjectInfoTelemetryEventOrNull,
+            >,
+        );
+        assert!(bad.is_empty(), "{}", bad.join("\n"));
     }
 
     // S6-002: a signatureHelp retrigger whose `activeSignatureHelp` is null.

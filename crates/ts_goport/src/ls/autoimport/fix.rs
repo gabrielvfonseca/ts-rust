@@ -1411,7 +1411,7 @@ pub fn get_import_kind_for_import_statement(
     )
 }
 
-// Go: ls/autoimport/fix.go:800 getImportKind
+// Go: ls/autoimport/fix.go:808 getImportKind
 // PORT: Go `fallthrough` from the Named case into the Modifier case is the
 // shared `NAMED` result.
 fn get_import_kind(
@@ -1716,7 +1716,7 @@ impl View {
         self.compare_module_specifiers_for_sorting(a, b)
     }
 
-    // Go: ls/autoimport/fix.go:1015 CompareFixesForRanking
+    // Go: ls/autoimport/fix.go:1026 CompareFixesForRanking
     // CompareFixesForRanking returns negative if `a` is better than `b`.
     // Sorting with this comparator will place the best fix first.
     // Fixes of equal desirability will be considered equal.

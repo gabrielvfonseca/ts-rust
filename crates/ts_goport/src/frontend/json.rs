@@ -309,6 +309,14 @@ impl<'a> JsonDecoder<'a> {
         self.pos
     }
 
+    /// The whole input of the decoder.
+    // PORT: not in Go. The lsproto union decoder finds the JSON pointer of
+    // an error in a member that it read earlier (`json_ext::error_pointer`).
+    #[must_use]
+    pub fn input(&self) -> &'a [u8] {
+        self.buf
+    }
+
     /// Go `jsontext.Decoder.DisableNamespace` (the export helper
     /// `Tokens.Last.DisableNamespace`): stop duplicate-name checks for the
     /// innermost open object.

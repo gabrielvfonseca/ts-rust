@@ -716,7 +716,7 @@ pub fn resolve_symbol_reference_for_checker(
     }
 }
 
-// Go: compiler/program.go:150 (*Program).BaseDirectory (ts#64159)
+// Go: compiler/program.go:151 (*Program).BaseDirectory (ts#64159)
 // The directory that a request's relative file name is rooted against
 // (Go `DocumentIdentifier.ToFileName(program.BaseDirectory())`).
 // PORT: the Rust program has no BaseDirectory yet (program-core lane). Go

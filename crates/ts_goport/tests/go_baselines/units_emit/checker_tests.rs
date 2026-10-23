@@ -28,7 +28,7 @@ impl ParseConfigHost for HostAsParseConfigHost {
     }
 }
 
-// Go: checker/checker_test.go:63 TestGetTypeAtLocationOfTypeOnlyImportClause
+// Go: checker/checker_test.go:65 TestGetTypeAtLocationOfTypeOnlyImportClause
 #[test]
 fn test_get_type_at_location_of_type_only_import_clause() {
     in_child(

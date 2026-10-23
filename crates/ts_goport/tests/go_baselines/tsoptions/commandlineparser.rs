@@ -479,7 +479,7 @@ fn parse_command_line_verify_null() {
     t.finish();
 }
 
-// Go: commandlineparser_test.go:231 createVerifyNullForNonNullIncluded
+// Go: commandlineparser_test.go:243 createVerifyNullForNonNullIncluded
 // PORT: the Go `slices.Concat` result is leaked so the list is `&'static`,
 // as the parser's declaration lists are.
 fn create_verify_null_for_non_null_included(
@@ -506,7 +506,7 @@ fn create_verify_null_for_non_null_included(
 }
 
 impl CommandLineSubScenario {
-    // Go: commandlineparser_test.go:286 (commandLineSubScenario).assertParseResult
+    // Go: commandlineparser_test.go:298 (commandLineSubScenario).assertParseResult
     fn assert_parse_result(&self, t: &mut Subtests) {
         t.run(&self.test_name, || {
             let original_baseline = self.baseline.read_file()?;
@@ -569,7 +569,7 @@ fn cut<'a>(s: &'a str, sep: &str) -> (&'a str, &'a str, bool) {
     }
 }
 
-// Go: commandlineparser_test.go:317 parseExistingCompilerBaseline
+// Go: commandlineparser_test.go:329 parseExistingCompilerBaseline
 fn parse_existing_compiler_baseline(baseline: &str) -> TestCommandLineParser {
     let (_, rest, _) = cut(baseline, "CompilerOptions::\n");
     let (compiler_options, rest, _) = cut(rest, "\nWatchOptions::\n");
@@ -586,7 +586,7 @@ fn parse_existing_compiler_baseline(baseline: &str) -> TestCommandLineParser {
     }
 }
 
-// Go: commandlineparser_test.go:334 formatNewBaseline
+// Go: commandlineparser_test.go:346 formatNewBaseline
 fn format_new_baseline(
     command_line: &[String],
     opts: &str,
@@ -619,7 +619,7 @@ fn format_new_baseline(
 type GetTsBaseline<'a> = &'a dyn Fn() -> Result<TestCommandLineParserBuild, String>;
 
 impl CommandLineSubScenario {
-    // Go: commandlineparser_test.go:361 (commandLineSubScenario).assertBuildParseResult
+    // Go: commandlineparser_test.go:373 (commandLineSubScenario).assertBuildParseResult
     fn assert_build_parse_result(&self, t: &mut Subtests) {
         let get_ts_baseline = || -> Result<TestCommandLineParserBuild, String> {
             let original_baseline = self.baseline.read_file()?;
@@ -628,7 +628,7 @@ impl CommandLineSubScenario {
         self.assert_build_parse_result_with_ts_baseline(t, Some(&get_ts_baseline));
     }
 
-    // Go: commandlineparser_test.go:369 (commandLineSubScenario).assertBuildParseResultWithTsBaseline
+    // Go: commandlineparser_test.go:381 (commandLineSubScenario).assertBuildParseResultWithTsBaseline
     fn assert_build_parse_result_with_ts_baseline(
         &self,
         t: &mut Subtests,
@@ -700,7 +700,7 @@ impl CommandLineSubScenario {
     }
 }
 
-// Go: commandlineparser_test.go:415 parseExistingCompilerBaselineBuild
+// Go: commandlineparser_test.go:427 parseExistingCompilerBaselineBuild
 fn parse_existing_compiler_baseline_build(baseline: &str) -> TestCommandLineParserBuild {
     let (_, rest, _) = cut(baseline, "buildOptions::\n");
     let (build_options, rest, _) = cut(rest, "\nWatchOptions::\n");
@@ -718,7 +718,7 @@ fn parse_existing_compiler_baseline_build(baseline: &str) -> TestCommandLinePars
     }
 }
 
-// Go: commandlineparser_test.go:437 formatNewBaselineBuild
+// Go: commandlineparser_test.go:449 formatNewBaselineBuild
 fn format_new_baseline_build(
     command_line: &[String],
     opts: &str,
@@ -749,7 +749,7 @@ fn format_new_baseline_build(
     formatted
 }
 
-// Go: commandlineparser_test.go:488 createSubScenario
+// Go: commandlineparser_test.go:500 createSubScenario
 // PORT: the Go variadic `opts ...[]*CommandLineOption` is an `Option`; nil
 // and an empty list are the empty slice.
 fn create_sub_scenario(
@@ -846,7 +846,7 @@ struct VerifyNull {
     opt_decls: &'static [&'static CommandLineOption],
 }
 
-// Go: commandlineparser_test.go:506 TestCommandLineParser
+// Go: commandlineparser_test.go:518 TestCommandLineParser
 // PORT: the Go option field is the decoded `*core.CompilerOptions`. Without
 // a JSON decoder it holds the JSON text.
 struct TestCommandLineParser {
@@ -855,7 +855,7 @@ struct TestCommandLineParser {
     errors: String,
 }
 
-// Go: commandlineparser_test.go:511 TestCommandLineParserBuild
+// Go: commandlineparser_test.go:523 TestCommandLineParserBuild
 // PORT: as `TestCommandLineParser`, the option fields hold the JSON text.
 struct TestCommandLineParserBuild {
     options: String,
@@ -864,7 +864,7 @@ struct TestCommandLineParserBuild {
     errors: String,
 }
 
-// Go: commandlineparser_test.go:517 TestParseBuildCommandLine
+// Go: commandlineparser_test.go:529 TestParseBuildCommandLine
 #[test]
 fn parse_build_command_line() {
     let parse_command_line_sub_scenarios: Vec<SubScenarioInput> = vec![

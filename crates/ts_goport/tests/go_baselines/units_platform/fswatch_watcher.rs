@@ -1279,7 +1279,7 @@ fn test_watch_rejects_network_paths() {
 
 // ----- errors ------------------------------------------------------------
 
-// Go: watcher_test.go:1810 TestSubscribeMissingDirError
+// Go: watcher_test.go:1839 TestSubscribeMissingDirError
 #[test]
 fn test_subscribe_missing_dir_error() {
     run_for_each_watcher("TestSubscribeMissingDirError", |t, wi| {
@@ -1290,7 +1290,7 @@ fn test_subscribe_missing_dir_error() {
     });
 }
 
-// Go: watcher_test.go:1821 TestSubscribeNotADirError
+// Go: watcher_test.go:1850 TestSubscribeNotADirError
 #[test]
 fn test_subscribe_not_a_dir_error() {
     run_for_each_watcher("TestSubscribeNotADirError", |t, wi| {
@@ -1303,7 +1303,7 @@ fn test_subscribe_not_a_dir_error() {
     });
 }
 
-// Go: watcher_test.go:1845 TestSubscribeRejectsRelativePath
+// Go: watcher_test.go:1874 TestSubscribeRejectsRelativePath
 #[test]
 fn test_subscribe_rejects_relative_path() {
     run_for_each_watcher("TestSubscribeRejectsRelativePath", |_, wi| {
@@ -1324,7 +1324,7 @@ fn test_subscribe_rejects_relative_path() {
 
 // ----- watch lifecycle --------------------------------------------
 
-// Go: watcher_test.go:1861 TestSubscribeUnsubscribeIdempotent
+// Go: watcher_test.go:1890 TestSubscribeUnsubscribeIdempotent
 #[test]
 fn test_subscribe_unsubscribe_idempotent() {
     run_for_each_watcher("TestSubscribeUnsubscribeIdempotent", |t, wi| {
@@ -1342,7 +1342,7 @@ fn test_subscribe_unsubscribe_idempotent() {
     });
 }
 
-// Go: watcher_test.go:1888 TestSubscribeCloseThenReSubscribe
+// Go: watcher_test.go:1917 TestSubscribeCloseThenReSubscribe
 #[test]
 fn test_subscribe_close_then_re_subscribe() {
     run_for_each_watcher("TestSubscribeCloseThenReSubscribe", |t, wi| {
@@ -1457,7 +1457,7 @@ fn no_thread_leak_child() {
     }
 }
 
-// Go: watcher_test.go:1934 TestSubscribeNoGoroutineLeak
+// Go: watcher_test.go:1963 TestSubscribeNoGoroutineLeak
 // PORT: Go counts goroutines with the test run alone (no `t.Parallel`).
 // libtest runs tests in parallel, so the count runs in a child process of
 // this test binary with one test thread; a thread stands for a goroutine.
@@ -1487,7 +1487,7 @@ fn test_subscribe_no_goroutine_leak() {
 
 // ----- additional coverage -----------------------------------------------
 
-// Go: watcher_test.go:1978 TestSubscribeDeepNestedCreate
+// Go: watcher_test.go:2007 TestSubscribeDeepNestedCreate
 #[test]
 fn test_subscribe_deep_nested_create() {
     run_for_each_watcher("TestSubscribeDeepNestedCreate", |t, wi| {
@@ -1516,7 +1516,7 @@ fn test_subscribe_deep_nested_create() {
     });
 }
 
-// Go: watcher_test.go:2008 TestSubscribeManyFilesAtOnce
+// Go: watcher_test.go:2037 TestSubscribeManyFilesAtOnce
 #[test]
 fn test_subscribe_many_files_at_once() {
     run_for_each_watcher("TestSubscribeManyFilesAtOnce", |t, wi| {
@@ -1553,7 +1553,7 @@ fn test_subscribe_many_files_at_once() {
     });
 }
 
-// Go: watcher_test.go:2049 TestSubscribeTruncateFile
+// Go: watcher_test.go:2078 TestSubscribeTruncateFile
 #[test]
 fn test_subscribe_truncate_file() {
     run_for_each_watcher("TestSubscribeTruncateFile", |t, wi| {
@@ -1570,7 +1570,7 @@ fn test_subscribe_truncate_file() {
     });
 }
 
-// Go: watcher_test.go:2066 TestSubscribeConcurrentSubscribeUnsubscribe
+// Go: watcher_test.go:2095 TestSubscribeConcurrentSubscribeUnsubscribe
 #[test]
 fn test_subscribe_concurrent_subscribe_unsubscribe() {
     run_for_each_watcher("TestSubscribeConcurrentSubscribeUnsubscribe", |t, wi| {
@@ -1591,7 +1591,7 @@ fn test_subscribe_concurrent_subscribe_unsubscribe() {
     });
 }
 
-// Go: watcher_test.go:2088 TestSubscribeRenameDir
+// Go: watcher_test.go:2117 TestSubscribeRenameDir
 #[test]
 fn test_subscribe_rename_dir() {
     run_for_each_watcher("TestSubscribeRenameDir", |t, wi| {
@@ -1616,7 +1616,7 @@ fn test_subscribe_rename_dir() {
     });
 }
 
-// Go: watcher_test.go:2116 TestSubscribeReplaceFileWithDir
+// Go: watcher_test.go:2145 TestSubscribeReplaceFileWithDir
 #[test]
 fn test_subscribe_replace_file_with_dir() {
     run_for_each_watcher("TestSubscribeReplaceFileWithDir", |t, wi| {
@@ -1636,7 +1636,7 @@ fn test_subscribe_replace_file_with_dir() {
     });
 }
 
-// Go: watcher_test.go:2142 TestSubscribeAppendToFile
+// Go: watcher_test.go:2171 TestSubscribeAppendToFile
 #[test]
 fn test_subscribe_append_to_file() {
     run_for_each_watcher("TestSubscribeAppendToFile", |t, wi| {
@@ -1655,7 +1655,7 @@ fn test_subscribe_append_to_file() {
     });
 }
 
-// Go: watcher_test.go:2163 TestSubscribeNoEventsAfterUnsubscribe
+// Go: watcher_test.go:2192 TestSubscribeNoEventsAfterUnsubscribe
 #[test]
 fn test_subscribe_no_events_after_unsubscribe() {
     run_for_each_watcher("TestSubscribeNoEventsAfterUnsubscribe", |t, wi| {
@@ -1678,13 +1678,13 @@ fn test_subscribe_no_events_after_unsubscribe() {
 
 // ----- watcherBase / dirWatchError internals -----------------------------
 
-// Go: watcher_test.go:2185 failingBackend
+// Go: watcher_test.go:2214 failingBackend
 struct FailingBackend {
     base: WatcherBase,
     err: GoError,
 }
 
-// Go: watcher_test.go:2190 newFailingBackend
+// Go: watcher_test.go:2219 newFailingBackend
 fn new_failing_backend(err: GoError) -> Arc<FailingBackend> {
     Arc::new_cyclic(|self_: &Weak<FailingBackend>| {
         let b = FailingBackend {
@@ -1715,7 +1715,7 @@ impl WatcherImpl for FailingBackend {
     }
 }
 
-// Go: watcher_test.go:2206 TestBackendRunReturnsStartError
+// Go: watcher_test.go:2235 TestBackendRunReturnsStartError
 #[test]
 fn test_backend_run_returns_start_error() {
     let want = errors::new("startup failed");
@@ -1731,7 +1731,7 @@ fn test_backend_run_returns_start_error() {
     }
 }
 
-// Go: watcher_test.go:2215 TestDirWatchErrorImplementsError
+// Go: watcher_test.go:2244 TestDirWatchErrorImplementsError
 // PORT: Go leaves `dirWatch` nil; the Rust field is an `Arc`, so it holds a
 // fresh dirWatch.
 #[test]
@@ -1752,7 +1752,7 @@ fn test_dir_watch_error_implements_error() {
     dw.destroy_debounce();
 }
 
-// Go: watcher_test.go:2223 TestFileCallbackForwardsErrAlongsideEvents
+// Go: watcher_test.go:2252 TestFileCallbackForwardsErrAlongsideEvents
 // ts#64210: the file filter is a dirWatch callback option (Go `addCallback`
 // with a file), not the removed `fileCallback` wrapper. `cb` feeds the
 // events through the dirWatch event list.
@@ -1842,7 +1842,7 @@ fn test_file_callback_forwards_err_alongside_events() {
     t.finish();
 }
 
-// Go: watcher_test.go:2291 TestRenameDirOutOfTreeNoStaleEvents
+// Go: watcher_test.go:2320 TestRenameDirOutOfTreeNoStaleEvents
 #[test]
 fn test_rename_dir_out_of_tree_no_stale_events() {
     run_for_each_watcher("TestRenameDirOutOfTreeNoStaleEvents", |t, wi| {
@@ -1878,7 +1878,7 @@ fn test_rename_dir_out_of_tree_no_stale_events() {
 
 // ----- platform-specific -------------------------------------------------
 
-// Go: watcher_test.go:2344 TestDefaultBackendMatchesPlatform
+// Go: watcher_test.go:2373 TestDefaultBackendMatchesPlatform
 // PORT: Go wants "fsevents" on darwin. `fswatch::default` picks FSEvents
 // when that backend is available and kqueue (Go's fallback) when it is
 // not, so the port wants the backend that is available.
@@ -1907,7 +1907,7 @@ fn test_default_backend_matches_platform() {
     assert_eq!(d.name(), want_name, "Default().Name()");
 }
 
-// Go: watcher_test.go:2374 TestUnavailableBackendReturnsError
+// Go: watcher_test.go:2403 TestUnavailableBackendReturnsError
 #[test]
 fn test_unavailable_backend_returns_error() {
     let Some(unavailable) = fswatch::all_watchers().into_iter().find(|w| !w.available()) else {
@@ -1929,7 +1929,7 @@ fn test_unavailable_backend_returns_error() {
     }
 }
 
-// Go: watcher_test.go:2394 TestSubscribeNestedDirDeletionCleansDescendants
+// Go: watcher_test.go:2423 TestSubscribeNestedDirDeletionCleansDescendants
 #[test]
 fn test_subscribe_nested_dir_deletion_cleans_descendants() {
     run_for_each_watcher(
@@ -1949,7 +1949,7 @@ fn test_subscribe_nested_dir_deletion_cleans_descendants() {
 
 // ----- non-recursive tests -----------------------------------------------
 
-// Go: watcher_test.go:2420 TestNonRecursiveFileCreate
+// Go: watcher_test.go:2449 TestNonRecursiveFileCreate
 #[test]
 fn test_non_recursive_file_create() {
     run_for_each_watcher("TestNonRecursiveFileCreate", |t, wi| {
@@ -1961,7 +1961,7 @@ fn test_non_recursive_file_create() {
     });
 }
 
-// Go: watcher_test.go:2434 TestNonRecursiveFileUpdate
+// Go: watcher_test.go:2463 TestNonRecursiveFileUpdate
 #[test]
 fn test_non_recursive_file_update() {
     run_for_each_watcher("TestNonRecursiveFileUpdate", |t, wi| {
@@ -1975,7 +1975,7 @@ fn test_non_recursive_file_update() {
     });
 }
 
-// Go: watcher_test.go:2452 TestNonRecursiveFileDelete
+// Go: watcher_test.go:2481 TestNonRecursiveFileDelete
 #[test]
 fn test_non_recursive_file_delete() {
     run_for_each_watcher("TestNonRecursiveFileDelete", |t, wi| {
@@ -1988,7 +1988,7 @@ fn test_non_recursive_file_delete() {
     });
 }
 
-// Go: watcher_test.go:2469 TestNonRecursiveDirCreate
+// Go: watcher_test.go:2498 TestNonRecursiveDirCreate
 #[test]
 fn test_non_recursive_dir_create() {
     run_for_each_watcher("TestNonRecursiveDirCreate", |t, wi| {
@@ -2000,7 +2000,7 @@ fn test_non_recursive_dir_create() {
     });
 }
 
-// Go: watcher_test.go:2483 TestNonRecursiveGrandchildIgnored
+// Go: watcher_test.go:2512 TestNonRecursiveGrandchildIgnored
 #[test]
 fn test_non_recursive_grandchild_ignored() {
     run_for_each_watcher("TestNonRecursiveGrandchildIgnored", |t, wi| {
@@ -2018,7 +2018,7 @@ fn test_non_recursive_grandchild_ignored() {
     });
 }
 
-// Go: watcher_test.go:2513 TestNonRecursiveNewSubdirContentIgnored
+// Go: watcher_test.go:2542 TestNonRecursiveNewSubdirContentIgnored
 #[test]
 fn test_non_recursive_new_subdir_content_ignored() {
     run_for_each_watcher("TestNonRecursiveNewSubdirContentIgnored", |t, wi| {
@@ -2037,7 +2037,7 @@ fn test_non_recursive_new_subdir_content_ignored() {
     });
 }
 
-// Go: watcher_test.go:2545 TestNonRecursiveAndRecursiveSameDir
+// Go: watcher_test.go:2574 TestNonRecursiveAndRecursiveSameDir
 #[test]
 fn test_non_recursive_and_recursive_same_dir() {
     run_for_each_watcher("TestNonRecursiveAndRecursiveSameDir", |t, wi| {
@@ -2057,7 +2057,7 @@ fn test_non_recursive_and_recursive_same_dir() {
     });
 }
 
-// Go: watcher_test.go:2577 TestNonRecursiveWithDeniedSubdir
+// Go: watcher_test.go:2606 TestNonRecursiveWithDeniedSubdir
 #[test]
 fn test_non_recursive_with_denied_subdir() {
     run_for_each_watcher("TestNonRecursiveWithDeniedSubdir", |t, wi| {
@@ -2076,7 +2076,7 @@ fn test_non_recursive_with_denied_subdir() {
 
 // ----- file watch tests --------------------------------------------------
 
-// Go: watcher_test.go:2608 TestFileWatchCreate
+// Go: watcher_test.go:2637 TestFileWatchCreate
 #[test]
 fn test_file_watch_create() {
     run_for_each_watcher("TestFileWatchCreate", |t, wi| {
@@ -2088,7 +2088,7 @@ fn test_file_watch_create() {
     });
 }
 
-// Go: watcher_test.go:2623 TestFileWatchUpdate
+// Go: watcher_test.go:2652 TestFileWatchUpdate
 #[test]
 fn test_file_watch_update() {
     run_for_each_watcher("TestFileWatchUpdate", |t, wi| {
@@ -2101,7 +2101,7 @@ fn test_file_watch_update() {
     });
 }
 
-// Go: watcher_test.go:2641 TestFileWatchDelete
+// Go: watcher_test.go:2670 TestFileWatchDelete
 #[test]
 fn test_file_watch_delete() {
     run_for_each_watcher("TestFileWatchDelete", |t, wi| {
@@ -2114,7 +2114,7 @@ fn test_file_watch_delete() {
     });
 }
 
-// Go: watcher_test.go:2659 TestFileWatchIgnoresSiblings
+// Go: watcher_test.go:2688 TestFileWatchIgnoresSiblings
 #[test]
 fn test_file_watch_ignores_siblings() {
     run_for_each_watcher("TestFileWatchIgnoresSiblings", |t, wi| {
@@ -2129,7 +2129,7 @@ fn test_file_watch_ignores_siblings() {
     });
 }
 
-// Go: watcher_test.go:2682 TestFileWatchMultipleSameDir
+// Go: watcher_test.go:2711 TestFileWatchMultipleSameDir
 #[test]
 fn test_file_watch_multiple_same_dir() {
     run_for_each_watcher("TestFileWatchMultipleSameDir", |t, wi| {
@@ -2151,7 +2151,7 @@ fn test_file_watch_multiple_same_dir() {
     });
 }
 
-// Go: watcher_test.go:2714 TestFileWatchDeleteAndRecreate
+// Go: watcher_test.go:2743 TestFileWatchDeleteAndRecreate
 #[test]
 fn test_file_watch_delete_and_recreate() {
     run_for_each_watcher("TestFileWatchDeleteAndRecreate", |t, wi| {
@@ -2166,7 +2166,7 @@ fn test_file_watch_delete_and_recreate() {
     });
 }
 
-// Go: watcher_test.go:2738 TestFileWatchNonExistentTarget
+// Go: watcher_test.go:2767 TestFileWatchNonExistentTarget
 #[test]
 fn test_file_watch_non_existent_target() {
     run_for_each_watcher("TestFileWatchNonExistentTarget", |t, wi| {
@@ -2206,7 +2206,7 @@ fn nudge_until_update(
     Err(to_want_events(&all_seen))
 }
 
-// Go: watcher_test.go:2758 TestRecursiveMoveInPrePopulated
+// Go: watcher_test.go:2787 TestRecursiveMoveInPrePopulated
 #[test]
 fn test_recursive_move_in_pre_populated() {
     run_for_each_watcher("TestRecursiveMoveInPrePopulated", |t, wi| {
@@ -2227,7 +2227,7 @@ fn test_recursive_move_in_pre_populated() {
     });
 }
 
-// Go: watcher_test.go:2809 TestAtomicSave
+// Go: watcher_test.go:2838 TestAtomicSave
 #[test]
 fn test_atomic_save() {
     run_for_each_watcher("TestAtomicSave", |t, wi| {
@@ -2247,7 +2247,7 @@ fn test_atomic_save() {
     });
 }
 
-// Go: watcher_test.go:2839 TestAtomicSaveFileWatch
+// Go: watcher_test.go:2868 TestAtomicSaveFileWatch
 #[test]
 fn test_atomic_save_file_watch() {
     run_for_each_watcher("TestAtomicSaveFileWatch", |t, wi| {
@@ -2267,7 +2267,7 @@ fn test_atomic_save_file_watch() {
     });
 }
 
-// Go: watcher_test.go:2868 TestReplaceDirWithFile
+// Go: watcher_test.go:2897 TestReplaceDirWithFile
 #[test]
 fn test_replace_dir_with_file() {
     run_for_each_watcher("TestReplaceDirWithFile", |t, wi| {
@@ -2286,7 +2286,7 @@ fn test_replace_dir_with_file() {
     });
 }
 
-// Go: watcher_test.go:2897 TestRecreateSubdirAndModify
+// Go: watcher_test.go:2926 TestRecreateSubdirAndModify
 #[test]
 fn test_recreate_subdir_and_modify() {
     run_for_each_watcher("TestRecreateSubdirAndModify", |t, wi| {
@@ -2308,7 +2308,7 @@ fn test_recreate_subdir_and_modify() {
     });
 }
 
-// Go: watcher_test.go:2961 TestReplaceParentDirWithDifferent
+// Go: watcher_test.go:2990 TestReplaceParentDirWithDifferent
 #[test]
 fn test_replace_parent_dir_with_different() {
     run_for_each_watcher("TestReplaceParentDirWithDifferent", |t, wi| {
@@ -2331,7 +2331,7 @@ fn test_replace_parent_dir_with_different() {
     });
 }
 
-// Go: watcher_test.go:3016 TestRoundTripRename
+// Go: watcher_test.go:3045 TestRoundTripRename
 #[test]
 fn test_round_trip_rename() {
     run_for_each_watcher("TestRoundTripRename", |t, wi| {
@@ -2360,7 +2360,7 @@ fn test_round_trip_rename() {
     });
 }
 
-// Go: watcher_test.go:3055 TestRecursiveWithDeniedSubdir
+// Go: watcher_test.go:3084 TestRecursiveWithDeniedSubdir
 #[test]
 fn test_recursive_with_denied_subdir() {
     run_for_each_watcher("TestRecursiveWithDeniedSubdir", |t, wi| {

@@ -2292,8 +2292,8 @@ const goIdentifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
  * goTypeToRust converts a Go type string from resolveType (or a field type
  * built from it) to the Rust type (map-lsproto.md section 3, PORTING.md
  * "Protocol types"). `*T` is Option<T>, `[]T` and `[]*T` are Vec<T>
- * (`[]*T`, also as a map value, is Vec<Option<T>> in a type the server
- * decodes: fieldGoTypeToRust),
+ * (`[]*T`, also as a map value, is Vec<Option<T>>, and a `*T` map value is
+ * Option<T>, in a type the server decodes: fieldGoTypeToRust),
  * `map[K]V` and `map[K]*V` are IndexMap<K, V>, `any` is LspAny, `struct{}`
  * is EmptyObject and `[2]uint32` is [u32; 2]. Named types keep their name.
  * Box for type cycles is added per field by the caller (see boxedEdges).
@@ -2595,7 +2595,9 @@ function generateCode(): Map<string, string> {
 
     // fieldGoTypeToRust is goTypeToRust for a field of `owner`, with the
     // nil elements of a type the server decodes: a `[]*T` field, or a map
-    // field whose values are `[]*T` (WorkspaceEdit.changes).
+    // field whose values are `[]*T` (WorkspaceEdit.changes) or `*T`
+    // (WorkspaceEdit.changeAnnotations: Go's pointer arshaler takes a null
+    // value as nil).
     function fieldGoTypeToRust(owner: string, goType: string): string {
         const field = /^(\*?)(.*)$/.exec(goType)!;
         const nilElements = (list: string) => {
@@ -2605,7 +2607,7 @@ function generateCode(): Map<string, string> {
         let rust = decodedTypes.has(owner) ? nilElements(field[2]) : undefined;
         if (!rust && decodedTypes.has(owner) && field[2].startsWith("map[")) {
             const [key, value] = splitGoMapType(field[2]);
-            const values = nilElements(value);
+            const values = nilElements(value) ?? (value.startsWith("*") ? goTypeToRust(value) : undefined);
             if (values) rust = `IndexMap<${goTypeToRust(key)}, ${values}>`;
         }
         if (!rust) return goTypeToRust(goType);

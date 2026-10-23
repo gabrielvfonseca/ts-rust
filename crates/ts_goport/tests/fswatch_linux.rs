@@ -251,7 +251,7 @@ fn expect_contains(r: &Recorder, kind: EventKind, path: &str) {
 
 // ----- tests -------------------------------------------------------------
 
-// Go: watcher.go:230 Default (the linux and darwin cases). Go has no test
+// Go: watcher.go:235 Default (the linux and darwin cases). Go has no test
 // for the linux case; its fanotify_linux_test.go:35
 // TestLinuxFanotifyBackendSelection checks only the fanotify watcher.
 #[test]

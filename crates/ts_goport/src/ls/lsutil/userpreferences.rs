@@ -1704,7 +1704,7 @@ fn set_raw_fields_from_config(
 }
 
 impl UserPreferences {
-    // Go: ls/lsutil/userpreferences.go:674 (UserPreferences).withConfig (at 673a5f17d713; ts#64554 generates it: ls/lsutil/userpreferences_generated.go:637 UserPreferences.withConfig)
+    // Go: ls/lsutil/userpreferences.go:685 (UserPreferences).withConfig (at 673a5f17d713; ts#64554 generates it: ls/lsutil/userpreferences_generated.go:637 UserPreferences.withConfig)
     // PORT: Go has a value receiver; this works on a copy of `self`.
     pub(crate) fn with_config(&self, config: &IndexMap<String, LspAny>) -> UserPreferences {
         let mut p = self.clone();
@@ -1827,7 +1827,7 @@ fn set_field_from_value(p: &mut UserPreferences, info: &FieldInfo, val: &LspAny)
     }
 }
 
-// Go: ls/lsutil/userpreferences.go:656 (*UserPreferences).MarshalJSONTo (at 673a5f17d713; ts#64554 generates it: ls/lsutil/userpreferences_generated.go:1053 UserPreferences.MarshalJSONTo)
+// Go: ls/lsutil/userpreferences.go:793 (*UserPreferences).MarshalJSONTo (at 673a5f17d713; ts#64554 generates it: ls/lsutil/userpreferences_generated.go:1053 UserPreferences.MarshalJSONTo)
 impl MarshalerTo for UserPreferences {
     fn marshal_json_to(&self, enc: &mut String) -> Result<(), JsonError> {
         let mut config: IndexMap<String, LspAny> = IndexMap::new();

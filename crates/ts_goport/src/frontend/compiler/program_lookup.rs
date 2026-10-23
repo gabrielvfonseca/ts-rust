@@ -1102,11 +1102,14 @@ impl NewProgram {
         root_directory: &str,
     ) -> bool {
         let mut all_files_belong_to_path = true;
-        // ts#64159 (program.go:1844): the file system's case sensitivity (N:
-        // the zero-value `comparePathsOptions`, case-insensitive).
-        let case_sensitivity = self.case_sensitivity();
+        // ts#64159 (program.go:1857): the file system's case sensitivity (N:
+        // the zero-value `comparePathsOptions`, case-insensitive), and Go's
+        // test on rooted paths (`CaseSensitivity.ContainsFilePath`): the
+        // root directory and the program file names are rooted and
+        // normalized.
+        let use_case_sensitive_file_names = self.use_case_sensitive_file_names();
         for file in source_files {
-            if !contains_path(root_directory, file, &case_sensitivity) {
+            if !contains_rooted_path(root_directory, file, use_case_sensitive_file_names) {
                 let absolute_source_file_path = get_canonical_file_name(
                     &get_normalized_absolute_path(file, &self.get_current_directory()),
                     self.use_case_sensitive_file_names(),

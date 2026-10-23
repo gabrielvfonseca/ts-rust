@@ -1733,7 +1733,9 @@ each message and after each wake-up. Go `WaitForBackgroundTasks` runs
   server-to-client results, and the types they hold), so a JSON null
   element is Go's nil element and a nil element encodes as null (the
   generator's `decodedTypes`). Code that builds such a list wraps each
-  element in `Some`; `map[K]V` is `IndexMap<K, V>`; LSPAny is
+  element in `Some`; `map[K]V` is `IndexMap<K, V>`, and in such a type a
+  `map[K]*V` is `IndexMap<K, Option<V>>` (`WorkspaceEdit.changeAnnotations`:
+  a null value is Go's nil); LSPAny is
   `LspAny`; a string enum is `pub struct MarkupKind(pub Cow<'static, str>)`
   with consts such as `MarkupKind::PLAIN_TEXT`; an int enum is
   `pub struct CompletionItemKind(pub i32)` with consts; method consts are
