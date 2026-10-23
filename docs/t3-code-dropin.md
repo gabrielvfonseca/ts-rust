@@ -17,7 +17,7 @@ package (bin `tsc`, `lib/tsc.js`, Go's `lib/getExePath.js`, `lib/version.cjs`, `
 name from the package dir, so an install as `"typescript": "npm:@tsc-rs/typescript@<v>"` finds the
 binary in the CLI and in VS Code (`js/ts.tsdk.path: node_modules/typescript/lib`, started with
 `--lsp --stdio`, version from `package.json`). `require("typescript").version` is the TypeScript
-version that `tsc` reports (7.1.0-dev).
+version that `tsc` reports (7.1.0-beta on `main`; 7.1.0-dev up to tsc-rs 0.8.0).
 
 ## The T3 Code change
 
