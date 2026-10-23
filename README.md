@@ -124,15 +124,16 @@ effect-tsgo 0.51.1. See [the Effect diagnostics doc](docs/effect-diagnostics.md#
 ## Status
 
 The port is pinned to one upstream revision, microsoft/TypeScript
-[`fed0bf24149f`](https://github.com/microsoft/TypeScript/commit/fed0bf24149fb1ed36039212648bafdafc1ea10e)
-(2026-10-08, TypeScript 7.1.0-dev; [UPSTREAM.md](UPSTREAM.md)), and compared with Go at that
-revision. To compare, use `typescript@7.1.0-dev.20261008.1` (the same commit), not 7.0.x or
+[`3e9236361fa9`](https://github.com/microsoft/TypeScript/commit/3e9236361fa97a9e6c685f4833ac457ae2d8c50a)
+(2026-10-19, TypeScript 7.1.0-beta; [UPSTREAM.md](UPSTREAM.md)), and compared with Go at that
+revision. To compare, use `typescript@7.1.0-beta` (the same commit), not 7.0.x or
 `@typescript/native-preview`. A difference that this build also shows is upstream behavior, and it
-goes away when the port moves to a newer pin. tsc-rs 0.3.0 and earlier used the 2026-09-29 pin
+goes away when the port moves to a newer pin. tsc-rs 0.4.0 to 0.8.0 used the 2026-10-08 pin
+(`typescript@7.1.0-dev.20261008.1`), and 0.3.0 and earlier the 2026-09-29 pin
 (`typescript@7.1.0-dev.20260929.1`).
 
 - **Same results.** TanStack Query core and Hono check with diagnostics identical to Go's. All
-  184,776 tests pass (ported Go tests and our own). The language server and API answers match Go
+  186,890 tests pass (ported Go tests and our own). The language server and API answers match Go
   on the oracle test sets. See [Conformance](#conformance).
 - **Faster.** On 60 open-source projects, type checking takes about half of Go's time (geometric
   mean). The npm packages from 0.2.0 on are built in CI with PGO but without BOLT (0.1.0 has
@@ -183,25 +184,25 @@ Four switches make some projects faster or use less memory. They are off by defa
 
 ## Conformance
 
-Results of the last accepted revision, R220 (2026-10-14), against Go at the pin `fed0bf24149f`
-(`typescript@7.1.0-dev.20261008.1`). Every revision runs these checks on our own machines
+Results of the last accepted revision, R222 (2026-10-22), against Go at the pin `3e9236361fa9`
+(`typescript@7.1.0-beta`). Every revision runs these checks on our own machines
 (Blacksmith testboxes and a LAN host), not in GitHub CI. We accept it only with no lost result.
 
 | Check | Compared with Go | Result |
 | --- | --- | --- |
-| Compiler test corpus | 13,571 configurations of 12,782 `compiler` and `conformance` cases | Diagnostics 13,571 of 13,571 and emit 13,497 of 13,497 match byte for byte |
-| Test suite | Go's tests and baselines (ported), and our own tests | 184,776 pass, 0 fail |
-| np-suite | API client tests of `packages/typescript` | 954 of 954 pass |
-| Language server | 257,808 requests in 6 batteries | 243,663 match, 0 differ |
-| API | 112,740 requests in 13 batteries | 112,677 match, 4 differ |
+| Compiler test corpus | 13,728 configurations of 12,932 `compiler` and `conformance` cases | Diagnostics 13,728 of 13,728 and emit 13,654 of 13,654 match byte for byte |
+| Test suite | Go's tests and baselines (ported), and our own tests | 186,890 pass, 0 fail |
+| np-suite | API client tests of `packages/typescript` | 966 of 966 pass |
+| Language server | 257,903 requests in 6 batteries | 243,771 match, 0 differ |
+| API | 112,740 requests in 13 batteries | 112,681 match, 4 differ |
 | Gate | `tsc-rs` and `tsgo` on corpus samples, real projects, build mode and editor sessions | 3,951 of 3,952 match, 1 allowed |
 | Query core and Hono | Full check (2 runs) and emit | Same as Go (Hono has 2 TS7031 errors in both) |
 
 - The corpus is all of Go's `testdata/tests/cases/compiler` and `conformance`, except what Go
   skips too (44 files, 1,720 configurations, 8 emit checks). Types, symbols and source maps match.
-- The test suite skips 3,635 names: the 1,728 above, 1,904 Go baseline files that no ported test
-  compares (1,761 are fourslash, see the language server row) and 3 others.
-- Requests in neither column: Go's own answer changed on a second run (378 LSP, 59 API), or the
+- The test suite skips 3,637 names: the 1,728 above, 1,906 Go baseline files that no ported test
+  compares (1,763 are fourslash, see the language server row) and 3 others.
+- Requests in neither column: Go's own answer changed on a second run (365 LSP, 55 API), or the
   request had no item to resolve (13,767 LSP).
 - The 4 API differences are in the list of file-system callbacks that `tsc-rs` makes, not in the
   answers. The allowed gate item is a resolution trace whose order changes between threaded Go runs.
@@ -268,7 +269,7 @@ for that case run on that same runner. Every cell has 5 runs after 1 warmup, wit
 runs on Node 24.19.0 with a 16 GiB heap.
 
 Without Effect, the configs have no Effect plugin and `tsc` 7 is 7.1.0-dev.20261008.1 (the
-port's pin). With Effect, `@effect/tsgo` 0.51.1 supplies its TypeScript 7.0.2 executable; the
+pin of 0.6.0). With Effect, `@effect/tsgo` 0.51.1 supplies its TypeScript 7.0.2 executable; the
 JavaScript comparison uses TypeScript 6.0.3 and `@effect/language-service` 0.87.4. Bun is
 1.4.4-canary.1+c69a636b9. `tsc-rs` is 0.6.0: a release PGO build without BOLT of the tag
 source ([`a8c5b7063`](https://github.com/pingdotgg/ts-rust/commit/a8c5b7063eed1ba2929ee78a7dd3508ebd43a6f8)), the same build
@@ -309,7 +310,7 @@ The time comparisons do not imply identical checking behavior for Bun or `tsc` 6
 
 Measured on 2026-10-13: median of 5 runs after 1 warmup, `--noEmit --incremental false`,
 default thread counts, and direct native binaries. `tsc` 6 runs on Node 24.19.0 with a 16 GiB
-heap. Versions: TypeScript 6.0.3 and 7.1.0-dev.20261008.1 (the port's pin), `tsc-rs` 0.6.0,
+heap. Versions: TypeScript 6.0.3 and 7.1.0-dev.20261008.1 (the pin of 0.6.0), `tsc-rs` 0.6.0,
 and Bun 1.4.4-canary.1+c69a636b9. The `tsc-rs` build is release PGO without BOLT, static
 musl, built from the tag source with the same training process as the release workflow.
 
@@ -366,7 +367,7 @@ with `tsc-rs` 0.1.0 and R179 on Linux.
   about edit 20 it stays below `tsc`'s. After 10,000 edits (two sessions each) it was 232 and 249
   MiB against `tsc`'s 291 and 305 MiB on Query core, and 314 and 324 MiB against 417 and 422 MiB on
   Hono.
-- `tsc-rs --version` prints the TypeScript version that it ports (7.1.0-dev), not the npm
+- `tsc-rs --version` prints the TypeScript version that it ports (7.1.0-beta), not the npm
   version. The compiler matches `typesVersions` against it.
 
 ## Development

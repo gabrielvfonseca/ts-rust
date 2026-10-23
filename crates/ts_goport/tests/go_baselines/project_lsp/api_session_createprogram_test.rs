@@ -24,7 +24,7 @@ use super::api_util::{doc, error_contains, nil_error, no_lib, program_params};
 use super::projecttestutil::{self, TypingsInstallerOptions, files};
 use super::util::bg;
 
-// Go: session_apistate_test.go:24 syntheticProjectID
+// Go: session_apistate_test.go:28 syntheticProjectID
 fn synthetic_project_id(id: i32) -> project::SyntheticProjectID {
     project::new_synthetic_project_id(id)
 }
@@ -54,7 +54,7 @@ fn marshal_operation(operation: &Option<api::SnapshotOperationResponse>) -> Stri
     json_marshal(operation, &[]).unwrap_or_else(|err| panic!("marshal: {err:?}"))
 }
 
-// Go: session_createprogram_test.go:15 TestCreateSnapshotUsesIndependentRoots
+// Go: session_createprogram_test.go:16 TestCreateSnapshotUsesIndependentRoots
 child_test! {
     fn create_snapshot_uses_independent_roots() {
         let (init, _) = projecttestutil::get_session_init_options(
@@ -133,7 +133,7 @@ child_test! {
     }
 }
 
-// Go: session_createprogram_test.go:89 TestCreateSnapshotPreservesWindowsRootDriveLetterCase
+// Go: session_createprogram_test.go:90 TestCreateSnapshotPreservesWindowsRootDriveLetterCase
 child_test! {
     fn create_snapshot_preserves_windows_root_drive_letter_case() {
         const FILE_NAME: &str = "D:/repo/index.ts";
@@ -171,7 +171,7 @@ child_test! {
     }
 }
 
-// Go: session_createprogram_test.go:115 TestSnapshotOperationResponseOmitsUnrequestedFields
+// Go: session_createprogram_test.go:116 TestSnapshotOperationResponseOmitsUnrequestedFields
 child_test! {
     fn snapshot_operation_response_omits_unrequested_fields() {
         let (project_session, _) = projecttestutil::setup(files(&[]));
@@ -246,7 +246,7 @@ child_test! {
     }
 }
 
-// Go: session_createprogram_test.go:176 TestReconfigureSyntheticProgramValidation
+// Go: session_createprogram_test.go:177 TestReconfigureSyntheticProgramValidation
 child_test! {
     fn reconfigure_synthetic_program_validation() {
         let (project_session, _) = projecttestutil::setup(files(&[]));
@@ -320,7 +320,7 @@ child_test! {
     }
 }
 
-// Go: session_createprogram_test.go:213 TestCreateSyntheticProgramValidation
+// Go: session_createprogram_test.go:214 TestCreateSyntheticProgramValidation
 child_test! {
     fn create_synthetic_program_validation() {
         let (project_session, _) = projecttestutil::setup(files(&[]));
@@ -338,7 +338,7 @@ child_test! {
     }
 }
 
-// Go: session_createprogram_test.go:228 TestCreateSnapshotRejectsRemovingProgramFromIndependentRoot
+// Go: session_createprogram_test.go:229 TestCreateSnapshotRejectsRemovingProgramFromIndependentRoot
 child_test! {
     fn create_snapshot_rejects_removing_program_from_independent_root() {
         let (project_session, _) = projecttestutil::setup(files(&[]));
@@ -363,7 +363,7 @@ child_test! {
     }
 }
 
-// Go: session_createprogram_test.go:243 TestUpdateSnapshotEnsuresSyntheticProgram
+// Go: session_createprogram_test.go:244 TestUpdateSnapshotEnsuresSyntheticProgram
 child_test! {
     fn update_snapshot_ensures_synthetic_program() {
         const FILE_NAME: &str = "/home/projects/p/index.ts";

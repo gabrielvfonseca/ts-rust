@@ -10,7 +10,7 @@
 - Upstream `ast.schema.json` SHA-256: `c614df46892e8623fcb4ba9d2cbdc4da2537af140674776f3dbb78e96cdf16d2`
 
 `ast.schema.json` is unchanged. It is equal to `tools/scripts/tsc/ast.schema.json` at
-microsoft/TypeScript `fed0bf24149f` (the current Go pin).
+microsoft/TypeScript `3e9236361fa9` (the current Go pin) and at `fed0bf24149f`.
 
 `ast.json` has hand edits for the Rust codegen: 5f68a9705, 2c834772b (nullable object
 property type slots), 0d68d93aa (the optional `ModuleDeclaration.Attributes` member of
@@ -20,9 +20,10 @@ equal to the Go `ast.json` change from `673a5f17d713` to `fed0bf24149f`. Its SHA
 `07154141071ce39ea214755ecbdc490d8dc3449cf261786e154583047dde017c`.
 
 The Go file at the current pin is `tools/scripts/tsc/ast.json` at microsoft/TypeScript
-`fed0bf24149f`. It is not a drop-in replacement: `ts_ast_codegen` stops on its
-`JsxTagNameExpression` alias member `JsxTagNamePropertyAccess`, and it differs from this file
-in `brand` fields, `extends` lists and aliases (`DeclarationName`, `HeritageClauseElement`).
-`ast_generated.rs` and `syntax_kind.rs` are checked against this file (`check-ast`, `check`).
+`3e9236361fa9`, byte-equal to the file at `fed0bf24149f`. It is not a drop-in replacement:
+`ts_ast_codegen` stops on its `JsxTagNameExpression` alias member `JsxTagNamePropertyAccess`,
+and it differs from this file in `brand` fields, `extends` lists and aliases (`DeclarationName`,
+`HeritageClauseElement`). `ast_generated.rs` and `syntax_kind.rs` are checked against this file
+(`check-ast`, `check`).
 
 The upstream repositories are licensed under the Apache License 2.0.

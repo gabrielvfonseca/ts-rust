@@ -4,17 +4,17 @@ Root keeps this queue. In goal mode, when a workflow ends, root starts the top i
 
 Each item: one line of goal, the files or worktree it owns, and what it waits for.
 
-## Now (2026-10-22)
+## Now (2026-10-23)
 
-Theo restarted the work (state note `goal-2026-10-22`): maintain and build ts-rust, handle public issues as before. The wind-down below is over.
+Theo restarted the work on 2026-10-22 (state note `goal-2026-10-22`): maintain and build ts-rust, handle public issues as before.
 
-- **R221 accepted** (batch 102; int89 = followups68, followups69, #100 and the light-path merges since R220); main e2af1c0a5.
-- **Running:** bump E wave 2a (bumpE-w2a-A: L1 config chain, L2 emit, L3 checker; bumpE-w2a-B: L4 ls, L5 api-ipc, L6 build, EFF Effect expectations at N prime) on goport-bumpE-base 64fd50ab1 (main + tools + gen); after-r221 (followups70: WASI probe test, wasm32 clippy, robust early_emit bounds).
-- **Next:** bump E integration of wave 2a, then wave 2b (L2b, L3b, L4b after L1a) and 2c (markers M1 to M4), then the pin-bump batch with the N prime base re-measured on R221.
-- **After bump E wave 2:** #99 option C (binder and checker loops for long binary chains, Go visit order; design oct22/stack99/go-note.md and its check; full path with timing; CI test at 5,000 terms). Option D (transforms, facts, flow) only if a user needs emit at that depth.
-- **Waits for Theo:** PR #81 (TypeScript JS API library), honorec1 (batch.latestHono constants), gatecounts1, PRs #93 and #95 (lust; his own sessions).
-- **Waits for authors:** PR #85 (changes requested: content-hash parse key, memory growth, case flag).
-- **Done 2026-10-22:** merged #98, #94, #44, #89, #100 (with #91 and #92); closed #90 (Go structure), #97 (duplicate), #74 (README Conformance section), #86 (matches TS 7.1), #87 and #88 (#100); filed #99; testbox inputs disk reseeded.
+- **Accepted:** R221 (int89: followups68, followups69, #100) and R222 (bump E: pin 3e9236361fa9 = typescript@7.1.0-beta; batch 103). main CI green on every platform after R222.
+- **Running:** after-r222 (docs at the new pin and the README conformance from R222; the editor/hono/long edit 160 auto-import item; the extra LSP batteries complete-u1, b4, b3-zod, b3z-effect with N prime goldens; the effect-tsgo N prime recipe into scripts/effect; 9 old wrong markers) and stack99c (#99 option C: binder and checker loops for long binary chains, full path).
+- **Before the R223 verdicts:** the editor/hono/long classification and the extra LSP batteries (R222 reviewer items 3 and 17.1).
+- **Next:** int90 with the after-r222 code lanes and stack99c, then R223. Later: #99 option D only if a user needs emit at that depth; bump F when upstream moves on (watch #64788, #64789, #64808).
+- **Waits for Theo:** a release with the 7.1 beta pin (tsc-rs 0.9.0; the release job publishes to npm); PR #81 (TypeScript JS API library); honorec1 (batch.latestHono constants); a side run that refuses empty testbox inputs (protected); a Go-backed edit-sequence check for the #96 fallback in the protected set (rule change); gatecounts1; PRs #93 and #95 (lust; his own sessions).
+- **Waits for authors:** PR #85 (changes requested).
+- **Done 2026-10-22:** merged #98, #94, #44, #89, #100 (with #91 and #92), #101; closed #90, #97, #74, #86, #87, #88; filed #99 and documented its stack limits; testbox inputs disk reseeded; testbox.sh SSH port fixes.
 
 ## Handoff (2026-10-14)
 
