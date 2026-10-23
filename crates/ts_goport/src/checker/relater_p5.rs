@@ -262,8 +262,8 @@ impl Checker {
             }
         }
         // Compute the set of types for each discriminant property.
-        let mut source_discriminant_types: Vec<Vec<TypeId>> =
-            vec![Vec::new(); source_properties_filtered.len()];
+        let mut source_discriminant_types: Vec<SharedList<TypeId>> =
+            vec![SharedList::default(); source_properties_filtered.len()];
         let mut excluded_properties: FxHashSet<String> = FxHashSet::default();
         for (i, &source_property) in source_properties_filtered.iter().enumerate() {
             let source_property_type = self.get_non_missing_type_of_symbol(source_property);
