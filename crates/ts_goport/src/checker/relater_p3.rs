@@ -1857,7 +1857,7 @@ impl Checker {
         }
         let mut reduced_target = target;
         // PORT: Go `checkTypes` is nil unless the target is a union; `None` stands for nil.
-        let mut check_types: Option<Vec<TypeId>> = None;
+        let mut check_types: Option<SharedList<TypeId>> = None;
         if self.ty(target).flags.intersects(TypeFlags::UNION) {
             reduced_target = self.find_matching_discriminant_type(
                 source,

@@ -1185,22 +1185,32 @@ impl InfoCache {
     // Go: cache.go:247 Get
     // PORT: a pending read of the key (`add_pending`) becomes its entry
     // here, as Go's cache holds the first read of the load.
+    // PERF (modpath1): the lookup uses the key text, which is
+    // `package_json_path` itself for a rooted normal name on a
+    // case-sensitive file system (`to_path_cow`, Go `PathKey`), so a hit
+    // copies nothing. The `Path` is made only for a pending read.
     #[must_use]
     pub fn get(&self, package_json_path: &str) -> Option<Rc<InfoCacheEntry>> {
-        let key = to_path(
+        let key = to_path_cow(
             package_json_path,
             &self.current_directory,
             self.use_case_sensitive_file_names,
         );
-        if let Some(entry) = self.cache.borrow().get(&key) {
+        if let Some(entry) = self.cache.borrow().get(&*key) {
             return Some(entry.clone());
         }
         if self.pending.borrow().is_empty() {
             return None;
         }
-        let pending = self.pending.borrow_mut().remove(&key)?;
+        let pending = self.pending.borrow_mut().remove(&*key)?;
         let entry = pending.into_entry();
-        Some(self.cache.borrow_mut().entry(key).or_insert(entry).clone())
+        Some(
+            self.cache
+                .borrow_mut()
+                .entry(Path(key.into_owned()))
+                .or_insert(entry)
+                .clone(),
+        )
     }
 
     /// PORT: not in Go. Keeps `read`, a parse worker's first read of

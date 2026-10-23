@@ -1300,16 +1300,18 @@ impl Type {
             .unwrap_or_else(|| crate::core::go_nil_dereference())
     }
 
-    // PORT: Go returns a fresh slice (`[]*Type{t}`) for the default case, so
-    // this returns an owned `Vec`.
+    // PORT: a `SharedList`. A union gives its `types` list without a copy, as
+    // Go returns the slice; never gives an empty list (Go nil); the default
+    // case is an inline list of one element (Go `[]*Type{t}`). No case
+    // allocates.
     // Go: checker/types.go:931 Type.Distributed
-    pub fn distributed(&self) -> Vec<TypeId> {
+    pub fn distributed(&self) -> SharedList<TypeId> {
         if self.flags.intersects(TypeFlags::UNION) {
-            return self.as_union_type().union_or_intersection.types.to_vec();
+            return self.as_union_type().union_or_intersection.types.clone();
         } else if self.flags.intersects(TypeFlags::NEVER) {
-            return Vec::new();
+            return SharedList::default();
         }
-        vec![self.id]
+        SharedList::from(&[self.id][..])
     }
 
     // Common accessors

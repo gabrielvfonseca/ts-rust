@@ -1422,7 +1422,7 @@ impl Discriminator for ObjectLiteralDiscriminator {
         } else {
             prop_type = c.undefined_type;
         }
-        for s in c.ty(prop_type).distributed() {
+        for &s in c.ty(prop_type).distributed().iter() {
             if c.is_type_assignable_to(s, t) {
                 return true;
             }

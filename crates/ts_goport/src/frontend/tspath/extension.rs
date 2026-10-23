@@ -215,7 +215,7 @@ pub fn has_json_file_extension(path: &str) -> bool {
 
 // Go: tspath/extension.go:113 IsDeclarationFileName
 pub fn is_declaration_file_name(file_name: &str) -> bool {
-    !get_declaration_file_extension(file_name).is_empty()
+    !get_declaration_file_extension_from_normalized(&normalize_slashes_cow(file_name)).is_empty()
 }
 
 // Go: tspath/extension.go:117 ExtensionIsOneOf
@@ -225,18 +225,31 @@ pub fn extension_is_one_of(ext: &str, extensions: &[&str]) -> bool {
 
 // Go: tspath/extension.go:121 GetDeclarationFileExtension
 pub fn get_declaration_file_extension(file_name: &str) -> String {
-    let base = get_base_file_name(file_name);
+    get_declaration_file_extension_from_normalized(&normalize_slashes_cow(file_name)).to_string()
+}
+
+// Go: tspath/extension.go:125 getDeclarationFileExtensionFromNormalized
+// PERF (modpath1): a slice of `file_name` or a constant, as Go returns, and
+// the ".d." search finds each '.' with memchr (namekeys1 did the same for
+// the checker's copy, checker_p16.rs): `str::find` built a `StrSearcher` on
+// every call, and the base name was copied.
+fn get_declaration_file_extension_from_normalized(file_name: &str) -> &str {
+    let base = get_base_file_name_from_normalized(file_name);
     for ext in SUPPORTED_DECLARATION_EXTENSIONS {
         if base.ends_with(ext) {
-            return ext.to_string();
+            return ext;
         }
     }
     if base.ends_with(EXTENSION_TS) {
-        if let Some(index) = base.find(".d.") {
-            return base[index..].to_string();
+        let bytes = base.as_bytes();
+        // Go: strings.Index(base, ".d.")
+        if let Some(index) =
+            memchr::memchr_iter(b'.', bytes).find(|&i| bytes[i + 1..].starts_with(b"d."))
+        {
+            return &base[index..];
         }
     }
-    String::new()
+    ""
 }
 
 // Go: tspath/extension.go:141 GetDeclarationEmitExtensionForPath
