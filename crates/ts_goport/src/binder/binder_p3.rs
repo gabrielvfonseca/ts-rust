@@ -637,7 +637,22 @@ impl Binder {
 
     // Go: binder/binder.go:2241 bindBinaryExpressionFlow
     // PERF: binderview1. `expr` holds the fields of `node`, read once.
+    // PORT: issue #99. Go binds an operand that is a BinaryExpression by
+    // recursion (bind, bindChildren, bindBinaryExpressionFlow, and for a
+    // logical operator bindLogicalLikeExpression and bindCondition), 3 to 5
+    // frames for each level of a chain. A long chain overflows a small host
+    // stack (wasm). When an operand is a BinaryExpression, the binary frames
+    // (`BindBinaryFrame`) bind the chain instead: the same calls in Go's
+    // order, with a heap frame for each BinaryExpression operand.
     pub fn bind_binary_expression_flow(&mut self, node: Node, expr: &BinaryView) {
+        if expr.left.kind() == SyntaxKind::BinaryExpression
+            || expr.right.kind() == SyntaxKind::BinaryExpression
+        {
+            let mut frames = BindFrames::new(self);
+            frames.push_flow(node, *expr, None);
+            frames.run();
+            return;
+        }
         let operator = expr.operator;
         if is_logical_or_coalescing_binary_operator(operator)
             || is_logical_or_coalescing_assignment_operator(operator)
@@ -677,23 +692,55 @@ impl Binder {
             }
             self.bind(expr.operator_token);
             self.bind(right);
-            if operator == SyntaxKind::CommaToken {
-                self.maybe_bind_expression_flow_if_call(right);
-            }
-            if is_assignment_operator(operator) && !is_assignment_target(node) {
-                self.bind_assignment_target_flow(left);
-                if operator == SyntaxKind::EqualsToken
-                    && left.kind() == SyntaxKind::ElementAccessExpression
-                {
-                    if is_narrowable_operand(left.expression()) {
-                        self.current_flow = self.create_flow_mutation(
-                            FlowFlags::ARRAY_MUTATION,
-                            self.current_flow,
-                            node,
-                        );
-                    }
+            self.bind_binary_expression_flow_end(node, expr);
+        }
+    }
+
+    /// The end of the non-logical arm of `bind_binary_expression_flow`,
+    /// after Right is bound (Go binder.go:2268-2279): the comma call flow,
+    /// then the assignment flow.
+    #[inline]
+    fn bind_binary_expression_flow_end(&mut self, node: Node, expr: &BinaryView) {
+        let operator = expr.operator;
+        let left = expr.left;
+        if operator == SyntaxKind::CommaToken {
+            self.maybe_bind_expression_flow_if_call(expr.right);
+        }
+        if is_assignment_operator(operator) && !is_assignment_target(node) {
+            self.bind_assignment_target_flow(left);
+            if operator == SyntaxKind::EqualsToken
+                && left.kind() == SyntaxKind::ElementAccessExpression
+            {
+                if is_narrowable_operand(left.expression()) {
+                    self.current_flow = self.create_flow_mutation(
+                        FlowFlags::ARRAY_MUTATION,
+                        self.current_flow,
+                        node,
+                    );
                 }
             }
+        }
+    }
+
+    /// The end of `bind_logical_like_expression`, after Right is bound (Go
+    /// binder.go:2295-2297): a logical assignment adds its assignment flow
+    /// and its own condition flows.
+    #[inline]
+    fn bind_logical_like_expression_end(
+        &mut self,
+        node: Node,
+        expr: &BinaryView,
+        true_target: FlowNodeId,
+        false_target: FlowNodeId,
+    ) {
+        if is_logical_or_coalescing_assignment_operator(expr.operator) {
+            self.bind_assignment_target_flow(expr.left);
+            let true_flow =
+                self.create_flow_condition(FlowFlags::TRUE_CONDITION, self.current_flow, node);
+            self.add_antecedent(true_target, true_flow);
+            let false_flow =
+                self.create_flow_condition(FlowFlags::FALSE_CONDITION, self.current_flow, node);
+            self.add_antecedent(false_target, false_flow);
         }
     }
 
@@ -723,16 +770,10 @@ impl Binder {
                 true_target,
                 false_target,
             );
-            self.bind_assignment_target_flow(expr.left);
-            let true_flow =
-                self.create_flow_condition(FlowFlags::TRUE_CONDITION, self.current_flow, node);
-            self.add_antecedent(true_target, true_flow);
-            let false_flow =
-                self.create_flow_condition(FlowFlags::FALSE_CONDITION, self.current_flow, node);
-            self.add_antecedent(false_target, false_flow);
         } else {
             self.bind_condition(expr.right, true_target, false_target);
         }
+        self.bind_logical_like_expression_end(node, expr, true_target, false_target);
     }
 
     // Go: binder/binder.go:2303 bindDeleteExpressionFlow
@@ -1018,6 +1059,321 @@ impl Binder {
                 self.set_node_return_flow_node(node, return_flow_node);
             }
             _ => {}
+        }
+    }
+}
+
+/// A BinaryExpression on the binder's work stack (`Binder::binary_frames`,
+/// issue #99). The frames bind a chain of BinaryExpressions with the calls
+/// of Go's recursion, in Go's order: `bind` (its kind arm, then the parse
+/// error flags around `bindChildren`), `bindChildren` (`inAssignmentPattern`,
+/// the unreachable path), `bindBinaryExpressionFlow`, and for a logical
+/// operator `bindLogicalLikeExpression` and the `bindCondition` or
+/// `doWithConditionalBranches` call of each operand. Only an operand that is
+/// a BinaryExpression gets a frame; any other operand is bound by the usual
+/// call.
+#[derive(Clone, Copy)]
+pub struct BindBinaryFrame {
+    node: Node,
+    expr: BinaryView,
+    stage: BindStage,
+    /// The targets of Go `bindLogicalLikeExpression` (logical operators).
+    true_target: FlowNodeId,
+    false_target: FlowNodeId,
+    /// Go `preRightLabel` of `bindLogicalLikeExpression`.
+    pre_right_label: FlowNodeId,
+    /// What Go `bindBinaryExpressionFlow` saved for a top-level logical
+    /// expression.
+    top_level: Option<TopLevelLogical>,
+    /// What the operand's call, `bind` and `bindChildren` saved. None for
+    /// the frame of the node that `bind_binary_expression_flow` got: its
+    /// callers run those steps.
+    entered: Option<EnteredOperand>,
+}
+
+/// The next step of a `BindBinaryFrame`.
+#[derive(Clone, Copy)]
+enum BindStage {
+    /// Bind Left (Go binder.go:2261).
+    Left,
+    /// Left is bound: Type, the comma call flow of Left, the operator, then
+    /// Right (binder.go:2262-2267).
+    Right,
+    /// Right is bound (binder.go:2268-2279).
+    End,
+    /// Bind Left as a condition (binder.go:2285-2290).
+    LogicalLeft,
+    /// Left is bound: finish the pre-right label, the operator, then Right
+    /// (binder.go:2291-2294, 2299).
+    LogicalRight,
+    /// Right is bound (binder.go:2295-2297), then the end of a top-level
+    /// logical expression (binder.go:2251-2256).
+    LogicalEnd,
+}
+
+/// Go `bindBinaryExpressionFlow` for a top-level logical expression.
+#[derive(Clone, Copy)]
+struct TopLevelLogical {
+    post_expression_label: FlowNodeId,
+    save_current_flow: FlowNodeId,
+    save_has_flow_effects: bool,
+}
+
+/// How a frame binds an operand that is a BinaryExpression.
+#[derive(Clone, Copy)]
+enum OperandCall {
+    /// Go `b.bind(operand)`.
+    Bind,
+    /// Go `b.bindCondition(operand, trueTarget, falseTarget)`.
+    Condition(FlowNodeId, FlowNodeId),
+    /// Go `b.doWithConditionalBranches((*Binder).bind, operand, trueTarget, falseTarget)`.
+    Branches(FlowNodeId, FlowNodeId),
+}
+
+/// What a frame's operand call saved before it got to Go
+/// `bindBinaryExpressionFlow` of the operand.
+#[derive(Clone, Copy)]
+struct EnteredOperand {
+    call: OperandCall,
+    /// `doWithConditionalBranches` (also in `bindCondition`).
+    save_true_target: FlowNodeId,
+    save_false_target: FlowNodeId,
+    /// `bind`.
+    this_node_or_any_subnodes_has_error: bool,
+    save_seen_parse_error: bool,
+    /// `bindChildren`.
+    save_in_assignment_pattern: bool,
+}
+
+/// The binder with its binary frames from `base` up. A drop truncates the
+/// frames to `base`, so a panic (the LSP catches one for each request)
+/// leaves none behind.
+struct BindFrames<'a> {
+    b: &'a mut Binder,
+    base: usize,
+}
+
+impl Drop for BindFrames<'_> {
+    fn drop(&mut self) {
+        self.b.binary_frames.truncate(self.base);
+    }
+}
+
+impl<'a> BindFrames<'a> {
+    fn new(b: &'a mut Binder) -> Self {
+        let base = b.binary_frames.len();
+        Self { b, base }
+    }
+
+    /// Go `bindBinaryExpressionFlow(node)` up to its first operand, and for
+    /// a logical operator `bindLogicalLikeExpression` up to Left: pushes the
+    /// frame of `node`.
+    fn push_flow(&mut self, node: Node, expr: BinaryView, entered: Option<EnteredOperand>) {
+        let b = &mut *self.b;
+        let mut frame = BindBinaryFrame {
+            node,
+            expr,
+            stage: BindStage::Left,
+            true_target: FlowNodeId::NIL,
+            false_target: FlowNodeId::NIL,
+            pre_right_label: FlowNodeId::NIL,
+            top_level: None,
+            entered,
+        };
+        let operator = expr.operator;
+        if is_logical_or_coalescing_binary_operator(operator)
+            || is_logical_or_coalescing_assignment_operator(operator)
+        {
+            if is_top_level_logical_expression(node) {
+                let post_expression_label = b.create_branch_label();
+                frame.top_level = Some(TopLevelLogical {
+                    post_expression_label,
+                    save_current_flow: b.current_flow,
+                    save_has_flow_effects: b.has_flow_effects,
+                });
+                b.has_flow_effects = false;
+                frame.true_target = post_expression_label;
+                frame.false_target = post_expression_label;
+            } else {
+                frame.true_target = b.current_true_target;
+                frame.false_target = b.current_false_target;
+            }
+            frame.pre_right_label = b.create_branch_label();
+            frame.stage = BindStage::LogicalLeft;
+        }
+        b.binary_frames.push(frame);
+    }
+
+    /// Runs the frames above `base` until none is left.
+    fn run(&mut self) {
+        while self.b.binary_frames.len() > self.base {
+            let top = self.b.binary_frames.len() - 1;
+            let frame = self.b.binary_frames[top];
+            let expr = frame.expr;
+            match frame.stage {
+                BindStage::Left => {
+                    self.b.binary_frames[top].stage = BindStage::Right;
+                    self.bind_operand(expr.left, OperandCall::Bind);
+                }
+                BindStage::Right => {
+                    let b = &mut *self.b;
+                    b.binary_frames[top].stage = BindStage::End;
+                    b.bind(expr.type_);
+                    if expr.operator == SyntaxKind::CommaToken {
+                        b.maybe_bind_expression_flow_if_call(expr.left);
+                    }
+                    b.bind(expr.operator_token);
+                    self.bind_operand(expr.right, OperandCall::Bind);
+                }
+                BindStage::End => {
+                    self.b.binary_frames.pop();
+                    self.b.bind_binary_expression_flow_end(frame.node, &expr);
+                    self.leave(frame);
+                }
+                BindStage::LogicalLeft => {
+                    self.b.binary_frames[top].stage = BindStage::LogicalRight;
+                    let call = if expr.operator == SyntaxKind::AmpersandAmpersandToken
+                        || expr.operator == SyntaxKind::AmpersandAmpersandEqualsToken
+                    {
+                        OperandCall::Condition(frame.pre_right_label, frame.false_target)
+                    } else {
+                        OperandCall::Condition(frame.true_target, frame.pre_right_label)
+                    };
+                    self.bind_operand(expr.left, call);
+                }
+                BindStage::LogicalRight => {
+                    let b = &mut *self.b;
+                    b.binary_frames[top].stage = BindStage::LogicalEnd;
+                    b.current_flow = b.finish_flow_label(frame.pre_right_label);
+                    b.bind(expr.operator_token);
+                    let call = if is_logical_or_coalescing_assignment_operator(expr.operator) {
+                        OperandCall::Branches(frame.true_target, frame.false_target)
+                    } else {
+                        OperandCall::Condition(frame.true_target, frame.false_target)
+                    };
+                    self.bind_operand(expr.right, call);
+                }
+                BindStage::LogicalEnd => {
+                    let b = &mut *self.b;
+                    b.binary_frames.pop();
+                    b.bind_logical_like_expression_end(
+                        frame.node,
+                        &expr,
+                        frame.true_target,
+                        frame.false_target,
+                    );
+                    if let Some(top_level) = frame.top_level {
+                        if b.has_flow_effects {
+                            b.current_flow = b.finish_flow_label(top_level.post_expression_label);
+                        } else {
+                            b.current_flow = top_level.save_current_flow;
+                        }
+                        b.has_flow_effects = b.has_flow_effects || top_level.save_has_flow_effects;
+                    }
+                    self.leave(frame);
+                }
+            }
+        }
+    }
+
+    /// Binds `operand` as `call` does. An operand that is a BinaryExpression
+    /// runs Go `bind` and `bindChildren` up to `bindBinaryExpressionFlow`,
+    /// which gets a frame. The unreachable path and a destructuring
+    /// assignment run `bind_children_of_kind` (Go `bindChildren`) as it is.
+    fn bind_operand(&mut self, operand: Node, call: OperandCall) {
+        let b = &mut *self.b;
+        if operand.kind() != SyntaxKind::BinaryExpression {
+            match call {
+                OperandCall::Bind => {
+                    b.bind(operand);
+                }
+                OperandCall::Condition(true_target, false_target) => {
+                    b.bind_condition(operand, true_target, false_target);
+                }
+                OperandCall::Branches(true_target, false_target) => {
+                    b.do_with_conditional_branches(
+                        &mut Binder::bind,
+                        operand,
+                        true_target,
+                        false_target,
+                    );
+                }
+            }
+            return;
+        }
+        // Go `doWithConditionalBranches` (binder.go:1790).
+        let save_true_target = b.current_true_target;
+        let save_false_target = b.current_false_target;
+        if let OperandCall::Condition(true_target, false_target)
+        | OperandCall::Branches(true_target, false_target) = call
+        {
+            b.current_true_target = true_target;
+            b.current_false_target = false_target;
+        }
+        // Go `bind` (binder.go:577) of a BinaryExpression, up to
+        // `bindChildren`. Its container flags are None.
+        let expr = b.binary_view(operand);
+        b.bind_binary_expression_kind(operand, &expr);
+        let this_node_or_any_subnodes_has_error = b
+            .node_flags(operand)
+            .intersects(NodeFlags::THIS_NODE_HAS_ERROR);
+        let save_seen_parse_error = b.seen_parse_error;
+        b.seen_parse_error = false;
+        let entered = EnteredOperand {
+            call,
+            save_true_target,
+            save_false_target,
+            this_node_or_any_subnodes_has_error,
+            save_seen_parse_error,
+            save_in_assignment_pattern: b.in_assignment_pattern,
+        };
+        if b.current_flow == b.unreachable_flow || expr.is_destructuring_assignment() {
+            // Go `bindChildren` as it is. It ends with `inAssignmentPattern`
+            // as it found it, as `leave_operand` sets it.
+            b.bind_children_of_kind(operand, SyntaxKind::BinaryExpression, Some(&expr));
+            b.leave_operand(operand, entered);
+            return;
+        }
+        // Go `bindChildren` (binder.go:1646) up to `bindBinaryExpressionFlow`.
+        b.in_assignment_pattern = false;
+        self.push_flow(operand, expr, Some(entered));
+    }
+
+    /// The end of a frame: for an operand, the end of Go `bindChildren`,
+    /// `bind` and the operand's call.
+    fn leave(&mut self, frame: BindBinaryFrame) {
+        if let Some(entered) = frame.entered {
+            self.b.leave_operand(frame.node, entered);
+        }
+    }
+}
+
+impl Binder {
+    /// The end of Go `bindChildren` (binder.go:1742), `bind`
+    /// (binder.go:740-748) and the operand's call, for a BinaryExpression
+    /// operand of a binary frame.
+    fn leave_operand(&mut self, node: Node, entered: EnteredOperand) {
+        self.in_assignment_pattern = entered.save_in_assignment_pattern;
+        let mut this_node_or_any_subnodes_has_error = entered.this_node_or_any_subnodes_has_error;
+        if self.seen_parse_error {
+            this_node_or_any_subnodes_has_error = true;
+        }
+        self.seen_parse_error = entered.save_seen_parse_error;
+        if this_node_or_any_subnodes_has_error {
+            self.add_node_flags(node, NodeFlags::THIS_NODE_OR_ANY_SUB_NODES_HAS_ERROR);
+            self.seen_parse_error = true;
+        }
+        match entered.call {
+            OperandCall::Bind => {}
+            OperandCall::Branches(..) => {
+                self.current_true_target = entered.save_true_target;
+                self.current_false_target = entered.save_false_target;
+            }
+            OperandCall::Condition(true_target, false_target) => {
+                self.current_true_target = entered.save_true_target;
+                self.current_false_target = entered.save_false_target;
+                self.bind_condition_flows(node, true_target, false_target);
+            }
         }
     }
 }
