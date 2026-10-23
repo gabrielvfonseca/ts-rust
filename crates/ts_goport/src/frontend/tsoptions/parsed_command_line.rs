@@ -649,7 +649,7 @@ impl ParsedCommandLine {
     }
 
     // The `files` closure of Go CommonSourceDirectory
-    // (tsoptions/parsedcommandline.go:159).
+    // (tsoptions/parsedcommandline.go:190).
     fn common_source_directory_files(&self) -> Vec<String> {
         self.parsed_config
             .file_names
@@ -692,13 +692,13 @@ impl ParsedCommandLine {
     }
 
     // Go: tsoptions/parsedcommandline.go:189 (*ParsedCommandLine).GetCurrentDirectory (at 673a5f17d713;
-    // ts#64159 makes it BaseDirectory, tsoptions/parsedcommandline.go:216)
+    // ts#64159 makes it BaseDirectory, tsoptions/parsedcommandline.go:219)
     pub fn get_current_directory(&self) -> &str {
         &self.compare_paths_options.current_directory
     }
 
     // Go: tsoptions/parsedcommandline.go:193 (*ParsedCommandLine).UseCaseSensitiveFileNames (at 673a5f17d713;
-    // ts#64159 makes it CaseSensitivity, tsoptions/parsedcommandline.go:220)
+    // ts#64159 makes it CaseSensitivity, tsoptions/parsedcommandline.go:223)
     pub fn use_case_sensitive_file_names(&self) -> bool {
         self.compare_paths_options.use_case_sensitive_file_names
     }
@@ -871,7 +871,7 @@ impl ParsedCommandLine {
     }
 
     // Go: tsoptions/parsedcommandline.go:334 (*ParsedCommandLine).FileNamesByPath (at 673a5f17d713;
-    // ts#64159 makes it FilePaths, tsoptions/parsedcommandline.go:369)
+    // ts#64159 makes it FilePaths, tsoptions/parsedcommandline.go:372)
     pub fn file_names_by_path(&self) -> &FxHashMap<Path, String> {
         self.file_names_by_path.get_or_init(|| {
             let mut file_names_by_path = FxHashMap::with_capacity_and_hasher(
@@ -1315,7 +1315,7 @@ mod common_source_directory_tests {
 
     // Go: tsoptions/parsedcommandline.go:207 checkSourceFilesBelongToPath
     // appends TS6059 to `p.Errors`, which GetConfigFileParsingDiagnostics
-    // (:393) and WithFileNames (:93) read. GetOutputFileNames (:211) is
+    // (:479) and WithFileNames (:101) read. GetOutputFileNames (:241) is
     // lazy: only a name under outDir or declarationDir reads
     // CommonSourceDirectory (outputpaths.go:166).
     #[test]
