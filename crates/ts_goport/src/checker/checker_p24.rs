@@ -983,7 +983,7 @@ impl Checker {
     }
 
     // Go: checker/checker.go:22320 somePropertyReducesToNever
-    // ts#64521, Go N' checker.go:22283: Go counts the names in a
+    // ts#64521, Go checker.go:22320: Go counts the names in a
     // `collections.OrderedMap` and tests them in first-seen order
     // (constituent order, then property order), so it makes the combined
     // properties in the same order every time. Every order gives the same

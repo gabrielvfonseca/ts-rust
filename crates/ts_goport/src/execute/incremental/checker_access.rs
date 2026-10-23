@@ -72,8 +72,8 @@ pub fn host() -> Rc<dyn CompilerHost> {
 
 // Go: compiler/program.go:188 PackageJsonCacheEntries
 // PORT: Go's resolver cache also holds the package.json lookups of module
-// specifier generation (program.go:147 GetNearestAncestorDirectoryWithPackageJson
-// and :157 GetPackageJsonInfo), which checker threads make for declaration
+// specifier generation (program.go:169 GetNearestAncestorDirectoryWithPackageJson
+// and :178 GetPackageJsonInfo), which checker threads make for declaration
 // diagnostics and declaration emit. The port keeps those in the program's
 // thread-safe `HostFsCache` (`modulespecifiers::host`). So they follow the
 // resolver's entries here: each one whose key the resolver does not have.

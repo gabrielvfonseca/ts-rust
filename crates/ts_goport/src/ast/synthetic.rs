@@ -2635,9 +2635,9 @@ fn new_ts_node(kind: SyntaxKind, data: BoxedData) -> crate::astdata::Node {
 
 /// Go `node.AsMutable().SetModifiers(modifiers)`.
 // Go: ast/ast_generated.go:11904 (n *MutableNode) SetModifiers
-// PORT: Go dispatches to `setModifiers` on the data. The kinds with a
-// `modifiers` field set it (ModifiersBase, NamedMemberBase,
-// BinaryExpression); other kinds do nothing, like Go `NodeDefault`.
+// PORT: Go calls `setModifiers` for the kinds that its switch lists; other
+// kinds do nothing. The port also sets EnumMember and FunctionType, which
+// the Go list leaves out (`print_pack_copies_every_list_field` sets them).
 pub fn set_node_modifiers(n: Node, modifiers: ModifierList) {
     // astshrink1: the list goes into the list table of the node's owner.
     let mods = node_modifiers_value(n, modifiers);

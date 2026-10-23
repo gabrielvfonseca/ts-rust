@@ -204,7 +204,7 @@ impl NewProgram {
     }
 
     // Go: program.go:1131 createDiagnosticForOptionPaths (closure)
-    // PORT: Go `forEachOptionPathsSyntax` (program.go:1122) is inlined; it is
+    // PORT: Go `forEachOptionPathsSyntax` (program.go:1127) is inlined; it is
     // `ForEachPropertyAssignment(getCompilerOptionsObjectLiteralSyntax(), "paths", callback)`.
     fn create_diagnostic_for_option_paths(
         &mut self,

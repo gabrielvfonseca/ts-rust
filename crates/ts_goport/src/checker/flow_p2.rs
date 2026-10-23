@@ -1633,7 +1633,7 @@ impl Checker {
 // Go: checker/flow.go:1782 tryGetNameFromType
 // PORT: Go package function that reads type data. The contract makes such
 // functions `Checker` methods, but `Checker::try_get_name_from_type` already
-// exists (Go method `(*Checker).tryGetNameFromType`, checker.go:18621, which
+// exists (Go method `(*Checker).tryGetNameFromType`, checker.go:19158, which
 // behaves differently). This stays a free function that takes the checker.
 pub fn try_get_name_from_type(c: &Checker, t: TypeId) -> (String, bool) {
     let flags = c.ty(t).flags;

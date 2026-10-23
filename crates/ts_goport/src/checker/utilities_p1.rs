@@ -482,7 +482,7 @@ pub fn checker_is_empty_array_literal(expression: Node) -> bool {
 }
 
 // Go: checker/utilities.go:334 declarationBelongsToPrivateAmbientMember
-// PORT: Go also has a `Checker` method with this name (checker.go:17940,
+// PORT: Go also has a `Checker` method with this name (checker.go:18465,
 // ported in checker_p20.rs); methods and free functions do not clash in Rust.
 pub fn declaration_belongs_to_private_ambient_member(declaration: Node) -> bool {
     let root = get_root_declaration(declaration);

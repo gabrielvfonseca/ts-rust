@@ -2386,7 +2386,7 @@ mod go_lower_tests {
     // Go: base/tsconfig.base.json sets `"outDir": "${confİgDir}/out"`, and
     // app/tsconfig.json extends it. The value starts with the template
     // (tsconfigparsing.go:358), so it stays relative until the template
-    // substitution (:1705), which replaces only the exact case and then
+    // substitution (:1771), which replaces only the exact case and then
     // makes it absolute from app/: `tsgo --listEmittedFiles` in app/ prints
     // `TSFILE: <dir>/app/${confİgDir}/out/a.js`.
     #[test]
