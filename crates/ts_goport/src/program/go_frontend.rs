@@ -1611,7 +1611,18 @@ impl KeptLists {
 // (ast/synthetic.rs) copies them out as owned lists, and the frontend
 // program still reads the parsed file.
 fn program_file_info(store: usize, file: &ParsedSourceFile, lists: KeptLists) -> SourceFileInfo {
-    let info = SourceFileInfo {
+    let late = LateSourceFileInfo {
+        file_index: store,
+        external_module_indicator: file.external_module_indicator,
+        reparsed_clones: lists.reparsed_clones,
+        imports: file.imports.clone(),
+        module_augmentations: file.module_augmentations.clone(),
+        ambient_module_names: file.ambient_module_names.clone(),
+        uses_uri_style_node_core_modules: file.uses_uri_style_node_core_modules,
+        jsdoc_cache: lists.jsdoc_cache,
+        post_bind: OnceLock::new(),
+    };
+    SourceFileInfo {
         file_name: file.file_name().to_string(),
         path: file.path().0.clone(),
         is_declaration_file: file.is_declaration_file,
@@ -1628,21 +1639,9 @@ fn program_file_info(store: usize, file: &ParsedSourceFile, lists: KeptLists) ->
         jsdoc_diagnostics: lists.jsdoc_diagnostics,
         has_lazy_js_doc: file.has_lazy_js_doc,
         external_module_indicator_options: file.parse_options.external_module_indicator_options,
-        late: OnceLock::new(),
-    };
-    let late = LateSourceFileInfo {
-        file_index: store,
-        external_module_indicator: file.external_module_indicator,
-        reparsed_clones: lists.reparsed_clones,
-        imports: file.imports.clone(),
-        module_augmentations: file.module_augmentations.clone(),
-        ambient_module_names: file.ambient_module_names.clone(),
-        uses_uri_style_node_core_modules: file.uses_uri_style_node_core_modules,
-        jsdoc_cache: lists.jsdoc_cache,
-        post_bind: OnceLock::new(),
-    };
-    assert!(info.late.set(late).is_ok());
-    info
+        // PERF (buildprog1): set when made, without a `OnceLock::set`.
+        late: OnceLock::from(late),
+    }
 }
 
 /// `SourceFileInfo` of a store that is not a program file (a tsconfig or

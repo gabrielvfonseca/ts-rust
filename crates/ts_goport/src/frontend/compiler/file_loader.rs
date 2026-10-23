@@ -13,6 +13,7 @@ use crate::contentmapper::{
 use crate::frontend::prelude::*;
 use crate::gostd::{GoError, errors};
 use crate::spanmap::{MappingError, MappingErrorKind};
+use std::borrow::Cow;
 use std::cell::Cell;
 use std::sync::Arc;
 
@@ -245,7 +246,10 @@ pub fn process_all_program_files(
 ) -> (ProcessedFiles, Option<GoError>) {
     let ProgramHosts { host } = hosts;
     let compiler_options = opts.config.compiler_options().clone();
-    let root_files: Vec<String> = opts.config.file_names().to_vec();
+    // PERF (buildprog1): the root names are read from the config, as Go
+    // reads `opts.Config.FileNames()`, not from a copy of the list.
+    let config = Rc::clone(&opts.config);
+    let root_files: &[String] = config.file_names();
     let supported_extensions =
         get_supported_extensions(&compiler_options, &opts.config.content_mapper_extensions());
     let supported_extensions_with_json_if_resolve_json_module =
@@ -395,14 +399,10 @@ pub fn process_all_program_files(
     for (index, root_file) in root_files.iter().enumerate() {
         // ts#64159 (Go N' fileloader.go:210): the diagnostics name a root
         // file as the command line gave it.
-        let reference_text = loader
-            .opts
-            .config
-            .root_file_name_for_diagnostic(index)
-            .to_string();
+        let reference_text = config.root_file_name_for_diagnostic(index);
         loader.add_root_file_task(
             root_file,
-            &reference_text,
+            reference_text,
             None,
             new_file_include_reason(
                 FileIncludeKind::ROOT_FILE,
@@ -916,18 +916,25 @@ impl FileLoader {
         lib_file: Option<Rc<LibFile>>,
         include_reason: Rc<FileIncludeReason>,
     ) {
-        let curr_dir = self.host.get_current_directory();
-        let abs_path = get_normalized_absolute_path(file_name, &curr_dir);
+        // PERF (buildprog1): the loader's copy of the host's directory
+        // (`set_task_path`), not a copy for each root file.
+        let abs_path =
+            get_normalized_absolute_path(file_name, &self.compare_paths_options.current_directory);
         let (resolved_file, diagnostic) =
             self.get_source_file_from_reference(&abs_path, reference_text);
+        // A borrowed result is `abs_path` itself (or empty with a
+        // diagnostic), so the task takes `abs_path` and no copy is made.
+        let resolved_file = match resolved_file {
+            Cow::Owned(resolved_file) if diagnostic.is_none() => Some(resolved_file),
+            _ => None,
+        };
         let mut root_task = ParseTask {
-            normalized_file_path: resolved_file,
+            normalized_file_path: resolved_file.unwrap_or(abs_path),
             lib_file,
             include_reason: Some(include_reason.clone()),
             ..Default::default()
         };
         if let Some(diagnostic) = diagnostic {
-            root_task.normalized_file_path = abs_path;
             root_task.failed_lookup = true;
             root_task.processing_diagnostics = vec![new_explaining_processing_diagnostic(
                 Some(include_reason),
@@ -1410,110 +1417,105 @@ impl FileLoader {
 
     // Go: fileloader.go:679 (*fileLoader).isSupportedExtension
     pub fn is_supported_extension(&self, canonical_file_name: &str) -> bool {
-        for group in &self.supported_extensions_with_json_if_resolve_json_module {
-            let group: Vec<&str> = group.iter().map(String::as_str).collect();
-            if file_extension_is_one_of(canonical_file_name, &group) {
-                return true;
-            }
-        }
-        false
+        // PERF (buildprog1): Go `ExtensionIsOneOf` on each group, with no
+        // list of borrowed names made for each group.
+        self.supported_extensions_with_json_if_resolve_json_module
+            .iter()
+            .any(|group| {
+                group
+                    .iter()
+                    .any(|extension| file_extension_is(canonical_file_name, extension))
+            })
     }
 
     // Go: fileloader.go:683 (*fileLoader).getSourceFileFromReference
     // ts#64159: the "A file cannot have a reference to itself" check moved
     // to `resolve_tripleslash_path_reference`, after the extension lookup.
-    pub fn get_source_file_from_reference(
+    // PERF (buildprog1): the file is `file_name` itself (borrowed) or a
+    // name with an added extension (owned), and an empty borrowed name with
+    // a diagnostic, so a caller that owns `file_name` copies no name (Go
+    // returns its string).
+    // The canonical name and the diagnostic text are made only when read.
+    pub fn get_source_file_from_reference<'a>(
         &self,
-        file_name: &str,
+        file_name: &'a str,
         reference_text: &str,
-    ) -> (String, Option<SourceFileFromReferenceDiagnostic>) {
+    ) -> (Cow<'a, str>, Option<SourceFileFromReferenceDiagnostic>) {
         let options = self.opts.config.compiler_options();
         let allow_non_ts_extensions = options.allow_non_ts_extensions.is_true();
-        let diagnostic_file_name = normalize_slashes(reference_text);
+        let diagnostic_file_name = || normalize_slashes(reference_text);
         let fs = self.host.fs();
+        let failed = |diagnostic| (Cow::Borrowed(""), Some(diagnostic));
 
         // ts#64832
         if crate::frontend::nativepath::is_network_path(file_name) {
-            return (
-                String::new(),
-                Some(SourceFileFromReferenceDiagnostic {
-                    message: diag::Network_path_0_is_not_supported,
-                    args: args![diagnostic_file_name],
-                }),
-            );
+            return failed(SourceFileFromReferenceDiagnostic {
+                message: diag::Network_path_0_is_not_supported,
+                args: args![diagnostic_file_name()],
+            });
         }
 
         if has_extension(file_name) {
-            let canonical_file_name =
-                get_canonical_file_name(file_name, fs.use_case_sensitive_file_names());
+            // Go `PathKey`: the name itself when the file system is case
+            // sensitive (`get_canonical_file_name`).
+            let canonical_file_name: Cow<str> = if fs.use_case_sensitive_file_names() {
+                Cow::Borrowed(file_name)
+            } else {
+                Cow::Owned(get_canonical_file_name(file_name, false))
+            };
             if !allow_non_ts_extensions && !self.is_supported_extension(&canonical_file_name) {
                 if has_js_file_extension(&canonical_file_name) {
-                    return (
-                        String::new(),
-                        Some(SourceFileFromReferenceDiagnostic {
-                            message: diag::File_0_is_a_JavaScript_file_Did_you_mean_to_enable_the_allowJs_option,
-                            args: args![diagnostic_file_name],
-                        }),
-                    );
+                    return failed(SourceFileFromReferenceDiagnostic {
+                        message: diag::File_0_is_a_JavaScript_file_Did_you_mean_to_enable_the_allowJs_option,
+                        args: args![diagnostic_file_name()],
+                    });
                 }
-                return (
-                    String::new(),
-                    Some(SourceFileFromReferenceDiagnostic {
-                        message: diag::File_0_has_an_unsupported_extension_The_only_supported_extensions_are_1,
-                        args: args![
-                            diagnostic_file_name,
-                            format!("'{}'", join_flattened_extensions(&self.supported_extensions))
-                        ],
-                    }),
-                );
+                return failed(SourceFileFromReferenceDiagnostic {
+                    message: diag::File_0_has_an_unsupported_extension_The_only_supported_extensions_are_1,
+                    args: args![
+                        diagnostic_file_name(),
+                        format!("'{}'", join_flattened_extensions(&self.supported_extensions))
+                    ],
+                });
             }
 
             if !fs.file_exists(file_name) {
-                return (
-                    String::new(),
-                    Some(SourceFileFromReferenceDiagnostic {
-                        message: diag::File_0_not_found,
-                        args: args![diagnostic_file_name],
-                    }),
-                );
+                return failed(SourceFileFromReferenceDiagnostic {
+                    message: diag::File_0_not_found,
+                    args: args![diagnostic_file_name()],
+                });
             }
-            return (file_name.to_string(), None);
+            return (Cow::Borrowed(file_name), None);
         }
 
         if allow_non_ts_extensions && fs.file_exists(file_name) {
-            return (file_name.to_string(), None);
+            return (Cow::Borrowed(file_name), None);
         }
 
         if allow_non_ts_extensions {
-            return (
-                String::new(),
-                Some(SourceFileFromReferenceDiagnostic {
-                    message: diag::File_0_not_found,
-                    args: args![diagnostic_file_name],
-                }),
-            );
+            return failed(SourceFileFromReferenceDiagnostic {
+                message: diag::File_0_not_found,
+                args: args![diagnostic_file_name()],
+            });
         }
 
         for ext in &self.supported_extensions[0] {
             let candidate = format!("{file_name}{ext}");
             if fs.file_exists(&candidate) {
-                return (candidate, None);
+                return (Cow::Owned(candidate), None);
             }
         }
 
-        (
-            String::new(),
-            Some(SourceFileFromReferenceDiagnostic {
-                message: diag::Could_not_resolve_the_path_0_with_the_extensions_Colon_1,
-                args: args![
-                    diagnostic_file_name,
-                    format!(
-                        "'{}'",
-                        join_flattened_extensions(&self.supported_extensions)
-                    )
-                ],
-            }),
-        )
+        failed(SourceFileFromReferenceDiagnostic {
+            message: diag::Could_not_resolve_the_path_0_with_the_extensions_Colon_1,
+            args: args![
+                diagnostic_file_name(),
+                format!(
+                    "'{}'",
+                    join_flattened_extensions(&self.supported_extensions)
+                )
+            ],
+        })
     }
 
     // Go: fileloader.go:728 (*fileLoader).resolveTripleslashPathReference
@@ -1556,6 +1558,7 @@ impl FileLoader {
         // ts#64159 (fileloader.go:747): the check is on the resolved file,
         // so `/// <reference path="a" />` in a.ts (found as "a" + ".ts")
         // is an error too. N checked only a name with an extension.
+        let resolved_file_name = resolved_file_name.into_owned();
         let resolved_path = self.to_path(&resolved_file_name);
         if containing_path == resolved_path {
             return (

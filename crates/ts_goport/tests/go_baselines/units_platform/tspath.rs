@@ -1437,3 +1437,80 @@ fn test_module_specifier_should_rewrite_extension() {
     }
     failures.finish();
 }
+
+// Go: typed_paths_test.go:551 TestContainsFilePath (the ContainsFilePath
+// asserts) and typed_paths_test.go:83 (TestEncodedDynamicPathsPreserveOpaqueIdentity:
+// an encoded dynamic name compares with case). `contains_rooted_path` is
+// Go `CaseSensitivity.ContainsFilePath`; `true` is Go `CaseSensitive`.
+#[test]
+fn test_contains_file_path() {
+    let cases: &[(&str, bool, &str, &str, bool)] = &[
+        ("same path", true, "/project/src", "/project/src", true),
+        ("child", true, "/project/src", "/project/src/a.ts", true),
+        (
+            "prefix sibling",
+            true,
+            "/project/src",
+            "/project/source/a.ts",
+            false,
+        ),
+        ("root", true, "/", "/project/src/a.ts", true),
+        (
+            "case sensitive mismatch",
+            true,
+            "/PROJECT",
+            "/project/a.ts",
+            false,
+        ),
+        ("case insensitive", false, "/PROJECT", "/project/a.ts", true),
+        (
+            "case folded rune",
+            false,
+            "/repo/\u{212A}",
+            "/repo/k/a.ts",
+            true,
+        ),
+        (
+            "drive root casing",
+            true,
+            "C:/project",
+            "c:/project/a.ts",
+            true,
+        ),
+        (
+            "file URL scheme and drive casing",
+            true,
+            "FILE:///C:/project",
+            "file:///c:/project/a.ts",
+            true,
+        ),
+        (
+            "file URL localhost and drive casing",
+            true,
+            "file://LOCALHOST/C:/project",
+            "file://localhost/c:/project/a.ts",
+            true,
+        ),
+        (
+            "different root",
+            false,
+            "c:/project",
+            "d:/project/a.ts",
+            false,
+        ),
+        (
+            "dynamic name with case",
+            false,
+            "^/~ts-uri~/custom/authority/Folder",
+            "^/~ts-uri~/custom/authority/folder/file.ts",
+            false,
+        ),
+    ];
+    for &(name, case_sensitive, directory, file_name, contained) in cases {
+        assert_eq!(
+            tspath::contains_rooted_path(directory, file_name, case_sensitive),
+            contained,
+            "{name}"
+        );
+    }
+}
