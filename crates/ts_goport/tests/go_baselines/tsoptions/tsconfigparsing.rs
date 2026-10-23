@@ -97,7 +97,7 @@ struct ParseJsonConfigTestCase {
 /// Go `func(config testConfig, host tsoptions.ParseConfigHost, basePath string) *tsoptions.ParsedCommandLine`.
 type GetParsed = fn(&TestConfig, &dyn ParseConfigHost, &str) -> ParsedCommandLine;
 
-// Go: tsconfigparsing_test.go:816 TestParseJsonConfigFileContent
+// Go: tsconfigparsing_test.go:871 TestParseJsonConfigFileContent
 #[test]
 fn parse_json_config_file_content() {
     let mut t = Subtests::new("TestParseJsonConfigFileContent");

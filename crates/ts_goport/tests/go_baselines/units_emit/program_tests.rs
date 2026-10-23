@@ -36,7 +36,7 @@ use ts_goport::program::ls_program;
 use ts_goport::spanmap;
 use ts_goport::tracing::{Arg, Phase, new_tracer, start_tracing};
 
-// Go: compiler/program_test.go:33 esnextLibs
+// Go: compiler/program_test.go:247 esnextLibs
 #[rustfmt::skip]
 const ESNEXT_LIBS: &[&str] = &[
     "lib.es5.d.ts",
