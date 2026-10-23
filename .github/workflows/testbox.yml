@@ -112,6 +112,7 @@ jobs:
       # testbox.sh sources this file before each command: commands run over SSH, without this job's env.
       # TS_CARGO_CGROUP_ACTIVE=1 skips the systemd user scope of run-cargo-capped.sh (no user session here).
       # HOME=/home/theo: the gate and the oracles read ~/.local/bin and ~/.explore at zbook's paths.
+      # GOPORT_TESTS_JOBS=5: goport-tests.sh runs the go_baselines run and its 4 shards at once (32 vCPU).
       - name: Write the testbox env
         env:
           SUBDIR: ${{ steps.pin.outputs.subdir }}
@@ -125,6 +126,7 @@ jobs:
           export TS_CARGO_CGROUP_ACTIVE=1
           export TS_CARGO_JOBS=32
           export TS_CARGO_SLOTS=1
+          export GOPORT_TESTS_JOBS=5
           export CARGO_HOME="$HOME/.cargo" RUSTUP_HOME="$HOME/.rustup" HOME=/home/theo
           export PYTHONDONTWRITEBYTECODE=1
           EOF
