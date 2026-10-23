@@ -1145,7 +1145,19 @@
       "agent": "pending-new-reviewer",
       "verdict": "PENDING"
     },
-    "nextPermittedAction": "Run the R226 pipeline (candidate.sh side)."
+    "nextPermittedAction": "Run the R226 pipeline (candidate.sh side).",
+    "protectedPathChanges": [
+      {
+        "path": "scripts/goport/goport-tests.sh",
+        "from": "718fdc2fe4fd76e8dd52d2deb8b0d70e7ab642aed116a0dfec6f70d3db329d42",
+        "to": "967d561f04601036cf3f329bf72e66b02e54e56d3413e4c7712be706ee2853b4",
+        "commits": [
+          "92165450e",
+          "8df3a9b43"
+        ],
+        "approval": "Theo on PR #103 (\"Have council approve. If they like it, merge.\"; note goporttests-par1-approval-2026-10-23): --jobs N / GOPORT_TESTS_JOBS (default 1) runs the default go_baselines run and its 4 shards N at a time; council APPROVE x3; evidence target/continuation-r97-goport/goporttests-par1 (all 190,535 names equal at --jobs 5 and 1 on R224 test bins). Not part of the candidate source: main changed it after R225; the R226 side run reuses the int93 test run (made with the old script)."
+      }
+    ]
   },
   "parallelModelPreference": {
     "model": "GPT-6 Astra",
