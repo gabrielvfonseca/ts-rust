@@ -243,7 +243,7 @@ impl Checker {
                 let parameters = declaration.parameters();
                 if parameters.len() == 1 && parameters.get(0).type_().is_some() {
                     let param_type = self.get_type_from_type_node(parameters.get(0).type_());
-                    let distributed = self.ty(param_type).distributed().to_vec();
+                    let distributed = self.ty(param_type).distributed();
                     for t in distributed {
                         index_signature_map.entry(t).or_default().push(declaration);
                     }
