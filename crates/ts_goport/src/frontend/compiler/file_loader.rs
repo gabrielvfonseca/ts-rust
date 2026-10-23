@@ -2885,8 +2885,8 @@ pub(crate) fn get_jsx_implicit_import_base_of_file(
 #[cfg(test)]
 mod tests {
     use super::super::files_parser::{
-        early_pools_taken, names_own, preps_taken, set_load_commit, set_load_names, set_load_prep,
-        set_meta_wait, set_move_up, set_prep_wait, start_default_lib_prefetch,
+        early_pools_taken, names_own, preps_taken, set_job_map, set_load_commit, set_load_names,
+        set_load_prep, set_meta_wait, set_move_up, set_prep_wait, start_default_lib_prefetch,
     };
     use super::*;
     use crate::frontend::bundled;
@@ -3408,6 +3408,10 @@ export declare namespace JSX { interface IntrinsicElements { [name: string]: any
             PREPS_COMMITTED.with(|files| files.borrow().is_empty()),
             "a commit with GOPORT_LOAD_COMMIT=0"
         );
+        // loadpar3b step A: the loader finds the jobs under the queue lock.
+        set_job_map(Some(false));
+        let without_job_map = parallel_load("names_job_map_off", tsconfig, &files);
+        set_job_map(None);
         set_meta_wait(false);
         set_prep_wait(false);
         set_load_names(Some(false));
@@ -3417,6 +3421,7 @@ export declare namespace JSX { interface IntrinsicElements { [name: string]: any
         let without_prep = parallel_load("names_prep_off", tsconfig, &files);
         set_load_prep(None);
         assert_eq!(with_names, without_commit);
+        assert_eq!(with_names, without_job_map);
         assert_eq!(with_names, without_names);
         assert_eq!(with_names, without_prep);
         assert!(

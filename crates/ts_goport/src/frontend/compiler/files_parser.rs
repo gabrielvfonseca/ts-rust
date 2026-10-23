@@ -577,7 +577,7 @@ impl FilesParser {
         // their output `.d.ts` files in place of the sources (Go
         // `getParseFileRedirect`), so the workers parse those.
         if !loader.opts.can_use_project_reference_source() {
-            lock(&pool.shared.queue).redirects = loader
+            let redirects: FxHashMap<String, (String, Path)> = loader
                 .project_reference_file_mapper
                 .borrow()
                 .source_to_project_reference
@@ -589,6 +589,10 @@ impl FilesParser {
                     (reference.source.clone(), (output, path))
                 })
                 .collect();
+            pool.shared
+                .has_redirects
+                .store(!redirects.is_empty(), AtomicOrdering::Relaxed);
+            lock(&pool.shared.queue).redirects = redirects;
         }
         let prefetch = PrefetchGuard::install(pool.shared.clone());
         self.start(loader, tasks, 0);
@@ -2087,7 +2091,7 @@ fn take_prefetched_meta(loader: &FileLoader, file_name: &str) -> Option<SourceFi
         return None;
     }
     let shared = PREFETCH.with(|p| p.borrow().clone())?;
-    let job = lock(&shared.queue).by_name.get(file_name).cloned()?;
+    let job = shared.job(file_name)?;
     // A content-mapped job finds no metadata, so the loader does not wait
     // for its transform here.
     if job.mapped.is_some() {
@@ -2285,6 +2289,81 @@ enum PrefetchRequest {
     Mapped(SourceFileParseOptions, Arc<ConcurrentTransform>),
 }
 
+/// The parse jobs by file name (`PrefetchQueue::by_name`), in 64 shards by
+/// the name's hash, so the loader finds a job without the queue lock
+/// (`PrefetchShared::job`). Every insert holds the queue lock too
+/// (`PrefetchQueue::add`), so a file name still gets one job, and no job
+/// is removed.
+// PORT: Go `taskDataByPath` is a `collections.SyncMap` (filesparser.go:235),
+// and Go has no central queue (loadpar3b step A).
+struct JobMap {
+    shards: Box<[Mutex<FxHashMap<String, Arc<PrefetchJob>>>]>,
+}
+
+impl Default for JobMap {
+    fn default() -> Self {
+        JobMap {
+            shards: (0..64).map(|_| Mutex::default()).collect(),
+        }
+    }
+}
+
+impl JobMap {
+    fn shard(
+        &self,
+        file_name: &str,
+    ) -> std::sync::MutexGuard<'_, FxHashMap<String, Arc<PrefetchJob>>> {
+        use std::hash::BuildHasher;
+        let hash = rustc_hash::FxBuildHasher.hash_one(file_name);
+        lock(&self.shards[crate::frontend::module::shard_index(hash)])
+    }
+
+    fn get(&self, file_name: &str) -> Option<Arc<PrefetchJob>> {
+        self.shard(file_name).get(file_name).cloned()
+    }
+
+    fn contains(&self, file_name: &str) -> bool {
+        self.shard(file_name).contains_key(file_name)
+    }
+
+    /// Adds `job` by its file name. Call it with the queue lock held.
+    fn insert(&self, job: Arc<PrefetchJob>) {
+        self.shard(&job.opts.file_name)
+            .insert(job.opts.file_name.clone(), job);
+    }
+
+    fn for_each(&self, mut f: impl FnMut(&Arc<PrefetchJob>)) {
+        for shard in &self.shards {
+            lock(shard).values().for_each(&mut f);
+        }
+    }
+}
+
+/// False when `GOPORT_JOB_MAP=0`: the loader finds jobs under the queue
+/// lock (`PrefetchShared::job`) and `queue_batch` locks for every batch, as
+/// at R224. An A/B switch, read once, or a test's choice for the pools that
+/// start on its thread (`set_job_map`).
+fn job_map_enabled() -> bool {
+    #[cfg(test)]
+    if let Some(on) = JOB_MAP.with(Cell::get) {
+        return on;
+    }
+    static ON: OnceLock<bool> = OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("GOPORT_JOB_MAP").is_none_or(|value| value != "0"))
+}
+
+#[cfg(test)]
+thread_local! {
+    /// A test's choice of `job_map_enabled` for the pools of this thread.
+    static JOB_MAP: Cell<Option<bool>> = const { Cell::new(None) };
+}
+
+/// Sets `job_map_enabled` for the pools that start on this thread (tests).
+#[cfg(test)]
+pub(crate) fn set_job_map(on: Option<bool>) {
+    JOB_MAP.with(|job_map| job_map.set(on));
+}
+
 #[derive(Default)]
 struct PrefetchQueue {
     /// Jobs no worker has taken yet. Workers take the newest first, like
@@ -2308,8 +2387,9 @@ struct PrefetchQueue {
     /// The root file names of an early pool for the next free worker to
     /// queue below the other jobs (`PrefetchShared::queue_roots`).
     roots: Option<Vec<String>>,
-    /// Every job by file name. A file name is queued once.
-    by_name: FxHashMap<String, Arc<PrefetchJob>>,
+    /// Every job by file name. A file name is queued once. The same map
+    /// as `PrefetchShared::jobs`.
+    by_name: Arc<JobMap>,
     /// The files that the loader's host gives from its cache, with their
     /// references (`CompilerHost::cached_source_file_refs`). Their jobs
     /// parse nothing (`PrefetchJob::cached`), unless the cached parse does
@@ -2357,7 +2437,7 @@ impl PrefetchQueue {
         }
         let (opts, script_kind) = self.redirected(opts, script_kind);
         if let Some(job) = self.by_name.get(&opts.file_name) {
-            return Some(job.clone());
+            return Some(job);
         }
         let cached = self
             .cached
@@ -2382,7 +2462,7 @@ impl PrefetchQueue {
             prep_settled: AtomicBool::new(false),
         });
         self.next_job += 1;
-        self.by_name.insert(job.opts.file_name.clone(), job.clone());
+        self.by_name.insert(job.clone());
         if job.cached.is_none() && job.opts.file_name.ends_with("/lib.dom.d.ts") {
             self.first = Some(job.clone());
         }
@@ -2418,11 +2498,11 @@ impl PrefetchQueue {
                     Some((output, _)) => output,
                     None => &file_name,
                 };
-                return self.by_name.get(file_name).cloned();
+                return self.by_name.get(file_name);
             }
         };
         match self.by_name.get(&opts.file_name) {
-            Some(job) => Some(job.clone()),
+            Some(job) => Some(job),
             None => self.add(opts, script_kind, mapped),
         }
     }
@@ -2638,6 +2718,13 @@ impl WorkerResolveConfig {
 /// The jobs that the loading thread and the parse workers share.
 struct PrefetchShared {
     queue: Mutex<PrefetchQueue>,
+    /// `PrefetchQueue::by_name`, which the loader reads without the queue
+    /// lock (`job`) unless `GOPORT_JOB_MAP=0`.
+    jobs: Arc<JobMap>,
+    /// `job_map_enabled` when the pool started.
+    job_map: bool,
+    /// True when `PrefetchQueue::redirects` has an entry.
+    has_redirects: AtomicBool,
     ready: Condvar,
     /// `queue.closed`, which a worker reads between resolutions.
     closed: AtomicBool,
@@ -2886,12 +2973,17 @@ thread_local! {
 
 impl PrefetchShared {
     fn new(config: PrefetchConfig) -> Self {
+        let jobs = Arc::new(JobMap::default());
         Self {
             queue: Mutex::new(PrefetchQueue {
                 timed: std::env::var_os("GOPORT_PREFETCH_STATS").is_some(),
                 move_up: move_up_enabled(),
+                by_name: jobs.clone(),
                 ..PrefetchQueue::default()
             }),
+            jobs,
+            job_map: job_map_enabled(),
+            has_redirects: AtomicBool::new(false),
             ready: Condvar::new(),
             closed: AtomicBool::new(false),
             config,
@@ -2929,14 +3021,13 @@ impl PrefetchShared {
     /// The jobs that a worker read (and parsed) and the loader did not
     /// take, and their text bytes. Call it after the workers ended.
     fn untaken(&self) -> (usize, u64) {
-        let queue = lock(&self.queue);
         let mut untaken = (0, 0);
-        for job in queue.by_name.values() {
+        self.jobs.for_each(|job| {
             if let PrefetchState::Done(Some(result)) = &*lock(&job.state) {
                 untaken.0 += 1;
                 untaken.1 += result.text.len() as u64;
             }
-        }
+        });
         untaken
     }
 
@@ -2955,12 +3046,7 @@ impl PrefetchShared {
         let mut queue = lock(&self.queue);
         let jobs: Vec<_> = tasks
             .iter()
-            .filter_map(|task| {
-                queue
-                    .by_name
-                    .get(&task.borrow().normalized_file_path)
-                    .cloned()
-            })
+            .filter_map(|task| queue.by_name.get(&task.borrow().normalized_file_path))
             .collect();
         if jobs.len() < 2 || count == 0 {
             return;
@@ -3021,10 +3107,9 @@ impl PrefetchShared {
     ) -> bool {
         if let Some(job) = queue.by_name.get(&opts.file_name) {
             if queue.move_up
-                && !queue.is_first(job)
+                && !queue.is_first(&job)
                 && matches!(*lock(&job.state), PrefetchState::Queued)
             {
-                let job = job.clone();
                 queue.push_pending(job);
             }
             return false;
@@ -3053,7 +3138,14 @@ impl PrefetchShared {
     // in the list. Before, the loader parsed 117 to 182 effect files itself
     // (`GOPORT_PREFETCH_STATS` "claimed"), among them root files such as
     // `Layer.ts` and `@types/node` files that were queued long before.
-    fn queue_batch(&self, requests: Vec<PrefetchRequest>) {
+    fn queue_batch(&self, mut requests: Vec<PrefetchRequest>) {
+        // loadpar3b step A: a request whose job a worker started or the
+        // loader took needs nothing, and the loader finds that without the
+        // queue lock (Go has no central queue; `taskDataByPath` is a
+        // `SyncMap`, filesparser.go:235). The lock is for the rest.
+        if self.job_map {
+            requests.retain(|request| !self.settled(request));
+        }
         if requests.is_empty() {
             return;
         }
@@ -3085,6 +3177,38 @@ impl PrefetchShared {
             }
         }
         self.wake(&mut queue, woken);
+    }
+
+    /// True when the job of `request` exists, is not queued and is not the
+    /// `lib.dom.d.ts` job (`PrefetchQueue::first`): `queue_batch` does
+    /// nothing for it. A job never goes back to `Queued`.
+    fn settled(&self, request: &PrefetchRequest) -> bool {
+        let file_name = match request {
+            PrefetchRequest::New(opts, _) => &opts.file_name,
+            // Without the queue lock the redirects are not known.
+            PrefetchRequest::Known(file_name)
+                if !self.has_redirects.load(AtomicOrdering::Relaxed) =>
+            {
+                file_name
+            }
+            _ => return false,
+        };
+        !file_name.ends_with("/lib.dom.d.ts")
+            && self
+                .jobs
+                .get(file_name)
+                .is_some_and(|job| !matches!(*lock(&job.state), PrefetchState::Queued))
+    }
+
+    /// The job of `file_name`, if any: without the queue lock unless
+    /// `GOPORT_JOB_MAP=0`.
+    fn job(&self, file_name: &str) -> Option<Arc<PrefetchJob>> {
+        if self.job_map {
+            self.jobs.get(file_name)
+        } else {
+            let _queue = lock(&self.queue);
+            self.jobs.get(file_name)
+        }
     }
 
     /// Wakes the workers for `jobs` new jobs, with the queue lock held: a
@@ -3202,7 +3326,7 @@ impl PrefetchShared {
         let mut jobs = Vec::with_capacity(requests.len());
         for (opts, script_kind) in requests {
             // A loader that came first queued the job already.
-            if queue.by_name.contains_key(&opts.file_name) {
+            if queue.by_name.contains(&opts.file_name) {
                 continue;
             }
             let Some(job) = queue.add(opts, script_kind, None) else {
@@ -5353,7 +5477,7 @@ pub(crate) fn take_prefetched_mapped(
     content: &str,
 ) -> Option<PrefetchedTransform> {
     let shared = PREFETCH.with(|p| p.borrow().clone())?;
-    let job = lock(&shared.queue).by_name.get(&opts.file_name).cloned()?;
+    let job = shared.job(&opts.file_name)?;
     job.mapped.as_ref()?;
     let mut state = lock(&job.state);
     #[cfg(test)]
@@ -5444,14 +5568,15 @@ pub fn take_prefetched(
     let Some(shared) = PREFETCH.with(|p| p.borrow().clone()) else {
         return Prefetched::Nothing;
     };
-    let (job, stack) = {
-        let queue = lock(&shared.queue);
-        let Some(job) = queue.by_name.get(&opts.file_name).cloned() else {
-            drop(queue);
-            shared.count(|c| c.not_queued.push(opts.file_name.clone()));
-            return Prefetched::Nothing;
-        };
-        (job, queue.pending.len())
+    let Some(job) = shared.job(&opts.file_name) else {
+        shared.count(|c| c.not_queued.push(opts.file_name.clone()));
+        return Prefetched::Nothing;
+    };
+    // The jobs on the worker stack, for the debug counts only.
+    let stack = if shared.counts.is_some() {
+        lock(&shared.queue).pending.len()
+    } else {
+        0
     };
     let mut state = lock(&job.state);
     let mut waited: Option<std::time::Instant> = None;
