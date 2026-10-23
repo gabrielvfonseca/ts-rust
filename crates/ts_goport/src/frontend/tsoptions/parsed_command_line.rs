@@ -1317,7 +1317,7 @@ mod common_source_directory_tests {
     // appends TS6059 to `p.Errors`, which GetConfigFileParsingDiagnostics
     // (:479) and WithFileNames (:101) read. GetOutputFileNames (:241) is
     // lazy: only a name under outDir or declarationDir reads
-    // CommonSourceDirectory (outputpaths.go:166).
+    // CommonSourceDirectory (outputpaths.go:209).
     #[test]
     fn common_source_directory_errors_are_config_errors_like_go() {
         let out_dir = command_line(CompilerOptions {
