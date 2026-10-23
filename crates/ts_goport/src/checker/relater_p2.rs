@@ -284,7 +284,7 @@ impl<'a> Discriminator for TypeDiscriminator<'a> {
     // Go: checker/relater.go:1044 TypeDiscriminator.matches
     fn matches(&mut self, c: &mut Checker, index: i32, t: TypeId) -> bool {
         let prop_type = c.get_type_of_symbol(self.props[index as usize]);
-        for s in c.ty(prop_type).distributed() {
+        for &s in c.ty(prop_type).distributed().iter() {
             if (self.is_related_to)(c, s, t) != Ternary::FALSE {
                 return true;
             }
@@ -528,7 +528,7 @@ impl Checker {
                     return None;
                 }
                 let mut duplicate = false;
-                for d in self.ty(discriminant).distributed() {
+                for &d in self.ty(discriminant).distributed().iter() {
                     let key = self.get_regular_type_of_literal_type(d);
                     let existing = types_by_key.get(&key).copied().unwrap_or(TypeId::NIL);
                     if existing.is_nil() {
