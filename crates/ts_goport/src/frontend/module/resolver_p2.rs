@@ -465,7 +465,10 @@ impl ResolutionState<'_> {
             extensions.string()
         );
         if !has_trailing_directory_separator(candidate) {
-            let parent_of_candidate = get_directory_path(candidate);
+            // PERF (modpath1): Go's `candidate.Directory()` is a slice
+            // (tspath/rooted_path.go:212); the port copied it.
+            let candidate_normal = normalize_slashes_cow(candidate);
+            let parent_of_candidate = get_directory_path_from_normalized(&candidate_normal);
             if !self
                 .resolver
                 .host
@@ -589,8 +592,11 @@ impl ResolutionState<'_> {
         extensions: Extensions,
         original_extension: &str,
     ) -> Option<Resolved> {
-        let directory = get_directory_path(extensionless);
-        if !directory.is_empty() && !self.resolver.host.fs().directory_exists(&directory) {
+        // PERF (modpath1): Go's caller passes the directory, a slice of the
+        // name (module/resolver.go tryAddingExtensions); the port copied it.
+        let extensionless_normal = normalize_slashes_cow(extensionless);
+        let directory = get_directory_path_from_normalized(&extensionless_normal);
+        if !directory.is_empty() && !self.resolver.host.fs().directory_exists(directory) {
             return continue_searching();
         }
 
