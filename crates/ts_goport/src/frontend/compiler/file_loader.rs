@@ -4,7 +4,7 @@
 //! PORT: Go `opts.Tracing` is the process tracing session
 //! (`crate::tracing::get`).
 
-use super::files_parser::{TakenParse, count_prep, note_names_own, note_prep_taken};
+use super::files_parser::{TakenParse, count_prep, note_commit, note_names_own, note_prep_taken};
 use crate::contentmapper::{
     ConcurrentTransform, DiagnosticDirectiveError, DiagnosticDirectiveErrorKind, InitializeError,
     InitializeErrorKind, InvalidVirtualExtensionError, Mapper, ProjectError, ProjectErrorKind,
@@ -518,6 +518,10 @@ thread_local! {
     /// Each file whose taken prep gave the worker's import names
     /// (`FilePrep::names`), in the loads on this thread.
     static PREPS_NAMED: std::cell::RefCell<Vec<String>> =
+        const { std::cell::RefCell::new(Vec::new()) };
+    /// Each file whose taken prep gave the worker's commit
+    /// (`FilePrep::commit`), in the loads on this thread.
+    static PREPS_COMMITTED: std::cell::RefCell<Vec<String>> =
         const { std::cell::RefCell::new(Vec::new()) };
 }
 
@@ -1779,9 +1783,6 @@ impl FileLoader {
                     usable
                 });
             let (mut names_taken, mut names_own) = (0, 0);
-            let mut resolutions_in_file: ModeAwareCache<Arc<ResolvedModule>> =
-                ModeAwareCache::default();
-            resolutions_in_file.reserve(module_names.len());
             let mut resolutions_trace: Vec<DiagAndArgs> = Vec::new();
             // PERF: the names, usages and JSDoc flags of the imports and
             // module augmentations of a parse that the loads keep
@@ -1805,6 +1806,134 @@ impl FileLoader {
             ) {
                 (Some(kept), Some(kept_index)) => kept.get(kept_index),
                 _ => (entry.text(), import_usage(entry), None, None),
+            };
+
+            // loadpar3b: the worker's commit of the synthetic imports and
+            // imports (`PrepCommit`), when the loader takes its names: the
+            // worker's modes are the loader's (the same usages, metadata
+            // and options; `FilePrep::fits`). Not when the file's options
+            // trace resolutions (a project reference's own
+            // `traceResolution`): the loader writes the ambient module
+            // traces (fileloader.go:888).
+            let commit = prep
+                .as_mut()
+                .filter(|_| named && !options_for_file.trace_resolution.is_true())
+                .and_then(|prep| prep.commit.take());
+            if named {
+                note_commit(commit.is_some());
+            }
+            #[cfg(test)]
+            if commit.is_some() {
+                PREPS_COMMITTED.with(|files| files.borrow_mut().push(file_name.to_string()));
+            }
+            // The first name that the loop below resolves.
+            let mut first_name = 0;
+            let mut resolutions_in_file: ModeAwareCache<Arc<ResolvedModule>> = match commit {
+                Some(commit) => {
+                    let prep = prep.as_ref().expect("a commit comes with its prep");
+                    first_name = imports_start as usize + file.imports.len();
+                    // Debug builds check the commit against the loader's
+                    // own decisions (the loop below).
+                    #[cfg(debug_assertions)]
+                    {
+                        let mut adds = Vec::new();
+                        for (index, entry) in module_names[..first_name].iter().copied().enumerate()
+                        {
+                            let (module_name, usage, add, source_phase) = name_at(index, entry);
+                            if module_name.is_empty()
+                                || source_phase
+                                    .unwrap_or_else(|| is_source_phase_import(entry.parent()))
+                            {
+                                continue;
+                            }
+                            let mode = mode_for_import_usage(
+                                usage,
+                                file.file_name(),
+                                &meta,
+                                Some(&options_for_file),
+                                &mut file_emit_mode,
+                            );
+                            assert_eq!(
+                                prep.mode(index),
+                                Some(mode),
+                                "worker mode of {module_name} in {}",
+                                file.file_name()
+                            );
+                            let Some(answer) = prep.answer(index, mode) else {
+                                continue;
+                            };
+                            let resolved = &answer.value;
+                            // No JS file: the commit asks no mapper.
+                            assert!(
+                                !resolved.is_resolved()
+                                    || file_extension_is_one_of(
+                                        &resolved.resolved_file_name,
+                                        SUPPORTED_TS_EXTENSIONS_WITH_JSON_FLAT,
+                                    ),
+                                "commit of {}",
+                                file.file_name()
+                            );
+                            let key = ModeAwareCacheKey {
+                                name: module_name.to_string(),
+                                mode,
+                            };
+                            assert!(
+                                commit
+                                    .resolutions
+                                    .get(&key)
+                                    .is_some_and(|value| Arc::ptr_eq(value, resolved)),
+                                "commit answer of {module_name} in {}",
+                                file.file_name()
+                            );
+                            if resolved.is_resolved()
+                                && get_resolution_diagnostic(&options_for_file, resolved, &file)
+                                    .is_none()
+                                && (index < imports_start as usize || add != Some(false))
+                            {
+                                adds.push(index);
+                            }
+                        }
+                        let committed: Vec<usize> =
+                            commit.adds.iter().map(|add| add.index).collect();
+                        assert_eq!(adds, committed, "commit of {}", file.file_name());
+                    }
+                    for answer in prep.answers().iter().flatten() {
+                        self.note_worker_logs(&answer.package_jsons, &answer.lookups);
+                        names_taken += 1;
+                    }
+                    let commit = *commit;
+                    for add in commit.adds {
+                        let import_index = add.index as i32 - imports_start;
+                        t.add_normalized_sub_task(
+                            ResolvedRef {
+                                file_name: add.file_name,
+                                path: add.path,
+                                increase_depth: add.increase_depth,
+                                elide_on_depth: false,
+                                include_reason: Some(new_file_include_reason(
+                                    FileIncludeKind::IMPORT,
+                                    FileIncludeData::ReferencedFile(ReferencedFileData {
+                                        file: t.path.clone(),
+                                        index: import_index,
+                                        synthetic: if import_index < 0 {
+                                            module_names[add.index]
+                                        } else {
+                                            Node::NIL
+                                        },
+                                    }),
+                                )),
+                                package_id: add.package_id,
+                            },
+                            None,
+                        );
+                    }
+                    commit.resolutions
+                }
+                None => {
+                    let mut resolutions = ModeAwareCache::default();
+                    resolutions.reserve(module_names.len());
+                    resolutions
+                }
             };
 
             // PERF (loadcost): with no prep, the file's parse worker may
@@ -1863,7 +1992,7 @@ impl FileLoader {
                 }
             }
 
-            for (index, entry) in module_names.iter().copied().enumerate() {
+            for (index, entry) in module_names.iter().copied().enumerate().skip(first_name) {
                 let (module_name, usage, adds, source_phase) = name_at(index, entry);
                 // ts#63915: a source phase import is not resolved
                 // (fileloader.go:880).
@@ -2756,8 +2885,8 @@ pub(crate) fn get_jsx_implicit_import_base_of_file(
 #[cfg(test)]
 mod tests {
     use super::super::files_parser::{
-        early_pools_taken, names_own, preps_taken, set_load_names, set_load_prep, set_meta_wait,
-        set_move_up, set_prep_wait, start_default_lib_prefetch,
+        early_pools_taken, names_own, preps_taken, set_load_commit, set_load_names, set_load_prep,
+        set_meta_wait, set_move_up, set_prep_wait, start_default_lib_prefetch,
     };
     use super::*;
     use crate::frontend::bundled;
@@ -2845,8 +2974,8 @@ mod tests {
     /// loads the program, and returns what the load found, as text: the
     /// files in program order, the metadata, module and type reference
     /// resolutions (in map order) and include reasons of each file, the
-    /// synthetic imports, the processing diagnostics, the missing files
-    /// and the package.json entries of the resolver. With `early_lib`, an
+    /// synthetic imports, the processing diagnostics, the missing files,
+    /// the package.json entries of the resolver and the host traces. With `early_lib`, an
     /// early pool with that default lib path starts on the root files after
     /// the config parse, as in tsc (`start_default_lib_prefetch`).
     fn load_text(
@@ -2895,7 +3024,15 @@ mod tests {
                 true,
             );
         }
-        let host = new_cached_fs_compiler_host(&cwd, fs, &bundled::lib_path(), None, None, None);
+        let traces: Rc<RefCell<Vec<(u32, Vec<String>)>>> = Rc::default();
+        let trace: TraceFn = {
+            let traces = traces.clone();
+            Rc::new(move |message: &'static Message, args: Vec<String>| {
+                traces.borrow_mut().push((message.code(), args));
+            })
+        };
+        let host =
+            new_cached_fs_compiler_host(&cwd, fs, &bundled::lib_path(), None, Some(trace), None);
         let processed = process_all_program_files_of(
             ProgramOptions {
                 host,
@@ -3016,6 +3153,10 @@ mod tests {
         package_jsons.sort();
         package_jsons.dedup();
         writeln!(out, "package.json {package_jsons:?}").unwrap();
+        for (code, args) in traces.borrow().iter() {
+            let args: Vec<String> = args.iter().map(|arg| name(arg)).collect();
+            writeln!(out, "trace TS{code} {args:?}").unwrap();
+        }
         out
     }
 
@@ -3141,11 +3282,15 @@ export declare namespace JSX { interface IntrinsicElements { [name: string]: any
     // a file whose prep it took (only the module augmentation). The load
     // with names waits for each worker's metadata and prep, so a.ts and
     // b.ts always take the worker's names.
+    // loadpar3b: the workers also make the commit of the answers
+    // (`FilePrep::commit`): a load that takes it finds the same, with `.tsx`
+    // and `.json` answers, an ambient module name (ts#64491) and a name
+    // imported twice. A file with a JS answer (l.ts) gets no commit.
     #[test]
     fn worker_names_give_the_same_load() {
         let tsconfig = r#"{ "compilerOptions": { "module": "nodenext", "allowJs": true,
              "checkJs": true, "importHelpers": true, "jsx": "react-jsx", "types": [],
-             "noEmit": true }, "include": ["src"] }"#;
+             "resolveJsonModule": true, "noEmit": true }, "include": ["src"] }"#;
         let files = [
             ("package.json", r#"{ "name": "app", "type": "commonjs" }"#),
             ("src/esm/package.json", r#"{ "type": "module" }"#),
@@ -3167,7 +3312,9 @@ export const viaRequire: typeof import("lib", { with: { "resolution-mode": "requ
                 r#"import x = require("./c.cjs");
 import { e } from "lib";
 export * from "./d.mjs";
-export const b: number = x.c + e;
+import data = require("./data.json");
+import { w } from "./w.js";
+export const b: number = x.c + e + data.x + w;
 export const lazy = () => import("lib");
 export const v = <div />;
 declare module "lib" { export const extra: number; }
@@ -3179,7 +3326,22 @@ declare module "lib" { export const extra: number; }
             ),
             (
                 "src/d.mts",
-                "import { e } from \"lib\";\nexport const d = e;\n",
+                "import { e } from \"lib\";\nexport { e as e2 } from \"lib\";\nexport const d = e;\n",
+            ),
+            ("src/data.json", "{ \"x\": 1 }\n"),
+            (
+                "src/w.tsx",
+                "export const w = 1;\nexport const div = <div />;\n",
+            ),
+            (
+                "src/l.ts",
+                "import { j } from \"./j.js\";\nexport const l = j;\n",
+            ),
+            (
+                "src/amb.d.ts",
+                r#"declare module "amb" { export const x: number; }
+declare module "user" { import { x } from "amb"; export const y: typeof x; }
+"#,
             ),
             (
                 "src/j.js",
@@ -3233,10 +3395,19 @@ export declare namespace JSX { interface IntrinsicElements { [name: string]: any
         set_meta_wait(workers);
         set_prep_wait(workers);
         PREPS_NAMED.with(|files| files.borrow_mut().clear());
+        PREPS_COMMITTED.with(|files| files.borrow_mut().clear());
         let (taken, own) = (preps_taken(), names_own());
         let with_names = parallel_load("names_on", tsconfig, &files);
         let (taken, own) = (preps_taken() - taken, names_own() - own);
         let named = PREPS_NAMED.with(|files| std::mem::take(&mut *files.borrow_mut()));
+        let committed = PREPS_COMMITTED.with(|files| std::mem::take(&mut *files.borrow_mut()));
+        set_load_commit(Some(false));
+        let without_commit = parallel_load("names_commit_off", tsconfig, &files);
+        set_load_commit(None);
+        assert!(
+            PREPS_COMMITTED.with(|files| files.borrow().is_empty()),
+            "a commit with GOPORT_LOAD_COMMIT=0"
+        );
         set_meta_wait(false);
         set_prep_wait(false);
         set_load_names(Some(false));
@@ -3245,12 +3416,20 @@ export declare namespace JSX { interface IntrinsicElements { [name: string]: any
         set_load_prep(Some(false));
         let without_prep = parallel_load("names_prep_off", tsconfig, &files);
         set_load_prep(None);
+        assert_eq!(with_names, without_commit);
         assert_eq!(with_names, without_names);
         assert_eq!(with_names, without_prep);
         assert!(
             with_names.contains(r#"module "lib" ModuleKind(1)"#),
             "{with_names}"
         );
+        for target in ["src/data.json", "src/w.tsx", "src/j.js"] {
+            assert!(
+                with_names.contains(&format!("file <dir>/{target}")),
+                "{with_names}"
+            );
+        }
+        assert!(with_names.contains(r#"module "amb""#), "{with_names}");
         assert!(
             with_names.contains(r#"module "lib" ModuleKind(99)"#),
             "{with_names}"
@@ -3266,6 +3445,16 @@ export declare namespace JSX { interface IntrinsicElements { [name: string]: any
             // Only the module augmentation of b.ts: the workers resolve the
             // synthetic imports and the imports.
             assert_eq!(own, 1, "names resolved on the loader:\n{with_names}");
+            for file in ["/src/esm/a.ts", "/src/b.ts", "/src/amb.d.ts"] {
+                assert!(
+                    committed.iter().any(|name| name.ends_with(file)),
+                    "{file} took no commit: {committed:?}"
+                );
+            }
+            assert!(
+                !committed.iter().any(|name| name.ends_with("/src/l.ts")),
+                "{committed:?}"
+            );
         }
     }
 
@@ -3494,6 +3683,54 @@ export const a: T | Dep | number = x + (h as never);
         if super::super::files_parser::parse_workers_enabled() {
             assert_eq!(fitted, [true; 3], "{redirected:?}");
         }
+    }
+
+    // loadpar3b (go-note-check R1): a project reference's own
+    // `traceResolution` traces the ambient module names of its files: Go
+    // reads the options of the file's redirect (fileloader.go:888). The
+    // root options do not trace, so the workers resolve for the loader; the
+    // loader takes no commit for such a file and writes the trace.
+    #[test]
+    fn reference_trace_keeps_the_ambient_module_trace() {
+        const AMBIENT: &str = r#"declare module "amb" { export const x: number; }
+declare module "user" { import { x } from "amb"; export const y: typeof x; }
+"#;
+        let lib_tsconfig = REFERENCE_FILES[0].1.replace(
+            r#""composite": true,"#,
+            r#""composite": true, "traceResolution": true,"#,
+        );
+        let mut files = REFERENCE_FILES.to_vec();
+        files[0].1 = &lib_tsconfig;
+        files.extend([
+            ("lib/src/amb.ts", AMBIENT),
+            ("lib/out/amb.d.ts", AMBIENT),
+            ("src/z.ts", "import \"../lib/src/amb\";\nexport {};\n"),
+        ]);
+        let load = |label: &str, prep: bool, single_threaded: bool| {
+            set_load_prep(Some(prep));
+            set_meta_wait(prep && !single_threaded);
+            set_prep_wait(prep && !single_threaded);
+            let text = load_text(label, REFERENCE_TSCONFIG, &files, single_threaded, None);
+            set_load_prep(None);
+            set_meta_wait(false);
+            set_prep_wait(false);
+            text
+        };
+        let single = load("ambient_trace_st", false, true);
+        let trace = format!(
+            "trace TS{} [\"amb\", \"<dir>/lib/out/amb.d.ts\"]",
+            diag::Module_0_was_resolved_as_locally_declared_ambient_module_in_file_1.code()
+        );
+        assert!(single.contains(&trace), "{single}");
+        PREPS_COMMITTED.with(|files| files.borrow_mut().clear());
+        assert_eq!(load("ambient_trace_prep_on", true, false), single);
+        let committed = PREPS_COMMITTED.with(|files| std::mem::take(&mut *files.borrow_mut()));
+        assert!(
+            !committed
+                .iter()
+                .any(|name| name.ends_with("/lib/out/amb.d.ts")),
+            "{committed:?}"
+        );
     }
 
     /// Loads a one-file project with `compilerOptions` and returns the base

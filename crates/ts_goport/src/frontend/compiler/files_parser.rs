@@ -274,16 +274,24 @@ impl ParseTask {
     }
 
     // Go: filesparser.go:220 (*parseTask).addSubTask
-    pub fn add_sub_task(&mut self, ref_: ResolvedRef, lib_file: Option<Rc<LibFile>>) {
+    pub fn add_sub_task(&mut self, mut ref_: ResolvedRef, lib_file: Option<Rc<LibFile>>) {
         // PERF: a resolved name is normal already (Go normalizes it again);
         // then the name moves, with no copy.
-        let normalized_file_path = if is_normalized_path(&ref_.file_name) {
-            ref_.file_name
-        } else {
-            normalize_path(&ref_.file_name)
-        };
+        if !is_normalized_path(&ref_.file_name) {
+            ref_.file_name = normalize_path(&ref_.file_name);
+        }
+        self.add_normalized_sub_task(ref_, lib_file);
+    }
+
+    /// `add_sub_task` of a ref whose name is normalized already (a parse
+    /// worker normalized it, `PrepAdd`).
+    pub(crate) fn add_normalized_sub_task(
+        &mut self,
+        ref_: ResolvedRef,
+        lib_file: Option<Rc<LibFile>>,
+    ) {
         let sub_task = Rc::new(RefCell::new(ParseTask {
-            normalized_file_path,
+            normalized_file_path: ref_.file_name,
             path: ref_.path,
             lib_file,
             increase_depth: ref_.increase_depth,
@@ -1858,8 +1866,9 @@ struct WorkerMeta {
 /// import and each import of the file (Go `resolveImportsAndModuleAugmentations`),
 /// with the inputs that it resolved them with. The loader takes an answer
 /// only when these inputs are its own (`fits`) and the name has the mode
-/// that the worker used (`answer`); it still builds the subtasks, the
-/// synthetic nodes and the per-file maps itself, in the queue order.
+/// that the worker used (`answer`); it still makes the synthetic nodes and
+/// the subtasks itself, in the queue order. With a `commit`, the worker
+/// made the module resolution map and the subtask data.
 // PORT: not in Go (loadpar1). Go resolves in each parse task, which runs
 // on its own goroutine; here the loader runs the tasks in order on one
 // thread, so the resolutions run ahead on the workers.
@@ -1884,9 +1893,119 @@ pub(crate) struct FilePrep {
     /// (parload1). The loader reads them in place of the nodes. `None`
     /// with `GOPORT_LOAD_NAMES=0` (an A/B switch).
     pub(crate) names: Option<Box<ImportNames>>,
+    /// The worker's commit of the answers (loadpar3b), when it read the
+    /// names and every answer is one that the loader adds without its own
+    /// state. `None` with `GOPORT_LOAD_COMMIT=0` (an A/B switch).
+    pub(crate) commit: Option<Box<PrepCommit>>,
+}
+
+/// What the loader makes of the answers of the synthetic imports and the
+/// imports of a file (Go `resolveImportsAndModuleAugmentations`, the part
+/// after each resolution, fileloader.go:886 to :951), made by the file's
+/// parse worker, which plays Go's parse task goroutine here. The loader
+/// moves it in its queue order, and still makes the include reasons and
+/// the subtasks (`Rc`), notes the answer logs and resolves the module
+/// augmentations.
+// PORT: not in Go (loadpar3b). Go runs all of it in the parse task.
+pub(crate) struct PrepCommit {
+    /// Go `resolutionsInFile` of the synthetic imports and imports: the
+    /// loader's capacity and insert order, so the loader's later inserts
+    /// (the module augmentations) give the same map.
+    pub(crate) resolutions: ModeAwareCache<Arc<ResolvedModule>>,
+    /// The files that the loader adds, in module name order.
+    pub(crate) adds: Vec<PrepAdd>,
+}
+
+/// One file of a `PrepCommit` (Go `resolvedRef` of an import, fileloader.go:937).
+pub(crate) struct PrepAdd {
+    /// The module name index (the synthetic imports, then the imports).
+    pub(crate) index: usize,
+    /// The resolved file name, normalized.
+    pub(crate) file_name: String,
+    pub(crate) path: Path,
+    pub(crate) package_id: PackageId,
+    pub(crate) increase_depth: bool,
+}
+
+impl PrepCommit {
+    /// Adds the answer of module name `index` with `mode`. `adds` is Go's
+    /// import index condition (a synthetic import, or `import_adds_file`).
+    /// False when the loader must decide for the file: no answer, or a
+    /// resolution whose diagnostic or JS file test needs more than the
+    /// options (a JS file needs the loader's project reference mapper).
+    fn push(
+        &mut self,
+        index: usize,
+        name: &str,
+        mode: ResolutionMode,
+        answer: Option<&SharedResolution<Arc<ResolvedModule>>>,
+        adds: bool,
+        options: &CompilerOptions,
+    ) -> bool {
+        let Some(answer) = answer else {
+            return false;
+        };
+        let resolved = &answer.value;
+        self.resolutions.insert(
+            ModeAwareCacheKey {
+                name: name.to_string(),
+                mode,
+            },
+            resolved.clone(),
+        );
+        if !resolved.is_resolved() {
+            return true;
+        }
+        // Go `GetResolutionDiagnostic` (module/util.go:132) is nil for
+        // these, and `isJsFile` (fileloader.go:919) is false for a TS or
+        // JSON name before it asks the mapper. `noResolve` is off whenever
+        // workers resolve (`workers_resolve_imports`).
+        let no_diagnostic = match resolved.extension.as_str() {
+            EXTENSION_TS | EXTENSION_DTS | EXTENSION_MTS | EXTENSION_DMTS | EXTENSION_CTS
+            | EXTENSION_DCTS => true,
+            EXTENSION_TSX => options.jsx != JsxEmit::NONE,
+            EXTENSION_JSON => options.get_resolve_json_module(),
+            _ => false,
+        };
+        if !no_diagnostic
+            || resolved.resolved_using_extra_extensions
+            || !file_extension_is_one_of(
+                &resolved.resolved_file_name,
+                SUPPORTED_TS_EXTENSIONS_WITH_JSON_FLAT,
+            )
+        {
+            return false;
+        }
+        if adds {
+            let file_name = &resolved.resolved_file_name;
+            self.adds.push(PrepAdd {
+                index,
+                file_name: if is_normalized_path(file_name) {
+                    file_name.clone()
+                } else {
+                    normalize_path(file_name)
+                },
+                path: resolved.resolved_path.clone(),
+                package_id: resolved.package_id.clone(),
+                increase_depth: resolved.is_external_library_import,
+            });
+        }
+        true
+    }
 }
 
 impl FilePrep {
+    /// The answers by module name index (`answers`).
+    pub(crate) fn answers(&self) -> &[Option<SharedResolution<Arc<ResolvedModule>>>] {
+        &self.answers
+    }
+
+    /// The mode of module name `index` (`modes`), for the loader's checks.
+    #[cfg(debug_assertions)]
+    pub(crate) fn mode(&self, index: usize) -> Option<ResolutionMode> {
+        self.modes.get(index).copied()
+    }
+
     /// True when the worker resolved with the loader's inputs: the
     /// metadata, the redirect and the containing file, the same synthetic
     /// imports and import count.
@@ -2019,6 +2138,32 @@ thread_local! {
     /// The names that loads on this thread resolved themselves, for tests.
     #[cfg(test)]
     static NAMES_OWN: Cell<usize> = const { Cell::new(0) };
+    /// A test's choice of `load_commit_enabled` for its loads on this thread.
+    static LOAD_COMMIT: Cell<Option<bool>> = const { Cell::new(None) };
+}
+
+/// True when the parse workers make the commit of their answers for the
+/// loader (`FilePrep::commit`): unless `GOPORT_LOAD_COMMIT` is `0` (an A/B
+/// switch), or a test chose (`set_load_commit`).
+fn load_commit_enabled() -> bool {
+    LOAD_COMMIT
+        .with(Cell::get)
+        .unwrap_or_else(|| std::env::var_os("GOPORT_LOAD_COMMIT").is_none_or(|value| value != "0"))
+}
+
+/// Sets `load_commit_enabled` for the loads on this thread (tests).
+#[cfg(test)]
+pub(crate) fn set_load_commit(on: Option<bool>) {
+    LOAD_COMMIT.with(|commit| commit.set(on));
+}
+
+/// Counts whether the loader took the commit of a named prep
+/// (`FilePrep::commit`).
+pub(crate) fn note_commit(taken: bool) {
+    count_prep(|c| {
+        c.commits_taken += usize::from(taken);
+        c.commits_missing += usize::from(!taken);
+    });
 }
 
 /// True when the parse workers of a load on this thread make preps for
@@ -2378,6 +2523,9 @@ struct WorkerResolveConfig {
     /// parse for the loader and resolve each name with its own mode
     /// (`FilePrep::names`): `GOPORT_LOAD_NAMES` is not `0`.
     names: bool,
+    /// True when, with `names`, the workers make the commit of the
+    /// answers (`FilePrep::commit`): `GOPORT_LOAD_COMMIT` is not `0`.
+    commit: bool,
 }
 
 impl WorkerResolveConfig {
@@ -2436,6 +2584,7 @@ impl WorkerResolveConfig {
             references,
             redirects,
             names: load_names_enabled(),
+            commit: load_commit_enabled(),
         })
     }
 
@@ -2462,6 +2611,7 @@ impl WorkerResolveConfig {
             redirects: FxHashMap::default(),
             prep: load_prep_enabled(),
             names: load_names_enabled(),
+            commit: load_commit_enabled(),
         })
     }
 
@@ -2481,6 +2631,7 @@ impl WorkerResolveConfig {
             && self.redirects == other.redirects
             && self.prep == other.prep
             && self.names == other.names
+            && self.commit == other.commit
     }
 }
 
@@ -2529,6 +2680,10 @@ pub(crate) struct PrefetchStats {
     pub(crate) preps_unfit: usize,
     /// Taken preps with the worker's import names (`FilePrep::names`).
     pub(crate) preps_named: usize,
+    /// Named preps whose commit the loader took, and with none
+    /// (`FilePrep::commit`).
+    commits_taken: usize,
+    commits_missing: usize,
     /// Worker parses with no prep when the loader needed it: the worker
     /// still resolved, or it made none.
     preps_missing: usize,
@@ -2594,10 +2749,12 @@ impl PrefetchStats {
                 .join(", "),
         );
         eprintln!(
-            "goport prefetch: took {} worker metadata; preps: took {} (named {}; {} names, {} resolved here), unfit {}, missing {}",
+            "goport prefetch: took {} worker metadata; preps: took {} (named {}, committed {}, not committed {}; {} names, {} resolved here), unfit {}, missing {}",
             self.meta_taken,
             self.preps_taken,
             self.preps_named,
+            self.commits_taken,
+            self.commits_missing,
             self.names_taken,
             self.names_own,
             self.preps_unfit,
@@ -4069,6 +4226,20 @@ impl WorkerResolver {
             .map_or(0, |synthetic| synthetic.names().count());
         let mut answers = Vec::with_capacity(synthetic_names + refs.import_specifiers.len());
         let mut modes = Vec::with_capacity(synthetic_names + refs.import_specifiers.len());
+        // loadpar3b: the commit of the answers (`PrepCommit`), with the
+        // loader's map capacity: its module names are the synthetic imports
+        // and the names that the worker read.
+        let mut commit = import_names
+            .as_ref()
+            .filter(|_| config.commit && answers_from.is_some())
+            .map(|names| {
+                let mut resolutions = ModeAwareCache::default();
+                resolutions.reserve(synthetic_names + names.len());
+                Box::new(PrepCommit {
+                    resolutions,
+                    adds: Vec::new(),
+                })
+            });
         let mut file_emit_mode = None;
         let specifiers = synthetic
             .iter()
@@ -4096,14 +4267,28 @@ impl WorkerResolver {
             };
             modes.push(mode);
             // ts#63915: the loader does not resolve a source phase import.
-            // ts#64491: nor an ambient module that the file declares.
             if specifier.is_empty()
                 || usage.is_some_and(|(_, _, _, source_phase)| source_phase == Some(true))
-                || refs
-                    .ambient_module_names
-                    .iter()
-                    .any(|name| name == specifier)
             {
+                answers.push(None);
+                continue;
+            }
+            // ts#64491: nor an ambient module that the file declares; it
+            // maps the name to an empty resolution (fileloader.go:887).
+            if refs
+                .ambient_module_names
+                .iter()
+                .any(|name| name == specifier)
+            {
+                if let Some(commit) = &mut commit {
+                    commit.resolutions.insert(
+                        ModeAwareCacheKey {
+                            name: specifier.to_string(),
+                            mode,
+                        },
+                        Arc::new(ResolvedModule::default()),
+                    );
+                }
                 answers.push(None);
                 continue;
             }
@@ -4116,12 +4301,21 @@ impl WorkerResolver {
                     .resolve_module_name(specifier, containing_file, mode, redirect);
             debug_assert!(err.is_none(), "the default resolver failed on {specifier}");
             if let Some((cache, directory, redirect_name)) = &answers_from {
-                answers.push(cache.get_module(&(
+                let answer = cache.get_module(&(
                     directory.as_str(),
                     specifier,
                     mode,
                     redirect_name.as_str(),
-                )));
+                ));
+                // The commit reads the stored answer, which the loader
+                // takes, not `resolved`.
+                if let Some(committed) = &mut commit {
+                    let adds = usage.is_none_or(|(_, _, adds, _)| adds != Some(false));
+                    if !committed.push(index, specifier, mode, answer.as_ref(), adds, &options) {
+                        commit = None;
+                    }
+                }
+                answers.push(answer);
             }
             if !resolved.is_resolved() {
                 continue;
@@ -4146,6 +4340,7 @@ impl WorkerResolver {
             modes,
             answers,
             names: import_names,
+            commit,
         })
     }
 }
