@@ -78,15 +78,23 @@ To try the example, run `python3 -m http.server -d npm/wasm` and open
   checker keeps its own node and symbol ids, as a native checker thread does.
 - Each run uses a new instance of the compiled module, because the compiler keeps one program per
   process. The module is compiled once. Memory goes back when a run ends.
-- The checker recurses deeply, so very deep nesting can run out of stack. Node runs each call in a
-  worker thread with a 256 MB stack (about 30,000 terms of `1 + 1 + ...`). Bun ignores that
-  setting, so under Bun a call runs on the calling thread. In a browser worker, `tsc` runs through
-  JSPI where the engine has it, which gives about 2 times the stack in Chrome.
-- A host with about 1 MB of stack (the Node main thread through `core.js`, Cloudflare workerd)
-  checks about 2,100 terms of `1 + 1 + ...` with `noEmit`, about 1,500 terms of `&&`, `||` or `??`,
-  and about 1,200 terms of any operator with emit on. A Node worker with `stackSizeMb: 8` checks
-  about 17,000 terms with `noEmit` and 10,000 with emit. Go recurses the same way but its stacks
-  grow; issue #99 tracks loops that remove this limit.
+- The compiler recurses on some deep nesting, so it can run out of stack. Node runs each call in a
+  worker thread with a 256 MB stack. Bun ignores that setting, so under Bun a call runs on the
+  calling thread. In a browser worker, `tsc` runs through JSPI where the engine has it, which gives
+  about 2 times the stack in Chrome.
+- Long chains of binary operators, such as `a + b + c`, `a, b, c` or `a || b || c`, bind and
+  check in a loop (issue #99). A host with about 1 MB of stack (a Node worker with
+  `stackSizeMb: 1`, the Node main thread through `core.js`, Cloudflare workerd) checks 20,000 terms
+  of such a chain with `noEmit`. Other shapes still recurse, as in Go. In a worker with
+  `stackSizeMb: 1`, the stack ends at about:
+  - 900 terms of any chain with emit on
+  - 800 levels of parentheses, as in `((a + b) + c) + d`
+  - 1,300 terms of a destructuring chain, as in `[a] = [b] = [c]`
+  - 1,400 terms of a `?:` chain, as in `a ? 1 : b ? 2 : 3`
+  - 1,600 terms of a chain in unreachable code, or after `false &&`
+  - 4,800 terms of an assignment chain, as in `a = b = c`
+
+  Go recurses the same way, but its stacks grow. Issue #99 tracks these shapes.
 - `scripts/wasm/diff.mjs` compares the module with the native tsgo on Query core, Hono, the
   multiprog fixtures and more, and `scripts/wasm/corpus.mjs` on the TypeScript compiler test cases.
   Exit codes, output and emitted files are byte-identical.
