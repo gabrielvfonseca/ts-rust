@@ -1891,10 +1891,19 @@ struct CheckFrames<'a> {
     base: usize,
 }
 
+/// The most frames whose memory `Checker::binary_frames` keeps when an
+/// outer chain ends (72 B each, 72 KiB). After a longer chain the memory
+/// goes back, as a checker can live long (LSP). A shorter chain, almost all
+/// code, keeps it and pays one compare.
+const KEEP_BINARY_FRAMES: usize = 1024;
+
 impl Drop for CheckFrames<'_> {
     fn drop(&mut self) {
         while self.c.binary_frames.len() > self.base {
             self.c.binary_frames.pop();
+        }
+        if self.base == 0 && self.c.binary_frames.capacity() > KEEP_BINARY_FRAMES {
+            self.c.binary_frames = Vec::new();
         }
     }
 }
@@ -2057,6 +2066,8 @@ mod binary_chain_tests {
                     line[at..].trim_end().to_string()
                 })
                 .collect();
+            // A chain longer than KEEP_BINARY_FRAMES gave its memory back.
+            assert!(checker.binary_frames.capacity() <= KEEP_BINARY_FRAMES);
             drop(checker);
             drop(scope);
             crate::program::release_program(program);
