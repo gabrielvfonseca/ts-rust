@@ -109,6 +109,78 @@ test("checks callbacks typed by a type predicate (#83)", async () => {
     assert.equal(filter.stdout, "");
 });
 
+// Issue #99: a chain of 5,000 binary operators binds and checks in a worker
+// with a 1 MB stack (V8 gets 832 KiB of it). Go recurses for each level, and
+// so did the port (about 465 B for each level in check, release build). Its
+// binder and checker now keep a work stack on the heap (binder_p3.rs
+// BindBinaryFrame, checker_p14.rs CheckBinaryFrame). The logical operators
+// have calls as operands, so the test does not depend on the flow analysis
+// of a reference, which still recurses (up to Go's limit of 2000, TS2563).
+// The output is tsgo-oracle-3e9236361fa9's (typescript@7.1.0-beta) on the
+// same files, one program for each.
+test("checks long binary chains on a 1 MB stack (#99)", async () => {
+    const n = 5000;
+    const chain = (op, special = {}) => Array.from({ length: n }, (_, i) => special[i] ?? "v").join(op);
+    const check = (name, text) =>
+        tsc(["-p", "/s"], {
+            files: {
+                "/s/tsconfig.json": JSON.stringify({
+                    compilerOptions: {
+                        strict: true,
+                        types: [],
+                        lib: ["es5"],
+                        target: "es2022",
+                        noEmit: true,
+                        skipLibCheck: true,
+                    },
+                    files: [name],
+                }),
+                [`/s/${name}`]: text,
+            },
+            cwd: "/s",
+            stackSizeMb: 1,
+        });
+    const expect = async (name, text, exitCode, stdout) => {
+        const result = await check(name, text);
+        assert.equal(result.stderr, "", name);
+        assert.equal(result.stdout, stdout, name);
+        assert.equal(result.exitCode, exitCode, name);
+    };
+    const v = "declare const v: number;\n";
+    await expect("plus.ts", `${v}export const total = ${chain(" + ")};\n`, 0, "");
+    for (const [name, op] of [["and.ts", " && "], ["or.ts", " || "], ["nullish.ts", " ?? "]]) {
+        const calls = Array(n).fill("f()").join(op);
+        await expect(name, `declare function f(): number;\nexport const total = ${calls};\n`, 0, "");
+    }
+    await expect(
+        "comma.ts",
+        `${v}export const total = (${chain(",\n")});\n`,
+        2,
+        "comma.ts(2,23): error TS2695: Left side of comma operator is unused and has no side effects.\n".repeat(n - 1),
+    );
+    // A `null` in each of 4 chains, and 4 calls with an argument too many in
+    // one chain: one diagnostic for each, at Go's positions.
+    const marks = [2, n / 4, n / 2, n - 1];
+    const nulls = marks.map((mark, i) => `export const bad${i} = ${chain(" + ", { [mark]: "null" })};\n`);
+    await expect(
+        "null.ts",
+        v + nulls.join(""),
+        2,
+        ["(2,29)", "(3,5021)", "(4,10021)", "(5,20017)"]
+            .map(at => `null.ts${at}: error TS18050: The value 'null' cannot be used here.\n`)
+            .join(""),
+    );
+    const calls = Object.fromEntries(marks.map(mark => [mark, "Math.abs(v, 0)"]));
+    await expect(
+        "call.ts",
+        `${v}export const bad = ${chain(" + ", calls)};\n`,
+        2,
+        ["(2,40)", "(2,5045)", "(2,10058)", "(2,20067)"]
+            .map(at => `call.ts${at}: error TS2554: Expected 1 arguments, but got 2.\n`)
+            .join(""),
+    );
+});
+
 test("its types need no lib dom", async () => {
     // A consumer of the package, checked with and without lib dom, the
     // package's .d.ts files included.

@@ -87,6 +87,10 @@ pub struct Binder {
     /// published store (`ast::frozen_store_ids`), read once for the node
     /// views (`binary_view`). `None` for any other file.
     pub frozen_ids: Option<FrozenIds>,
+    /// Rust-only: the work stack of `bind_binary_expression_flow` (issue
+    /// #99). Go binds each operand that is a BinaryExpression by recursion;
+    /// here it gets a frame. Empty between binds.
+    pub binary_frames: Vec<super::binder_p3::BindBinaryFrame>,
 }
 
 // Go: binder/binder.go:84 ActiveLabel
@@ -1808,16 +1812,7 @@ impl Binder {
             }
             SyntaxKind::BinaryExpression => {
                 let bin = self.binary_view(node);
-                match get_binary_assignment_declaration_kind(&bin) {
-                    JSDeclarationKind::MODULE_EXPORTS => self.bind_module_exports_assignment(node),
-                    JSDeclarationKind::EXPORTS_PROPERTY => {
-                        self.bind_exports_or_object_define_property(node)
-                    }
-                    JSDeclarationKind::PROPERTY => self.bind_expando_property_assignment(node),
-                    JSDeclarationKind::THIS_PROPERTY => self.bind_this_property_assignment(node),
-                    _ => {}
-                }
-                self.check_strict_mode_binary_expression(node, &bin);
+                self.bind_binary_expression_kind(node, &bin);
                 binary = Some(bin);
             }
             SyntaxKind::CatchClause => {
@@ -2057,6 +2052,23 @@ impl Binder {
             self.seen_parse_error = true;
         }
         false
+    }
+
+    /// The BinaryExpression arm of `bind` (Go binder.go:622-633): the JS
+    /// assignment declarations, then the strict mode check. `bind` and the
+    /// binary frames (`bind_binary_expression_flow`) run it.
+    #[inline]
+    pub fn bind_binary_expression_kind(&mut self, node: Node, bin: &BinaryView) {
+        match get_binary_assignment_declaration_kind(bin) {
+            JSDeclarationKind::MODULE_EXPORTS => self.bind_module_exports_assignment(node),
+            JSDeclarationKind::EXPORTS_PROPERTY => {
+                self.bind_exports_or_object_define_property(node)
+            }
+            JSDeclarationKind::PROPERTY => self.bind_expando_property_assignment(node),
+            JSDeclarationKind::THIS_PROPERTY => self.bind_this_property_assignment(node),
+            _ => {}
+        }
+        self.check_strict_mode_binary_expression(node, bin);
     }
 
     // Go: binder/binder.go:752 bindPropertyWorker

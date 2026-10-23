@@ -1,0 +1,154 @@
+commit 8a600eca8cc295982cc0eff0317689e40df89ca3
+Author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+Date:   Fri Oct 16 12:06:07 2026 +0200
+
+    chore: update upstreams (#861)
+    
+    * chore: update upstream metadata
+    
+    * fix(shims): build against TypeScript 7.1.0-dev.20261015.1
+    
+    Upstream moved signature type parameters, structured-type index infos and
+    value-symbol write types into cold storage, and added a self-referencing
+    free list to Checker.
+    
+    - 003-checker-exports.patch reads type parameters via Signature.TypeParameters().
+    - The TypeScript provider reads index infos through a linkname to
+      StructuredType.getIndexInfos; the legacy provider keeps the field.
+    - Drop the unused ValueSymbolLinks.writeType field shim.
+    - gen_shims emits each extra struct once, so cyclic unexported pointers
+      terminate, and names embedded unexported fields it expands to literals.
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    
+    * fix(shims): mirror paged typeNodeLinks and generic arena fields
+    
+    Upstream stores typeNodeLinks in an unexported nodeLinkStore and adds
+    arenas over unexported extra structs to Checker.
+    
+    - The TypeScript provider reads typeNodeLinks through the extra_Checker
+      mirror as a NodeLinkStore; the legacy provider keeps the field accessor.
+    - gen_shims expands unexported type arguments of exported generic fields.
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    
+    * chore(nix): pin TypeScript 257e874 in the flake
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    
+    ---------
+    
+    Co-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+    Co-authored-by: Mattia Manzati <mattia.manzati@gmail.com>
+    Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>
+
+diff --git a/_tools/gen_shims/config/checker/extra-shim.json b/_tools/gen_shims/config/checker/extra-shim.json
+index b1fac16b..c1e58d44 100644
+--- a/_tools/gen_shims/config/checker/extra-shim.json
++++ b/_tools/gen_shims/config/checker/extra-shim.json
+@@ -13,7 +13,6 @@
+       "moduleSymbolLinks",
+       "typeAliasLinks",
+       "declaredTypeLinks",
+-      "typeNodeLinks",
+       "sourceFileLinks",
+       "unknownSymbol",
+       "noConstraintType",
+@@ -24,7 +23,7 @@
+     ],
+     "IndexInfo": ["keyType", "valueType"],
+     "SymbolReferenceLinks": ["referenceKinds"],
+-    "ValueSymbolLinks": ["resolvedType", "writeType", "mapper"],
++    "ValueSymbolLinks": ["resolvedType", "mapper"],
+     "AliasSymbolLinks": ["immediateTarget", "aliasTarget", "referenced"],
+     "ModuleSymbolLinks": ["resolvedExports", "exportsChecked"],
+     "TypeAliasLinks": ["declaredType"],
+@@ -38,7 +37,7 @@
+     "Signature": ["resolvedReturnType"],
+     "TypeParameter": ["constraint", "resolvedDefaultType"],
+     "InterfaceType": ["baseTypesResolved", "resolvedBaseTypes"],
+-    "StructuredType": ["members", "indexInfos"],
++    "StructuredType": ["members"],
+     "SourceFileLinks": ["typeChecked"]
+   }
+ }
+diff --git a/_tools/gen_shims/main.go b/_tools/gen_shims/main.go
+index c0bd21c9..720032ed 100644
+--- a/_tools/gen_shims/main.go
++++ b/_tools/gen_shims/main.go
+@@ -1173,6 +1173,13 @@ func run() error {
+ 				if !ty.Obj().Exported() {
+ 					return fieldTypeString(ty.Underlying())
+ 				}
++				if ty.TypeArgs().Len() > 0 {
++					args := make([]string, 0, ty.TypeArgs().Len())
++					for arg := range ty.TypeArgs().Types() {
++						args = append(args, fieldTypeString(arg))
++					}
++					return qualifierOnlyPackageName(ty.Obj().Pkg()) + "." + ty.Obj().Name() + "[" + strings.Join(args, ", ") + "]"
++				}
+ 			case *types.Pointer:
+ 				return "*" + fieldTypeString(ty.Elem())
+ 			case *types.Slice:
+@@ -1241,6 +1248,7 @@ func run() error {
+ 		for name := range extraShim.ExtraFields {
+ 			matchedExtraFields[name] = false
+ 		}
++		emittedExtraStructs := make(map[string]bool)
+ 		compactFieldNames := make(map[string]map[string]bool, len(extraShim.CompactFields))
+ 		for name, fields := range extraShim.CompactFields {
+ 			compactFieldNames[name] = make(map[string]bool, len(fields))
+@@ -1354,6 +1362,10 @@ func run() error {
+ 
+ 					var emitExtraStruct func(name string, s *types.Struct)
+ 					emitExtraStruct = func(name string, s *types.Struct) {
++						if emittedExtraStructs[name] {
++							return
++						}
++						emittedExtraStructs[name] = true
+ 						shimBuilder.WriteString("type extra_")
+ 						shimBuilder.WriteString(name)
+ 						shimBuilder.WriteString(" struct {")
+@@ -1364,7 +1376,8 @@ func run() error {
+ 						}){}
+ 						for field := range s.Fields() {
+ 							shimBuilder.WriteString("\n  ")
+-							if !field.Embedded() {
++							embeddedNamed, isNamed := field.Type().(*types.Named)
++							if !field.Embedded() || isNamed && !embeddedNamed.Obj().Exported() {
+ 								shimBuilder.WriteString(field.Name())
+ 								shimBuilder.WriteByte(' ')
+ 							}
+diff --git a/_tools/gen_shims/providers/typescript/checker/extra-shim.json b/_tools/gen_shims/providers/typescript/checker/extra-shim.json
+new file mode 100644
+index 00000000..68087e31
+--- /dev/null
++++ b/_tools/gen_shims/providers/typescript/checker/extra-shim.json
+@@ -0,0 +1,5 @@
++{
++  "ExtraMethods": {
++    "StructuredType": ["getIndexInfos"]
++  }
++}
+diff --git a/_tools/gen_shims/providers/typescript/checker/integration.go b/_tools/gen_shims/providers/typescript/checker/integration.go
+index 744794c0..5ac2cc43 100644
+--- a/_tools/gen_shims/providers/typescript/checker/integration.go
++++ b/_tools/gen_shims/providers/typescript/checker/integration.go
+@@ -78,7 +78,7 @@ func GetResolvedTypeFromTypeNode(c *Checker, node *ast.Node) *Type {
+ 	if node == nil {
+ 		return nil
+ 	}
+-	store := Checker_typeNodeLinks(c)
++	store := (*NodeLinkStore[TypeNodeLinks])(unsafe.Pointer(&(*extra_Checker)(unsafe.Pointer(c)).typeNodeLinks))
+ 	links := store.TryGet(node)
+ 	if links == nil {
+ 		return nil
+@@ -283,7 +283,7 @@ func GetResolvedIndexInfosOfTypeIfMaterialized(c *Checker, t *Type) ([]*IndexInf
+ 	if t == nil || t.Flags()&TypeFlagsObject == 0 || t.ObjectFlags()&ObjectFlagsMembersResolved == 0 {
+ 		return nil, false
+ 	}
+-	return StructuredType_indexInfos(t.AsStructuredType()), true
++	return StructuredType_getIndexInfos(t.AsStructuredType()), true
+ }
+ 
+ // GetInstantiatedSymbolMapper returns the mapper already recorded on an
