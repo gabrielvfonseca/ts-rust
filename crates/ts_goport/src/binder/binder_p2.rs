@@ -1526,6 +1526,20 @@ impl Binder {
             true_target,
             false_target,
         );
+        self.bind_condition_flows(node, true_target, false_target);
+    }
+
+    /// The end of `bind_condition`, after `node` is bound: the true and
+    /// false condition flows, unless `node` makes its own (a logical
+    /// expression or an outermost optional chain). The binary frames
+    /// (`bind_binary_expression_flow`) run it for an operand they bind.
+    #[inline]
+    pub fn bind_condition_flows(
+        &mut self,
+        node: Node,
+        true_target: FlowNodeId,
+        false_target: FlowNodeId,
+    ) {
         if node.is_nil()
             || !is_logical_assignment_expression(node)
                 && !is_logical_expression(node)
