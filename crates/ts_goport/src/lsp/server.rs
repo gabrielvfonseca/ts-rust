@@ -702,7 +702,7 @@ impl Server {
     }
 }
 
-// Go: server.go:360 content mapper registration IDs (tsgo#4712)
+// Go: server.go:361 contentMapperDidOpenRegistrationID and the other content mapper registration IDs (tsgo#4712)
 const CONTENT_MAPPER_DID_OPEN_REGISTRATION_ID: &str = "content-mapper-did-open";
 const CONTENT_MAPPER_DID_CHANGE_REGISTRATION_ID: &str = "content-mapper-did-change";
 const CONTENT_MAPPER_DID_CLOSE_REGISTRATION_ID: &str = "content-mapper-did-close";

@@ -179,7 +179,10 @@ push_paths() {
   local host ssh p keep
   ssh_route
   # The idle loop of run-testbox does not see this SSH route: touch its activity marker while we copy.
-  while :; do $ssh "runner@$host" touch .testbox-last-activity || true; sleep 60; done &
+  # Its stdio goes to /dev/null and fd 4 (our stderr) is closed: kill stops the loop, not its `sleep 60`,
+  # and a sleep that holds the caller's stdout or stderr keeps a pipe (testbox.sh push ... 2>&1 | tail)
+  # open for up to 60 s after the copy.
+  while :; do $ssh "runner@$host" touch .testbox-last-activity || true; sleep 60; done < /dev/null > /dev/null 2>&1 4>&- &
   keep=$!
   # shellcheck disable=SC2064 # expand now: keep is local, and the trap runs after the function returns
   trap "kill $keep 2>/dev/null || true" EXIT

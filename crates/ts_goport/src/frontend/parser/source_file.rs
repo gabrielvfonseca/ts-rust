@@ -165,7 +165,7 @@ impl ParsedSourceFile {
             .unwrap_or_else(|| xxhash_rust::xxh3::xxh3_128(self.text.as_bytes()))
     }
 
-    // Go: ast/ast.go:2703 FileName
+    // Go: ast/ast.go:2628 FileName
     #[must_use]
     pub fn file_name(&self) -> &str {
         &self.parse_options.file_name
@@ -234,7 +234,7 @@ impl ParsedSourceFile {
         source_file_span_map(self.root)
     }
 
-    // Go: ast/ast.go:2575 ContentMapper
+    // Go: ast/ast.go:2502 ContentMapper
     // ContentMapper returns the identity of the content mapper that produced this file, or "" if the file
     // was not produced by a content mapper (or the mapper did not identify itself).
     #[must_use]
@@ -242,7 +242,7 @@ impl ParsedSourceFile {
         source_file_content_mapper(self.root)
     }
 
-    // Go: ast/ast.go:2584 IsContentMapperFailureStub
+    // Go: ast/ast.go:2511 IsContentMapperFailureStub
     // IsContentMapperFailureStub reports whether this file is the empty placeholder produced when a content
     // mapper's transform failed.
     #[must_use]

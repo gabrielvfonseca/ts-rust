@@ -132,7 +132,7 @@ struct ProgramCheckers {
 }
 
 thread_local! {
-    // Go: checker/checker.go:583 nextCheckerID
+    // Go: checker/checker.go:586 nextCheckerID
     // PORT: every language-service checker is made on the dispatch thread,
     // so the Go atomic is a thread-local counter.
     static NEXT_CHECKER_ID: Cell<u32> = const { Cell::new(0) };
@@ -462,7 +462,7 @@ fn release_if_pending(version: &'static GoProgram) {
 // Program construction and release
 // ---------------------------------------------------------------------------
 
-// Go: compiler/program.go:313 NewProgram
+// Go: compiler/program.go:314 NewProgram
 // PORT: Go `opts.CreateCheckerPool` is the `create_checker_pool` argument.
 // The program does not keep it (ts#64519).
 // The frontend program parses with no current program, then becomes a
@@ -484,7 +484,7 @@ pub fn new_program(
     p
 }
 
-// Go: compiler/program.go:335 UpdateProgram
+// Go: compiler/program.go:336 UpdateProgram
 // PORT: `NewProgram::update_program` builds the new program. It
 // becomes a program version that shares the unchanged file versions of
 // `p`, and gets its checker pool here. Since ts#64519 the new program uses
@@ -570,7 +570,7 @@ fn release_now(key: usize) {
     crate::ast::free_synthetic_owner(version.id);
 }
 
-// Go: compiler/program.go:455 initCheckerPool
+// Go: compiler/program.go:456 initCheckerPool
 // PORT: `load_host` is not in Go (`ProgramCheckers::load_host`). Go ts#64519
 // passes the factory as an argument and does not keep it.
 fn init_checker_pool(
@@ -610,7 +610,7 @@ fn init_checker_pool(
     });
 }
 
-// Go: compiler/program.go:470 GetCheckerPool
+// Go: compiler/program.go:471 GetCheckerPool
 // GetCheckerPool returns the checker pool associated with this program.
 pub fn get_checker_pool(p: &NewProgram) -> Rc<dyn CheckerPool> {
     program_checkers(p).checker_pool.clone()
@@ -1455,7 +1455,7 @@ impl CompilerCheckerPool {
 // Program checker access (Go compiler/program.go:445-492)
 // ---------------------------------------------------------------------------
 
-// Go: compiler/program.go:595 BindSourceFiles
+// Go: compiler/program.go:600 BindSourceFiles
 // PORT: the Rust binder binds every file of the program version into one
 // arena (`program::bind_all`). A file version that an earlier version
 // bound is not bound again.
@@ -1468,7 +1468,7 @@ pub fn bind_source_files(p: &NewProgram) {
 // until the returned release runs (see the module comment), so the caller
 // uses the checker with its program current.
 
-// Go: compiler/program.go:611 GetTypeChecker
+// Go: compiler/program.go:616 GetTypeChecker
 // Return the type checker associated with the program.
 pub fn get_type_checker(p: &NewProgram, ctx: &Context) -> (Rc<RefCell<Checker>>, Release) {
     let program = enter(p);
@@ -1480,7 +1480,7 @@ pub fn get_type_checker(p: &NewProgram, ctx: &Context) -> (Rc<RefCell<Checker>>,
     (checker, program.with_release(release))
 }
 
-// Go: compiler/program.go:618 ForEachCheckerParallel
+// Go: compiler/program.go:623 ForEachCheckerParallel
 pub fn for_each_checker_parallel(p: &NewProgram, cb: &mut dyn FnMut(usize, &mut Checker)) {
     let _program = enter(p);
     let checkers = program_checkers(p);
@@ -1489,7 +1489,7 @@ pub fn for_each_checker_parallel(p: &NewProgram, cb: &mut dyn FnMut(usize, &mut 
     }
 }
 
-// Go: compiler/program.go:628 GetTypeCheckerForFile
+// Go: compiler/program.go:633 GetTypeCheckerForFile
 // Return a checker for the given file. We may have multiple checkers in concurrent scenarios and this
 // method returns the checker that was tasked with checking the file. Note that it isn't possible to mix
 // types obtained from different checkers, so only non-type data (such as diagnostics or string
@@ -1508,7 +1508,7 @@ pub fn get_type_checker_for_file(
     (checker, program.with_release(release))
 }
 
-// Go: compiler/program.go:637 GetTypeCheckerForFileExclusive
+// Go: compiler/program.go:642 GetTypeCheckerForFileExclusive
 // Return a checker for the given file, locked to the current thread to prevent data races from multiple threads
 // accessing the same checker. The lock will be released when the `done` function is called.
 pub fn get_type_checker_for_file_exclusive(
@@ -1543,7 +1543,7 @@ fn source_file_nodes(p: &NewProgram) -> Vec<Node> {
     p.files.iter().map(|file| file.root).collect()
 }
 
-// Go: compiler/program.go:691 collectDiagnostics
+// Go: compiler/program.go:696 collectDiagnostics
 // collectDiagnostics collects diagnostics from a single file or all files.
 // If sourceFile is non-nil, returns diagnostics for just that file.
 // If sourceFile is nil, returns diagnostics for all files in the program.
@@ -1565,7 +1565,7 @@ fn collect_diagnostics(
     filter_and_sort_diagnostics(result)
 }
 
-// Go: compiler/program.go:702 collectDiagnosticsFromFiles
+// Go: compiler/program.go:707 collectDiagnosticsFromFiles
 // PORT: Go runs the files on a WorkGroup. On the dispatch thread they run
 // one after another, in file order.
 fn collect_diagnostics_from_files(
@@ -1582,7 +1582,7 @@ fn collect_diagnostics_from_files(
     diagnostics
 }
 
-// Go: compiler/program.go:719 collectCheckerDiagnostics
+// Go: compiler/program.go:724 collectCheckerDiagnostics
 // collectCheckerDiagnostics collects diagnostics from a single file or all files,
 // using a callback that receives the checker for each file. When the checker pool
 // supports grouped iteration (compiler pool), files are grouped by checker and
@@ -1609,7 +1609,7 @@ fn collect_checker_diagnostics(
     filter_and_sort_diagnostics(diagnostics.into_iter().flatten().collect())
 }
 
-// Go: compiler/program.go:744 collectCheckerDiagnosticsFromFiles
+// Go: compiler/program.go:749 collectCheckerDiagnosticsFromFiles
 // collectCheckerDiagnosticsFromFiles collects checker diagnostics for a list of files.
 // PORT: Go runs the files of an external pool on a WorkGroup. On the
 // dispatch thread they run one after another, in file order.
@@ -1643,7 +1643,7 @@ fn collect_checker_diagnostics_from_files(
     diagnostics
 }
 
-// Go: compiler/program.go:767 GetSyntacticDiagnostics
+// Go: compiler/program.go:772 GetSyntacticDiagnostics
 pub fn get_syntactic_diagnostics(
     p: &NewProgram,
     ctx: &Context,
@@ -1675,7 +1675,7 @@ pub fn get_syntactic_diagnostics(
     )
 }
 
-// Go: compiler/program.go:811 GetBindDiagnostics
+// Go: compiler/program.go:816 GetBindDiagnostics
 // PORT: Go binds only `sourceFile` when it is set, else every file. The
 // Rust binder binds every file of the program version into one arena, so
 // both cases bind all files.
@@ -1691,7 +1691,7 @@ pub fn get_bind_diagnostics(p: &NewProgram, ctx: &Context, source_file: Node) ->
     )
 }
 
-// Go: compiler/program.go:822 GetSemanticDiagnostics
+// Go: compiler/program.go:827 GetSemanticDiagnostics
 pub fn get_semantic_diagnostics(
     p: &NewProgram,
     ctx: &Context,
@@ -1703,7 +1703,7 @@ pub fn get_semantic_diagnostics(
     })
 }
 
-// Go: compiler/program.go:828 GetSemanticDiagnosticsForIncremental
+// Go: compiler/program.go:833 GetSemanticDiagnosticsForIncremental
 // GetSemanticDiagnosticsForIncremental includes newly discovered globals in each
 // file's cached diagnostics and leaves noEmit filtering to the builder.
 pub fn get_semantic_diagnostics_for_incremental(
@@ -1726,7 +1726,7 @@ pub fn get_semantic_diagnostics_for_incremental(
     result
 }
 
-// Go: compiler/program.go:839 GetSuggestionDiagnostics
+// Go: compiler/program.go:844 GetSuggestionDiagnostics
 pub fn get_suggestion_diagnostics(
     p: &NewProgram,
     ctx: &Context,
@@ -1738,7 +1738,7 @@ pub fn get_suggestion_diagnostics(
     })
 }
 
-// Go: compiler/program.go:843 GetProgramDiagnostics
+// Go: compiler/program.go:848 GetProgramDiagnostics
 pub fn get_program_diagnostics(p: &NewProgram) -> Vec<Diagnostic> {
     let _program = enter(p);
     let mut diagnostics = p.program_diagnostics.clone();
@@ -1754,7 +1754,7 @@ pub fn get_program_diagnostics(p: &NewProgram) -> Vec<Diagnostic> {
     sort_and_deduplicate_diagnostics(diagnostics)
 }
 
-// Go: compiler/program.go:864 GetIncludeProcessorDiagnostics
+// Go: compiler/program.go:869 GetIncludeProcessorDiagnostics
 pub fn get_include_processor_diagnostics(p: &NewProgram, source_file: Node) -> Vec<Diagnostic> {
     let _program = enter(p);
     if skip_type_checking(p, source_file, false) {
@@ -1770,7 +1770,7 @@ pub fn get_include_processor_diagnostics(p: &NewProgram, source_file: Node) -> V
     filtered
 }
 
-// Go: compiler/program.go:872 SkipTypeChecking
+// Go: compiler/program.go:877 SkipTypeChecking
 pub fn skip_type_checking(p: &NewProgram, source_file: Node, ignore_no_check: bool) -> bool {
     let _program = enter(p);
     let options = p.options();
@@ -1783,7 +1783,7 @@ pub fn skip_type_checking(p: &NewProgram, source_file: Node, ignore_no_check: bo
         || !can_include_bind_and_check_diagnostics(p, source_file)
 }
 
-// Go: compiler/program.go:880 canIncludeBindAndCheckDiagnostics
+// Go: compiler/program.go:885 canIncludeBindAndCheckDiagnostics
 fn can_include_bind_and_check_diagnostics(p: &NewProgram, source_file: Node) -> bool {
     let info = source_file_info(source_file);
     if info.check_js_directive.is_some_and(|d| !d.enabled) {
@@ -1806,7 +1806,7 @@ fn can_include_bind_and_check_diagnostics(p: &NewProgram, source_file: Node) -> 
     is_plain_js || is_check_js
 }
 
-// Go: compiler/program.go:1479 GetGlobalDiagnostics
+// Go: compiler/program.go:1492 GetGlobalDiagnostics
 pub fn get_global_diagnostics(p: &NewProgram, ctx: &Context) -> Vec<Diagnostic> {
     let _program = enter(p);
     if p.files.is_empty() {
@@ -1821,7 +1821,7 @@ pub fn get_global_diagnostics(p: &NewProgram, ctx: &Context) -> Vec<Diagnostic> 
     Vec::new()
 }
 
-// Go: compiler/program.go:1491 GetDeclarationDiagnostics
+// Go: compiler/program.go:1504 GetDeclarationDiagnostics
 pub fn get_declaration_diagnostics(
     p: &NewProgram,
     ctx: &Context,
@@ -1837,7 +1837,7 @@ pub fn get_declaration_diagnostics(
     )
 }
 
-// Go: compiler/program.go:1642 getDeclarationDiagnosticsForFile
+// Go: compiler/program.go:1655 getDeclarationDiagnosticsForFile
 fn get_declaration_diagnostics_for_file(
     p: &NewProgram,
     ctx: &Context,
@@ -1894,7 +1894,7 @@ fn new_emit_host(p: &NewProgram, ctx: &Context, file: Node) -> (Rc<EmitHost>, Re
     (host, done)
 }
 
-// Go: compiler/program.go:1890 Program.Emit
+// Go: compiler/program.go:1903 Program.Emit
 // PORT: the language service form of `program_emit::emit` (#4710: the
 // language server flake check; the API emit methods call Go `Program.Emit`
 // too). Each file's emit host gets its checker from the checker pool of `p`
@@ -1966,7 +1966,7 @@ pub fn emit(p: &NewProgram, ctx: &Context, options: EmitOptions) -> EmitResult {
     combine_emit_results(results)
 }
 
-// Go: compiler/program.go:1999 HandleNoEmitOptions
+// Go: compiler/program.go:2012 HandleNoEmitOptions
 // PORT: the language service form of `program_emit::handle_no_emit_options`
 // (`Program.Emit` passes a nil `emitBuildInfo`). The bind, semantic, global
 // and declaration diagnostics come from `p` and its checker pool. The
@@ -2010,7 +2010,7 @@ fn handle_no_emit_options(
     Some(EmitResult::default())
 }
 
-// Go: compiler/program.go:1809 IsGlobalTypingsFile
+// Go: compiler/program.go:1822 IsGlobalTypingsFile
 pub fn is_global_typings_file(p: &NewProgram, file_name: &str) -> bool {
     if !tspath::is_declaration_file_name(file_name) {
         return false;

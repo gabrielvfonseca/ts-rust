@@ -2633,11 +2633,10 @@ fn new_ts_node(kind: SyntaxKind, data: BoxedData) -> crate::astdata::Node {
     }
 }
 
-/// Go `node.AsMutable().SetModifiers(modifiers)`.
+/// Go `node.AsMutable().SetModifiers(modifiers)`: the kinds that Go's switch
+/// lists get the list; other kinds (also EnumMember and FunctionType, whose
+/// data has a modifiers field) do nothing, as in Go.
 // Go: ast/ast_generated.go:11904 (n *MutableNode) SetModifiers
-// PORT: Go calls `setModifiers` for the kinds that its switch lists; other
-// kinds do nothing. The port also sets EnumMember and FunctionType, which
-// the Go list leaves out (`print_pack_copies_every_list_field` sets them).
 pub fn set_node_modifiers(n: Node, modifiers: ModifierList) {
     // astshrink1: the list goes into the list table of the node's owner.
     let mods = node_modifiers_value(n, modifiers);
@@ -2651,12 +2650,10 @@ pub fn set_node_modifiers(n: Node, modifiers: ModifierList) {
         BoxedData::ConstructorDeclaration(d) => d.modifiers = mods,
         BoxedData::ConstructorTypeNode(d) => d.modifiers = mods,
         BoxedData::EnumDeclaration(d) => d.modifiers = mods,
-        BoxedData::EnumMember(d) => d.modifiers = mods,
         BoxedData::ExportAssignment(d) => d.modifiers = mods,
         BoxedData::ExportDeclaration(d) => d.modifiers = mods,
         BoxedData::FunctionDeclaration(d) => d.modifiers = mods,
         BoxedData::FunctionExpression(d) => d.modifiers = mods,
-        BoxedData::FunctionTypeNode(d) => d.modifiers = mods,
         BoxedData::GetAccessorDeclaration(d) => d.modifiers = mods,
         BoxedData::ImportDeclaration(d) => d.modifiers = mods,
         BoxedData::ImportEqualsDeclaration(d) => d.modifiers = mods,
@@ -3306,6 +3303,37 @@ mod tests {
         .expect("test thread panicked");
     }
 
+    // Go `SetModifiers` (ast_generated.go:11904) has a case for 31 kinds.
+    // An enum member and a function type have a modifiers field, but Go has
+    // no case for them, so the call leaves them as they were. A kind with a
+    // case (a type parameter) gets the list.
+    #[test]
+    fn set_node_modifiers_skips_the_kinds_that_go_skips() {
+        std::thread::spawn(|| {
+            let f = NodeFactory::new();
+            let mods = f.new_modifier_list(&[f.new_modifier(SyntaxKind::ExportKeyword)]);
+            let member = f.new_enum_member(f.new_identifier("a"), Node::NIL);
+            let any = f.new_keyword_type_node(SyntaxKind::AnyKeyword);
+            let function_type = f.new_function_type_node(NodeList::NIL, f.new_node_list(&[]), any);
+            let t = f.new_type_parameter_declaration(
+                ModifierList::NIL,
+                f.new_identifier("T"),
+                Node::NIL,
+                Node::NIL,
+                Node::NIL,
+            );
+            for n in [member, function_type, t] {
+                set_node_modifiers(n, mods);
+            }
+            assert!(member.modifiers().is_nil());
+            assert!(function_type.modifiers().is_nil());
+            assert_eq!(t.modifiers().nodes().len(), 1);
+            free_synthetic_nodes();
+        })
+        .join()
+        .expect("test thread panicked");
+    }
+
     // `set_node_modifiers` on a synthetic node puts the new list in the
     // owner of the node, with its new data, not in the current owner. A
     // base node or a program node changed in a file scope, and a base node
@@ -3322,7 +3350,15 @@ mod tests {
             let f = NodeFactory::new();
             let export = f.new_modifier(SyntaxKind::ExportKeyword);
             let mods = f.new_modifier_list(&[export]);
-            let member = |name: &str| f.new_enum_member(f.new_identifier(name), Node::NIL);
+            let member = |name: &str| {
+                f.new_type_parameter_declaration(
+                    ModifierList::NIL,
+                    f.new_identifier(name),
+                    Node::NIL,
+                    Node::NIL,
+                    Node::NIL,
+                )
+            };
             let (in_program, in_file) = (member("a"), member("b"));
 
             open_synthetic_owner(program.id);

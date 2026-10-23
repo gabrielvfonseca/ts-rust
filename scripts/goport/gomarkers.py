@@ -5,12 +5,13 @@ usage: gomarkers.py [options] PATH...   (PATH: .rs files, or dirs to walk for .r
        gomarkers.py help
 
 Forms:
-  marker  `// Go: <path>.go:<N> <Name>` (also `///` and `//!`). One line can hold
-          several refs, and a short `:<N> <Name>` after a full ref uses its file.
+  marker  `// Go: <path>.go:<N> <Name>` (also `///` and `//!`, any space before
+          `Go:`). One line can hold several refs, and a short `:<N> <Name>`
+          after a full ref uses its file.
   cont    the `//` comment lines that follow a marker line, up to the next code
           line, blank line or marker line. Refs there have the same forms.
-Numbers: `N`, `N-M`, `N-:M`, `N,K`. Only the first number is checked. A bare
-file name after a full path in the same comment looks in that dir first.
+Numbers: `N`, `N-M`, `N-:M`, `N,K`. A bare file name after a full path in the
+same comment looks in that dir first.
 Names: `F`, `(*T).M`, `(t *T) M`, `T.M`, `a.b.F(args)`, in backticks or not; a
 backticked snake_case name is Rust (no name). With no name after the ref, a
 backticked Go name just before it counts (`` `F` (x.go:N) ``). `Name: <text>`
@@ -18,17 +19,27 @@ cites a line inside Name's body. `TestF/sub words` passes when the line holds
 `"sub`. On a cont line, a plain word that the Go file does not declare is
 prose: NONAME.
 
-A ref is ok when line N of the cited Go file holds Name as a word, and the line
-is not the declaration of another func or type. The file is found by path
-suffix in the Go tree, then in $GOROOT/src and in the golang.org/x/sys version
-of the tree's go.mod (a Rust file whose `//!` header names x/sys uses that
-version). A ref followed by `at <sha>` (on its line or the next comment line,
-before the next ref), or just after `at <sha>`, is checked in the tree of that
-pin. When several files match, one is enough.
+A ref is ok when the code of line N of the cited Go file (not a comment or a
+string on it) declares or calls Name:
+  declares  `func Name`; a method `func (r *T) Name` (for `(*T).Name` or `T.Name`
+            a method or field of T when T has one); `type`, `var` or `const
+            Name` (also inside a func); `Name :=` (also `x, Name :=`); a struct
+            field or a group entry `Name ...`
+  calls     `Name(`, `Name[T](` or a composite literal `Name{`, on a line that
+            does not declare another func or type
+In a list `N,K` every number must hold. The end M of a range `N-M` (or `N-:M`)
+must be at least N and lie in the body of a declaration of Name (any one: a
+range can cover several methods of one name) or, when line N calls Name, in
+the declaration that holds line N. With `Name:`, every number lies in Name's
+body. The file is found by path suffix in the Go tree, then in $GOROOT/src and
+in the golang.org/x/sys version of the tree's go.mod (a Rust file whose `//!`
+header names x/sys uses that version). A ref followed by `at <sha>` (on its
+line or the next comment line, before the next ref), or just after `at <sha>`,
+is checked in the tree of that pin. When several files match, one is enough.
 
-Kinds: ok; STALE (Name not on line N; its declarations are listed); NOTFOUND
-(Name is not declared in the file); NONAME (nothing to check: by hand);
-EXTERNAL (no such file, no tree for the pin, or `with #NNNN`: a PR tree).
+Kinds: ok; STALE (a number does not hold; Name's declarations are listed);
+NOTFOUND (Name is not declared in the file); NONAME (nothing to check: by
+hand); EXTERNAL (no such file, no tree for the pin, or `with #NNNN`: a PR tree).
 
 options:
   --pin KEY   Go tree of pin KEY (UPSTREAM.json "pins"). Default: $GOPORT_PIN.
@@ -37,7 +48,7 @@ options:
   --from KEY  for a STALE or NOTFOUND ref that is ok at pin KEY, map its line to
               the current tree (git diff --histogram): MOVED N -> M when the line
               text did not change. A NONAME ref gets the mapped line as a note.
-  --fix       with --from: write each MOVED number in place (not ranges).
+  --fix       with --from: write each MOVED number in place (not ranges or lists).
   --tsv FILE  write every ref (ok too): file, line, form, kind, ref, name, note.
   --verbose   also print the NONAME and EXTERNAL refs.
 
@@ -181,22 +192,83 @@ def decl_lines(p, ident, recv):
     return out
 
 
+STRLIT = re.compile(r'"(?:[^"\\]|\\.)*"|`[^`]*`|\'(?:[^\'\\]|\\.)*\'')
+
+
+def code_of(l):
+    """A Go line without its comments, with each string and rune literal emptied."""
+    return re.sub(r'/\*.*?\*/', ' ', STRLIT.sub('""', l)).split('//', 1)[0]
+
+
 def body_end(p, d):
+    """The last line of the declaration at line d: d for a one-line declaration, the `)` of a `type (`, `var (`
+    or `const (` group, else the first `}` (for a func) or `}` or `)` (other) at column 0 after d."""
     ls = lines_of(p)
-    return next((i for i in range(d, len(ls) + 1) if ls[i - 1].startswith('}')), d)
+    c = code_of(ls[d - 1])
+    if re.match(r'^\s*(?:type|var|const)\s*\(\s*$', c):
+        close = r'^\)'
+    elif c.count('{') == c.count('}') and c.count('(') == c.count(')'):
+        return d
+    else:
+        close = r'^\}' if c.lstrip().startswith('func') else r'^[})]'
+    return next((i for i in range(d + 1, len(ls) + 1) if re.match(close, ls[i - 1])), d)
+
+
+def declares(p, n, ident, recv):
+    """Line n of p declares ident: a func or a method of recv (a method of another type does not count), a
+    `type`, `var` or `const` (also inside a func), `ident :=` (also `x, ident :=`), a struct field or a
+    `const`, `var` or `type` group entry."""
+    if n in decl_lines(p, ident, recv):
+        return True
+    c = code_of(lines_of(p)[n - 1])
+    w = re.escape(ident)
+    if c.startswith('func '):
+        return False  # decl_lines has every func and method that declares ident
+    return bool(re.match(r'^\s*(?:type|var|const)\s+' + w + r'\b', c) or
+                re.match(r'^\s*(?:\w+\s*,\s*)*' + w + r'(?:\s*,\s*\w+)*\s*:=', c) or
+                re.match(r'^\s+' + w + r'(?:\s*,\s*\w+)*(?:\s+[\w*\[(]|\s*=[^=]|\s*$)', c))
+
+
+def calls(p, n, ident):
+    """Line n of p calls ident: `ident(`, `ident[T](` or a composite literal `ident{` in its code (not in a
+    comment or string), on a line that does not declare another func or type."""
+    l = lines_of(p)[n - 1]
+    if re.match(r'^(?:func |type )', l):
+        return False
+    return bool(re.search(r'(?<!\w)' + re.escape(ident) + r'(?:\[[^\]\n]*\])?[({]', code_of(l)))
 
 
 def holds(p, n, ident, recv, stmt):
-    """Line n of p holds ident (strict: not the declaration of another func or type)."""
+    """Line n of p holds ident: the line declares or calls it, or (stmt) lies in the body of its declaration."""
     ls = lines_of(p)
     if n < 1 or n > len(ls):
         return False
     if stmt:
         return any(d <= n <= body_end(p, d) for d in decl_lines(p, ident, recv))
-    l = ls[n - 1]
-    if not re.search(r'(?<!\w)' + re.escape(ident) + r'(?!\w)', l):
+    return declares(p, n, ident, recv) or calls(p, n, ident)
+
+
+def outer_decl(p, n):
+    """The first line of the top-level declaration that holds line n, or None."""
+    ls = lines_of(p)
+    for d in range(min(n, len(ls)), 0, -1):
+        if re.match(r'^(?:func|type|var|const)\b', ls[d - 1]):
+            return d if n <= body_end(p, d) else None
+    return None
+
+
+def end_holds(p, n, m, ident, recv, stmt):
+    """The last number m of a range n-m: n <= m, and m lies in the body of a declaration of ident (any one: a
+    range can cover several methods of one name) or, when line n calls ident, in the top-level declaration
+    that holds line n."""
+    if not n <= m <= len(lines_of(p)):
         return False
-    return not re.match(r'^(?:func |type )', l) or n in decl_lines(p, ident, recv)
+    spans = [(d, body_end(p, d)) for d in decl_lines(p, ident, recv)]
+    if not stmt and not declares(p, n, ident, recv):
+        o = outer_decl(p, n)
+        if o:
+            spans.append((o, body_end(p, o)))
+    return any(a <= m <= b for a, b in spans)
 
 
 hunks = {}
@@ -235,6 +307,7 @@ TREE = re.compile(r'\s+with\s+#\d+')
 BEFORE = re.compile(r'`([A-Za-z_][\w.()*]*)`\s*\(\s*$')
 AHEAD = re.compile(r'\s*(?:[\w./-]*\.go)?:\d')
 SUBTEST = re.compile(r'^`?Test\w*/([^\s`_]+)')
+MARK = re.compile(r'\s*//[/!]?\s*Go:')
 STOP = {'the', 'a', 'an', 'in', 'of', 'and', 'see', 'which', 'from', 'case', 'func', 'to', 'ts', 'tsgo', 'interface',
         'package', 'var', 'root', 'constants', 'lists', 'with', 'or', 'at', 'for', 'is', 'set', 'when', 'then',
         'plus', 'after', 'before', 'on', 'by', 'as', 'if', 'not', 'into', 'that', 'this', 'it', 'its', 'also',
@@ -299,7 +372,7 @@ def comment_lines(src):
     form = None
     for idx, line in enumerate(src):
         s = line.strip()
-        if re.match(r'\s*//[/!]?\s*Go:', line):
+        if MARK.match(line):
             form = 'marker'
         elif form and s.startswith('//'):
             form = 'cont'
@@ -327,14 +400,34 @@ def pin_for(ctx, line, refs, k):
     return None
 
 
-def ok_in(files, n, ident, recv, stmt, sub):
-    """Line n of one of the files holds the name (a subtest: its name in a string)."""
+def line_ok(f, n, ident, recv, stmt, sub):
+    """Line n of f holds the name (a subtest: its name in a string)."""
+    if holds(f, n, ident, recv, stmt):
+        return True
+    return bool(sub) and n <= len(lines_of(f)) and '"' + sub in lines_of(f)[n - 1]
+
+
+def ok_in(files, n, ident, recv, stmt, sub, rng=''):
+    """One of the files holds the name at every number of the ref: n, each `,K`, and the end `-M` of a range."""
+    return not range_fault(files, n, ident, recv, stmt, sub, rng)
+
+
+def range_fault(files, n, ident, recv, stmt, sub, rng):
+    """'' when one of the files holds the ref at every number, else why not (for the first file that holds n)."""
+    why = f'line {n}'
     for f in files:
-        if holds(f, n, ident, recv, stmt):
-            return True
-        if sub and n <= len(lines_of(f)) and '"' + sub in lines_of(f)[n - 1]:
-            return True
-    return False
+        if not line_ok(f, n, ident, recv, stmt, sub):
+            continue
+        bad = [k for k in map(int, re.findall(r',(\d+)', rng)) if not line_ok(f, k, ident, recv, stmt, sub)]
+        if bad:
+            why = 'list ' + ','.join(map(str, bad))
+            continue
+        m = re.match(r'-:?(\d+)', rng)
+        if m and not end_holds(f, n, int(m.group(1)), ident, recv, stmt):
+            why = f'range end {m.group(1)}'
+            continue
+        return ''
+    return why
 
 
 counts, rows, bad = {}, [], 0
@@ -362,7 +455,7 @@ for rf in rust_files(paths):
         ctx = line
         if idx + 1 < len(src) and re.match(r'^\s*//(?! Go:)', src[idx + 1]):
             ctx += ' ' + src[idx + 1].strip()
-        start = line.find('// Go:') + 6 if form == 'marker' else line.find('//') + 2
+        start = MARK.match(line).end() if form == 'marker' else line.find('//') + 2
         refs = list(REF.finditer(line, start))
         for k, r in enumerate(refs):
             path = r.group(1) or cur
@@ -412,7 +505,8 @@ for rf in rust_files(paths):
                             break
                 report(rf, idx, form, 'NONAME', ref, name, note)
                 continue
-            if ok_in(files, n, ident, recv, stmt, sub):
+            fault = range_fault(files, n, ident, recv, stmt, sub, rng)
+            if not fault:
                 report(rf, idx, form, 'ok', ref, name)
                 continue
             decls = sorted({(f, d) for f in files for d in decl_lines(f, ident, recv)})
@@ -420,13 +514,13 @@ for rf in rust_files(paths):
                 report(rf, idx, form, 'NONAME', ref, name, 'a word, not a name of the file')
                 continue
             kind = 'STALE' if decls else 'NOTFOUND'
-            notes = []
+            notes = [] if fault == f'line {n}' else [f'{fault} does not hold']
             if decls:
                 notes.append('decls ' + ', '.join(f'{f.rsplit("/", 1)[-1]}:{d}' for f, d in decls[:6]))
             if from_dir and not pm and not extra:
                 for a in candidates(from_dir, path):
                     b = os.path.join(root, os.path.relpath(a, from_dir))
-                    if not (os.path.exists(b) and ok_in([a], n, ident, recv, stmt, sub)):
+                    if not (os.path.exists(b) and ok_in([a], n, ident, recv, stmt, sub, rng)):
                         continue
                     m, same = map_line(a, b, n)
                     if same and ok_in([b], m, ident, recv, stmt, sub):
@@ -439,7 +533,7 @@ for rf in rust_files(paths):
                     break
             if '--older' in opts and kind != 'MOVED' and not pm and not extra:
                 for key, d in OLDER:
-                    if ok_in(candidates(d, path), n, ident, recv, stmt, sub):
+                    if ok_in(candidates(d, path), n, ident, recv, stmt, sub, rng):
                         notes.append(f'ok at {key}')
                         break
                 else:

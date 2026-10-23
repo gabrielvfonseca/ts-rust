@@ -14,6 +14,8 @@
 use crate::prelude::*;
 use crate::printer::{EmitContext, EmitFlags, SymbolAccessibility};
 
+use super::emit_resolver_p1::get_meaning_of_entity_name_reference;
+
 // PORT: private accessors for NodeBuilderImpl fields (owned by U11). Clone
 // the handle out, then drop the borrow before any Checker call.
 fn nb_ctx(b: &Rc<RefCell<NodeBuilderImpl>>) -> Rc<RefCell<NodeBuilderContext>> {
@@ -521,38 +523,6 @@ impl Checker {
         }
         enc
     }
-}
-
-// Go: checker/emitsupport.go:136 getMeaningOfEntityNameReference
-// PORT: a private copy of the one in emit_resolver_p1.rs (Go has one
-// function). Keep the two the same.
-fn get_meaning_of_entity_name_reference(entity_name: Node) -> SymbolFlags {
-    let parent = entity_name.parent();
-    // get symbol of the first identifier of the entityName
-    if parent.kind() == SyntaxKind::TypeQuery
-        || parent.kind() == SyntaxKind::ExpressionWithTypeArguments && !is_part_of_type_node(parent)
-        || parent.kind() == SyntaxKind::ComputedPropertyName
-        || parent.kind() == SyntaxKind::TypePredicate && parent.parameter_name() == entity_name
-        || parent.kind() == SyntaxKind::BinaryExpression
-    {
-        // Typeof value
-        return SymbolFlags::VALUE | SymbolFlags::EXPORT_VALUE;
-    }
-    if entity_name.kind() == SyntaxKind::QualifiedName
-        || entity_name.kind() == SyntaxKind::PropertyAccessExpression
-        || parent.kind() == SyntaxKind::ImportEqualsDeclaration
-        || (parent.kind() == SyntaxKind::QualifiedName && parent.left() == entity_name)
-        || (parent.kind() == SyntaxKind::PropertyAccessExpression
-            && parent.expression() == entity_name)
-        || (parent.kind() == SyntaxKind::ElementAccessExpression
-            && parent.expression() == entity_name)
-    {
-        // Left identifier from type reference or TypeAlias
-        // Entity name of the import declaration
-        return SymbolFlags::NAMESPACE;
-    }
-    // Type Reference or TypeAlias entity = Identifier
-    SymbolFlags::TYPE
 }
 
 // Go: checker/nodecopy.go:292 getExistingNodeTreeVisitor

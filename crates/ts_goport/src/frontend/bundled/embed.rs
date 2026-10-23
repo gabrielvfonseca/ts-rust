@@ -251,7 +251,7 @@ fn new_file_info(name: &str, mode: FileMode, size: i64) -> FileInfo {
     }
 }
 
-// Go: embed_generated.go:242 embeddedContents
+// Go: embed_generated.go:244 embeddedContents
 // PORT: the Go map is built once from `EMBEDDED_CONTENTS`.
 #[cfg(not(target_family = "wasm"))]
 fn embedded_contents(rest: &str) -> Option<&'static str> {
@@ -266,7 +266,7 @@ fn embedded_contents(rest: &str) -> Option<&'static str> {
     .copied()
 }
 
-// Go: embed_generated.go:242 embeddedContents
+// Go: embed_generated.go:244 embeddedContents
 // PORT: wasm unpacks the one stream of build.rs (`libs.lzma`, the libs in
 // `PACKED_LIBS` order) on first use, all of it, and keeps the texts for the
 // life of the process. The reader goes with its 3.8 MB window. Unpacking

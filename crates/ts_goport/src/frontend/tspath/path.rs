@@ -1864,6 +1864,50 @@ pub fn contains_path(parent: &str, child: &str, options: &ComparePathsOptions) -
     true
 }
 
+// Go: tspath/rooted_path.go:549 CaseSensitivity.ContainsFilePath, :553
+// ContainsPath and :575 trimContainedPath (the bool result)
+// PORT: Go takes typed rooted paths. `parent` and `child` are rooted and
+// normalized, as Go's types are: this does not combine or reduce them
+// (`contains_path` does, for the callers with strings of any form).
+pub fn contains_rooted_path(
+    parent: &str,
+    child: &str,
+    mut use_case_sensitive_file_names: bool,
+) -> bool {
+    if parent.is_empty() || child.is_empty() {
+        return false;
+    }
+    let parent_root_length = get_root_length(parent);
+    let child_root_length = get_root_length(child);
+    let mut parent_root = &parent[..parent_root_length];
+    let mut child_root = &child[..child_root_length];
+    let dynamic = is_encoded_dynamic_file_name(parent) || is_encoded_dynamic_file_name(child);
+    if dynamic {
+        parent_root = parent_root.strip_suffix('/').unwrap_or(parent_root);
+        child_root = child_root.strip_suffix('/').unwrap_or(child_root);
+        use_case_sensitive_file_names = true;
+    }
+    let roots_equal = if dynamic {
+        parent_root == child_root
+    } else {
+        equate_string_case_insensitive(parent_root, child_root)
+    };
+    if !roots_equal {
+        return false;
+    }
+    let Some(relative) = trim_file_path_prefix(
+        &child[child_root_length..],
+        &parent[parent_root_length..],
+        use_case_sensitive_file_names,
+    ) else {
+        return false;
+    };
+    relative.is_empty()
+        || has_trailing_directory_separator(parent)
+        || parent.len() == parent_root_length
+        || relative.starts_with('/')
+}
+
 impl Path {
     // Go: tspath/path.go:1111 Path.ContainsPath
     // ContainsPath checks whether child is contained within or equal to p.

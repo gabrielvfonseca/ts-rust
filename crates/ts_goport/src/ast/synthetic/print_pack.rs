@@ -256,21 +256,32 @@ mod tests {
     }
 
     // A pack copies every list field of its nodes, also the ones that
-    // `for_each_child` skips: the modifiers that `set_node_modifiers` gives
-    // an enum member or a function type, and the type parameters of an
-    // index signature. The twin reads them and their nodes.
+    // `for_each_child` skips: the modifiers field of an enum member or a
+    // function type, and the type parameters of an index signature. The twin
+    // reads them and their nodes. No factory call fills these fields (Go
+    // `SetModifiers` has no case for the two kinds), so the test writes them.
     #[test]
     fn print_pack_copies_every_list_field() {
         std::thread::spawn(|| {
             let f = NodeFactory::new();
             let shared = share_synthetic_chunks();
+            let set_modifiers_field = |n: Node, modifiers: ModifierList| {
+                let mods = node_modifiers_value(n, modifiers);
+                let mut data = with_ast_data(n, |d| d.to_boxed());
+                match &mut data {
+                    BoxedData::EnumMember(d) => d.modifiers = mods,
+                    BoxedData::FunctionTypeNode(d) => d.modifiers = mods,
+                    _ => unreachable!("an enum member or a function type"),
+                }
+                replace_node_data(n, data);
+            };
             let export = f.new_modifier(SyntaxKind::ExportKeyword);
             let member = f.new_enum_member(f.new_identifier("a"), Node::NIL);
-            set_node_modifiers(member, f.new_modifier_list(&[export]));
+            set_modifiers_field(member, f.new_modifier_list(&[export]));
             let readonly = f.new_modifier(SyntaxKind::ReadonlyKeyword);
             let any = f.new_keyword_type_node(SyntaxKind::AnyKeyword);
             let function_type = f.new_function_type_node(NodeList::NIL, f.new_node_list(&[]), any);
-            set_node_modifiers(function_type, f.new_modifier_list(&[readonly]));
+            set_modifiers_field(function_type, f.new_modifier_list(&[readonly]));
             let t = f.new_type_parameter_declaration(
                 ModifierList::NIL,
                 f.new_identifier("T"),

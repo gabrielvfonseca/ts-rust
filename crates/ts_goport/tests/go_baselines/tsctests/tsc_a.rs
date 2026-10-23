@@ -52,9 +52,9 @@ declare const console: { log(msg: any): void; };
     )
 }
 
-// Go: tsc_test.go:15 TestTscCommandline
+// Go: tsc_test.go:58 TestTscCommandline
 fn tsc_commandline_inputs() -> Vec<TscInput> {
-    // Go: tsc_test.go:17 colorTest (ts#63941)
+    // Go: tsc_test.go:60 colorTest (ts#63941)
     let color_test = |sub_scenario: &str, env: &[(&str, &str)], output_is_tty: bool| TscInput {
         sub_scenario: sub_scenario.into(),
         files: file_map! {
