@@ -1281,7 +1281,8 @@ pub struct Checker {
     pub effect_relation_errors: FxHashMap<Node, Vec<crate::effect::RelationError>>,
     /// Rust-only: the work stack of `check_binary_like_expression` (issue
     /// #99). Go checks each operand that is a BinaryExpression by
-    /// recursion; here it gets a frame. Empty between checks.
+    /// recursion; here it gets a frame. Empty between checks, and it keeps
+    /// the memory of at most `KEEP_BINARY_FRAMES` frames (checker_p14.rs).
     pub binary_frames: Vec<CheckBinaryFrame>,
 }
 

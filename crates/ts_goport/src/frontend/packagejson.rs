@@ -1235,7 +1235,7 @@ impl InfoCache {
     // A pending read of the key (`add_pending`) is a parse worker's read
     // from earlier in the load, which Go's shared cache stored first, so it
     // becomes the entry and `info` is dropped. The one caller
-    // (`get_package_json_info`, module/resolver.go:1755) calls `get` first,
+    // (`get_package_json_info`, module/resolver.go:1985) calls `get` first,
     // which takes the pending read, and adds no pending read between its
     // `get` and `set`, so it never meets one here.
     pub fn set(&self, package_json_path: &str, info: Rc<InfoCacheEntry>) -> Rc<InfoCacheEntry> {

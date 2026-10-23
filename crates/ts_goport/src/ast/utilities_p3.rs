@@ -699,8 +699,8 @@ pub fn get_enclosing_block_scope_container(node: Node) -> Node {
 }
 
 // Go: ast/utilities.go:2306 IsBlockScope
-// Kept as the port of the Go function. Its one Go caller at fed0bf24149f,
-// GetEnclosingBlockScopeContainer (utilities.go:2251), is ported above and
+// Kept as the port of the Go function. Its one Go caller,
+// GetEnclosingBlockScopeContainer (utilities.go:2300), is ported above and
 // runs the same tests by kind (`is_block_scope_kind`), so no crate code
 // calls this form since checkid1.
 pub fn is_block_scope(node: Node, parent_node: Node) -> bool {

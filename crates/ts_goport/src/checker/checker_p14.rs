@@ -1697,11 +1697,13 @@ impl Checker {
     // its value is discarded (e.g. the left side of the comma operator).
     // Go: checker/checker.go:13252 isSideEffectFree
     // PORT: issue #99. Go recurses on both operands of a BinaryExpression
-    // and both branches of a ConditionalExpression, so a long comma chain
-    // recurses once for each level. The function has no effects, so here
-    // the first operand (Right, WhenTrue) is checked first and the loop goes
-    // on with the other: the same result, with no recursion down a Left
-    // spine.
+    // (Left, then Right) and on both branches of a ConditionalExpression
+    // (WhenTrue, then WhenFalse), so a long comma chain recurses once for
+    // each level of its Left spine. Here a BinaryExpression checks its Right
+    // by a recursive call and the loop goes on with its Left, and a
+    // ConditionalExpression checks its WhenTrue by a recursive call and the
+    // loop goes on with its WhenFalse. The function has no effects, so the
+    // result is Go's in any order.
     pub fn is_side_effect_free(&self, node: Node) -> bool {
         let mut node = node;
         loop {
@@ -1891,10 +1893,19 @@ struct CheckFrames<'a> {
     base: usize,
 }
 
+/// The most frames whose memory `Checker::binary_frames` keeps when an
+/// outer chain ends (72 B each, 72 KiB). After a longer chain the memory
+/// goes back, as a checker can live long (LSP). A shorter chain, almost all
+/// code, keeps it and pays one compare.
+const KEEP_BINARY_FRAMES: usize = 1024;
+
 impl Drop for CheckFrames<'_> {
     fn drop(&mut self) {
         while self.c.binary_frames.len() > self.base {
             self.c.binary_frames.pop();
+        }
+        if self.base == 0 && self.c.binary_frames.capacity() > KEEP_BINARY_FRAMES {
+            self.c.binary_frames = Vec::new();
         }
     }
 }
@@ -1992,10 +2003,10 @@ impl<'a> CheckFrames<'a> {
 /// thread stack (a wasm host has about 1 MB), with Go's diagnostics. Go and
 /// the port before the binary frames recursed for each level: natively
 /// about 320 B (bind) and 540 B (check) for each level, so 20,000 levels
-/// needed 6 and 11 MB. Each test checks one file in a program of its own
+/// needed 6 and 11 MB. Each test loads one file in a program of its own
 /// (`singleThreaded`, so the bind runs on the test's thread): after a
 /// TS2563, Go's checker skips flow analysis for the rest of its files. The
-/// expected text is the output of tsgo-oracle-3e9236361fa9
+/// expected diagnostics are the output of tsgo-oracle-3e9236361fa9
 /// (typescript@7.1.0-beta) on the same file and options, with
 /// `--pretty false`.
 #[cfg(test)]
@@ -2014,10 +2025,16 @@ mod binary_chain_tests {
     /// A 1 MiB thread stack.
     const SMALL_STACK: usize = 1 << 20;
 
-    /// The diagnostics of `text` as file `name`, from a bind and a check on
-    /// a thread with a `stack`-byte stack, one line each as tsc prints them,
-    /// with the file name only.
-    fn check_on_a_stack(stack: usize, name: &'static str, text: String) -> Vec<String> {
+    /// `f` with a new checker and the root of file `name` (text `text`), in
+    /// a program of its own, on a thread with a `stack`-byte stack. The
+    /// program loads on that thread too (`singleThreaded`, so the bind runs
+    /// there).
+    fn on_a_stack<R: Send + 'static>(
+        stack: usize,
+        name: &'static str,
+        text: String,
+        f: impl FnOnce(&mut Checker, Node) -> R + Send + 'static,
+    ) -> R {
         static CALLS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
         let call = CALLS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let dir =
@@ -2042,27 +2059,15 @@ mod binary_chain_tests {
                 .expect("the file is in the program")
                 .root;
             let mut checker = Box::new(Checker::new(0));
-            let diagnostics = crate::program::sort_and_deduplicate_diagnostics(
-                crate::program::get_semantic_diagnostics_with_checker(
-                    &crate::gostd::context::background(),
-                    &mut checker,
-                    file,
-                ),
-            );
-            let lines: Vec<String> = diagnostics
-                .iter()
-                .map(|d| {
-                    let line = crate::program::format_diagnostic(d);
-                    let at = line.find(name).expect("the line names the file");
-                    line[at..].trim_end().to_string()
-                })
-                .collect();
+            let result = f(&mut checker, file);
+            // A chain longer than KEEP_BINARY_FRAMES gave its memory back.
+            assert!(checker.binary_frames.capacity() <= KEEP_BINARY_FRAMES);
             drop(checker);
             drop(scope);
             crate::program::release_program(program);
-            lines
+            result
         };
-        let lines = std::thread::Builder::new()
+        let result = std::thread::Builder::new()
             .name(format!("stack99-{name}"))
             .stack_size(stack)
             .spawn(run)
@@ -2070,7 +2075,42 @@ mod binary_chain_tests {
             .join()
             .unwrap();
         let _ = std::fs::remove_dir_all(&dir);
-        lines
+        result
+    }
+
+    /// The diagnostics of `text` as file `name`, from a bind and a check on
+    /// a thread with a `stack`-byte stack, one line each as tsc prints them,
+    /// with the file name only.
+    fn check_on_a_stack(stack: usize, name: &'static str, text: String) -> Vec<String> {
+        on_a_stack(stack, name, text, move |checker, file| {
+            let diagnostics = crate::program::sort_and_deduplicate_diagnostics(
+                crate::program::get_semantic_diagnostics_with_checker(
+                    &crate::gostd::context::background(),
+                    checker,
+                    file,
+                ),
+            );
+            diagnostics
+                .iter()
+                .map(|d| {
+                    let line = crate::program::format_diagnostic(d);
+                    let at = line.find(name).expect("the line names the file");
+                    line[at..].trim_end().to_string()
+                })
+                .collect()
+        })
+    }
+
+    /// The initializer of the last statement of `file`, a variable
+    /// statement.
+    fn last_initializer(file: Node) -> Node {
+        let statement = file.statements().last().expect("a statement");
+        statement
+            .declaration_list()
+            .declarations()
+            .nodes()
+            .get(0)
+            .initializer()
     }
 
     /// `declare const v: number;` then `export const <name> = <body>;` for
@@ -2152,6 +2192,39 @@ mod binary_chain_tests {
             19_999
         ];
         assert_eq!(check_on_a_stack(SMALL_STACK, "comma.ts", text), expected);
+    }
+
+    /// Terms for the M1 and M2 tests. Go recurses once for each level, and a
+    /// recursive call takes at least 16 B of stack on every target, so the
+    /// recursion would need at least 1.6 MB.
+    const LOOP_TERMS: usize = 100_000;
+
+    /// M1 alone: one call of `is_side_effect_free` on a comma chain. Go
+    /// recurses down its Left spine, and without the loop this test
+    /// overflows the stack. (A check of the whole chain calls the function
+    /// at each level, which takes quadratic time, as in Go.)
+    #[test]
+    fn side_effect_free_loops_down_a_comma_chain() {
+        let text = total(format!("({})", chain(LOOP_TERMS, ", ", &[])));
+        let free = on_a_stack(SMALL_STACK, "m1.ts", text, |checker, file| {
+            checker.is_side_effect_free(last_initializer(file))
+        });
+        assert!(free);
+    }
+
+    /// M2 alone: one call of `get_syntactic_nullishness_semantics` on a `??`
+    /// chain. Go recurses down its Left spine, and without the loop this
+    /// test overflows the stack.
+    #[test]
+    fn nullishness_semantics_loops_down_a_coalesce_chain() {
+        let text = format!(
+            "declare function f(): number | undefined;\nexport const total = {};\n",
+            vec!["f()"; LOOP_TERMS].join(" ?? ")
+        );
+        let semantics = on_a_stack(SMALL_STACK, "m2.ts", text, |checker, file| {
+            checker.get_syntactic_nullishness_semantics(last_initializer(file))
+        });
+        assert_eq!(semantics, PredicateSemantics::SOMETIMES);
     }
 
     /// The check's T1 probes (stack99 go-note-check.md): a `null` in each of

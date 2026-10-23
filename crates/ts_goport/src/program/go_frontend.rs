@@ -3,7 +3,7 @@
 //! (`compiler.NewProgram`: scanner, parser, module resolution, file order)
 //! and the `GoProgram` built from its node stores.
 //!
-//! Go: execute/tsc.go:213 (config), tsc.go:293 (host), tsc.go:301 (program).
+//! Go: execute/tsc.go:219 (config), tsc.go:307 (host), tsc.go:321 (program).
 
 use super::*;
 use crate::ast::store::{
@@ -203,7 +203,7 @@ pub(super) fn try_load_with(
     times: &mut CompileTimes,
 ) -> Result<&'static GoProgram, String> {
     let opts = load_config(config_path, edit_options, times)?;
-    // Go: tsc.go:298 startTracingIfNeeded. PORT: the warning goes to stdout
+    // Go: tsc.go:318 startTracingIfNeeded. PORT: the warning goes to stdout
     // (Go `sys.Writer()`) as Go bytes, like `trace_from_sys`. A program
     // version (`try_load_version`) does not trace, as Go tsc starts tracing
     // only here.
@@ -213,9 +213,9 @@ pub(super) fn try_load_with(
             warning.as_bytes(),
         );
     }
-    // Go: tsc.go:305 times `NewProgram`. PORT: the port's `NewProgram` is
-    // `install_new_program`, which also builds the Go files, as the build
-    // task times `new_program` and `new_program_version`.
+    // Go: tsc.go:321 NewProgram, timed by :320 `parseStart`. PORT: the
+    // port's `NewProgram` is `install_new_program`, which also builds the
+    // Go files, as the build task times `new_program` and `new_program_version`.
     let parse_start = std::time::Instant::now();
     let program = install_new_program(opts);
     times.parse_time = parse_start.elapsed();
@@ -292,7 +292,7 @@ pub(super) fn mark_freeable_parses(np: &NewProgram) {
     }
 }
 
-// Go: compiler/program.go:2330 GetSymlinkCache (`get_go_symlink_cache`)
+// Go: compiler/program.go:2343 GetSymlinkCache (`get_go_symlink_cache`)
 // PORT: Go builds the cache on first use, on any goroutine. The port
 // builds it from the frontend program, which only the loading thread has,
 // and keeps a thread-safe copy in the program's shared state. The loading
@@ -716,7 +716,7 @@ pub(super) fn publish_parsed_files(cwd: &str) {
     publish_file_stores(files);
 }
 
-// Go: ast/ast.go:2747 (*SourceFile).resolveJSDoc (slow path; the caller
+// Go: ast/ast.go:2672 (*SourceFile).resolveJSDoc (slow path; the caller
 // has checked the parser cache) and parser/jsdoc.go:19 parseJSDocForNode
 /// The lazy JSDoc of `node` in published file `file`, whose info is
 /// `info`. The result is cached in `LAZY_JSDOC`.
@@ -767,7 +767,7 @@ pub(crate) fn cached_lazy_js_doc(node: Node) -> Option<&'static [Node]> {
 // Go: compiler/program.go:145 FileExists (the Go frontend program)
 // PORT: the loading thread asks the program host (with its cache). Another
 // thread (a checker worker) cannot read that cache. It asks the program's
-// thread-safe cache (Go `cachedvfs.FS`, compiler/host.go:52), which asks
+// thread-safe cache (Go `cachedvfs.FS`, compiler/host.go:49), which asks
 // this thread's copy of the file system on a miss. Module specifier
 // generation probes the same paths for many types (`tryGetAnyFileFromPath`):
 // realworld3 lexical made 8.6M uncached stat calls, Go 8,768.
@@ -872,7 +872,7 @@ fn load_config(
         config_abs = tspath::combine_paths(&config_abs, &["tsconfig.json"]);
     }
 
-    // Go: tsc.go:214 GetParsedCommandLineOfConfigFile with the command line
+    // Go: tsc.go:219 GetParsedCommandLineOfConfigFilePath with the command line
     // options. PORT: the command line raw map only marks explicit nulls,
     // and the command line here has none, so it is nil.
     let mut command_line_options = CompilerOptions::default();
@@ -915,8 +915,8 @@ fn load_config(
         true,
     );
 
-    // Go: tsc.go:302 NewCachedFSCompilerHost, tsc.go:310 NewProgram.
-    // #4712: the 6th argument is Go `contentMapperProject` (tsc.go:298
+    // Go: tsc.go:307 NewCachedFSCompilerHost, tsc.go:321 NewProgram.
+    // #4712: the last argument is Go `contentMapperProject` (tsc.go:303
     // `getContentMapperProject(tsc.NewContentMapperHost(ctx, sys, options),
     // config)`).
     // PORT: Go makes a content mapper host only with `runExternalCode`, and
@@ -1104,9 +1104,9 @@ fn build_program(
             (tables, common_source_directory)
         }
     };
-    // Go: compiler/program.go:359 ReuseProgram keeps `processedFiles`, so
+    // Go: compiler/program.go:360 ReuseProgram keeps `processedFiles`, so
     // the new program keeps the resolver and the package.json lookups of
-    // module specifier generation in its cache (program.go:147-169).
+    // module specifier generation in its cache (program.go:168-185).
     if let Some(old) = &previous
         && let (Some(resolver), Some(old_resolver)) = (&np.resolver, &old.np.resolver)
         && Rc::ptr_eq(resolver, old_resolver)
@@ -1209,20 +1209,20 @@ fn replaced_files<'a>(
         if file.path() != old_file.path() {
             return None;
         }
-        // Go: program.go:368-375 ReuseProgram rebuilds when the changed file
+        // Go: program.go:388-395 ReuseProgram: it rebuilds when the changed file
         // is in a package redirect group, but it does not check the
-        // content-mapper supplemental files (:391, :424-429). When one of those
+        // content-mapper supplemental files (:411, :445-450). When one of those
         // is a redirect target, Go's `filesByPath` keeps the old file at the
         // redirect paths of its group, and a shared path-to-slot map would
         // give the new file there. So such a version takes the full build,
         // which keeps Go's map.
-        // The `redirect_files_by_path` half (Go :371) cannot hold here, and
+        // The `redirect_files_by_path` half (Go :391) cannot hold here, and
         // stays as in Go. A redirect path is the path of a package copy that
         // the loader leaves out of the program files (Go
         // filesparser.go:455-484, the `continue`), and `old_file` is a
         // program file. A changed copy at a redirect path takes the full
         // build in `reuse_program` (frontend/compiler/program_new.rs, Go
-        // program.go:371), so no reused version gets here with it. Test:
+        // program.go:391), so no reused version gets here with it. Test:
         // `redirect_paths_are_not_program_files`.
         let in_redirect_group = old_np
             .redirect_files_by_path
@@ -1485,7 +1485,7 @@ fn assert_same_tables(tables: &VersionTables, full: &VersionTables) {
     go.assert_same(full_go);
 }
 
-// Go: compiler/program.go:1562 CommonSourceDirectory.
+// Go: compiler/program.go:1836 CommonSourceDirectory.
 // PORT: Go computes it on first use, and `checkSourceFilesBelongToPath`
 // then adds include diagnostics. Go uses it first either in
 // `verifyCompilerOptions`, which the frontend program has already run, or
@@ -1512,10 +1512,10 @@ fn common_source_directory_of(p: &NewProgram) -> String {
     )
 }
 
-// Go: compiler/program.go:852 collectContentMapperOptionDiagnostics (#4712)
+// Go: compiler/program.go:857 collectContentMapperOptionDiagnostics (#4712)
 // PORT: returns the list; Go sets `p.contentMapperOptionDiagnostics`.
 fn collect_content_mapper_option_diagnostics(p: &NewProgram) -> Vec<Diagnostic> {
-    // Go: compiler/program.go:158 ContentMapperProject
+    // Go: compiler/program.go:159 ContentMapperProject
     let Some(project) = p.host().content_mapper_project() else {
         return Vec::new();
     };
@@ -1937,7 +1937,7 @@ impl GoSharedState {
         &self.content_mapper_option_diagnostics
     }
 
-    // Go: compiler/program.go:206 GetSourceOfProjectReferenceIfOutputIncluded
+    // Go: compiler/program.go:207 GetSourceOfProjectReferenceIfOutputIncluded
     // (the map lookup; the caller falls back to the file name)
     pub(super) fn get_source_of_project_reference_if_output_included(
         &self,
@@ -1969,7 +1969,7 @@ impl GoSharedState {
         self.can_use_project_reference_source && self.source_to_project_reference.contains_key(path)
     }
 
-    // Go: compiler/program.go:231 GetRedirectForResolution (for program files)
+    // Go: compiler/program.go:232 GetRedirectForResolution (for program files)
     pub(super) fn get_redirect_for_resolution(
         &self,
         file: Node,
@@ -1977,7 +1977,7 @@ impl GoSharedState {
         self.redirects_for_resolution.get(&file.file_index())
     }
 
-    // Go: compiler/program.go:245 GetResolvedProjectReferences
+    // Go: compiler/program.go:246 GetResolvedProjectReferences
     pub(super) fn get_resolved_project_references(
         &self,
     ) -> Vec<Option<Arc<ResolvedProjectReference>>> {
@@ -1992,7 +1992,7 @@ impl GoSharedState {
         self.known_symlinks.get().cloned()
     }
 
-    // Go: compiler/program.go:236 GetParseFileRedirect
+    // Go: compiler/program.go:237 GetParseFileRedirect
     // Go: compiler/projectreferencefilemapper.go:45 getParseFileRedirect
     // PORT: after the load, so `getSourceToDtsIfSymlink` only reads
     // `realpathDtsToSource`. None is the Go "".
@@ -2032,12 +2032,12 @@ impl GoSharedState {
         (!redirect.is_empty()).then_some(redirect)
     }
 
-    // Go: compiler/program.go:198 GetRedirectTargets
+    // Go: compiler/program.go:199 GetRedirectTargets
     pub(super) fn get_redirect_targets(&self, path: &str) -> Vec<String> {
         self.redirect_targets.get(path).cloned().unwrap_or_default()
     }
 
-    // Go: compiler/program.go:275 GetSourceFileFromReference (for the
+    // Go: compiler/program.go:276 GetSourceFileFromReference (for the
     // preserved references of a program file)
     pub(super) fn get_source_file_from_reference(&self, origin: Node, r: &FileReference) -> Node {
         self.references
@@ -2046,7 +2046,7 @@ impl GoSharedState {
             .expect("not a preserved reference of a program file")
     }
 
-    // Go: compiler/program.go:644 GetResolvedModule
+    // Go: compiler/program.go:649 GetResolvedModule
     // PERF: returns a borrow, and looks the name up as `&str`. A name has at
     // most one entry per mode, so the mode scan finds the Go map entry.
     pub(super) fn get_resolved_module(
@@ -2062,7 +2062,7 @@ impl GoSharedState {
             .get(&(module_reference, mode) as &dyn crate::frontend::module::ModeAwareKey)
     }
 
-    // Go: compiler/program.go:664 GetResolvedModules (ranged over: every
+    // Go: compiler/program.go:669 GetResolvedModules (ranged over: every
     // resolution of every file)
     // PERF: borrows the version's own map, as Go returns `p.resolvedModules`
     // with no copy. The order is the map order; Go ranges over maps in a
@@ -2074,7 +2074,7 @@ impl GoSharedState {
             .map(|resolved| &**resolved)
     }
 
-    // Go: compiler/program.go:2228 GetJSXRuntimeImportSpecifier
+    // Go: compiler/program.go:2241 GetJSXRuntimeImportSpecifier
     pub(super) fn get_jsx_runtime_import_specifier(&self, path: &str) -> (String, Node) {
         self.jsx_runtime_import_specifiers
             .get(path)
@@ -2082,7 +2082,7 @@ impl GoSharedState {
             .unwrap_or((String::new(), Node::NIL))
     }
 
-    // Go: compiler/program.go:1414 IsEmitBlocked
+    // Go: compiler/program.go:1427 IsEmitBlocked
     pub(super) fn is_emit_blocked(&self, emit_file_name: &str) -> bool {
         let path = crate::frontend::tspath::to_path(
             emit_file_name,
@@ -2092,13 +2092,13 @@ impl GoSharedState {
         self.has_emit_blocking_diagnostics.contains(&path.0)
     }
 
-    // Go: compiler/program.go:2224 IsSourceFileFromExternalLibrary
+    // Go: compiler/program.go:2237 IsSourceFileFromExternalLibrary
     pub(super) fn is_source_file_from_external_library(&self, path: &str) -> bool {
         self.source_files_found_searching_node_modules
             .contains(path)
     }
 
-    // Go: compiler/program.go:2235 GetImportHelpersImportSpecifier
+    // Go: compiler/program.go:2248 GetImportHelpersImportSpecifier
     pub(super) fn get_import_helpers_import_specifier(&self, path: &str) -> Node {
         self.import_helpers_import_specifiers
             .get(path)
@@ -2106,7 +2106,7 @@ impl GoSharedState {
             .unwrap_or(Node::NIL)
     }
 
-    // Go: compiler/program.go:864 GetIncludeProcessorDiagnostics (the
+    // Go: compiler/program.go:869 GetIncludeProcessorDiagnostics (the
     // include processor part)
     pub(super) fn get_include_processor_diagnostics(&self, file: Node) -> Vec<Diagnostic> {
         // Go builds the collection here (`includeProcessor.getDiagnostics`).

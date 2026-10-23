@@ -1135,7 +1135,8 @@ enum OperandCall {
 #[derive(Clone, Copy)]
 struct EnteredOperand {
     call: OperandCall,
-    /// `doWithConditionalBranches` (also in `bindCondition`).
+    /// `doWithConditionalBranches` (also in `bindCondition`). NIL for a
+    /// Bind call, which does not restore them.
     save_true_target: FlowNodeId,
     save_false_target: FlowNodeId,
     /// `bind`.
@@ -1301,15 +1302,18 @@ impl<'a> BindFrames<'a> {
             }
             return;
         }
-        // Go `doWithConditionalBranches` (binder.go:1790).
-        let save_true_target = b.current_true_target;
-        let save_false_target = b.current_false_target;
-        if let OperandCall::Condition(true_target, false_target)
-        | OperandCall::Branches(true_target, false_target) = call
-        {
-            b.current_true_target = true_target;
-            b.current_false_target = false_target;
-        }
+        // Go `doWithConditionalBranches` (binder.go:1790). A Bind call does
+        // not save or set the targets.
+        let (save_true_target, save_false_target) = match call {
+            OperandCall::Bind => (FlowNodeId::NIL, FlowNodeId::NIL),
+            OperandCall::Condition(true_target, false_target)
+            | OperandCall::Branches(true_target, false_target) => {
+                let saved = (b.current_true_target, b.current_false_target);
+                b.current_true_target = true_target;
+                b.current_false_target = false_target;
+                saved
+            }
+        };
         // Go `bind` (binder.go:577) of a BinaryExpression, up to
         // `bindChildren`. Its container flags are None.
         let expr = b.binary_view(operand);

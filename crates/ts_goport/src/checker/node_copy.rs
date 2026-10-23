@@ -524,8 +524,8 @@ impl Checker {
 }
 
 // Go: checker/emitsupport.go:136 getMeaningOfEntityNameReference
-// PORT: no unit owns emitresolver.go yet, so the free function is ported here
-// as a private helper. Move it when emitresolver.go lands.
+// PORT: a private copy of the one in emit_resolver_p1.rs (Go has one
+// function). Keep the two the same.
 fn get_meaning_of_entity_name_reference(entity_name: Node) -> SymbolFlags {
     let parent = entity_name.parent();
     // get symbol of the first identifier of the entityName

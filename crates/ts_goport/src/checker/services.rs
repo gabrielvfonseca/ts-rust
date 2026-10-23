@@ -585,7 +585,7 @@ impl Checker {
 
     // Go: checker/services.go:395 SkipAlias
     // PORT: the Go package function `SkipAlias(symbol, checker)`
-    // (utilities.go:1622) is already `Checker::skip_alias`, so this method
+    // (utilities.go:1779) is already `Checker::skip_alias`, so this method
     // ends in `_exported`.
     pub fn skip_alias_exported(&mut self, symbol: SymbolId) -> SymbolId {
         if self.sym(symbol).flags.intersects(SymbolFlags::ALIAS) {
