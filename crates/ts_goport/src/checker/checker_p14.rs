@@ -1697,11 +1697,13 @@ impl Checker {
     // its value is discarded (e.g. the left side of the comma operator).
     // Go: checker/checker.go:13252 isSideEffectFree
     // PORT: issue #99. Go recurses on both operands of a BinaryExpression
-    // and both branches of a ConditionalExpression, so a long comma chain
-    // recurses once for each level. The function has no effects, so here
-    // the first operand (Right, WhenTrue) is checked first and the loop goes
-    // on with the other: the same result, with no recursion down a Left
-    // spine.
+    // (Left, then Right) and on both branches of a ConditionalExpression
+    // (WhenTrue, then WhenFalse), so a long comma chain recurses once for
+    // each level of its Left spine. Here a BinaryExpression checks its Right
+    // by a recursive call and the loop goes on with its Left, and a
+    // ConditionalExpression checks its WhenTrue by a recursive call and the
+    // loop goes on with its WhenFalse. The function has no effects, so the
+    // result is Go's in any order.
     pub fn is_side_effect_free(&self, node: Node) -> bool {
         let mut node = node;
         loop {
