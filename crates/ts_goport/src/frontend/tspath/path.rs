@@ -311,6 +311,16 @@ fn path_components(path: &str, root_length: usize) -> Vec<String> {
     result
 }
 
+/// `get_path_components(path, "")` of a path with no backslash, with parts
+/// that borrow `path`.
+// Go: tspath/path.go:128 GetPathComponents: its parts are substrings of the
+// path (`pathComponents`, path.go:138).
+#[must_use]
+pub fn get_path_component_refs(path: &str) -> Vec<&str> {
+    debug_assert!(!path.contains('\\'), "{path}");
+    path_component_refs(path, get_root_length(path))
+}
+
 /// `combine_paths(directory, &[path])`, with no copy when `path` is rooted:
 /// then the result is `path` with normal slashes.
 fn combine_with_directory<'a>(directory: &str, path: &'a str) -> Cow<'a, str> {
@@ -412,7 +422,7 @@ pub fn get_encoded_root_length(path: &str) -> i32 {
     }
 
     // URL
-    if let Some(scheme_end) = path.find(URL_SCHEME_SEPARATOR) {
+    if let Some(scheme_end) = find_url_scheme_separator(bytes) {
         let authority_start = scheme_end + URL_SCHEME_SEPARATOR.len();
         if let Some(authority_length) = path[authority_start..].find('/') {
             // URL: "file:///", "file://server/", "file://server/path"
@@ -452,6 +462,25 @@ pub fn get_encoded_root_length(path: &str) -> i32 {
     0
 }
 
+/// The first index of "://" in `bytes` (Go `strings.Index(path,
+/// urlSchemeSeparator)`, path.go:217).
+// PERF (modpath1): `str::find` with a `&str` pattern builds a two-way
+// searcher on each call. A relative part ("package.json", "node_modules")
+// reaches this search on every `combine_paths`, and in the TypeORM
+// single-thread profile the searcher was 85% of `get_encoded_root_length`.
+// memchr finds each ':' and the next two bytes are compared in place.
+fn find_url_scheme_separator(bytes: &[u8]) -> Option<usize> {
+    let mut start = 0;
+    while let Some(offset) = memchr::memchr(b':', &bytes[start..]) {
+        let colon = start + offset;
+        if bytes[colon + 1..].starts_with(b"//") {
+            return Some(colon);
+        }
+        start = colon + 1;
+    }
+    None
+}
+
 // Go: tspath/path.go:255 GetRootLength
 // PORT: returns `usize` because the result is never negative and is used to slice.
 pub fn get_root_length(path: &str) -> usize {
@@ -471,19 +500,23 @@ pub fn get_root_length(path: &str) -> usize {
 // itself, paid about 5x the instructions here (state note
 // edbisect1-2026-10-06, `scripts/state history --kind note`).
 pub fn get_directory_path(path: &str) -> String {
-    let path = normalize_slashes_cow(path);
+    get_directory_path_from_normalized(&normalize_slashes_cow(path)).to_string()
+}
 
+// Go: tspath/path.go:267 getDirectoryPathFromNormalized
+/// `get_directory_path` of a path with no backslash: a slice of `path`.
+pub fn get_directory_path_from_normalized(path: &str) -> &str {
     // If the path provided is itself a root, then return it.
-    let root_length = get_root_length(&path);
+    let root_length = get_root_length(path);
     if root_length == path.len() {
-        return path.into_owned();
+        return path;
     }
 
     // return the leading portion of the path up to the last (non-terminal) directory separator
     // but not including any trailing directory separator.
-    let path = remove_trailing_directory_separator(&path);
+    let path = remove_trailing_directory_separator(path);
     let end = memchr::memrchr(b'/', path.as_bytes()).map_or(root_length, |i| i.max(root_length));
-    path[..end].to_string()
+    &path[..end]
 }
 
 impl Path {
@@ -671,14 +704,41 @@ pub fn get_normalized_absolute_path_without_root(
     absolute_path[root_length..].to_string()
 }
 
+/// `get_normalized_absolute_path(file_name, current_directory)`, borrowed
+/// when that is `file_name` itself: a rooted normal path with no trailing
+/// separator, or a root with one.
+// PORT: not in Go. Go's resolver keeps rooted normal paths by type
+// (`RootedDirectoryPath`) and does not normalize them again; the port tests
+// the path.
+#[must_use]
+pub fn normalized_absolute_path_cow<'a>(
+    file_name: &'a str,
+    current_directory: &str,
+) -> Cow<'a, str> {
+    let root_length = get_root_length(file_name);
+    if root_length != 0
+        && is_normalized_path(file_name)
+        && (file_name.len() == root_length || !has_trailing_directory_separator(file_name))
+    {
+        debug_assert_eq!(
+            file_name,
+            get_normalized_absolute_path(file_name, current_directory)
+        );
+        return Cow::Borrowed(file_name);
+    }
+    Cow::Owned(get_normalized_absolute_path(file_name, current_directory))
+}
+
 // Go: tspath/path.go:398 GetNormalizedAbsolutePath
 pub fn get_normalized_absolute_path(file_name: &str, current_directory: &str) -> String {
     let root_length = get_root_length(file_name);
-    let file_name = if root_length == 0 && !current_directory.is_empty() {
-        combine_paths(current_directory, &[file_name])
+    // PERF (modpath1): the path is copied only when it is the result (no
+    // relative segment); the other branches make their own strings.
+    let file_name: Cow<'_, str> = if root_length == 0 && !current_directory.is_empty() {
+        Cow::Owned(combine_paths(current_directory, &[file_name]))
     } else {
         // CombinePaths normalizes slashes, so not necessary in other branch
-        normalize_slashes(file_name)
+        normalize_slashes_cow(file_name)
     };
     let root_length = get_root_length(&file_name);
 
@@ -698,7 +758,7 @@ pub fn get_normalized_absolute_path(file_name: &str, current_directory: &str) ->
     // PORT: `simpleNormalizePath` returns the path itself when it has no
     // relative segment. Reuse `file_name` then instead of copying it.
     if !has_relative_path_segment(&file_name) {
-        return finish(file_name);
+        return finish(file_name.into_owned());
     }
     if let Some(simple_normalized) = simple_normalize_path(&file_name) {
         return finish(simple_normalized);
@@ -811,7 +871,7 @@ pub fn get_normalized_absolute_path(file_name: &str, current_directory: &str) ->
     if length == root_length {
         return ensure_trailing_directory_separator(&file_name);
     }
-    file_name
+    file_name.into_owned()
 }
 
 // Go: tspath/path.go:537 simpleNormalizePath
@@ -822,14 +882,18 @@ fn simple_normalize_path(path: &str) -> Option<String> {
         return Some(path.to_string());
     }
     // Some paths only require cleanup of `/./` or leading `./`
-    let simplified = path.replace("/./", "/");
-    let trimmed = simplified.strip_prefix("./").unwrap_or(&simplified);
+    let mut simplified = path.replace("/./", "/");
+    let prefix = if simplified.starts_with("./") { 2 } else { 0 };
+    let trimmed = &simplified[prefix..];
     if trimmed != path
         && !has_relative_path_segment(trimmed)
-        && !(trimmed != simplified && trimmed.starts_with('/'))
+        && !(prefix != 0 && trimmed.starts_with('/'))
     {
         // If we trimmed a leading "./" and the path now starts with "/", we changed the meaning
-        return Some(trimmed.to_string());
+        // PERF (modpath1): Go's `TrimPrefix` slices; the port drops the
+        // prefix in place instead of copying the rest.
+        simplified.replace_range(..prefix, "");
+        return Some(simplified);
     }
     None
 }
@@ -940,14 +1004,14 @@ fn has_relative_path_segment_go(p: &str) -> bool {
 
 // Go: tspath/path.go:622 NormalizePath
 pub fn normalize_path(path: &str) -> String {
-    let path = normalize_slashes(path);
+    let path = normalize_slashes_cow(path);
     // PORT: the common case of `simpleNormalizePath` with no copy. A path
     // with no relative segment is normal, except a root with no trailing
     // separator, which gets one (ts#64159: "c:" is "c:/").
     if !has_relative_path_segment(&path) {
         let root_length = get_root_length(&path);
         if root_length == 0 || path.len() > root_length {
-            return path;
+            return path.into_owned();
         }
         return ensure_trailing_directory_separator(&path);
     }
@@ -1128,6 +1192,28 @@ pub fn to_path(file_name: &str, base_path: &str, use_case_sensitive_file_names: 
         &non_canonicalized_path,
         use_case_sensitive_file_names,
     ))
+}
+
+/// `to_path(file_name, base_path, use_case_sensitive_file_names)` as text,
+/// borrowed when that is `file_name` itself: a rooted normal name that is
+/// not an encoded dynamic name, on a case-sensitive file system.
+// Go: tspath/pathkey.go:43 CaseSensitivity.PathKey: `Canonicalize`
+// (path.go:1019) returns the text itself when case-sensitive, so the key of
+// a rooted normal path is that path, with no copy.
+#[must_use]
+pub fn to_path_cow<'a>(
+    file_name: &'a str,
+    base_path: &str,
+    use_case_sensitive_file_names: bool,
+) -> Cow<'a, str> {
+    if use_case_sensitive_file_names
+        && is_rooted_disk_path(file_name)
+        && is_normalized_path(file_name)
+        && !is_encoded_dynamic_file_name(file_name)
+    {
+        return Cow::Borrowed(file_name);
+    }
+    Cow::Owned(to_path(file_name, base_path, use_case_sensitive_file_names).into_string())
 }
 
 // Go: tspath/path.go:714 RemoveTrailingDirectorySeparator
@@ -1472,20 +1558,24 @@ pub fn get_relative_path_to_directory_or_url(
 // Semantics align with NodeJS's `path.basename` except that we support URL's as well.
 // If the base name has any one of the provided extensions, it is removed.
 pub fn get_base_file_name(path: &str) -> String {
-    let path = normalize_slashes(path);
+    get_base_file_name_from_normalized(&normalize_slashes_cow(path)).to_string()
+}
 
+// Go: tspath/path.go:887 getBaseFileNameFromNormalized
+/// `get_base_file_name` of a path with no backslash: a slice of `path`.
+pub fn get_base_file_name_from_normalized(path: &str) -> &str {
     // if the path provided is itself the root, then it has no file name.
-    let root_length = get_root_length(&path);
+    let root_length = get_root_length(path);
     if root_length == path.len() {
-        return String::new();
+        return "";
     }
 
     // return the trailing portion of the path starting after the last (non-terminal) directory
     // separator but not including any trailing directory separator.
-    let path = remove_trailing_directory_separator(&path);
+    let path = remove_trailing_directory_separator(path);
     let start = (get_root_length(path) as isize).max(last_index_byte(path, DIRECTORY_SEPARATOR) + 1)
         as usize;
-    path[start..].to_string()
+    &path[start..]
 }
 
 // Go: tspath/path.go:911 GetAnyExtensionFromPath
@@ -1817,23 +1907,34 @@ pub fn for_each_ancestor_directory_stopping_at_global_cache<T: Default>(
 
 // Go: tspath/path.go:1163 ForEachAncestorDirectory
 // PORT: the Go zero value of T is `T::default()`.
+// PERF (modpath1): Go's resolver walks a `RootedDirectoryPath` by slicing
+// (tspath/rooted_path.go:810 with `getDirectoryPathFromNormalized`). The
+// port made a `String` for each ancestor. Each parent is now a slice of the
+// start directory with normal slashes, which `get_directory_path` makes of
+// it in the first step: the same directories, in the same order.
 pub fn for_each_ancestor_directory<T: Default>(
     directory: &str,
     mut callback: impl FnMut(&str) -> (T, bool),
 ) -> (T, bool) {
-    let mut directory = directory.to_string();
+    let (result, stop) = callback(directory);
+    if stop {
+        return (result, true);
+    }
+    let normal = normalize_slashes_cow(directory);
+    let mut previous = directory;
+    let mut current: &str = &normal;
     loop {
-        let (result, stop) = callback(&directory);
-        if stop {
-            return (result, true);
-        }
-
-        let parent_path = get_directory_path(&directory);
-        if parent_path == directory {
+        let parent_path = get_directory_path_from_normalized(current);
+        if parent_path == previous {
             return (T::default(), false);
         }
 
-        directory = parent_path;
+        let (result, stop) = callback(parent_path);
+        if stop {
+            return (result, true);
+        }
+        previous = parent_path;
+        current = parent_path;
     }
 }
 
