@@ -1331,17 +1331,18 @@ impl ResolutionState<'_> {
         if !ok {
             return continue_searching();
         }
-        let parts = get_path_components(&self.name, "");
-        let name_parts = get_path_components(&name, "");
+        // PERF (modpath1): Go's parts are substrings (tspath/path.go:128
+        // GetPathComponents); the port copied each one.
+        let module_name = normalize_slashes_cow(&self.name);
+        let package_name = normalize_slashes_cow(&name);
+        let parts = get_path_component_refs(&module_name);
+        let name_parts = get_path_component_refs(&package_name);
         if parts.len() < name_parts.len() || name_parts[..] != parts[..name_parts.len()] {
             return continue_searching();
         }
-        let trailing_parts: Vec<&str> = parts[name_parts.len()..]
-            .iter()
-            .map(String::as_str)
-            .collect();
+        let trailing_parts = &parts[name_parts.len()..];
         let subpath = if !trailing_parts.is_empty() {
-            combine_paths(".", &trailing_parts)
+            combine_paths(".", trailing_parts)
         } else {
             ".".to_string()
         };
@@ -1690,15 +1691,20 @@ impl ResolutionState<'_> {
                     );
                     return continue_searching();
                 }
-                let parts: Vec<String> = if path_is_relative(&target_string) {
-                    get_path_components(&target_string, "")[1..].to_vec()
+                // PERF (modpath1): Go's parts are substrings of the target
+                // (tspath/path.go:128 GetPathComponents); the port copied
+                // each one twice.
+                let target_normal = normalize_slashes_cow(&target_string);
+                let target_parts = get_path_component_refs(&target_normal);
+                let parts = if path_is_relative(&target_string) {
+                    &target_parts[1..]
                 } else {
-                    get_path_components(&target_string, "")
+                    &target_parts[..]
                 };
                 let parts_after_first = &parts[1..];
                 if parts_after_first
                     .iter()
-                    .any(|p| p == ".." || p == "." || p == "node_modules")
+                    .any(|p| matches!(*p, ".." | "." | "node_modules"))
                 {
                     trace_write!(
                         self,
@@ -1710,10 +1716,10 @@ impl ResolutionState<'_> {
                 }
                 // TODO: Assert that `resolvedTarget` is actually within the package directory? That's what the spec says.... but I'm not sure we need
                 // to be in the business of validating everyone's import and export map correctness.
-                let subpath_parts = get_path_components(subpath, "");
-                if subpath_parts
+                let subpath_normal = normalize_slashes_cow(subpath);
+                if get_path_component_refs(&subpath_normal)
                     .iter()
-                    .any(|p| p == ".." || p == "." || p == "node_modules")
+                    .any(|p| matches!(*p, ".." | "." | "node_modules"))
                 {
                     trace_write!(
                         self,
@@ -2066,7 +2072,11 @@ impl ResolutionState<'_> {
             &containing_directory,
             |directory: &str| -> (Option<Resolved>, bool) {
                 // !!! stop at global cache
-                if get_base_file_name(directory) != "node_modules" {
+                // PERF (modpath1): Go reads `directory.AsPath().BaseName()`,
+                // a slice (tspath/path.go:887); the port copied it.
+                if get_base_file_name_from_normalized(&normalize_slashes_cow(directory))
+                    != "node_modules"
+                {
                     let result = self.load_module_from_immediate_node_modules_directory(
                         ext,
                         directory,
