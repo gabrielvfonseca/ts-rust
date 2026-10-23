@@ -1066,7 +1066,7 @@ impl Checker {
     }
 
     // Go: checker/checker.go:32128 getTargetType
-    // PORT: Go has both a package func `getTargetType` (checker.go:19465, ported in
+    // PORT: Go has both a package func `getTargetType` (checker.go:20002, ported in
     // checker_p22 as `Checker::get_target_type`) and this method with identical logic.
     // Both would be `get_target_type` on `Checker`, so this one gets a `_method` suffix.
     // Callers of either Go form can use `get_target_type`.

@@ -69,8 +69,8 @@ impl ReduceLabel {
 }
 
 // Go: checker/flow.go:40 FlowState
-// PORT: Go `*FlowState` is `&mut FlowState`. Go `getFlowState` and
-// `putFlowState` (flow.go:52-66) keep a free list so that a walk does not
+// PORT: Go `*FlowState` is `&mut FlowState`. Go `getFlowState` (flow.go:52)
+// and `putFlowState` (:61) keep a free list so that a walk does not
 // allocate its state on the heap; here each walk keeps its state on the
 // stack (`flow_walk`, `is_reachable_flow_node`, `is_post_super_flow_node`),
 // which starts as Go's reset state, so there is no free list and no `next`.

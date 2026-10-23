@@ -115,8 +115,8 @@ static IMPLIED_OPTIONS: [ImpliedOption; 14] = [
 // `ConvertToTSConfig` never sets a non-nil empty slice: it sets `References`,
 // `Files` and `Include` only when they are non-empty, and `Exclude` is
 // `configFileSpecs.validatedExcludeSpecs`, which `validateSpecs`
-// (tsconfigparsing.go:1398) builds by `append` from a nil slice and
-// `getSubstitutedStringArrayWithConfigDirTemplate` (tsconfigparsing.go:1538)
+// (tsconfigparsing.go:1512) builds by `append` from a nil slice and
+// `getSubstitutedStringArrayWithConfigDirTemplate` (tsconfigparsing.go:1774)
 // replaces only with a non-nil copy of a non-empty list. So a `Vec` is
 // empty exactly when the Go slice is nil. `CompileOnSave *bool` is
 // `Option<bool>`.

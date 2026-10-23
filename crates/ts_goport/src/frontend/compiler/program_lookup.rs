@@ -493,7 +493,7 @@ impl NewProgram {
     // Go: program.go:2344 (the getValue callback, up to the
     // ResolvePackageDirectory calls)
     // PORT: the host's current directory, as the program's path keys
-    // (`to_path`). Go N' KnownSymlinks has no directory (program.go:2333).
+    // (`to_path`). Go KnownSymlinks has no directory (program.go:2346).
     pub fn symlink_cache_seed(&self) -> SymlinkCacheSeed {
         let current_directory = self.host().get_current_directory();
         let use_case_sensitive_file_names = self.use_case_sensitive_file_names();

@@ -461,7 +461,7 @@ impl Checker {
     }
 
     // Go: checker/checker.go:20229 findIndexInfo
-    // PORT: Go has both a package-level `findIndexInfo` (checker.go:19057,
+    // PORT: Go has both a package-level `findIndexInfo` (checker.go:19594,
     // ported elsewhere as `Checker::find_index_info`) and this `*Checker`
     // method with the same body. Both would be `find_index_info`, so this
     // method gets a `_method` suffix.

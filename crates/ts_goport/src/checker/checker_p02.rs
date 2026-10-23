@@ -1461,8 +1461,8 @@ impl Checker {
     //   result is not kept. A target can still change after a kept scan
     //   read it, with no merge: a nested resolution (after
     //   `get_resolved_signature` moves `resolution_start`, Go
-    //   checker.go:8624) sets it, and the outer one (checker.go:16670 to
-    //   16673) writes it again, so a kept entry can have seen `unknown`
+    //   checker.go:8621) sets it, and the outer one (checker.go:16692 to
+    //   16695) writes it again, so a kept entry can have seen `unknown`
     //   where a late member is now. Both are Property-like value symbols,
     //   so no meaning that a name lookup asks for tells them apart (spell1
     //   skeptic case c17 matches Go).

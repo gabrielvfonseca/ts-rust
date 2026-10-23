@@ -4214,7 +4214,11 @@ impl UnmarshalerFrom for WorkspaceEdit {
                     if dec.peek_kind() == b'n' {
                         return Err(err_null("changeAnnotations"));
                     }
-                    json_unmarshal_decode(dec, &mut self.change_annotations)?;
+                    unmarshal_go_map(
+                        dec,
+                        &mut self.change_annotations,
+                        "map[string]*lsproto.ChangeAnnotation",
+                    )?;
                 }
                 _ => {
                     dec.skip_value()?;

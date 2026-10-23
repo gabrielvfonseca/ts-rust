@@ -398,6 +398,23 @@ impl JsonMapKey for DocumentUri {
     }
 }
 
+// Go v2 map arshaler (arshal_default.go:955) for a Go `map[string]V` field: a
+// value that is not an object or null is an error of the Go map type
+// `go_type`. Generated methods decode such a field with it.
+// PORT: `IndexMap<String, V>` decodes as Go `collections.OrderedMap`, whose
+// error text differs, so the kind is checked here first.
+pub fn unmarshal_go_map<T: UnmarshalerFrom>(
+    dec: &mut JsonDecoder<'_>,
+    v: &mut T,
+    go_type: &str,
+) -> Result<(), JsonError> {
+    if !matches!(dec.peek_kind(), b'{' | b'n') {
+        let tok = dec.read_token()?;
+        return Err(unmarshal_kind_error(tok.kind(), go_type));
+    }
+    json_unmarshal_decode(dec, v)
+}
+
 // Go: boolToInt (removed in tsgo#4471)
 // PORT: Go tsgo#4471 replaced the generated union and `Registration`
 // marshal checks with the reflective `marshalUnion` and `countNonNil`
@@ -1053,6 +1070,60 @@ mod unmarshal_error_tests {
         assert_eq!(
             params_err_text::<NoParams>("{}"),
             "InvalidParams: expected no params, got {}"
+        );
+    }
+
+    // A Go `map[string]V` field whose value is not an object (`unmarshal_go_map`).
+    // Expected texts come from Go at 3e9236361fa9: a probe test in package lsproto
+    // that calls `(&RequestMessage{Params: ...}).UnmarshalParams[T]()`.
+    #[test]
+    fn map_field_kind_errors_match_go() {
+        let within = |kind: &str, go_type: &str, pointer: &str| {
+            format!(
+                r#"InvalidParams: json: cannot unmarshal JSON {kind} into Go {go_type} within "{pointer}""#
+            )
+        };
+        let string_map = "map[string]string";
+        for (data, kind) in [
+            (r#"{"outputExtensions":"x"}"#, "string"),
+            (r#"{"outputExtensions":5}"#, "number"),
+            (r#"{"outputExtensions":true}"#, "boolean"),
+            (r#"{"outputExtensions":[],"cwd":"a"}"#, "array"),
+        ] {
+            assert_eq!(
+                params_err_text::<ContentMapperManifest>(data),
+                within(kind, string_map, "/outputExtensions"),
+            );
+        }
+        assert_eq!(
+            params_err_text::<SetContentMapperContributionsParams>(
+                r#"{"contributions":[{"contributorId":"a","extensions":[".x"],"inferredProjectContribution":{"manifest":{"outputExtensions":[1]}}}],"openDocuments":[]}"#
+            ),
+            within(
+                "array",
+                string_map,
+                "/contributions/0/inferredProjectContribution/manifest/outputExtensions"
+            ),
+        );
+        assert_eq!(
+            params_err_text::<InferredProjectContentMapperContribution>(
+                r#"{"options":[1,2],"manifest":{}}"#
+            ),
+            within("array", "map[string]interface {}", "/options"),
+        );
+        assert_eq!(
+            params_err_text::<WorkspaceEdit>(r#"{"changeAnnotations":"x"}"#),
+            within(
+                "string",
+                "map[string]*lsproto.ChangeAnnotation",
+                "/changeAnnotations"
+            ),
+        );
+        assert_eq!(
+            params_err_text::<ProjectInfoTelemetryEvent>(
+                r#"{"eventName":"languageServer.projectInfo","telemetryPurpose":"usage","properties":5}"#
+            ),
+            within("number", string_map, "/properties"),
         );
     }
 
