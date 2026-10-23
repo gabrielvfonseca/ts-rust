@@ -649,7 +649,7 @@ impl ParsedCommandLine {
     }
 
     // The `files` closure of Go CommonSourceDirectory
-    // (tsoptions/parsedcommandline.go:159).
+    // (tsoptions/parsedcommandline.go:190).
     fn common_source_directory_files(&self) -> Vec<String> {
         self.parsed_config
             .file_names
@@ -1315,7 +1315,7 @@ mod common_source_directory_tests {
 
     // Go: tsoptions/parsedcommandline.go:207 checkSourceFilesBelongToPath
     // appends TS6059 to `p.Errors`, which GetConfigFileParsingDiagnostics
-    // (:393) and WithFileNames (:93) read. GetOutputFileNames (:211) is
+    // (:479) and WithFileNames (:101) read. GetOutputFileNames (:241) is
     // lazy: only a name under outDir or declarationDir reads
     // CommonSourceDirectory (outputpaths.go:166).
     #[test]

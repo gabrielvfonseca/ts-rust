@@ -35,13 +35,13 @@ struct TestConfig {
     existing_options: Option<CompilerOptions>,
 }
 
-// Go: tsconfigparsing_test.go:38 parseConfigFileTextToJsonTests (element type)
+// Go: tsconfigparsing_test.go:39 parseConfigFileTextToJsonTests (element type)
 struct ParseConfigFileTextToJsonTest {
     title: &'static str,
     input: &'static [&'static str],
 }
 
-// Go: tsconfigparsing_test.go:128 TestParseConfigFileTextToJson
+// Go: tsconfigparsing_test.go:129 TestParseConfigFileTextToJson
 #[test]
 fn parse_config_file_text_to_json() {
     let mut t = Subtests::new("TestParseConfigFileTextToJson");
@@ -87,7 +87,7 @@ fn parse_config_file_text_to_json() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:155 parseJsonConfigTestCase
+// Go: tsconfigparsing_test.go:159 parseJsonConfigTestCase
 struct ParseJsonConfigTestCase {
     title: &'static str,
     include_compiler_options: bool,
@@ -139,7 +139,7 @@ fn parse_project_json(json: &CompilerOptionsValue, host: &VfsParseConfigHost) ->
     )
 }
 
-// Go: tsconfigparsing_test.go:828 TestParseJsonConfigFileContentAcceptsJsonRepresentations
+// Go: tsconfigparsing_test.go:881 TestParseJsonConfigFileContentAcceptsJsonRepresentations
 // PORT: `CompilerOptionsValue` has no form for a Go `map[string]any`, so the
 // "plain map" and "typed slices" cases are ordered maps in the sorted key
 // order that Go `normalizeJsonValue` gives them, and a Go `[]string` is
@@ -211,7 +211,7 @@ fn parse_json_config_file_content_accepts_json_representations() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:877 TestParseJsonConfigFileContentPreservesRaw
+// Go: tsconfigparsing_test.go:930 TestParseJsonConfigFileContentPreservesRaw
 // PORT: the Go `map[string]any` input is an ordered map in its sorted key
 // order (see above).
 #[test]
@@ -252,7 +252,7 @@ fn parse_json_config_file_content_preserves_raw() {
     assert!(raw.contains_key("customSetting"));
 }
 
-// Go: tsconfigparsing_test.go:906 TestParseJsonConfigFileContentHandlesNullArrayElements
+// Go: tsconfigparsing_test.go:959 TestParseJsonConfigFileContentHandlesNullArrayElements
 #[test]
 fn parse_json_config_file_content_handles_null_array_elements() {
     let host = new_vfs_parse_config_host(
@@ -281,7 +281,7 @@ fn parse_json_config_file_content_handles_null_array_elements() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:930 TestParseJsonConfigFileContentDefaultsCompileOnSaveToFalse
+// Go: tsconfigparsing_test.go:983 TestParseJsonConfigFileContentDefaultsCompileOnSaveToFalse
 #[test]
 fn parse_json_config_file_content_defaults_compile_on_save_to_false() {
     let host = new_vfs_parse_config_host(
@@ -396,7 +396,7 @@ fn project_reference_network_check_uses_config_directory() {
     }
 }
 
-// Go: tsconfigparsing_test.go:818 getParsedWithJsonApi
+// Go: tsconfigparsing_test.go:1002 getParsedWithJsonApi
 fn get_parsed_with_json_api(
     config: &TestConfig,
     host: &dyn ParseConfigHost,
@@ -421,7 +421,7 @@ fn get_parsed_with_json_api(
     )
 }
 
-// Go: tsconfigparsing_test.go:962 TestParseJsonSourceFileConfigFileContent
+// Go: tsconfigparsing_test.go:1017 TestParseJsonSourceFileConfigFileContent
 #[test]
 fn parse_json_source_file_config_file_content() {
     let mut t = Subtests::new("TestParseJsonSourceFileConfigFileContent");
@@ -439,7 +439,7 @@ fn parse_json_source_file_config_file_content() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:845 TestParseJsonSourceFileConfigFileContentReportsInvalidExtendedConfig
+// Go: tsconfigparsing_test.go:1027 TestParseJsonSourceFileConfigFileContentReportsInvalidExtendedConfig
 #[test]
 fn parse_json_source_file_config_file_content_reports_invalid_extended_config() {
     let files = file_map(&[
@@ -503,7 +503,7 @@ fn parse_json_source_file_config_file_content_reports_invalid_extended_config() 
 }
 
 // Extending an empty config file used to panic on nil Statements (#4265).
-// Go: tsconfigparsing_test.go:891 TestParseJsonSourceFileConfigFileContentWithEmptyExtendedConfig
+// Go: tsconfigparsing_test.go:1071 TestParseJsonSourceFileConfigFileContentWithEmptyExtendedConfig
 #[test]
 fn parse_json_source_file_config_file_content_with_empty_extended_config() {
     let files = file_map(&[
@@ -606,7 +606,7 @@ fn circular_extends_leave_config_out_of_its_extended_source_files() {
     }
 }
 
-// Go: tsconfigparsing_test.go:924 TestParseJsonSourceFileConfigFileContentDoesNotDuplicateUnquotedKeyDiagnostics
+// Go: tsconfigparsing_test.go:1102 TestParseJsonSourceFileConfigFileContentDoesNotDuplicateUnquotedKeyDiagnostics
 #[test]
 fn parse_json_source_file_config_file_content_does_not_duplicate_unquoted_key_diagnostics() {
     let parsed = get_parsed_command_line(
@@ -631,7 +631,7 @@ fn parse_json_source_file_config_file_content_does_not_duplicate_unquoted_key_di
     }
 }
 
-// Go: tsconfigparsing_test.go:949 TestParseJsonSourceFileConfigFileContentReportsQuestionTokenDiagnostics
+// Go: tsconfigparsing_test.go:1127 TestParseJsonSourceFileConfigFileContentReportsQuestionTokenDiagnostics
 #[test]
 fn parse_json_source_file_config_file_content_reports_question_token_diagnostics() {
     let parsed = get_parsed_command_line(
@@ -659,7 +659,7 @@ fn parse_json_source_file_config_file_content_reports_question_token_diagnostics
     }
 }
 
-// Go: tsconfigparsing_test.go:978 TestParseNullEnumCompilerOptions
+// Go: tsconfigparsing_test.go:1156 TestParseNullEnumCompilerOptions
 #[test]
 fn parse_null_enum_compiler_options() {
     let config = TestConfig {
@@ -812,7 +812,7 @@ fn content_mapper_output_extensions_reset() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1136 TestContentMappers (tsgo#4712)
+// Go: tsconfigparsing_test.go:1245 TestContentMappers (tsgo#4712)
 #[test]
 fn content_mappers() {
     let config = TestConfig {
@@ -882,7 +882,7 @@ fn content_mappers() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1191 TestContentMapperOptionDiagnosticLocation (tsgo#4712)
+// Go: tsconfigparsing_test.go:1300 TestContentMapperOptionDiagnosticLocation (tsgo#4712)
 #[test]
 fn content_mapper_option_diagnostic_location() {
     let config = TestConfig {
@@ -929,7 +929,7 @@ fn content_mapper_option_diagnostic_location() {
     );
 }
 
-// Go: tsconfigparsing_test.go:1219 TestContentMappersAreInheritedFromExtendedConfig (tsgo#4712)
+// Go: tsconfigparsing_test.go:1328 TestContentMappersAreInheritedFromExtendedConfig (tsgo#4712)
 #[test]
 fn content_mappers_are_inherited_from_extended_config() {
     let config = TestConfig {
@@ -974,7 +974,7 @@ fn content_mappers_are_inherited_from_extended_config() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1250 TestContentMappersRequireFlag (tsgo#4712)
+// Go: tsconfigparsing_test.go:1359 TestContentMappersRequireFlag (tsgo#4712)
 #[test]
 fn content_mappers_require_flag() {
     let config = TestConfig {
@@ -1011,7 +1011,7 @@ fn content_mappers_require_flag() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1279 TestUnresolvedContentMapperDoesNotRegisterExtensions (tsgo#4712)
+// Go: tsconfigparsing_test.go:1388 TestUnresolvedContentMapperDoesNotRegisterExtensions (tsgo#4712)
 #[test]
 fn unresolved_content_mapper_does_not_register_extensions() {
     let config = TestConfig {
@@ -1369,7 +1369,7 @@ fn content_mapper_compound_extension_validation() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1009 getParsedWithJsonSourceFileApi
+// Go: tsconfigparsing_test.go:1654 getParsedWithJsonSourceFileApi
 fn get_parsed_with_json_source_file_api(
     config: &TestConfig,
     host: &dyn ParseConfigHost,
@@ -1415,7 +1415,7 @@ fn ts_config_source_file(parsed: &ParsedSourceFile) -> TsConfigSourceFile {
     }
 }
 
-// Go: tsconfigparsing_test.go:1500 baselineParseConfigWith
+// Go: tsconfigparsing_test.go:1675 baselineParseConfigWith
 // PORT: Go `t.Fatal` and the fatal `assert.NilError` are panics; the
 // `baseline.Run` result (Go `t.Errorf`) is the returned `Err`.
 fn baseline_parse_config_with(
@@ -1507,7 +1507,7 @@ fn baseline_parse_config_with(
     )
 }
 
-// Go: tsconfigparsing_test.go:1091 writeJsonReadableText
+// Go: tsconfigparsing_test.go:1729 writeJsonReadableText
 fn write_json_readable_text<T: MarshalerTo + ?Sized>(
     output: &mut String,
     input: &T,
@@ -1515,14 +1515,14 @@ fn write_json_readable_text<T: MarshalerTo + ?Sized>(
     marshal_indent_write(output, input, "", "  ")
 }
 
-// Go: tsconfigparsing_test.go:1098 TestParseTypeAcquisition (element type of `cases`)
+// Go: tsconfigparsing_test.go:1735 TestParseTypeAcquisition (element type of `cases`)
 struct TypeAcquisitionCase {
     title: &'static str,
     config_name: &'static str,
     config: &'static str,
 }
 
-// Go: tsconfigparsing_test.go:1095 TestParseTypeAcquisition
+// Go: tsconfigparsing_test.go:1733 TestParseTypeAcquisition
 #[test]
 fn parse_type_acquisition() {
     let mut t = Subtests::new("TestParseTypeAcquisition");
@@ -1556,7 +1556,7 @@ fn parse_type_acquisition() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1652 printFS
+// Go: tsconfigparsing_test.go:1829 printFS
 fn print_fs(output: &mut String, files: &dyn Fs, root: &str) -> Result<(), FsError> {
     let mut walk_fn = |path: &str, d: Option<&DirEntry>, err: Option<FsError>| {
         if let Some(err) = err {
@@ -1576,8 +1576,8 @@ fn print_fs(output: &mut String, files: &dyn Fs, root: &str) -> Result<(), FsErr
     ts_goport::frontend::vfs::walk_dir(files, root, &mut walk_fn)
 }
 
-// Go: tsconfigparsing_test.go:1699 TestParseSrcCompiler (ts#64022)
-// PORT: Go `parseSrcCompiler` (tsconfigparsing_test.go:1668) is inlined: its
+// Go: tsconfigparsing_test.go:1871 TestParseSrcCompiler (ts#64022)
+// PORT: Go `parseSrcCompiler` (tsconfigparsing_test.go:1845) is inlined: its
 // only other user is `BenchmarkParseSrcCompiler`, which is not ported.
 #[test]
 fn parse_src_compiler() {
@@ -1642,7 +1642,7 @@ fn parse_src_compiler() {
 
 // memoCache is a minimal memoizing ExtendedConfigCache used by tests to simulate
 // cache hits across multiple parses of configs that extend a common base.
-// Go: tsconfigparsing_test.go:1424 memoCache
+// Go: tsconfigparsing_test.go:1915 memoCache
 // PORT: the trait takes `&self`, so the map is in a `RefCell`.
 #[derive(Default)]
 struct MemoCache {
@@ -1650,7 +1650,7 @@ struct MemoCache {
 }
 
 impl ExtendedConfigCache for MemoCache {
-    // Go: tsconfigparsing_test.go:1428 (*memoCache).GetExtendedConfig
+    // Go: tsconfigparsing_test.go:1919 (*memoCache).GetExtendedConfig
     fn get_extended_config(
         &self,
         file_name: &str,
@@ -1676,7 +1676,7 @@ impl ExtendedConfigCache for MemoCache {
 
 // TestExtendedConfigErrorsAppearOnCacheHit verifies that diagnostics produced while parsing an
 // extended config are still reported when the extended config comes from the cache.
-// Go: tsconfigparsing_test.go:1444 TestExtendedConfigErrorsAppearOnCacheHit
+// Go: tsconfigparsing_test.go:1935 TestExtendedConfigErrorsAppearOnCacheHit
 #[test]
 fn extended_config_errors_appear_on_cache_hit() {
     let mut t = Subtests::new("TestExtendedConfigErrorsAppearOnCacheHit");
@@ -1738,7 +1738,7 @@ fn extended_config_errors_appear_on_cache_hit() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1462 and :1507 parseConfig (the closure in
+// Go: tsconfigparsing_test.go:1953 and :1996 parseConfig (the closure in
 // both subtests of TestExtendedConfigErrorsAppearOnCacheHit)
 fn parse_config_with_cache(
     host: &VfsParseConfigHost,
@@ -1774,7 +1774,7 @@ fn parse_config_with_cache(
     )
 }
 
-// Go: tsconfigparsing_test.go:1535 TestExtendedConfigConfigDirPathsAreNotCached
+// Go: tsconfigparsing_test.go:2022 TestExtendedConfigConfigDirPathsAreNotCached
 #[test]
 fn extended_config_config_dir_paths_are_not_cached() {
     let files = file_map(&[
@@ -1828,7 +1828,7 @@ fn extended_config_config_dir_paths_are_not_cached() {
 // Test data, generated from the Go source (tsconfigparsing_test.go).
 // ---------------------------------------------------------------------------
 
-// Go: tsconfigparsing_test.go:38 parseConfigFileTextToJsonTests
+// Go: tsconfigparsing_test.go:39 parseConfigFileTextToJsonTests
 fn parse_config_file_text_to_json_tests() -> Vec<ParseConfigFileTextToJsonTest> {
     vec![
         ParseConfigFileTextToJsonTest {
@@ -1910,7 +1910,7 @@ fn parse_config_file_text_to_json_tests() -> Vec<ParseConfigFileTextToJsonTest> 
     ]
 }
 
-// Go: tsconfigparsing_test.go:167 parseJsonConfigFileTests
+// Go: tsconfigparsing_test.go:165 parseJsonConfigFileTests
 fn parse_json_config_file_tests() -> Vec<ParseJsonConfigTestCase> {
     vec![
         ParseJsonConfigTestCase {
@@ -2724,7 +2724,7 @@ export {}",
     ]
 }
 
-// Go: tsconfigparsing_test.go:772 tsconfigWithExtends
+// Go: tsconfigparsing_test.go:836 tsconfigWithExtends
 const TSCONFIG_WITH_EXTENDS: &str = r#"{
   "files": ["/src/index.ts", "/src/app.ts"],
   "include": ["/src/**/*"],
@@ -2737,21 +2737,21 @@ const TSCONFIG_WITH_EXTENDS: &str = r#"{
   }
 }"#;
 
-// Go: tsconfigparsing_test.go:784 tsconfigWithoutConfigDir
+// Go: tsconfigparsing_test.go:848 tsconfigWithoutConfigDir
 const TSCONFIG_WITHOUT_CONFIG_DIR: &str = r#"{
   "compilerOptions": {
     "outDir": "bin"
   }
 }"#;
 
-// Go: tsconfigparsing_test.go:790 tsconfigWithConfigDir
+// Go: tsconfigparsing_test.go:854 tsconfigWithConfigDir
 const TSCONFIG_WITH_CONFIG_DIR: &str = r#"{
   "compilerOptions": {
     "outDir": "${configDir}/bin"
   }
 }"#;
 
-// Go: tsconfigparsing_test.go:796 tsconfigWithExtendsAndConfigDir
+// Go: tsconfigparsing_test.go:860 tsconfigWithExtendsAndConfigDir
 const TSCONFIG_WITH_EXTENDS_AND_CONFIG_DIR: &str = r#"{
   "compilerOptions": {
     "outFile": "${configDir}/outFile",
@@ -2763,7 +2763,7 @@ const TSCONFIG_WITH_EXTENDS_AND_CONFIG_DIR: &str = r#"{
   }
 }"#;
 
-// Go: tsconfigparsing_test.go:1098 TestParseTypeAcquisition (cases)
+// Go: tsconfigparsing_test.go:1735 TestParseTypeAcquisition (cases)
 fn type_acquisition_cases() -> Vec<TypeAcquisitionCase> {
     vec![
         TypeAcquisitionCase {

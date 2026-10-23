@@ -165,7 +165,7 @@ type ProgramTest = (
     ScriptTarget,
 );
 
-// Go: compiler/program_test.go:133 programTestCases
+// Go: compiler/program_test.go:350 programTestCases
 #[rustfmt::skip]
 const PROGRAM_TEST_CASES: &[ProgramTest] = &[
     (
@@ -221,7 +221,7 @@ const PROGRAM_TEST_CASES: &[ProgramTest] = &[
     ),
 ];
 
-// Go: compiler/program_test.go:229 TestProgram
+// Go: compiler/program_test.go:446 TestProgram
 // PORT: the Go subtests run on one map file system each. Here they run in
 // one child process with one map file system (the OS override is set once
 // per process); each subtest writes its files over the previous ones, and
@@ -361,7 +361,7 @@ fn test_get_source_file_for_resolved_module_empty_path_misses() {
     );
 }
 
-// Go: compiler/program_test.go:271 TestIncludeProcessorDiagnosticsWithMissingFileCasing
+// Go: compiler/program_test.go:540 TestIncludeProcessorDiagnosticsWithMissingFileCasing
 #[test]
 fn test_include_processor_diagnostics_with_missing_file_casing() {
     in_child(
@@ -491,7 +491,7 @@ fn test_collect_package_names_looks_up_the_scope_of_the_file_directory() {
     );
 }
 
-// Go: checker/checker_test.go:20 TestGetSymbolAtLocation
+// Go: checker/checker_test.go:22 TestGetSymbolAtLocation
 #[test]
 fn test_get_symbol_at_location() {
     in_child(module_path!(), "test_get_symbol_at_location", || {
@@ -557,9 +557,9 @@ foo.bar;";
     });
 }
 
-// PORT: no Go counterpart (followups11 item 1). Go `EagerJSDoc` (ast.go:1581)
+// PORT: no Go counterpart (followups11 item 1). Go `EagerJSDoc` (ast.go:1506)
 // reads the file's JSDoc cache, which also holds the comments that a lazy
-// parse (`resolveJSDoc`, ast.go:2745) added. The parser defers a TS comment
+// parse (`resolveJSDoc`, ast.go:2672) added. The parser defers a TS comment
 // whose `{@link}` its prefilter misses (`{@link<form feed>Foo}`). The call
 // `f()` before `f` reads that comment lazily (the `@deprecated` check), so
 // `checkSourceElementWorker` (checker.go:2299) sees the link and marks `Foo`
@@ -808,7 +808,7 @@ impl ParseConfigHost for HostAsParseConfigHost {
 /// Go `testTraceEvent`: (ph, name, args).
 type TestTraceEvent = (String, String, IndexMap<String, LspAny>);
 
-// Go: checker/tracer_test.go:60 findTestTraceEvent
+// Go: checker/tracer_test.go:61 findTestTraceEvent
 fn find_test_trace_event(events: &[TestTraceEvent], phase: &str, name: &str) -> TestTraceEvent {
     for event in events {
         if event.0 == phase && event.1 == name {
@@ -818,7 +818,7 @@ fn find_test_trace_event(events: &[TestTraceEvent], phase: &str, name: &str) -> 
     panic!("failed to find {phase} event {name:?}");
 }
 
-// Go: checker/tracer_test.go:14 TestTracerPushPreservesEndArgMutations
+// Go: checker/tracer_test.go:15 TestTracerPushPreservesEndArgMutations
 // PORT: Go passes the args map to `Push` and mutates it before `pop()`;
 // the end event shows the change and the caller's map never gets
 // "checkerId". The Rust `Push` takes the args by value, so the caller has no
@@ -909,7 +909,7 @@ fn fake_transform(
     Rc::new(transform)
 }
 
-// Go: compiler/contentmapper_test.go:22 fakeContentMapperHost
+// Go: compiler/contentmapper_test.go:23 fakeContentMapperHost
 struct FakeContentMapperHost {
     transform: FakeTransform,
 }
@@ -945,7 +945,7 @@ impl contentmapper::Project for FakeContentMapperHost {
     }
 }
 
-// Go: compiler/contentmapper_test.go:39 newContentMapperProgram
+// Go: compiler/contentmapper_test.go:40 newContentMapperProgram
 fn new_content_mapper_program(
     transform: FakeTransform,
     files: &[(&str, &str)],
@@ -964,7 +964,7 @@ fn new_content_mapper_program(
     )
 }
 
-// Go: compiler/contentmapper_test.go:47 newContentMapperProgramWithOptions
+// Go: compiler/contentmapper_test.go:48 newContentMapperProgramWithOptions
 // PORT: Go writes the files into an empty case-insensitive map file system;
 // `MapFs::from_map` makes the same files and parent directories. The first
 // map file system of the test process is also its OS file system (see
@@ -1039,7 +1039,7 @@ fn transform_result(
     }
 }
 
-// Go: compiler/contentmapper_test.go:73 TestContentMapperVirtualExtensionSetsImpliedNodeFormat
+// Go: compiler/contentmapper_test.go:69 TestContentMapperVirtualExtensionSetsImpliedNodeFormat
 #[test]
 fn test_content_mapper_virtual_extension_sets_implied_node_format() {
     in_child(
@@ -1075,7 +1075,7 @@ fn test_content_mapper_virtual_extension_sets_implied_node_format() {
     );
 }
 
-// Go: compiler/contentmapper_test.go:94 TestContentMapperDirectivesPreserveIncrementalGlobals
+// Go: compiler/contentmapper_test.go:90 TestContentMapperDirectivesPreserveIncrementalGlobals
 #[test]
 fn test_content_mapper_directives_preserve_incremental_globals() {
     in_child(
@@ -1160,7 +1160,7 @@ fn test_content_mapper_directives_preserve_incremental_globals() {
     );
 }
 
-// Go: compiler/contentmapper_test.go:153 TestCompositeProjectContentMapperSupplementalRoots
+// Go: compiler/contentmapper_test.go:149 TestCompositeProjectContentMapperSupplementalRoots
 #[test]
 fn test_composite_project_content_mapper_supplemental_roots() {
     in_child(
@@ -1234,7 +1234,7 @@ fn test_composite_project_content_mapper_supplemental_roots() {
     );
 }
 
-// Go: compiler/contentmapper_test.go:216 collectContentMapperDiagnostics
+// Go: compiler/contentmapper_test.go:212 collectContentMapperDiagnostics
 fn collect_content_mapper_diagnostics(program: &NewProgram) -> Vec<Diagnostic> {
     let ctx = context::background();
     let mut diagnostics = ls_program::get_syntactic_diagnostics(program, &ctx, Node::NIL);
@@ -1247,7 +1247,7 @@ fn collect_content_mapper_diagnostics(program: &NewProgram) -> Vec<Diagnostic> {
     diagnostics
 }
 
-// Go: compiler/contentmapper_test.go:225 TestContentMapperInvalidMappings
+// Go: compiler/contentmapper_test.go:221 TestContentMapperInvalidMappings
 #[test]
 fn test_content_mapper_invalid_mappings() {
     in_child(
@@ -1297,7 +1297,7 @@ fn test_content_mapper_invalid_mappings() {
     );
 }
 
-// Go: compiler/contentmapper_test.go:251 TestContentMapperSourceFileState
+// Go: compiler/contentmapper_test.go:247 TestContentMapperSourceFileState
 #[test]
 fn test_content_mapper_source_file_state() {
     in_child(
@@ -1377,7 +1377,7 @@ fn test_content_mapper_source_file_state() {
     );
 }
 
-// Go: compiler/contentmapper_test.go:302 TestContentMapperProjectErrorDiagnostics
+// Go: compiler/contentmapper_test.go:298 TestContentMapperProjectErrorDiagnostics
 #[test]
 fn test_content_mapper_project_error_diagnostics() {
     let tests = [

@@ -24,7 +24,7 @@ use super::api_util::{doc, error_contains, nil_error, no_lib, program_params};
 use super::projecttestutil::{self, TypingsInstallerOptions, files};
 use super::util::bg;
 
-// Go: session_apistate_test.go:24 syntheticProjectID
+// Go: session_apistate_test.go:28 syntheticProjectID
 fn synthetic_project_id(id: i32) -> project::SyntheticProjectID {
     project::new_synthetic_project_id(id)
 }
