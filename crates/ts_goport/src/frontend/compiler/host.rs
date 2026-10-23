@@ -189,6 +189,13 @@ pub struct CompilerHostImpl {
 }
 
 // Go: host.go:42 NewCachedFSCompilerHost
+// PORT: Go has no `current_directory` parameter since ts#64159, which took
+// GetCurrentDirectory out of Go's CompilerHost (program.go:155
+// GetCurrentDirectory returns BaseDirectory, the config's). The port's
+// `CompilerHost` keeps `get_current_directory`, and the file loader, project
+// references, program lookup and go_frontend read it (about 30 calls), so the
+// host keeps the directory. Taking it out means moving each call to the
+// program's base directory, as Go did.
 pub fn new_cached_fs_compiler_host(
     current_directory: &str,
     fs: Rc<dyn Fs>,

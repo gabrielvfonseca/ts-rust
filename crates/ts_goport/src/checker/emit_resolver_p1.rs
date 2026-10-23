@@ -789,7 +789,8 @@ impl AliasWalkPaths {
 }
 
 // Go: checker/emitsupport.go:136 getMeaningOfEntityNameReference (ts#64649 moved it from emitresolver.go)
-fn get_meaning_of_entity_name_reference(entity_name: Node) -> SymbolFlags {
+// The emit resolver and node_copy.rs (Go nodecopy.go) both call it.
+pub(super) fn get_meaning_of_entity_name_reference(entity_name: Node) -> SymbolFlags {
     let parent = entity_name.parent();
     // get symbol of the first identifier of the entityName
     if parent.kind() == SyntaxKind::TypeQuery
