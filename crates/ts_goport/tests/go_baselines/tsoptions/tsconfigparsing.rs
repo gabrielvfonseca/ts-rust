@@ -300,6 +300,102 @@ fn parse_json_config_file_content_defaults_compile_on_save_to_false() {
     assert_eq!(parsed.compile_on_save, Some(false));
 }
 
+// PORT: no Go test. The project reference network check (ts#64832) resolves
+// the path against the config file's directory, not the base path: Go calls
+// getProjectReferences(basePathForFileNames) (tsconfigparsing.go:1478, check
+// at :1449). The expected values are the Go N' (3e9236361fa9) output of the
+// same calls (a `go test -overlay` probe, bump E L1 round 2):
+//   base /apath, config /apath/sub/tsconfig.json: no error, reference
+//     /apath/??/UNC/server/share/project
+//   base /apath/sub, config /apath/tsconfig.json: TS5116 (JSON API at -1..-1,
+//     source file API at 50..82), no reference
+#[test]
+fn project_reference_network_check_uses_config_directory() {
+    const TEXT: &str = "{\n  \"files\": [\"a.ts\"],\n  \"references\": [{ \"path\": \"../??/UNC/server/share/project\" }]\n}";
+    const REFERENCE: &str = "../??/UNC/server/share/project";
+    // (base path, config file, file names, (JSON API, source file API) error ranges, reference)
+    let cases = [
+        (
+            "/apath",
+            "/apath/sub/tsconfig.json",
+            "/apath/sub/a.ts",
+            None,
+            Some("/apath/??/UNC/server/share/project"),
+        ),
+        (
+            "/apath/sub",
+            "/apath/tsconfig.json",
+            "/apath/a.ts",
+            Some([(-1, -1), (50, 82)]),
+            None,
+        ),
+    ];
+    for (base_path, config_file_name, file_name, error_ranges, reference) in cases {
+        let files = file_map(&[
+            ("/apath/a.ts", ""),
+            ("/apath/sub/a.ts", ""),
+            (config_file_name, TEXT),
+        ]);
+        let host =
+            new_vfs_parse_config_host(&files, base_path, true /*useCaseSensitiveFileNames*/);
+        let path = to_path(config_file_name, base_path, true);
+        let (json, _) =
+            tsoptions::parse_config_file_text_to_json(config_file_name, path.clone(), TEXT);
+        let via_json = tsoptions::parse_json_config_file_content(
+            &json,
+            &host,
+            base_path,
+            None,
+            config_file_name,
+            &[],
+            None,
+        );
+        let via_source_file = tsoptions::parse_json_source_file_config_file_content(
+            new_tsconfig_source_file_from_file_path(config_file_name, path, TEXT),
+            &host,
+            base_path,
+            None,
+            None,
+            config_file_name,
+            &[],
+            None,
+        );
+        for (api, parsed) in [via_json, via_source_file].iter().enumerate() {
+            let context = format!("base {base_path}, config {config_file_name}, api {api}");
+            assert_eq!(parsed.parsed_config.file_names, [file_name], "{context}");
+            let errors: Vec<_> = parsed
+                .errors
+                .iter()
+                .map(|d| (d.code, d.pos, d.end, d.message_args.clone()))
+                .collect();
+            let expected_errors: Vec<_> = error_ranges
+                .map(|ranges| {
+                    (
+                        5116,
+                        ranges[api].0,
+                        ranges[api].1,
+                        vec![REFERENCE.to_string()],
+                    )
+                })
+                .into_iter()
+                .collect();
+            assert_eq!(errors, expected_errors, "{context}");
+            let references: Vec<_> = parsed
+                .parsed_config
+                .project_references
+                .iter()
+                .flatten()
+                .map(|r| (r.path.as_str(), r.original_path.as_str()))
+                .collect();
+            let expected_references: Vec<_> = reference
+                .map(|path| (path, REFERENCE))
+                .into_iter()
+                .collect();
+            assert_eq!(references, expected_references, "{context}");
+        }
+    }
+}
+
 // Go: tsconfigparsing_test.go:818 getParsedWithJsonApi
 fn get_parsed_with_json_api(
     config: &TestConfig,
@@ -449,6 +545,67 @@ fn parse_json_source_file_config_file_content_with_empty_extended_config() {
     );
 }
 
+// PORT: no Go test. Go tests ts#64755 through the API
+// (TestOpenProjectsWithCircularExtendsReportCircularity, ported in
+// `project_lsp/api_session_apistate_test.rs`): without the fix Go deadlocks
+// there, and the port has no such lock, so that test passes without it. This
+// test checks the parse result on the same files: a config in an `extends`
+// cycle is not in its own extended source files (tsconfigparsing.go:1106,
+// with the file system's case sensitivity). The expected values are the Go N'
+// (3e9236361fa9) output of the same calls (a `go test -overlay` probe, bump E
+// L1 round 2). Go N' without the fix gives p2 its own path first.
+#[test]
+fn circular_extends_leave_config_out_of_its_extended_source_files() {
+    const P1: &str = "/home/projects/p1/tsconfig.json";
+    const P2: &str = "/home/projects/p2/tsconfig.json";
+    const BASE: &str = "/home/projects/shared/base.json";
+    // (useCaseSensitiveFileNames, base.json `extends`, p2 as p1 sees it)
+    let cases = [
+        (true, "../p2/tsconfig.json", P2),
+        (
+            false,
+            "../P2/TSCONFIG.json",
+            "/home/projects/P2/TSCONFIG.json",
+        ),
+    ];
+    for (case_sensitive, base_extends, p2_extended) in cases {
+        let base_text = format!("{{ \"extends\": \"{base_extends}\" }}");
+        let files = file_map(&[
+            (P1, r#"{ "extends": "../shared/base.json" }"#),
+            (P2, r#"{ "extends": "../shared/base.json" }"#),
+            (BASE, base_text.as_str()),
+            ("/home/projects/p1/a.ts", "export const a = 1;"),
+            ("/home/projects/p2/b.ts", "export const b = 1;"),
+        ]);
+        let host = new_vfs_parse_config_host(&files, "/", case_sensitive);
+        for (config_file_name, extended, file_name) in [
+            (P1, vec![p2_extended, BASE], "/home/projects/p1/a.ts"),
+            (P2, vec![BASE], "/home/projects/p2/b.ts"),
+        ] {
+            let config_file = new_tsconfig_source_file_from_file_path(
+                config_file_name,
+                to_path(config_file_name, "", case_sensitive),
+                &files[config_file_name],
+            );
+            let parsed = tsoptions::parse_json_source_file_config_file_content(
+                config_file,
+                &host,
+                &get_directory_path(config_file_name),
+                None,
+                None,
+                config_file_name,
+                &[],
+                None,
+            );
+            let context = format!("{config_file_name}, case sensitive {case_sensitive}");
+            assert_eq!(parsed.extended_source_files(), extended, "{context}");
+            let codes: Vec<_> = parsed.errors.iter().map(|d| d.code).collect();
+            assert_eq!(codes, [18000], "{context}");
+            assert_eq!(parsed.parsed_config.file_names, [file_name], "{context}");
+        }
+    }
+}
+
 // Go: tsconfigparsing_test.go:924 TestParseJsonSourceFileConfigFileContentDoesNotDuplicateUnquotedKeyDiagnostics
 #[test]
 fn parse_json_source_file_config_file_content_does_not_duplicate_unquoted_key_diagnostics() {
@@ -549,6 +706,110 @@ fn run_external_code_options() -> Option<CompilerOptions> {
         run_external_code: Tristate::True,
         ..Default::default()
     })
+}
+
+// Go: tsconfigparsing_test.go:1187 TestContentMapperOutputExtensionsReset (ts#64581)
+#[test]
+fn content_mapper_output_extensions_reset() {
+    struct ResetTest {
+        name: &'static str,
+        override_: &'static str,
+        rewrite: bool,
+        declaration: &'static str,
+        output_extensions: Option<&'static [(&'static str, &'static str)]>,
+    }
+    let tests = [
+        ResetTest {
+            name: "omitted",
+            override_: "",
+            rewrite: true,
+            declaration: "/dist/Card.d.ts",
+            output_extensions: Some(&[(".astro", ".js")]),
+        },
+        ResetTest {
+            name: "null",
+            override_: r#", "outputExtensions": null"#,
+            rewrite: false,
+            declaration: "/dist/Card.d.astro.ts",
+            output_extensions: None,
+        },
+        ResetTest {
+            name: "empty object",
+            override_: r#", "outputExtensions": {}"#,
+            rewrite: false,
+            declaration: "/dist/Card.d.astro.ts",
+            output_extensions: Some(&[]),
+        },
+        ResetTest {
+            name: "replacement",
+            override_: r#", "outputExtensions": {".astro": ".mjs"}"#,
+            rewrite: true,
+            declaration: "/dist/Card.d.mts",
+            output_extensions: Some(&[(".astro", ".mjs")]),
+        },
+    ];
+    let mut t = Subtests::new("TestContentMapperOutputExtensionsReset");
+    for test in &tests {
+        for (name, get_parsed) in CONFIG_APIS {
+            t.run(&format!("{}/{name}", test.name), || {
+                // PORT: the parser keeps `&'static str` text, so the config text is leaked.
+                let json_text: &'static str = Box::leak(
+                    format!(
+                        "{{\n\t\t\t\t\t\t\"compilerOptions\": {{\n\t\t\t\t\t\t\t\"declaration\": true, \"rootDir\": \"/src\", \"outDir\": \"/dist\",\n\t\t\t\t\t\t\t\"rewriteRelativeImportExtensions\": {}\n\t\t\t\t\t\t}},\n\t\t\t\t\t\t\"contentMappers\": [{{ \"package\": \"mapper\", \"extensions\": [\".astro\"]{} }}],\n\t\t\t\t\t\t\"files\": [\"/src/Card.astro\"]\n\t\t\t\t\t}}",
+                        test.rewrite, test.override_
+                    )
+                    .into_boxed_str(),
+                );
+                let files = file_map(&[
+                    ("/tsconfig.json", json_text),
+                    ("/src/Card.astro", "export {};"),
+                    (
+                        "/node_modules/mapper/package.json",
+                        "{\n\t\t\t\t\t\t\"name\": \"mapper\",\n\t\t\t\t\t\t\"typescript\": { \"contentMapper\": {\n\t\t\t\t\t\t\t\"exec\": [\"mapper\"], \"outputExtensions\": {\".astro\": \".js\"}\n\t\t\t\t\t\t} }\n\t\t\t\t\t}",
+                    ),
+                ]);
+                let config = TestConfig {
+                    json_text,
+                    config_file_name: "tsconfig.json",
+                    base_path: "/",
+                    all_file_list: files.clone(),
+                    existing_options: run_external_code_options(),
+                };
+                let host = new_vfs_parse_config_host(
+                    &files,
+                    config.base_path,
+                    true, /*useCaseSensitiveFileNames*/
+                );
+                let parsed = get_parsed(&config, &host, config.base_path);
+                if !parsed.errors.is_empty() {
+                    return Err(format!("unexpected errors: {:?}", parsed.errors));
+                }
+                assert_eq!(parsed.content_mappers().len(), 1);
+                let mapper = &parsed.content_mappers()[0];
+                let want: Option<BTreeMap<String, String>> = test.output_extensions.map(|entries| {
+                    entries
+                        .iter()
+                        .map(|(source, target)| ((*source).to_string(), (*target).to_string()))
+                        .collect()
+                });
+                assert_eq!(mapper.definition.output_extensions, want);
+                assert_eq!(
+                    !parsed.content_mapper_extension_rewrites().is_empty(),
+                    test.rewrite
+                );
+                assert_eq!(
+                    parsed.get_output_file_names().collect::<Vec<_>>(),
+                    vec![test.declaration.to_string()]
+                );
+                // PORT: Go then writes into the manifest map and checks that
+                // the definition map did not change (it is a clone). A Rust
+                // clone is always a separate map, and the mapper is in an
+                // `Rc`, so that step has no port.
+                Ok(())
+            });
+        }
+    }
+    t.finish();
 }
 
 // Go: tsconfigparsing_test.go:1136 TestContentMappers (tsgo#4712)
@@ -783,7 +1044,7 @@ fn unresolved_content_mapper_does_not_register_extensions() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1306 TestContentMappersValidation (tsgo#4712)
+// Go: tsconfigparsing_test.go:1415 TestContentMappersValidation (tsgo#4712, ts#64581)
 #[test]
 fn content_mappers_validation() {
     struct ValidationTest {
@@ -792,11 +1053,44 @@ fn content_mappers_validation() {
         expected_code: i32,
     }
     let requires_type = diag::Compiler_option_0_requires_a_value_of_type_1.code() as i32;
+    let separators =
+        diag::Content_mapper_extension_0_must_not_contain_path_separators.code() as i32;
     let tests = [
         ValidationTest {
             name: "extension without leading dot",
             content_mappers: r#"[{ "package": "vue-mapper", "extensions": ["vue"] }]"#,
             expected_code: diag::Content_mapper_file_extension_0_must_begin_with_a.code() as i32,
+        },
+        // ts#64581
+        ValidationTest {
+            name: "source extension contains slash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue/foo"] }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "source extension contains backslash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue\\foo"] }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "output extension key contains slash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue"], "outputExtensions": {".vue/foo": ".js"} }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "output extension key contains backslash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue"], "outputExtensions": {".vue\\foo": ".js"} }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "output extension value contains slash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue"], "outputExtensions": {".vue": ".js/foo"} }]"#,
+            expected_code: separators,
+        },
+        ValidationTest {
+            name: "output extension value contains backslash",
+            content_mappers: r#"[{ "package": "x", "extensions": [".vue"], "outputExtensions": {".vue": ".js\\foo"} }]"#,
+            expected_code: separators,
         },
         ValidationTest {
             name: "built-in extension",
@@ -928,7 +1222,7 @@ fn content_mappers_validation() {
     t.finish();
 }
 
-// Go: tsconfigparsing_test.go:1413 TestContentMapperExtensionValidationUsesHostCaseSensitivity (ts#63936)
+// Go: tsconfigparsing_test.go:1552 TestContentMapperExtensionValidationUsesHostCaseSensitivity (ts#63936)
 #[test]
 fn content_mapper_extension_validation_uses_host_case_sensitivity() {
     struct CaseTest {
@@ -1011,6 +1305,66 @@ fn content_mapper_extension_validation_uses_host_case_sensitivity() {
             }
             Ok(())
         });
+    }
+    t.finish();
+}
+
+// Go: tsconfigparsing_test.go:1617 TestContentMapperCompoundExtensionValidation (ts#64581)
+#[test]
+fn content_mapper_compound_extension_validation() {
+    let built_in = diag::Content_mapper_file_extension_0_is_a_built_in_extension_and_cannot_be_registered_by_a_content_mapper.code() as i32;
+    let mut t = Subtests::new("TestContentMapperCompoundExtensionValidation");
+    for use_case_sensitive_file_names in [false, true] {
+        let mut extensions: Vec<String> =
+            vec![".y.z".to_string(), ".component.tsx.vue".to_string()];
+        for extension in ALL_SUPPORTED_EXTENSIONS_WITH_JSON
+            .iter()
+            .flat_map(|group| group.iter())
+        {
+            extensions.push(format!(".component{extension}"));
+            extensions.push(format!(".component{}", extension.to_uppercase()));
+        }
+        for extension in &extensions {
+            t.run(
+                &format!("{extension}/caseSensitive={use_case_sensitive_file_names}"),
+                || {
+                    // PORT: the parser keeps `&'static str` text, so the config text is leaked.
+                    let json_text: &'static str = Box::leak(
+                        format!(
+                            r#"{{ "contentMappers": [{{ "package": "mapper", "extensions": ["{extension}"] }}] }}"#
+                        )
+                        .into_boxed_str(),
+                    );
+                    let files = file_map(&[
+                        ("/tsconfig.json", json_text),
+                        ("/app.ts", "export {};"),
+                        (
+                            "/node_modules/mapper/package.json",
+                            "{\n\t\t\t\t\t\t\"name\": \"mapper\",\n\t\t\t\t\t\t\"typescript\": { \"contentMapper\": { \"exec\": [\"mapper\"] } }\n\t\t\t\t\t}",
+                        ),
+                    ]);
+                    let host = new_vfs_parse_config_host(&files, "/", use_case_sensitive_file_names);
+                    let config = TestConfig {
+                        json_text,
+                        config_file_name: "tsconfig.json",
+                        base_path: "/",
+                        all_file_list: files.clone(),
+                        existing_options: run_external_code_options(),
+                    };
+                    let parsed =
+                        get_parsed_with_json_source_file_api(&config, &host, config.base_path);
+                    if extension == ".y.z" || extension == ".component.tsx.vue" {
+                        assert_eq!(parsed.errors.len(), 0, "{:?}", parsed.errors);
+                        assert_eq!(parsed.content_mapper_extensions(), vec![extension.clone()]);
+                    } else {
+                        assert_eq!(parsed.errors.len(), 1, "{:?}", parsed.errors);
+                        assert_eq!(parsed.errors[0].code, built_in);
+                        assert_eq!(parsed.content_mapper_extensions().len(), 0);
+                    }
+                    Ok(())
+                },
+            );
+        }
     }
     t.finish();
 }
@@ -1684,6 +2038,56 @@ fn parse_json_config_file_tests() -> Vec<ParseJsonConfigTestCase> {
                 json_text: r#"{
                 "include": ["**/../*.ts"]
             }"#,
+                config_file_name: "/apath/tsconfig.json",
+                base_path: "/apath",
+                all_file_list: file_map(&[("/apath/main.ts", "")]),
+                existing_options: None,
+            }],
+        },
+        // Go: tsconfigparsing_test.go:261 (ts#64832)
+        ParseJsonConfigTestCase {
+            title: "reports errors for network paths",
+            include_compiler_options: true,
+            input: vec![TestConfig {
+                json_text: r#"{
+                "extends": ["//server/share/base.json", "\\\\?\\UNC\\server\\share\\base.json"],
+                "compilerOptions": {
+                    "outDir": "\\\\server\\share\\out",
+                    "rootDir": "./src",
+                    "typeRoots": ["./types", "\\??\\UNC\\server\\share\\types"],
+                    "mapRoot": "//server/share/maps",
+                    "declarationDir": "/x/../??/UNC/server/share/decl",
+                    "baseUrl": "/??/../apath"
+                },
+                "files": ["main.ts", "//server/share/a.ts", "../??/UNC/server/share/b.ts"],
+                "include": ["src", "\\\\.\\GLOBALROOT\\Device\\Mup\\server\\share"],
+                "exclude": ["//server/share/excluded", "../??/*.ts"],
+                "references": [{ "path": "//server/share/project" }]
+            }"#,
+                config_file_name: "/apath/tsconfig.json",
+                base_path: "/apath",
+                all_file_list: file_map(&[("/apath/main.ts", ""), ("/apath/src/index.ts", "")]),
+                existing_options: None,
+            }],
+        },
+        // Go: tsconfigparsing_test.go:285 (ts#64832)
+        ParseJsonConfigTestCase {
+            title: "reports errors for network path in string extends",
+            include_compiler_options: false,
+            input: vec![TestConfig {
+                json_text: r#"{ "extends": "\\\\server\\share\\base.json" }"#,
+                config_file_name: "/apath/tsconfig.json",
+                base_path: "/apath",
+                all_file_list: file_map(&[("/apath/main.ts", "")]),
+                existing_options: None,
+            }],
+        },
+        // Go: tsconfigparsing_test.go:294 (ts#64832)
+        ParseJsonConfigTestCase {
+            title: "reports errors for normalized network path in string extends",
+            include_compiler_options: false,
+            input: vec![TestConfig {
+                json_text: r#"{ "extends": "/x/../??/UNC/server/share/base.json" }"#,
                 config_file_name: "/apath/tsconfig.json",
                 base_path: "/apath",
                 all_file_list: file_map(&[("/apath/main.ts", "")]),

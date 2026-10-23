@@ -349,7 +349,7 @@ impl Checker {
         resolved
     }
 
-    // Go: checker/relater.go:2083 getUnionOrIntersectionTypePredicate
+    // Go: checker/relater.go:2084 getUnionOrIntersectionTypePredicate
     pub fn get_union_or_intersection_type_predicate(
         &mut self,
         signatures: &[SignatureId],
@@ -392,13 +392,13 @@ impl Checker {
         self.new_type_predicate(kind, &parameter_name, parameter_index, composite_type)
     }
 
-    // Go: checker/relater.go:2113 typePredicateKindsMatch
+    // Go: checker/relater.go:2114 typePredicateKindsMatch
     pub fn type_predicate_kinds_match(&self, a: TypePredicateId, b: TypePredicateId) -> bool {
         let (a, b) = (self.pred(a), self.pred(b));
         a.kind == b.kind && a.parameter_index == b.parameter_index
     }
 
-    // Go: checker/relater.go:2117 createTypePredicateFromTypePredicateNode
+    // Go: checker/relater.go:2118 createTypePredicateFromTypePredicateNode
     pub fn create_type_predicate_from_type_predicate_node(
         &mut self,
         node: Node,
@@ -438,7 +438,7 @@ impl Checker {
         self.new_type_predicate(kind, name, index, t)
     }
 
-    // Go: checker/relater.go:2133 instantiateTypePredicate
+    // Go: checker/relater.go:2134 instantiateTypePredicate
     pub fn instantiate_type_predicate(
         &mut self,
         predicate: TypePredicateId,
@@ -456,7 +456,7 @@ impl Checker {
         self.new_type_predicate(kind, &parameter_name, parameter_index, t)
     }
 
-    // Go: checker/relater.go:2141 newTypePredicate
+    // Go: checker/relater.go:2142 newTypePredicate
     pub fn new_type_predicate(
         &mut self,
         kind: TypePredicateKind,
@@ -476,7 +476,7 @@ impl Checker {
         id
     }
 
-    // Go: checker/relater.go:2145 isResolvingReturnTypeOfSignature
+    // Go: checker/relater.go:2146 isResolvingReturnTypeOfSignature
     pub fn is_resolving_return_type_of_signature(&mut self, signature: SignatureId) -> bool {
         if let Some(composite) = self.sig(signature).composite.clone() {
             for &s in &composite.signatures {
@@ -492,7 +492,7 @@ impl Checker {
             ) >= 0
     }
 
-    // Go: checker/relater.go:2152 findMatchingSignatures
+    // Go: checker/relater.go:2153 findMatchingSignatures
     pub fn find_matching_signatures(
         &mut self,
         signature_lists: &[Vec<SignatureId>],
@@ -556,7 +556,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:2187 findMatchingSignature
+    // Go: checker/relater.go:2188 findMatchingSignature
     pub fn find_matching_signature(
         &mut self,
         signature_list: &[SignatureId],
@@ -591,7 +591,7 @@ impl Checker {
     /**
      * See signatureRelatedTo, compareSignaturesIdentical
      */
-    // Go: checker/relater.go:2200 compareSignaturesIdentical
+    // Go: checker/relater.go:2201 compareSignaturesIdentical
     pub fn compare_signatures_identical(
         &mut self,
         source: SignatureId,
@@ -681,7 +681,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:2260 isMatchingSignature
+    // Go: checker/relater.go:2261 isMatchingSignature
     pub fn is_matching_signature(
         &mut self,
         source: SignatureId,
@@ -710,7 +710,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/relater.go:2280 compareTypeParametersIdentical
+    // Go: checker/relater.go:2281 compareTypeParametersIdentical
     pub fn compare_type_parameters_identical(
         &mut self,
         source_params: &[TypeId],
@@ -747,7 +747,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/relater.go:2303 compareTypePredicatesIdentical
+    // Go: checker/relater.go:2304 compareTypePredicatesIdentical
     pub fn compare_type_predicates_identical(
         &mut self,
         source: TypePredicateId,
@@ -767,7 +767,7 @@ impl Checker {
         Ternary::FALSE
     }
 
-    // Go: checker/relater.go:2315 getEffectiveConstraintOfIntersection
+    // Go: checker/relater.go:2316 getEffectiveConstraintOfIntersection
     pub fn get_effective_constraint_of_intersection(
         &mut self,
         types: &[TypeId],
@@ -825,7 +825,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/relater.go:2354 templateLiteralTypesDefinitelyUnrelated
+    // Go: checker/relater.go:2355 templateLiteralTypesDefinitelyUnrelated
     pub fn template_literal_types_definitely_unrelated(
         &self,
         source: &TemplateLiteralType,
@@ -934,7 +934,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/relater.go:2365 isTypeMatchedByTemplateLiteralType
+    // Go: checker/relater.go:2366 isTypeMatchedByTemplateLiteralType
     pub fn is_type_matched_by_template_literal_type(
         &mut self,
         source: TypeId,
@@ -960,7 +960,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/relater.go:2378 inferTypesFromTemplateLiteralType
+    // Go: checker/relater.go:2379 inferTypesFromTemplateLiteralType
     // PORT: returns an empty list where Go returns nil. Go never returns a
     // non-nil empty slice here (a match always records at least one type).
     pub fn infer_types_from_template_literal_type(
@@ -1064,7 +1064,7 @@ impl Checker {
     // the source. The first match for the '.' in target occurs at character 1 in the source text part at index 1, and thus
     // the first inference is the template literal type `<${string}>`. The remainder of the source makes up the second
     // inference, the template literal type `<${number}-${number}>`.
-    // Go: checker/relater.go:2418 inferFromLiteralPartsToTemplateLiteral
+    // Go: checker/relater.go:2419 inferFromLiteralPartsToTemplateLiteral
     // PORT: returns an empty list where Go returns nil (a match is never
     // empty). `match_literal_parts_to_template_literal` does the text
     // matching first, then the types are made in Go `addMatch` order. The
@@ -1124,7 +1124,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/relater.go:2502 getStringLikeTypeForType
+    // Go: checker/relater.go:2503 getStringLikeTypeForType
     pub fn get_string_like_type_for_type(&mut self, t: TypeId) -> TypeId {
         if self
             .ty(t)
@@ -1136,7 +1136,7 @@ impl Checker {
         self.get_template_literal_type(&[String::new(), String::new()], &[t])
     }
 
-    // Go: checker/relater.go:2509 isValidTypeForTemplateLiteralPlaceholder
+    // Go: checker/relater.go:2510 isValidTypeForTemplateLiteralPlaceholder
     pub fn is_valid_type_for_template_literal_placeholder(
         &mut self,
         source: TypeId,
@@ -1201,7 +1201,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/relater.go:2531 isMemberOfStringMapping
+    // Go: checker/relater.go:2532 isMemberOfStringMapping
     pub fn is_member_of_string_mapping(&mut self, source: TypeId, target: TypeId) -> bool {
         let target_flags = self.ty(target).flags;
         if target_flags.intersects(TypeFlags::ANY) {
@@ -1224,7 +1224,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/relater.go:2551 applyTargetStringMappingToSource
+    // Go: checker/relater.go:2552 applyTargetStringMappingToSource
     pub fn apply_target_string_mapping_to_source(
         &mut self,
         source: TypeId,
@@ -1240,7 +1240,7 @@ impl Checker {
     }
 }
 
-// Go: checker/relater.go:2559 visibilityToString
+// Go: checker/relater.go:2560 visibilityToString
 pub fn visibility_to_string(flags: ModifierFlags) -> String {
     if flags == ModifierFlags::PRIVATE {
         return "private".to_string();
@@ -1251,7 +1251,7 @@ pub fn visibility_to_string(flags: ModifierFlags) -> String {
     "public".to_string()
 }
 
-// Go: checker/relater.go:2569 errorState
+// Go: checker/relater.go:2570 errorState
 #[derive(Clone, Debug, Default)]
 pub struct ErrorState {
     pub error_chain: Option<Rc<ErrorChain>>,
@@ -1283,7 +1283,7 @@ impl RelatedInfo {
     }
 }
 
-// Go: checker/relater.go:2574 ErrorChain
+// Go: checker/relater.go:2575 ErrorChain
 // PORT: Go `*ErrorChain` nodes are immutable once built and compared by
 // pointer, so they are `Rc<ErrorChain>` (nil is `None`; compare with
 // `Rc::ptr_eq`). Go `args []any` are diagnostic args, so `Vec<String>`.
@@ -1294,7 +1294,7 @@ pub struct ErrorChain {
     pub args: Vec<String>,
 }
 
-// Go: checker/relater.go:2580 Relater
+// Go: checker/relater.go:2581 Relater
 // PORT: The Go `c *Checker` field is not stored. Every `(r *Relater)` method
 // is an `impl Checker` method that takes the handle `r: &Rc<RefCell<Relater>>`
 // right after `self` (same convention as relater_p4/p5). Borrows of `r` are
@@ -1414,7 +1414,7 @@ impl Relater {
 }
 
 impl Checker {
-    // Go: checker/relater.go:2599 getRelater
+    // Go: checker/relater.go:2600 getRelater
     // PORT: perf. The pool head and `next` are moved out, not cloned. Go
     // leaves `r.next` set while `r` is in use; nothing reads it then, and
     // `putRelater` sets it again.
@@ -1427,7 +1427,7 @@ impl Checker {
         r
     }
 
-    // Go: checker/relater.go:2608 putRelater
+    // Go: checker/relater.go:2609 putRelater
     // PORT: the caller must drop any borrow of `r` before calling.
     pub fn put_relater(&mut self, r: Rc<RefCell<Relater>>) {
         {
@@ -1482,7 +1482,7 @@ impl Checker {
 }
 
 impl Checker {
-    // Go: checker/relater.go:2621 isRelatedToSimple
+    // Go: checker/relater.go:2622 isRelatedToSimple
     pub fn is_related_to_simple(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1500,7 +1500,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/relater.go:2625 isRelatedToWorker
+    // Go: checker/relater.go:2626 isRelatedToWorker
     pub fn is_related_to_worker(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1519,7 +1519,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/relater.go:2629 isRelatedTo
+    // Go: checker/relater.go:2630 isRelatedTo
     pub fn is_related_to(
         &mut self,
         r: &Rc<RefCell<Relater>>,
@@ -1539,7 +1539,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/relater.go:2633 isRelatedToEx
+    // Go: checker/relater.go:2634 isRelatedToEx
     #[allow(clippy::too_many_arguments)]
     pub fn is_related_to_ex(
         &mut self,
@@ -1826,7 +1826,7 @@ impl Checker {
         Ternary::FALSE
     }
 
-    // Go: checker/relater.go:2747 hasExcessProperties
+    // Go: checker/relater.go:2748 hasExcessProperties
     pub fn has_excess_properties(
         &mut self,
         r: &Rc<RefCell<Relater>>,

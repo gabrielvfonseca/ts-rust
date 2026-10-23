@@ -397,6 +397,8 @@ pub trait EmitResolver {
 pub trait EmitHost {
     fn options(&self) -> &CompilerOptions;
     fn source_files(&self) -> Vec<Node>;
+    /// ts#64581: the output extension rewrites of the content mappers.
+    fn content_mapper_extension_rewrites(&self) -> Vec<crate::frontend::tspath::ExtensionRewrite>;
     fn use_case_sensitive_file_names(&self) -> bool;
     fn get_current_directory(&self) -> String;
     fn common_source_directory(&self) -> String;

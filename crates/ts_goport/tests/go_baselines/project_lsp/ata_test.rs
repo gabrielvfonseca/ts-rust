@@ -61,7 +61,45 @@ fn typings_file(name: &str) -> String {
 }
 
 child_test! {
-    // Go: ata_test.go:22 TestATA/local module should not be picked up
+    // Go: ata_test.go:23 TestATA/no typings cache disables acquisition (ts#64836)
+    // PORT: a Go `&project.SessionOptions{...}` literal without
+    // TypingsLocation: the empty typings location turns ATA off.
+    fn no_typings_cache_disables_acquisition() {
+        let app_text = r#"const $ = require("jquery");"#;
+        let files = files(&[
+            (APP, app_text),
+            (
+                "/user/username/projects/project/jsconfig.json",
+                r#"{
+				"typeAcquisition": { "enable": true }
+			}"#,
+            ),
+        ]);
+        let (session, utils) = projecttestutil::setup_with_options_and_typings_installer(
+            files,
+            Some(ts_goport::project::SessionOptions {
+                typings_location: String::new(),
+                ..projecttestutil::session_options("/")
+            }),
+            ti(&[], &[("jquery", "export const x: number;")]),
+        );
+
+        open_kind(&session, APP_URI, app_text, lsproto::LanguageKind::JAVA_SCRIPT);
+        session.wait_for_background_tasks();
+
+        let p = program(&session, APP_URI);
+        assert!(has_file(&p, APP));
+        assert_eq!(calls(&utils).len(), 0);
+        assert!(
+            !session
+                .fs()
+                .file_exists(&format!("{TEST_TYPINGS_LOCATION}/package.json"))
+        );
+    }
+}
+
+child_test! {
+    // Go: ata_test.go:53 TestATA/local module should not be picked up
     fn local_module_should_not_be_picked_up() {
         let files = files(&[
             (APP, "const c = require('./config');"),
@@ -97,7 +135,7 @@ const PACKAGE_JSON_JQUERY: &str = r#"{
 			}"#;
 
 child_test! {
-    // Go: ata_test.go:58 TestATA/configured projects
+    // Go: ata_test.go:89 TestATA/configured projects
     fn configured_projects() {
         let files = files(&[
             (APP, ""),
@@ -122,7 +160,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:92 TestATA/inferred projects
+    // Go: ata_test.go:123 TestATA/inferred projects
     fn inferred_projects() {
         let files = files(&[(APP, ""), ("/user/username/projects/project/package.json", PACKAGE_JSON_JQUERY)]);
         let (session, utils) = open_app(files, ti(&[], &[("jquery", "declare const $: { x: number }")]));
@@ -181,7 +219,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:129 TestATA/type acquisition with disableFilenameBasedTypeAcquisition:true
+    // Go: ata_test.go:160 TestATA/type acquisition with disableFilenameBasedTypeAcquisition:true
     fn type_acquisition_with_disable_filename_based_type_acquisition_true() {
         let files = files(&[
             ("/user/username/projects/project/jquery.js", ""),
@@ -249,7 +287,7 @@ fn node_modules_ti() -> TypingsInstallerOptions {
 }
 
 child_test! {
-    // Go: ata_test.go:155 TestATA/discover from node_modules
+    // Go: ata_test.go:186 TestATA/discover from node_modules
     fn discover_from_node_modules() {
         let files = node_modules_files(
             "",
@@ -272,7 +310,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:192 TestATA/discover from node_modules empty types
+    // Go: ata_test.go:223 TestATA/discover from node_modules empty types
     fn discover_from_node_modules_empty_types() {
         let files = node_modules_files(
             "",
@@ -289,7 +327,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:222 TestATA/discover from node_modules explicit types
+    // Go: ata_test.go:253 TestATA/discover from node_modules explicit types
     fn discover_from_node_modules_explicit_types() {
         let files = node_modules_files(
             "",
@@ -306,7 +344,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:252 TestATA/discover from node_modules empty types has import
+    // Go: ata_test.go:283 TestATA/discover from node_modules empty types has import
     fn discover_from_node_modules_empty_types_has_import() {
         let files = node_modules_files(
             r#"import "jquery";"#,
@@ -341,7 +379,7 @@ fn two_calls_and_jquery_installed(session: &Rc<Session>, utils: &SessionUtils) {
 }
 
 child_test! {
-    // Go: ata_test.go:283 TestATA/discover from bower_components
+    // Go: ata_test.go:314 TestATA/discover from bower_components
     fn discover_from_bower_components() {
         let files = files(&[
             (APP, ""),
@@ -355,7 +393,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:317 TestATA/discover from bower.json
+    // Go: ata_test.go:348 TestATA/discover from bower.json
     fn discover_from_bower_json() {
         let files = files(&[
             (APP, ""),
@@ -375,7 +413,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:354 TestATA/Malformed package.json should be watched
+    // Go: ata_test.go:385 TestATA/Malformed package.json should be watched
     fn malformed_package_json_should_be_watched() {
         let files = files(&[
             (APP, ""),
@@ -412,7 +450,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:401 TestATA/should redo resolution that resolved to '.js' file after typings are installed
+    // Go: ata_test.go:432 TestATA/should redo resolution that resolved to '.js' file after typings are installed
     fn should_redo_resolution_that_resolved_to_js_file_after_typings_are_installed() {
         let files = files(&[
             // PORT: the Go literal is a raw string with `\n` escapes (not newlines).
@@ -459,7 +497,7 @@ fn jquery_typings_text(session: &Rc<Session>) -> String {
 }
 
 child_test! {
-    // Go: ata_test.go:432 TestATA/expired cache entry (inferred project, should install typings)
+    // Go: ata_test.go:463 TestATA/expired cache entry (inferred project, should install typings)
     fn expired_cache_entry_inferred_project_should_install_typings() {
         let files = cache_files("1.0.0", r#"{"dependencies":{"@types/jquery":{"version":"1.0.0"}}}"#);
         let (session, _) = open_app(files, ti(&[], &[("jquery", "export const y = 10")]));
@@ -469,7 +507,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:460 TestATA/non-expired cache entry (inferred project, should not install typings)
+    // Go: ata_test.go:491 TestATA/non-expired cache entry (inferred project, should not install typings)
     fn non_expired_cache_entry_inferred_project_should_not_install_typings() {
         let files = cache_files("1.3.0", r#"{"dependencies":{"@types/jquery":{"version":"1.3.0"}}}"#);
         let (session, _) = open_app(files, ti(&["jquery"], &[]));
@@ -478,12 +516,12 @@ child_test! {
     }
 }
 
-// Go: ata_test.go:486 TestATA/deduplicate from local @types packages
+// Go: ata_test.go:517 TestATA/deduplicate from local @types packages
 // PORT: Go skips this subtest ("Todo - implement removing local @types from
 // include list"); it is not ported.
 
 child_test! {
-    // Go: ata_test.go:519 TestATA/expired cache entry (inferred project, should install typings) lockfile3
+    // Go: ata_test.go:550 TestATA/expired cache entry (inferred project, should install typings) lockfile3
     fn expired_cache_entry_inferred_project_should_install_typings_lockfile3() {
         let files = cache_files(
             "1.0.0",
@@ -496,7 +534,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:547 TestATA/non-expired cache entry (inferred project, should not install typings) lockfile3
+    // Go: ata_test.go:578 TestATA/non-expired cache entry (inferred project, should not install typings) lockfile3
     fn non_expired_cache_entry_inferred_project_should_not_install_typings_lockfile3() {
         let files = cache_files(
             "1.3.0",
@@ -509,7 +547,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:573 TestATA/should install typings for unresolved imports
+    // Go: ata_test.go:604 TestATA/should install typings for unresolved imports
     fn should_install_typings_for_unresolved_imports() {
         let files = files(&[(
             APP,
@@ -558,7 +596,7 @@ child_test! {
 }
 
 child_test! {
-    // Go: ata_test.go:626 TestATA/ATA with WatchEnabled false should not panic
+    // Go: ata_test.go:657 TestATA/ATA with WatchEnabled false should not panic
     fn ata_with_watch_enabled_false_should_not_panic() {
         let files = files(&[(APP, ""), ("/user/username/projects/project/package.json", PACKAGE_JSON_JQUERY)]);
 
@@ -618,7 +656,7 @@ fn deprecated_ata_disabled() -> Vec<(&'static str, LspAny)> {
     )]
 }
 
-// Go: ata_test.go:694 TestATA/ATA disabled via <name>
+// Go: ata_test.go:725 TestATA/ATA disabled via <name>
 fn ata_disabled(config: Vec<(&str, LspAny)>, name: &str) {
     let files = files(&[
         (APP, ""),
@@ -644,21 +682,21 @@ fn ata_disabled(config: Vec<(&str, LspAny)>, name: &str) {
 }
 
 child_test! {
-    // Go: ata_test.go:694 TestATA/ATA disabled via unified setting
+    // Go: ata_test.go:725 TestATA/ATA disabled via unified setting
     fn ata_disabled_via_unified_setting() {
         ata_disabled(unified_ata_disabled(), "unified setting");
     }
 }
 
 child_test! {
-    // Go: ata_test.go:694 TestATA/ATA disabled via deprecated setting
+    // Go: ata_test.go:725 TestATA/ATA disabled via deprecated setting
     fn ata_disabled_via_deprecated_setting() {
         ata_disabled(deprecated_ata_disabled(), "deprecated setting");
     }
 }
 
 child_test! {
-    // Go: ata_test.go:722 TestATA/ATA re-enabled after being disabled triggers diagnostics refresh
+    // Go: ata_test.go:753 TestATA/ATA re-enabled after being disabled triggers diagnostics refresh
     fn ata_re_enabled_after_being_disabled_triggers_diagnostics_refresh() {
         let files = files(&[(APP, ""), ("/user/username/projects/project/package.json", PACKAGE_JSON_JQUERY)]);
         let (session, utils) = projecttestutil::setup_with_typings_installer(

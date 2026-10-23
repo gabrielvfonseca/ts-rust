@@ -29,7 +29,7 @@ To also replace the `typescript` that other packages depend on, use `overrides` 
 
 Then run `npx tsc -p tsconfig.json`. `tsc` takes the same options as TypeScript 7's `tsc`.
 
-`tsc --version` prints the TypeScript version that tsc-rs ports (7.1.0-dev), and so does
+`tsc --version` prints the TypeScript version that tsc-rs ports (7.1.0-beta), and so does
 `require("typescript").version`. The compiler matches `typesVersions` against that version. The
 npm version of this package is the tsc-rs version.
 

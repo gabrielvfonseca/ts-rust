@@ -167,7 +167,7 @@
 #                     GOPORT_BUILD_VERSION (core.rs VERSION), as Go's release
 #                     build sets core.version with -ldflags -X. Default:
 #                     $GOPORT_BUILD_VERSION, else none, and then the bins report
-#                     the source default 7.1.0-dev, as a Go build without -X.
+#                     the source default 7.1.0-beta, as a Go build without -X.
 #                     RELEASE_VERSION also adds the feature "noembed" (a
 #                     shipped release). For a version with embedded libs, set
 #                     GOPORT_BUILD_VERSION and not RELEASE_VERSION.

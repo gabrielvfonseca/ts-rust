@@ -1,19 +1,33 @@
 //! Ports of internal/execute/build/graph_test.go and
 //! internal/execute/tsc/extendedconfigcache_test.go.
+//!
+//! PORT: `TestBuildScheduling` (ts#64615) builds programs, and the compiler
+//! runs in this process with the OS override for the test system, which is
+//! for the whole process. So each of its subtests is a test that runs in a
+//! child process of its own (`run_test_in_child`), as in watcher_race.rs.
 
 use super::Subtests;
-use crate::support::runner::FileMap;
-use crate::support::test_sys::new_tsc_system;
+use crate::support::child::{new_in_process_test_sys, run_test_in_child};
+use crate::support::runner::{FileMap, TscInput};
+use crate::support::test_sys::{TestSys, new_tsc_system};
 use crate::support::vfstest;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
+use std::sync::Arc;
+use std::time::{Duration, SystemTime};
+use ts_goport::contentmapper::ProcessExitState;
 use ts_goport::execute::build::command_line::parse_build_command_line;
 use ts_goport::execute::build::host::TscExtendedConfigCache;
 use ts_goport::execute::build::orchestrator::{Options, new_orchestrator};
-use ts_goport::execute::tsc::compile::{System, SystemParseConfigHost};
+use ts_goport::execute::tsc::compile::{
+    ErrorWriter, ExitStatus, System, SystemParseConfigHost, Writer,
+};
 use ts_goport::frontend::tsoptions::{
     ParseConfigHost, ParsedCommandLine, get_parsed_command_line_of_config_file,
 };
 use ts_goport::frontend::vfs::Fs;
+use ts_goport::frontend::vfs::wrapvfs::{Replacements, wrapvfs_wrap};
+use ts_goport::gostd::{GoError, context};
 
 // ---------------------------------------------------------------------------
 // execute/build/graph_test.go
@@ -29,7 +43,7 @@ struct BuildOrderTestCase {
     circular: bool,
 }
 
-// Go: execute/build/graph_test.go:16 TestBuildOrderGenerator
+// Go: execute/build/graph_test.go:21 TestBuildOrderGenerator
 #[test]
 fn test_build_order_generator() {
     #[rustfmt::skip]
@@ -52,12 +66,12 @@ fn test_build_order_generator() {
 }
 
 impl BuildOrderTestCase {
-    // Go: execute/build/graph_test.go:41 configName
+    // Go: execute/build/graph_test.go:164 configName
     fn config_name(project: &str) -> String {
         format!("/home/src/workspaces/project/{project}/tsconfig.json")
     }
 
-    // Go: execute/build/graph_test.go:45 projectName
+    // Go: execute/build/graph_test.go:168 projectName
     fn project_name(config: &str) -> String {
         let s = config
             .strip_prefix("/home/src/workspaces/project/")
@@ -65,7 +79,7 @@ impl BuildOrderTestCase {
         s.strip_suffix("/tsconfig.json").unwrap_or(s).to_string()
     }
 
-    // Go: execute/build/graph_test.go:51 run
+    // Go: execute/build/graph_test.go:174 run
     fn run(&self, t: &mut Subtests) {
         t.run(
             &format!("{} - {}", self.name, self.projects.join(",")),
@@ -222,7 +236,7 @@ impl BuildOrderTestCase {
             ));
         }
         verify_deps(&orchestrator, &build_order, false)?;
-        // Go: graph_test.go:123-125 (ts#64220)
+        // Go: graph_test.go:245-247 (ts#64220)
         let schedule_order: Vec<String> = orchestrator
             .schedule_order()
             .iter()
@@ -281,6 +295,243 @@ impl BuildOrderTestCase {
             .collect();
         verify_deps(&orchestrator, &build_order3, true)
     }
+}
+
+// Go: execute/build/graph_test.go:39 TestBuildScheduling (ts#64615)
+// PORT: Go blocks the read of `Leaf/index.ts` until `Independent` starts,
+// with a 30 s timeout. Here the builders are one thread: a task starts when
+// it reads its files, and a started task writes its outputs when it is
+// built (orchestrator.rs). So the read of `Independent/index.ts` checks that
+// `Leaf/dist/index.js` is not written yet: `Independent` started while
+// `Leaf` still held a builder. With the build order as the take order (Go
+// before ts#64615), `Independent` waits behind `Middle`, which waits on
+// `Leaf`, so `Leaf` is built first and the check fails.
+fn test_build_scheduling(
+    test: &str,
+    project: &'static str,
+    refs_only: bool,
+    order: &'static [&'static str],
+) {
+    run_test_in_child(&format!("units_emit::execute_tests::{test}"), move || {
+        let sys = new_scheduling_test_system();
+        let command = parse_build_command_line(
+            &["--build", "--verbose", "--builders", "2", "Root", "Other"].map(String::from),
+            &SystemParseConfigHost(&*sys),
+        );
+        let mut orchestrator = new_orchestrator(Options {
+            sys: sys.clone() as Rc<dyn System>,
+            command: Rc::new(command),
+            testing: None,
+        });
+        let ctx = context::background();
+        let result = if refs_only {
+            orchestrator.build_references(&ctx, project)
+        } else {
+            orchestrator.build(&ctx, project)
+        };
+        let output = String::from_utf8_lossy(&sys.output.borrow()).into_owned();
+        assert_eq!(result.result.status, ExitStatus::Success, "{output}");
+        assert_eq!(result.statistics.projects, order.len() as i32);
+        assert_eq!(result.statistics.projects_built, order.len() as i32);
+        let mut reported = Vec::new();
+        for line in output.split('\n') {
+            if line.contains("Building project") {
+                for project in order {
+                    if line.contains(&format!("'{project}/tsconfig.json'")) {
+                        reported.push(*project);
+                    }
+                }
+            }
+        }
+        assert_eq!(reported, order, "{output}");
+        for project in ["Leaf", "Middle", "Independent", "Root", "Other"] {
+            assert_eq!(
+                sys.fs
+                    .file_exists(&format!("/project/{project}/dist/index.js")),
+                order.contains(&project),
+                "{project}: {output}"
+            );
+        }
+        if order.contains(&"Independent") {
+            assert_eq!(
+                sys.independent_started_while_leaf_built.get(),
+                Some(true),
+                "Independent was queued behind a builder waiting on Leaf"
+            );
+        }
+    });
+}
+
+#[test]
+fn test_build_scheduling_full_build() {
+    test_build_scheduling(
+        "test_build_scheduling_full_build",
+        "",
+        false,
+        &["Leaf", "Middle", "Independent", "Root", "Other"],
+    );
+}
+
+#[test]
+fn test_build_scheduling_selected_project() {
+    test_build_scheduling(
+        "test_build_scheduling_selected_project",
+        "Root",
+        false,
+        &["Leaf", "Middle", "Independent", "Root"],
+    );
+}
+
+#[test]
+fn test_build_scheduling_selected_references() {
+    test_build_scheduling(
+        "test_build_scheduling_selected_references",
+        "Root",
+        true,
+        &["Leaf", "Middle", "Independent"],
+    );
+}
+
+// Go: execute/build/graph_test.go:111 schedulingTestSystem, with
+// graph_test.go:101 schedulingTestFS
+// PORT: Go embeds `*tsctests.TestSys`; every method but `FS` and `Writer`
+// calls the test system. The `schedulingTestFS` is a `wrapvfs` file system
+// whose `ReadFile` calls the hook first (see `test_build_scheduling`). The
+// hook stores whether `Leaf/dist/index.js` was missing when
+// `Independent/index.ts` was read (`None` until then).
+struct SchedulingTestSystem {
+    test_sys: Rc<TestSys>,
+    fs: Rc<dyn Fs>,
+    output: Rc<RefCell<Vec<u8>>>,
+    independent_started_while_leaf_built: Rc<Cell<Option<bool>>>,
+}
+
+impl System for SchedulingTestSystem {
+    // Go: graph_test.go:118 schedulingTestSystem.Writer
+    fn writer(&self) -> Writer {
+        self.output.clone()
+    }
+    fn error_writer(&self) -> ErrorWriter {
+        System::error_writer(&*self.test_sys)
+    }
+    // Go: graph_test.go:117 schedulingTestSystem.FS
+    fn fs(&self) -> Rc<dyn Fs> {
+        self.fs.clone()
+    }
+    fn default_library_path(&self) -> String {
+        System::default_library_path(&*self.test_sys)
+    }
+    fn get_current_directory(&self) -> String {
+        System::get_current_directory(&*self.test_sys)
+    }
+    fn write_output_is_tty(&self) -> bool {
+        System::write_output_is_tty(&*self.test_sys)
+    }
+    fn get_width_of_terminal(&self) -> i32 {
+        System::get_width_of_terminal(&*self.test_sys)
+    }
+    fn get_environment_variable(&self, name: &str) -> (String, bool) {
+        System::get_environment_variable(&*self.test_sys, name)
+    }
+    fn spawn(
+        &self,
+        command: &[String],
+        dir: &str,
+        stderr: Option<Box<dyn std::io::Write + Send>>,
+    ) -> Result<Arc<dyn ProcessExitState>, GoError> {
+        System::spawn(&*self.test_sys, command, dir, stderr)
+    }
+    fn now(&self) -> SystemTime {
+        System::now(&*self.test_sys)
+    }
+    fn since_start(&self) -> Duration {
+        System::since_start(&*self.test_sys)
+    }
+}
+
+// Go: execute/build/graph_test.go:120 newSchedulingTestSystem
+// PORT: Go `tsctests.NewTscSystem(files, tspath.CaseSensitive, "/project")`
+// is the in-process test system of `newTestSys` with the cwd `/project`
+// (`new_in_process_test_sys`), which also adds the test default libraries;
+// these projects set `noLib`. Go ranges over the `deps` map; the order does
+// not matter.
+fn new_scheduling_test_system() -> Rc<SchedulingTestSystem> {
+    let mut files: FileMap = [(
+        "/project/lib.d.ts".to_string(),
+        r#"
+interface Array<T> {}
+interface Boolean {}
+interface CallableFunction {}
+interface Function {}
+interface IArguments {}
+interface NewableFunction {}
+interface Number {}
+interface Object {}
+interface RegExp {}
+interface String {}
+"#
+        .into(),
+    )]
+    .into_iter()
+    .collect();
+    let deps: &[(&str, &[&str])] = &[
+        ("Root", &["Middle", "Independent"]),
+        ("Middle", &["Leaf"]),
+        ("Leaf", &[]),
+        ("Independent", &[]),
+        ("Other", &[]),
+    ];
+    for (project, references) in deps {
+        files.insert(
+            format!("/project/{project}/index.ts"),
+            "export const value = 1;".into(),
+        );
+        let references: Vec<String> = references
+            .iter()
+            .map(|reference| format!(r#"{{ "path": "../{reference}" }}"#))
+            .collect();
+        files.insert(
+            format!("/project/{project}/tsconfig.json"),
+            format!(
+                r#"{{
+			"compilerOptions": {{ "composite": true, "noLib": true, "outDir": "dist" }},
+			"files": ["../lib.d.ts", "index.ts"],
+			"references": [{}]
+		}}"#,
+                references.join(",")
+            )
+            .into(),
+        );
+    }
+    let test_sys = new_in_process_test_sys(&TscInput {
+        files,
+        cwd: "/project".into(),
+        ..Default::default()
+    });
+    let inner = System::fs(&*test_sys);
+    let independent_started_while_leaf_built = Rc::new(Cell::new(None));
+    let fs = wrapvfs_wrap(
+        inner.clone(),
+        Replacements {
+            read_file: Some(Box::new({
+                let inner = inner.clone();
+                let started = independent_started_while_leaf_built.clone();
+                move |path: &str| {
+                    if path == "/project/Independent/index.ts" && started.get().is_none() {
+                        started.set(Some(!inner.file_exists("/project/Leaf/dist/index.js")));
+                    }
+                    inner.read_file(path)
+                }
+            })),
+            ..Default::default()
+        },
+    );
+    Rc::new(SchedulingTestSystem {
+        test_sys,
+        fs,
+        output: Rc::new(RefCell::new(Vec::new())),
+        independent_started_while_leaf_built,
+    })
 }
 
 // ---------------------------------------------------------------------------

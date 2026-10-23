@@ -86,7 +86,7 @@ fn visit_condition_body_child(
 }
 
 impl Checker {
-    // Go: checker/checker.go:3921 isSymbolUsedInBinaryExpressionChain
+    // Go: checker/checker.go:3943 isSymbolUsedInBinaryExpressionChain
     pub fn is_symbol_used_in_binary_expression_chain(
         &mut self,
         node: Node,
@@ -108,7 +108,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:3942 isSymbolUsedInConditionBody
+    // Go: checker/checker.go:3964 isSymbolUsedInConditionBody
     pub fn is_symbol_used_in_condition_body(
         &mut self,
         expr: Node,
@@ -121,21 +121,21 @@ impl Checker {
         })
     }
 
-    // Go: checker/checker.go:3978 checkDoStatement
+    // Go: checker/checker.go:4000 checkDoStatement
     pub fn check_do_statement(&mut self, node: Node) {
         self.check_grammar_statement_in_ambient_context(node);
         self.check_source_element(node.statement());
         self.check_truthiness_expression(node.expression(), CheckMode::NORMAL);
     }
 
-    // Go: checker/checker.go:3984 checkWhileStatement
+    // Go: checker/checker.go:4006 checkWhileStatement
     pub fn check_while_statement(&mut self, node: Node) {
         self.check_grammar_statement_in_ambient_context(node);
         self.check_truthiness_expression(node.expression(), CheckMode::NORMAL);
         self.check_source_element(node.statement());
     }
 
-    // Go: checker/checker.go:3990 checkForStatement
+    // Go: checker/checker.go:4012 checkForStatement
     pub fn check_for_statement(&mut self, node: Node) {
         if !self.check_grammar_statement_in_ambient_context(node) {
             let init = node.initializer();
@@ -166,7 +166,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4016 checkForInStatement
+    // Go: checker/checker.go:4038 checkForInStatement
     pub fn check_for_in_statement(&mut self, node: Node) {
         // PORT: Go passes `node.AsForInOrOfStatement()`; the Rust callee takes the node.
         self.check_grammar_for_in_or_for_of_statement(node);
@@ -241,7 +241,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4058 getIndexTypeOrString
+    // Go: checker/checker.go:4080 getIndexTypeOrString
     pub fn get_index_type_or_string(&mut self, t: TypeId) -> TypeId {
         let index = self.get_index_type(t);
         let index_type = self.get_extract_string_type(index);
@@ -252,7 +252,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4063 checkForOfStatement
+    // Go: checker/checker.go:4085 checkForOfStatement
     pub fn check_for_of_statement(&mut self, node: Node) {
         // PORT: Go passes `node.AsForInOrOfStatement()`; the Rust callee takes the node.
         self.check_grammar_for_in_or_for_of_statement(node);
@@ -330,14 +330,14 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4111 checkBreakOrContinueStatement
+    // Go: checker/checker.go:4133 checkBreakOrContinueStatement
     pub fn check_break_or_continue_statement(&mut self, node: Node) {
         if !self.check_grammar_statement_in_ambient_context(node) {
             self.check_grammar_break_or_continue_statement(node);
         }
     }
 
-    // Go: checker/checker.go:4117 checkReturnStatement
+    // Go: checker/checker.go:4139 checkReturnStatement
     pub fn check_return_statement(&mut self, node: Node) {
         // Always check the return expression so its identifiers are resolved even when the
         // return statement is misplaced (grammar error), keeping diagnostics stable
@@ -418,7 +418,7 @@ impl Checker {
 
     // When checking an arrow expression such as `(x) => exp`, then `node` is the expression `exp`.
     // Otherwise, `node` is a return statement.
-    // Go: checker/checker.go:4162 checkReturnExpression
+    // Go: checker/checker.go:4184 checkReturnExpression
     pub fn check_return_expression(
         &mut self,
         container: Node,
@@ -484,7 +484,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:4187 checkWithStatement
+    // Go: checker/checker.go:4209 checkWithStatement
     pub fn check_with_statement(&mut self, node: Node) {
         if !self.check_grammar_statement_in_ambient_context(node) {
             if node.flags().intersects(NodeFlags::AWAIT_CONTEXT) {
@@ -510,7 +510,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4202 checkSwitchStatement
+    // Go: checker/checker.go:4224 checkSwitchStatement
     pub fn check_switch_statement(&mut self, node: Node) {
         // Grammar checking
         self.check_grammar_statement_in_ambient_context(node);
@@ -561,7 +561,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4238 checkLabeledStatement
+    // Go: checker/checker.go:4260 checkLabeledStatement
     pub fn check_labeled_statement(&mut self, node: Node) {
         let label_node = node.label();
         let label_text = label_node.text();
@@ -588,7 +588,7 @@ impl Checker {
         self.check_source_element(node.statement());
     }
 
-    // Go: checker/checker.go:4256 checkThrowStatement
+    // Go: checker/checker.go:4278 checkThrowStatement
     pub fn check_throw_statement(&mut self, node: Node) {
         let throw_expr = node.expression();
         if !self.check_grammar_statement_in_ambient_context(node) {
@@ -605,7 +605,7 @@ impl Checker {
         self.check_expression(throw_expr);
     }
 
-    // Go: checker/checker.go:4266 checkTryStatement
+    // Go: checker/checker.go:4288 checkTryStatement
     pub fn check_try_statement(&mut self, node: Node) {
         self.check_grammar_statement_in_ambient_context(node);
         self.check_block(node.try_block());
@@ -619,7 +619,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4278 checkCatchClause
+    // Go: checker/checker.go:4300 checkCatchClause
     pub fn check_catch_clause(&mut self, node: Node) {
         let declaration = node.variable_declaration();
         if declaration.is_some() {
@@ -666,14 +666,14 @@ impl Checker {
         self.check_block(node.block());
     }
 
-    // Go: checker/checker.go:4304 checkBindingElement
+    // Go: checker/checker.go:4326 checkBindingElement
     pub fn check_binding_element(&mut self, node: Node) {
         // PORT: Go passes `node.AsBindingElement()`; the Rust callee takes the node.
         self.check_grammar_binding_element(node);
         self.check_variable_like_declaration(node);
     }
 
-    // Go: checker/checker.go:4309 checkClassDeclaration
+    // Go: checker/checker.go:4331 checkClassDeclaration
     pub fn check_class_declaration(&mut self, node: Node) {
         let first_decorator = node
             .modifier_nodes()
@@ -706,7 +706,7 @@ impl Checker {
         self.register_for_unused_identifiers_check(node);
     }
 
-    // Go: checker/checker.go:4325 checkConstructorDeclaredProperties (ts#64646, Go N')
+    // Go: checker/checker.go:4347 checkConstructorDeclaredProperties (ts#64646, Go N')
     // Gets the type of each JS property that the class constructor declares,
     // so the diagnostics of its type do not depend on what is checked first.
     pub fn check_constructor_declared_properties(&mut self, node: Node) {
@@ -726,7 +726,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4337 checkClassLikeDeclaration
+    // Go: checker/checker.go:4359 checkClassLikeDeclaration
     pub fn check_class_like_declaration(&mut self, node: Node) {
         self.check_grammar_class_like_declaration(node);
         self.check_decorators(node);
@@ -753,8 +753,8 @@ impl Checker {
             let base_types = self.get_base_types(class_type);
             if !base_types.is_empty() {
                 let base_type = base_types[0];
-                self.check_js_doc_augments_tag_matches_extends(node, base_type_node, base_type);
                 let base_constructor_type = self.get_base_constructor_type_of_class(class_type);
+                self.check_js_doc_augments_tag_matches_extends(node, base_type_node, base_type);
                 let static_base_type = self.get_apparent_type(base_constructor_type);
                 self.check_base_type_accessibility(static_base_type, base_type_node);
                 self.check_source_element(base_type_node.expression());
@@ -918,7 +918,8 @@ impl Checker {
         self.check_property_initialization(node);
     }
 
-    // Go: checker/checker.go:4440 checkJSDocAugmentsTagMatchesExtends
+    // Go: checker/jsdoc.go:103 checkJSDocAugmentsTagMatchesExtends
+    // PORT: Go moved it to jsdoc.go (#64072); the port keeps it beside its caller.
     pub fn check_js_doc_augments_tag_matches_extends(
         &mut self,
         node: Node,
@@ -940,21 +941,35 @@ impl Checker {
                 }
                 let source_type_node = tag.class_name();
                 let source_type = self.get_type_from_type_node(source_type_node);
-                if self.is_type_identical_to(source_type, base_type) {
-                    continue;
-                }
-                let target_name =
-                    get_identifier_from_entity_name_expression(base_type_node.expression());
                 let source_name =
                     get_identifier_from_entity_name_expression(source_type_node.expression());
-                if target_name.is_some() && source_name.is_some() {
+                if is_entity_name_expression(base_type_node.expression()) {
+                    if self.is_type_identical_to(source_type, base_type) {
+                        continue;
+                    }
+                    let target_name =
+                        get_identifier_from_entity_name_expression(base_type_node.expression());
+                    if target_name.is_some() && source_name.is_some() {
+                        self.error(
+                            source_name,
+                            diag::JSDoc_0_1_does_not_match_the_extends_2_clause,
+                            args![
+                                tag.tag_name().text(),
+                                source_name.text(),
+                                target_name.text()
+                            ],
+                        );
+                    }
+                } else if source_name.is_some()
+                    && !self.is_type_assignable_to(base_type, source_type)
+                {
                     self.error(
                         source_name,
                         diag::JSDoc_0_1_does_not_match_the_extends_2_clause,
                         args![
                             tag.tag_name().text(),
                             source_name.text(),
-                            target_name.text()
+                            get_text_of_node(base_type_node.expression())
                         ],
                     );
                 }
@@ -962,7 +977,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4466 checkClassForStaticPropertyNameConflicts
+    // Go: checker/checker.go:4462 checkClassForStaticPropertyNameConflicts
     pub fn check_class_for_static_property_name_conflicts(&mut self, node: Node) {
         if self.compiler_options.get_use_define_for_class_fields() {
             return;
@@ -990,7 +1005,7 @@ impl Checker {
     }
 
     // Check that type parameter lists are identical across multiple declarations
-    // Go: checker/checker.go:4489 checkTypeParameterListsIdentical
+    // Go: checker/checker.go:4485 checkTypeParameterListsIdentical
     pub fn check_type_parameter_lists_identical(&mut self, symbol: SymbolId) {
         if self.sym(symbol).declarations.len() == 1 {
             return;
@@ -1026,7 +1041,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4511 getClassOrInterfaceDeclarationsOfSymbol
+    // Go: checker/checker.go:4507 getClassOrInterfaceDeclarationsOfSymbol
     pub fn get_class_or_interface_declarations_of_symbol(&self, symbol: SymbolId) -> Vec<Node> {
         self.sym(symbol)
             .declarations
@@ -1036,7 +1051,7 @@ impl Checker {
             .collect()
     }
 
-    // Go: checker/checker.go:4517 areTypeParametersIdentical
+    // Go: checker/checker.go:4513 areTypeParametersIdentical
     // PORT: Go `getTypeParameterDeclarations func(node *ast.Node) []*ast.Node`
     // is `&dyn Fn(Node) -> Vec<Node>`.
     pub fn are_type_parameters_identical(
@@ -1090,7 +1105,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/checker.go:4554 checkBaseTypeAccessibility
+    // Go: checker/checker.go:4550 checkBaseTypeAccessibility
     pub fn check_base_type_accessibility(&mut self, t: TypeId, node: Node) {
         let signatures = self.get_signatures_of_type(t, SignatureKind::CONSTRUCT);
         let accessibility_error =
@@ -1106,7 +1121,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4562 issueMemberSpecificError
+    // Go: checker/checker.go:4558 issueMemberSpecificError
     pub fn issue_member_specific_error(
         &mut self,
         node: Node,
@@ -1163,7 +1178,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4587 getTypeWithoutSignatures
+    // Go: checker/checker.go:4583 getTypeWithoutSignatures
     pub fn get_type_without_signatures(&mut self, t: TypeId) -> TypeId {
         let flags = self.ty(t).flags;
         if flags.intersects(TypeFlags::OBJECT) {
@@ -1198,7 +1213,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:4604 checkKindsOfPropertyMemberOverrides
+    // Go: checker/checker.go:4600 checkKindsOfPropertyMemberOverrides
     pub fn check_kinds_of_property_member_overrides(&mut self, t: TypeId, base_type: TypeId) {
         // TypeScript 1.0 spec (April 2014): 8.2.3
         // A derived class inherits all members from its base class it doesn't override.
@@ -1459,7 +1474,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4760 arePropertiesAbstractOrInterface
+    // Go: checker/checker.go:4756 arePropertiesAbstractOrInterface
     pub fn are_properties_abstract_or_interface(
         &self,
         base: SymbolId,
@@ -1478,7 +1493,7 @@ impl Checker {
             .all(|&d| self.is_property_abstract_or_interface(d, base_declaration_flags))
     }
 
-    // Go: checker/checker.go:4767 isPropertyAbstractOrInterface
+    // Go: checker/checker.go:4763 isPropertyAbstractOrInterface
     pub fn is_property_abstract_or_interface(
         &self,
         declaration: Node,
@@ -1489,7 +1504,7 @@ impl Checker {
                 && (!is_property_declaration(declaration) || declaration.initializer().is_nil())
     }
 
-    // Go: checker/checker.go:4772 checkMembersForOverrideModifier
+    // Go: checker/checker.go:4768 checkMembersForOverrideModifier
     pub fn check_members_for_override_modifier(
         &mut self,
         node: Node,
@@ -1538,7 +1553,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:4797 checkMemberForOverrideModifier
+    // Go: checker/checker.go:4793 checkMemberForOverrideModifier
     pub fn check_member_for_override_modifier(
         &mut self,
         node: Node,
@@ -1570,7 +1585,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:4806 getMemberOverrideModifierStatus
+    // Go: checker/checker.go:4802 getMemberOverrideModifierStatus
     pub fn get_member_override_modifier_status(
         &mut self,
         node: Node,
@@ -1616,7 +1631,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:4831 checkMemberForOverrideModifierWorker
+    // Go: checker/checker.go:4827 checkMemberForOverrideModifierWorker
     #[allow(clippy::too_many_arguments)]
     pub fn check_member_for_override_modifier_worker(
         &mut self,
@@ -1757,7 +1772,7 @@ impl Checker {
         MemberOverrideStatus::NONE
     }
 
-    // Go: checker/checker.go:4889 getSuggestedSymbolForNonexistentClassMember
+    // Go: checker/checker.go:4885 getSuggestedSymbolForNonexistentClassMember
     pub fn get_suggested_symbol_for_nonexistent_class_member(
         &mut self,
         name: &str,
@@ -1768,7 +1783,7 @@ impl Checker {
         self.get_spelling_suggestion_for_name(name, &properties, SymbolFlags::CLASS_MEMBER)
     }
 
-    // Go: checker/checker.go:4893 checkIndexConstraints
+    // Go: checker/checker.go:4889 checkIndexConstraints
     pub fn check_index_constraints(&mut self, t: TypeId, symbol: SymbolId, is_static_index: bool) {
         let index_infos = self.get_index_infos_of_type(t);
         if index_infos.is_empty() {

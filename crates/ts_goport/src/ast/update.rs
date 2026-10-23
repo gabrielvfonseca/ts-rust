@@ -9,7 +9,7 @@
 
 use crate::prelude::*;
 
-// Go: ast/ast.go:61 NodeFactoryHooks
+// Go: ast/ast.go:62 NodeFactoryHooks
 /// Go `ast.NodeFactoryHooks`. The printer's `EmitContext` sets them.
 #[derive(Clone, Default)]
 pub struct NodeFactoryHooks {
@@ -31,7 +31,7 @@ impl std::fmt::Debug for NodeFactoryHooks {
     }
 }
 
-// Go: ast/ast.go:103 updateNode
+// Go: ast/ast.go:102 updateNode
 /// Copies `Flags` and `Loc` from `original` to a new `updated` node and runs
 /// the `OnUpdate` hook.
 pub fn update_node(updated: Node, original: Node, hooks: &NodeFactoryHooks) -> Node {
@@ -46,7 +46,7 @@ pub fn update_node(updated: Node, original: Node, hooks: &NodeFactoryHooks) -> N
 }
 
 impl NodeFactory {
-    // Go: ast/ast_generated.go:685 UpdateQualifiedName
+    // Go: ast/ast_generated.go:731 UpdateQualifiedName
     pub fn update_qualified_name(&self, node: Node, left: Node, right: Node) -> Node {
         if left != node.left() || right != node.right() {
             return update_node(self.new_qualified_name(left, right), node, self.hooks());
@@ -54,7 +54,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:729 UpdateComputedPropertyName
+    // Go: ast/ast_generated.go:775 UpdateComputedPropertyName
     pub fn update_computed_property_name(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(
@@ -66,7 +66,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:772 UpdateDecorator
+    // Go: ast/ast_generated.go:818 UpdateDecorator
     pub fn update_decorator(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_decorator(expression), node, self.hooks());
@@ -74,7 +74,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:836 UpdateIfStatement
+    // Go: ast/ast_generated.go:882 UpdateIfStatement
     pub fn update_if_statement(
         &self,
         node: Node,
@@ -95,7 +95,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:882 UpdateDoStatement
+    // Go: ast/ast_generated.go:928 UpdateDoStatement
     pub fn update_do_statement(&self, node: Node, statement: Node, expression: Node) -> Node {
         if statement != node.statement() || expression != node.expression() {
             return update_node(
@@ -107,7 +107,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:927 UpdateWhileStatement
+    // Go: ast/ast_generated.go:973 UpdateWhileStatement
     pub fn update_while_statement(&self, node: Node, expression: Node, statement: Node) -> Node {
         if expression != node.expression() || statement != node.statement() {
             return update_node(
@@ -119,7 +119,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:977 UpdateForStatement
+    // Go: ast/ast_generated.go:1023 UpdateForStatement
     pub fn update_for_statement(
         &self,
         node: Node,
@@ -142,7 +142,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1033 UpdateForInOrOfStatement
+    // Go: ast/ast_generated.go:1084 UpdateForInOrOfStatement
     pub fn update_for_in_or_of_statement(
         &self,
         node: Node,
@@ -171,7 +171,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1078 UpdateBreakStatement
+    // Go: ast/ast_generated.go:1129 UpdateBreakStatement
     pub fn update_break_statement(&self, node: Node, label: Node) -> Node {
         if label != node.label() {
             return update_node(self.new_break_statement(label), node, self.hooks());
@@ -179,7 +179,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1116 UpdateContinueStatement
+    // Go: ast/ast_generated.go:1167 UpdateContinueStatement
     pub fn update_continue_statement(&self, node: Node, label: Node) -> Node {
         if label != node.label() {
             return update_node(self.new_continue_statement(label), node, self.hooks());
@@ -187,7 +187,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1155 UpdateReturnStatement
+    // Go: ast/ast_generated.go:1206 UpdateReturnStatement
     pub fn update_return_statement(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_return_statement(expression), node, self.hooks());
@@ -195,7 +195,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1196 UpdateWithStatement
+    // Go: ast/ast_generated.go:1247 UpdateWithStatement
     pub fn update_with_statement(&self, node: Node, expression: Node, statement: Node) -> Node {
         if expression != node.expression() || statement != node.statement() {
             return update_node(
@@ -207,7 +207,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1242 UpdateSwitchStatement
+    // Go: ast/ast_generated.go:1293 UpdateSwitchStatement
     pub fn update_switch_statement(&self, node: Node, expression: Node, case_block: Node) -> Node {
         if expression != node.expression() || case_block != node.case_block() {
             return update_node(
@@ -219,7 +219,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1287 UpdateCaseBlock
+    // Go: ast/ast_generated.go:1338 UpdateCaseBlock
     pub fn update_case_block(&self, node: Node, clauses: NodeList) -> Node {
         if clauses != node.clauses() {
             return update_node(self.new_case_block(clauses), node, self.hooks());
@@ -227,7 +227,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1333 UpdateCaseOrDefaultClause
+    // Go: ast/ast_generated.go:1389 UpdateCaseOrDefaultClause
     pub fn update_case_or_default_clause(
         &self,
         node: Node,
@@ -244,7 +244,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1381 UpdateThrowStatement
+    // Go: ast/ast_generated.go:1437 UpdateThrowStatement
     pub fn update_throw_statement(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_throw_statement(expression), node, self.hooks());
@@ -252,7 +252,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1428 UpdateTryStatement
+    // Go: ast/ast_generated.go:1484 UpdateTryStatement
     pub fn update_try_statement(
         &self,
         node: Node,
@@ -273,7 +273,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1476 UpdateCatchClause
+    // Go: ast/ast_generated.go:1532 UpdateCatchClause
     pub fn update_catch_clause(&self, node: Node, variable_declaration: Node, block: Node) -> Node {
         if variable_declaration != node.variable_declaration() || block != node.block() {
             return update_node(
@@ -285,7 +285,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1537 UpdateLabeledStatement
+    // Go: ast/ast_generated.go:1593 UpdateLabeledStatement
     pub fn update_labeled_statement(&self, node: Node, label: Node, statement: Node) -> Node {
         if label != node.label() || statement != node.statement() {
             return update_node(
@@ -297,7 +297,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1580 UpdateExpressionStatement
+    // Go: ast/ast_generated.go:1636 UpdateExpressionStatement
     pub fn update_expression_statement(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(
@@ -309,7 +309,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1626 UpdateBlock
+    // Go: ast/ast_generated.go:1682 UpdateBlock
     pub fn update_block(&self, node: Node, statements: NodeList, multi_line: bool) -> Node {
         if statements != node.statement_list() || multi_line != node.multi_line() {
             return update_node(self.new_block(statements, multi_line), node, self.hooks());
@@ -317,7 +317,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1671 UpdateVariableStatement
+    // Go: ast/ast_generated.go:1727 UpdateVariableStatement
     pub fn update_variable_statement(
         &self,
         node: Node,
@@ -334,7 +334,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1718 UpdateVariableDeclaration
+    // Go: ast/ast_generated.go:1774 UpdateVariableDeclaration
     pub fn update_variable_declaration(
         &self,
         node: Node,
@@ -357,7 +357,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1766 UpdateVariableDeclarationList
+    // Go: ast/ast_generated.go:1822 UpdateVariableDeclarationList
     pub fn update_variable_declaration_list(
         &self,
         node: Node,
@@ -374,7 +374,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1805 UpdateBindingPattern
+    // Go: ast/ast_generated.go:1866 UpdateBindingPattern
     pub fn update_binding_pattern(&self, node: Node, elements: NodeList) -> Node {
         if elements != node.element_list() {
             return update_node(
@@ -386,7 +386,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1859 UpdateParameterDeclaration
+    // Go: ast/ast_generated.go:1920 UpdateParameterDeclaration
     pub fn update_parameter_declaration(
         &self,
         node: Node,
@@ -420,7 +420,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1916 UpdateBindingElement
+    // Go: ast/ast_generated.go:1977 UpdateBindingElement
     pub fn update_binding_element(
         &self,
         node: Node,
@@ -443,7 +443,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:1962 UpdateMissingDeclaration
+    // Go: ast/ast_generated.go:2023 UpdateMissingDeclaration
     pub fn update_missing_declaration(&self, node: Node, modifiers: ModifierList) -> Node {
         if modifiers != node.modifiers() {
             return update_node(self.new_missing_declaration(modifiers), node, self.hooks());
@@ -451,7 +451,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2013 UpdateFunctionDeclaration
+    // Go: ast/ast_generated.go:2074 UpdateFunctionDeclaration
     pub fn update_function_declaration(
         &self,
         node: Node,
@@ -491,7 +491,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2067 UpdateClassDeclaration
+    // Go: ast/ast_generated.go:2128 UpdateClassDeclaration
     pub fn update_class_declaration(
         &self,
         node: Node,
@@ -522,7 +522,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2118 UpdateClassExpression
+    // Go: ast/ast_generated.go:2179 UpdateClassExpression
     pub fn update_class_expression(
         &self,
         node: Node,
@@ -553,7 +553,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2167 UpdateHeritageClause
+    // Go: ast/ast_generated.go:2228 UpdateHeritageClause
     pub fn update_heritage_clause(&self, node: Node, token: SyntaxKind, types: NodeList) -> Node {
         if token != node.token() || types != node.types() {
             return update_node(self.new_heritage_clause(token, types), node, self.hooks());
@@ -561,7 +561,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2216 UpdateInterfaceDeclaration
+    // Go: ast/ast_generated.go:2277 UpdateInterfaceDeclaration
     pub fn update_interface_declaration(
         &self,
         node: Node,
@@ -592,7 +592,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2281 UpdateTypeAliasDeclaration
+    // Go: ast/ast_generated.go:2342 UpdateTypeAliasDeclaration
     pub fn update_type_alias_declaration(
         &self,
         node: Node,
@@ -640,7 +640,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2348 UpdateEnumMember
+    // Go: ast/ast_generated.go:2409 UpdateEnumMember
     pub fn update_enum_member(&self, node: Node, name: Node, initializer: Node) -> Node {
         if name != node.name() || initializer != node.initializer() {
             return update_node(self.new_enum_member(name, initializer), node, self.hooks());
@@ -648,7 +648,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2397 UpdateEnumDeclaration
+    // Go: ast/ast_generated.go:2458 UpdateEnumDeclaration
     pub fn update_enum_declaration(
         &self,
         node: Node,
@@ -666,7 +666,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2440 UpdateModuleBlock
+    // Go: ast/ast_generated.go:2501 UpdateModuleBlock
     pub fn update_module_block(&self, node: Node, statements: NodeList) -> Node {
         if statements != node.statement_list() {
             return update_node(self.new_module_block(statements), node, self.hooks());
@@ -674,7 +674,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2543 UpdateImportDeclaration
+    // Go: ast/ast_generated.go:2604 UpdateImportDeclaration
     pub fn update_import_declaration(
         &self,
         node: Node,
@@ -722,7 +722,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2609 UpdateExternalModuleReference
+    // Go: ast/ast_generated.go:2670 UpdateExternalModuleReference
     pub fn update_external_module_reference(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(
@@ -734,7 +734,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2653 UpdateNamespaceImport
+    // Go: ast/ast_generated.go:2714 UpdateNamespaceImport
     pub fn update_namespace_import(&self, node: Node, name: Node) -> Node {
         if name != node.name() {
             return update_node(self.new_namespace_import(name), node, self.hooks());
@@ -742,7 +742,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2700 UpdateNamedImports
+    // Go: ast/ast_generated.go:2761 UpdateNamedImports
     pub fn update_named_imports(&self, node: Node, elements: NodeList) -> Node {
         if elements != node.element_list() {
             return update_node(self.new_named_imports(elements), node, self.hooks());
@@ -750,7 +750,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2750 UpdateExportAssignment
+    // Go: ast/ast_generated.go:2811 UpdateExportAssignment
     pub fn update_export_assignment(
         &self,
         node: Node,
@@ -773,7 +773,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2792 UpdateNamespaceExportDeclaration
+    // Go: ast/ast_generated.go:2853 UpdateNamespaceExportDeclaration
     pub fn update_namespace_export_declaration(
         &self,
         node: Node,
@@ -790,7 +790,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2835 UpdateNamespaceExport
+    // Go: ast/ast_generated.go:2896 UpdateNamespaceExport
     pub fn update_namespace_export(&self, node: Node, name: Node) -> Node {
         if name != node.name() {
             return update_node(self.new_namespace_export(name), node, self.hooks());
@@ -798,7 +798,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2882 UpdateNamedExports
+    // Go: ast/ast_generated.go:2943 UpdateNamedExports
     pub fn update_named_exports(&self, node: Node, elements: NodeList) -> Node {
         if elements != node.element_list() {
             return update_node(self.new_named_exports(elements), node, self.hooks());
@@ -806,7 +806,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2931 UpdateExportSpecifier
+    // Go: ast/ast_generated.go:2992 UpdateExportSpecifier
     pub fn update_export_specifier(
         &self,
         node: Node,
@@ -827,7 +827,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:2978 UpdateCallSignatureDeclaration
+    // Go: ast/ast_generated.go:3039 UpdateCallSignatureDeclaration
     pub fn update_call_signature_declaration(
         &self,
         node: Node,
@@ -848,7 +848,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3021 UpdateConstructSignatureDeclaration
+    // Go: ast/ast_generated.go:3082 UpdateConstructSignatureDeclaration
     pub fn update_construct_signature_declaration(
         &self,
         node: Node,
@@ -869,7 +869,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3069 UpdateConstructorDeclaration
+    // Go: ast/ast_generated.go:3130 UpdateConstructorDeclaration
     pub fn update_constructor_declaration(
         &self,
         node: Node,
@@ -903,7 +903,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3117 UpdateGetAccessorDeclaration
+    // Go: ast/ast_generated.go:3178 UpdateGetAccessorDeclaration
     pub fn update_get_accessor_declaration(
         &self,
         node: Node,
@@ -940,7 +940,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3170 UpdateSetAccessorDeclaration
+    // Go: ast/ast_generated.go:3231 UpdateSetAccessorDeclaration
     pub fn update_set_accessor_declaration(
         &self,
         node: Node,
@@ -977,7 +977,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3225 UpdateIndexSignatureDeclaration
+    // Go: ast/ast_generated.go:3286 UpdateIndexSignatureDeclaration
     pub fn update_index_signature_declaration(
         &self,
         node: Node,
@@ -998,7 +998,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3272 UpdateMethodSignatureDeclaration
+    // Go: ast/ast_generated.go:3333 UpdateMethodSignatureDeclaration
     pub fn update_method_signature_declaration(
         &self,
         node: Node,
@@ -1032,7 +1032,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3333 UpdateMethodDeclaration
+    // Go: ast/ast_generated.go:3394 UpdateMethodDeclaration
     pub fn update_method_declaration(
         &self,
         node: Node,
@@ -1075,7 +1075,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3392 UpdatePropertySignatureDeclaration
+    // Go: ast/ast_generated.go:3453 UpdatePropertySignatureDeclaration
     pub fn update_property_signature_declaration(
         &self,
         node: Node,
@@ -1106,7 +1106,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3447 UpdatePropertyDeclaration
+    // Go: ast/ast_generated.go:3508 UpdatePropertyDeclaration
     pub fn update_property_declaration(
         &self,
         node: Node,
@@ -1137,7 +1137,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3523 UpdateClassStaticBlockDeclaration
+    // Go: ast/ast_generated.go:3584 UpdateClassStaticBlockDeclaration
     pub fn update_class_static_block_declaration(
         &self,
         node: Node,
@@ -1154,7 +1154,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3740 UpdateBinaryExpression
+    // Go: ast/ast_generated.go:3806 UpdateBinaryExpression
     pub fn update_binary_expression(
         &self,
         node: Node,
@@ -1179,7 +1179,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3784 UpdatePrefixUnaryExpression
+    // Go: ast/ast_generated.go:3850 UpdatePrefixUnaryExpression
     pub fn update_prefix_unary_expression(
         &self,
         node: Node,
@@ -1196,7 +1196,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3828 UpdatePostfixUnaryExpression
+    // Go: ast/ast_generated.go:3894 UpdatePostfixUnaryExpression
     pub fn update_postfix_unary_expression(
         &self,
         node: Node,
@@ -1213,7 +1213,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3872 UpdateYieldExpression
+    // Go: ast/ast_generated.go:3938 UpdateYieldExpression
     pub fn update_yield_expression(
         &self,
         node: Node,
@@ -1230,7 +1230,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3921 UpdateArrowFunction
+    // Go: ast/ast_generated.go:3987 UpdateArrowFunction
     pub fn update_arrow_function(
         &self,
         node: Node,
@@ -1267,7 +1267,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:3978 UpdateFunctionExpression
+    // Go: ast/ast_generated.go:4044 UpdateFunctionExpression
     pub fn update_function_expression(
         &self,
         node: Node,
@@ -1307,7 +1307,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4029 UpdateAsExpression
+    // Go: ast/ast_generated.go:4095 UpdateAsExpression
     pub fn update_as_expression(&self, node: Node, expression: Node, type_node: Node) -> Node {
         if expression != node.expression() || type_node != node.type_() {
             return update_node(
@@ -1319,7 +1319,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4069 UpdateSatisfiesExpression
+    // Go: ast/ast_generated.go:4135 UpdateSatisfiesExpression
     pub fn update_satisfies_expression(
         &self,
         node: Node,
@@ -1336,7 +1336,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4116 UpdateConditionalExpression
+    // Go: ast/ast_generated.go:4182 UpdateConditionalExpression
     pub fn update_conditional_expression(
         &self,
         node: Node,
@@ -1367,7 +1367,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4174 UpdatePropertyAccessExpression
+    // Go: ast/ast_generated.go:4240 UpdatePropertyAccessExpression
     pub fn update_property_access_expression(
         &self,
         node: Node,
@@ -1390,7 +1390,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4224 UpdateElementAccessExpression
+    // Go: ast/ast_generated.go:4290 UpdateElementAccessExpression
     pub fn update_element_access_expression(
         &self,
         node: Node,
@@ -1418,7 +1418,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4278 UpdateCallExpression
+    // Go: ast/ast_generated.go:4344 UpdateCallExpression
     pub fn update_call_expression(
         &self,
         node: Node,
@@ -1449,7 +1449,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4324 UpdateNewExpression
+    // Go: ast/ast_generated.go:4390 UpdateNewExpression
     pub fn update_new_expression(
         &self,
         node: Node,
@@ -1470,7 +1470,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4366 UpdateMetaProperty
+    // Go: ast/ast_generated.go:4432 UpdateMetaProperty
     pub fn update_meta_property(&self, node: Node, keyword_token: SyntaxKind, name: Node) -> Node {
         if keyword_token != node.keyword_token() || name != node.name() {
             return update_node(
@@ -1482,7 +1482,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4410 UpdateNonNullExpression
+    // Go: ast/ast_generated.go:4476 UpdateNonNullExpression
     pub fn update_non_null_expression(
         &self,
         node: Node,
@@ -1499,7 +1499,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4448 UpdateSpreadElement
+    // Go: ast/ast_generated.go:4514 UpdateSpreadElement
     pub fn update_spread_element(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_spread_element(expression), node, self.hooks());
@@ -1507,7 +1507,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4489 UpdateTemplateExpression
+    // Go: ast/ast_generated.go:4555 UpdateTemplateExpression
     pub fn update_template_expression(
         &self,
         node: Node,
@@ -1524,7 +1524,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4534 UpdateTemplateSpan
+    // Go: ast/ast_generated.go:4600 UpdateTemplateSpan
     pub fn update_template_span(&self, node: Node, expression: Node, literal: Node) -> Node {
         if expression != node.expression() || literal != node.literal() {
             return update_node(
@@ -1536,7 +1536,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4586 UpdateTaggedTemplateExpression
+    // Go: ast/ast_generated.go:4652 UpdateTaggedTemplateExpression
     pub fn update_tagged_template_expression(
         &self,
         node: Node,
@@ -1567,7 +1567,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4627 UpdateParenthesizedExpression
+    // Go: ast/ast_generated.go:4693 UpdateParenthesizedExpression
     pub fn update_parenthesized_expression(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(
@@ -1579,7 +1579,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4672 UpdateArrayLiteralExpression
+    // Go: ast/ast_generated.go:4738 UpdateArrayLiteralExpression
     pub fn update_array_literal_expression(
         &self,
         node: Node,
@@ -1596,7 +1596,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4718 UpdateObjectLiteralExpression
+    // Go: ast/ast_generated.go:4784 UpdateObjectLiteralExpression
     pub fn update_object_literal_expression(
         &self,
         node: Node,
@@ -1613,7 +1613,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4762 UpdateSpreadAssignment
+    // Go: ast/ast_generated.go:4828 UpdateSpreadAssignment
     pub fn update_spread_assignment(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_spread_assignment(expression), node, self.hooks());
@@ -1621,7 +1621,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4809 UpdatePropertyAssignment
+    // Go: ast/ast_generated.go:4875 UpdatePropertyAssignment
     pub fn update_property_assignment(
         &self,
         node: Node,
@@ -1652,7 +1652,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4866 UpdateShorthandPropertyAssignment
+    // Go: ast/ast_generated.go:4932 UpdateShorthandPropertyAssignment
     pub fn update_shorthand_property_assignment(
         &self,
         node: Node,
@@ -1686,7 +1686,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4913 UpdateDeleteExpression
+    // Go: ast/ast_generated.go:4979 UpdateDeleteExpression
     pub fn update_delete_expression(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_delete_expression(expression), node, self.hooks());
@@ -1694,7 +1694,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4955 UpdateTypeOfExpression
+    // Go: ast/ast_generated.go:5021 UpdateTypeOfExpression
     pub fn update_type_of_expression(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_type_of_expression(expression), node, self.hooks());
@@ -1702,7 +1702,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:4997 UpdateVoidExpression
+    // Go: ast/ast_generated.go:5063 UpdateVoidExpression
     pub fn update_void_expression(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_void_expression(expression), node, self.hooks());
@@ -1710,7 +1710,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5039 UpdateAwaitExpression
+    // Go: ast/ast_generated.go:5105 UpdateAwaitExpression
     pub fn update_await_expression(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(self.new_await_expression(expression), node, self.hooks());
@@ -1718,7 +1718,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5079 UpdateTypeAssertion
+    // Go: ast/ast_generated.go:5145 UpdateTypeAssertion
     pub fn update_type_assertion(&self, node: Node, type_node: Node, expression: Node) -> Node {
         if type_node != node.type_() || expression != node.expression() {
             return update_node(
@@ -1730,7 +1730,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5141 UpdateUnionTypeNode
+    // Go: ast/ast_generated.go:5212 UpdateUnionTypeNode
     pub fn update_union_type_node(&self, node: Node, types: NodeList) -> Node {
         if types != node.types() {
             return update_node(self.new_union_type_node(types), node, self.hooks());
@@ -1738,7 +1738,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5178 UpdateIntersectionTypeNode
+    // Go: ast/ast_generated.go:5249 UpdateIntersectionTypeNode
     pub fn update_intersection_type_node(&self, node: Node, types: NodeList) -> Node {
         if types != node.types() {
             return update_node(self.new_intersection_type_node(types), node, self.hooks());
@@ -1746,7 +1746,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5223 UpdateConditionalTypeNode
+    // Go: ast/ast_generated.go:5294 UpdateConditionalTypeNode
     pub fn update_conditional_type_node(
         &self,
         node: Node,
@@ -1769,7 +1769,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5266 UpdateTypeOperatorNode
+    // Go: ast/ast_generated.go:5337 UpdateTypeOperatorNode
     pub fn update_type_operator_node(
         &self,
         node: Node,
@@ -1786,7 +1786,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5304 UpdateInferTypeNode
+    // Go: ast/ast_generated.go:5375 UpdateInferTypeNode
     pub fn update_infer_type_node(&self, node: Node, type_parameter: Node) -> Node {
         if type_parameter != node.type_parameter() {
             return update_node(self.new_infer_type_node(type_parameter), node, self.hooks());
@@ -1794,7 +1794,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5342 UpdateArrayTypeNode
+    // Go: ast/ast_generated.go:5413 UpdateArrayTypeNode
     pub fn update_array_type_node(&self, node: Node, element_type: Node) -> Node {
         if element_type != node.element_type() {
             return update_node(self.new_array_type_node(element_type), node, self.hooks());
@@ -1802,7 +1802,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5382 UpdateIndexedAccessTypeNode
+    // Go: ast/ast_generated.go:5453 UpdateIndexedAccessTypeNode
     pub fn update_indexed_access_type_node(
         &self,
         node: Node,
@@ -1819,7 +1819,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5421 UpdateTypeReferenceNode
+    // Go: ast/ast_generated.go:5492 UpdateTypeReferenceNode
     pub fn update_type_reference_node(
         &self,
         node: Node,
@@ -1836,7 +1836,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5462 UpdateExpressionWithTypeArguments
+    // Go: ast/ast_generated.go:5533 UpdateExpressionWithTypeArguments
     pub fn update_expression_with_type_arguments(
         &self,
         node: Node,
@@ -1853,7 +1853,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5500 UpdateLiteralTypeNode
+    // Go: ast/ast_generated.go:5571 UpdateLiteralTypeNode
     pub fn update_literal_type_node(&self, node: Node, literal: Node) -> Node {
         if literal != node.literal() {
             return update_node(self.new_literal_type_node(literal), node, self.hooks());
@@ -1861,7 +1861,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5563 UpdateTypePredicateNode
+    // Go: ast/ast_generated.go:5634 UpdateTypePredicateNode
     pub fn update_type_predicate_node(
         &self,
         node: Node,
@@ -1882,7 +1882,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5604 UpdateImportAttribute
+    // Go: ast/ast_generated.go:5675 UpdateImportAttribute
     pub fn update_import_attribute(&self, node: Node, name: Node, value: Node) -> Node {
         if name != node.name() || value != node.value() {
             return update_node(self.new_import_attribute(name, value), node, self.hooks());
@@ -1890,7 +1890,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5656 UpdateImportAttributes
+    // Go: ast/ast_generated.go:5727 UpdateImportAttributes
     pub fn update_import_attributes(
         &self,
         node: Node,
@@ -1911,7 +1911,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5699 UpdateTypeQueryNode
+    // Go: ast/ast_generated.go:5770 UpdateTypeQueryNode
     pub fn update_type_query_node(
         &self,
         node: Node,
@@ -1928,7 +1928,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5749 UpdateMappedTypeNode
+    // Go: ast/ast_generated.go:5820 UpdateMappedTypeNode
     pub fn update_mapped_type_node(
         &self,
         node: Node,
@@ -1962,7 +1962,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5793 UpdateTypeLiteralNode
+    // Go: ast/ast_generated.go:5864 UpdateTypeLiteralNode
     pub fn update_type_literal_node(&self, node: Node, members: NodeList) -> Node {
         if members != node.member_list() {
             return update_node(self.new_type_literal_node(members), node, self.hooks());
@@ -1970,7 +1970,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5831 UpdateTupleTypeNode
+    // Go: ast/ast_generated.go:5902 UpdateTupleTypeNode
     pub fn update_tuple_type_node(&self, node: Node, elements: NodeList) -> Node {
         if elements != node.element_list() {
             return update_node(self.new_tuple_type_node(elements), node, self.hooks());
@@ -1978,7 +1978,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5876 UpdateNamedTupleMember
+    // Go: ast/ast_generated.go:5947 UpdateNamedTupleMember
     pub fn update_named_tuple_member(
         &self,
         node: Node,
@@ -2001,7 +2001,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5921 UpdateOptionalTypeNode
+    // Go: ast/ast_generated.go:5992 UpdateOptionalTypeNode
     pub fn update_optional_type_node(&self, node: Node, type_node: Node) -> Node {
         if type_node != node.type_() {
             return update_node(self.new_optional_type_node(type_node), node, self.hooks());
@@ -2009,7 +2009,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5959 UpdateRestTypeNode
+    // Go: ast/ast_generated.go:6030 UpdateRestTypeNode
     pub fn update_rest_type_node(&self, node: Node, type_node: Node) -> Node {
         if type_node != node.type_() {
             return update_node(self.new_rest_type_node(type_node), node, self.hooks());
@@ -2017,7 +2017,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:5997 UpdateParenthesizedTypeNode
+    // Go: ast/ast_generated.go:6068 UpdateParenthesizedTypeNode
     pub fn update_parenthesized_type_node(&self, node: Node, type_node: Node) -> Node {
         if type_node != node.type_() {
             return update_node(
@@ -2029,7 +2029,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6036 UpdateFunctionTypeNode
+    // Go: ast/ast_generated.go:6107 UpdateFunctionTypeNode
     pub fn update_function_type_node(
         &self,
         node: Node,
@@ -2050,7 +2050,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6076 UpdateConstructorTypeNode
+    // Go: ast/ast_generated.go:6147 UpdateConstructorTypeNode
     pub fn update_constructor_type_node(
         &self,
         node: Node,
@@ -2073,7 +2073,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6197 UpdateTemplateLiteralTypeNode
+    // Go: ast/ast_generated.go:6268 UpdateTemplateLiteralTypeNode
     pub fn update_template_literal_type_node(
         &self,
         node: Node,
@@ -2090,7 +2090,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6237 UpdateTemplateLiteralTypeSpan
+    // Go: ast/ast_generated.go:6308 UpdateTemplateLiteralTypeSpan
     pub fn update_template_literal_type_span(
         &self,
         node: Node,
@@ -2107,7 +2107,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6279 UpdateSyntheticExpression
+    // Go: ast/ast_generated.go:6350 UpdateSyntheticExpression
     pub fn update_synthetic_expression(
         &self,
         node: Node,
@@ -2128,7 +2128,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6317 UpdatePartiallyEmittedExpression
+    // Go: ast/ast_generated.go:6388 UpdatePartiallyEmittedExpression
     pub fn update_partially_emitted_expression(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(
@@ -2140,7 +2140,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6364 UpdateJsxElement
+    // Go: ast/ast_generated.go:6435 UpdateJsxElement
     pub fn update_jsx_element(
         &self,
         node: Node,
@@ -2161,7 +2161,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6404 UpdateJsxAttributes
+    // Go: ast/ast_generated.go:6475 UpdateJsxAttributes
     pub fn update_jsx_attributes(&self, node: Node, properties: NodeList) -> Node {
         if properties != node.property_list() {
             return update_node(self.new_jsx_attributes(properties), node, self.hooks());
@@ -2169,7 +2169,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6445 UpdateJsxNamespacedName
+    // Go: ast/ast_generated.go:6516 UpdateJsxNamespacedName
     pub fn update_jsx_namespaced_name(&self, node: Node, namespace: Node, name: Node) -> Node {
         if namespace != node.namespace() || name != node.name() {
             return update_node(
@@ -2181,7 +2181,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6492 UpdateJsxOpeningElement
+    // Go: ast/ast_generated.go:6563 UpdateJsxOpeningElement
     pub fn update_jsx_opening_element(
         &self,
         node: Node,
@@ -2202,7 +2202,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6535 UpdateJsxSelfClosingElement
+    // Go: ast/ast_generated.go:6606 UpdateJsxSelfClosingElement
     pub fn update_jsx_self_closing_element(
         &self,
         node: Node,
@@ -2223,7 +2223,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6578 UpdateJsxFragment
+    // Go: ast/ast_generated.go:6649 UpdateJsxFragment
     pub fn update_jsx_fragment(
         &self,
         node: Node,
@@ -2244,7 +2244,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6662 UpdateJsxAttribute
+    // Go: ast/ast_generated.go:6733 UpdateJsxAttribute
     pub fn update_jsx_attribute(&self, node: Node, name: Node, initializer: Node) -> Node {
         if name != node.name() || initializer != node.initializer() {
             return update_node(
@@ -2256,7 +2256,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6706 UpdateJsxSpreadAttribute
+    // Go: ast/ast_generated.go:6777 UpdateJsxSpreadAttribute
     pub fn update_jsx_spread_attribute(&self, node: Node, expression: Node) -> Node {
         if expression != node.expression() {
             return update_node(
@@ -2268,7 +2268,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6744 UpdateJsxClosingElement
+    // Go: ast/ast_generated.go:6815 UpdateJsxClosingElement
     pub fn update_jsx_closing_element(&self, node: Node, tag_name: Node) -> Node {
         if tag_name != node.tag_name() {
             return update_node(self.new_jsx_closing_element(tag_name), node, self.hooks());
@@ -2276,7 +2276,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6784 UpdateJsxExpression
+    // Go: ast/ast_generated.go:6855 UpdateJsxExpression
     pub fn update_jsx_expression(
         &self,
         node: Node,
@@ -2293,7 +2293,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6848 UpdateSyntaxList
+    // Go: ast/ast_generated.go:6919 UpdateSyntaxList
     // PORT: Go `core.Same` (slice identity) becomes element equality. The visitor passes the
     // unchanged children when `core.SameMap` would return the original slice.
     pub fn update_syntax_list(&self, node: Node, children: &[Node]) -> Node {
@@ -2303,7 +2303,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6889 UpdateJSDoc
+    // Go: ast/ast_generated.go:6960 UpdateJSDoc
     pub fn update_js_doc(&self, node: Node, comment: NodeList, tags: NodeList) -> Node {
         if comment != node.comment() || tags != node.tags() {
             return update_node(self.new_js_doc(comment, tags), node, self.hooks());
@@ -2311,7 +2311,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6927 UpdateJSDocTypeExpression
+    // Go: ast/ast_generated.go:6998 UpdateJSDocTypeExpression
     pub fn update_js_doc_type_expression(&self, node: Node, type_node: Node) -> Node {
         if type_node != node.type_() {
             return update_node(
@@ -2323,7 +2323,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:6965 UpdateJSDocNonNullableType
+    // Go: ast/ast_generated.go:7036 UpdateJSDocNonNullableType
     pub fn update_js_doc_non_nullable_type(&self, node: Node, type_node: Node) -> Node {
         if type_node != node.type_() {
             return update_node(
@@ -2335,7 +2335,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7003 UpdateJSDocNullableType
+    // Go: ast/ast_generated.go:7074 UpdateJSDocNullableType
     pub fn update_js_doc_nullable_type(&self, node: Node, type_node: Node) -> Node {
         if type_node != node.type_() {
             return update_node(self.new_js_doc_nullable_type(type_node), node, self.hooks());
@@ -2343,7 +2343,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7062 UpdateJSDocVariadicType
+    // Go: ast/ast_generated.go:7133 UpdateJSDocVariadicType
     pub fn update_js_doc_variadic_type(&self, node: Node, type_node: Node) -> Node {
         if type_node != node.type_() {
             return update_node(self.new_js_doc_variadic_type(type_node), node, self.hooks());
@@ -2351,7 +2351,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7100 UpdateJSDocOptionalType
+    // Go: ast/ast_generated.go:7171 UpdateJSDocOptionalType
     pub fn update_js_doc_optional_type(&self, node: Node, type_node: Node) -> Node {
         if type_node != node.type_() {
             return update_node(self.new_js_doc_optional_type(type_node), node, self.hooks());
@@ -2359,7 +2359,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7140 UpdateJSDocTypeTag
+    // Go: ast/ast_generated.go:7211 UpdateJSDocTypeTag
     pub fn update_js_doc_type_tag(
         &self,
         node: Node,
@@ -2380,7 +2380,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7178 UpdateJSDocUnknownTag
+    // Go: ast/ast_generated.go:7249 UpdateJSDocUnknownTag
     pub fn update_js_doc_unknown_tag(&self, node: Node, tag_name: Node, comment: NodeList) -> Node {
         if tag_name != node.tag_name() || comment != node.comment() {
             return update_node(
@@ -2392,7 +2392,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7220 UpdateJSDocTemplateTag
+    // Go: ast/ast_generated.go:7291 UpdateJSDocTemplateTag
     pub fn update_js_doc_template_tag(
         &self,
         node: Node,
@@ -2415,7 +2415,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7263 UpdateJSDocReturnTag
+    // Go: ast/ast_generated.go:7334 UpdateJSDocReturnTag
     pub fn update_js_doc_return_tag(
         &self,
         node: Node,
@@ -2436,7 +2436,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7301 UpdateJSDocPublicTag
+    // Go: ast/ast_generated.go:7372 UpdateJSDocPublicTag
     pub fn update_js_doc_public_tag(&self, node: Node, tag_name: Node, comment: NodeList) -> Node {
         if tag_name != node.tag_name() || comment != node.comment() {
             return update_node(
@@ -2448,7 +2448,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7339 UpdateJSDocPrivateTag
+    // Go: ast/ast_generated.go:7410 UpdateJSDocPrivateTag
     pub fn update_js_doc_private_tag(&self, node: Node, tag_name: Node, comment: NodeList) -> Node {
         if tag_name != node.tag_name() || comment != node.comment() {
             return update_node(
@@ -2460,7 +2460,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7377 UpdateJSDocProtectedTag
+    // Go: ast/ast_generated.go:7448 UpdateJSDocProtectedTag
     pub fn update_js_doc_protected_tag(
         &self,
         node: Node,
@@ -2477,7 +2477,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7415 UpdateJSDocReadonlyTag
+    // Go: ast/ast_generated.go:7486 UpdateJSDocReadonlyTag
     pub fn update_js_doc_readonly_tag(
         &self,
         node: Node,
@@ -2494,7 +2494,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7453 UpdateJSDocOverrideTag
+    // Go: ast/ast_generated.go:7524 UpdateJSDocOverrideTag
     pub fn update_js_doc_override_tag(
         &self,
         node: Node,
@@ -2511,7 +2511,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7491 UpdateJSDocDeprecatedTag
+    // Go: ast/ast_generated.go:7562 UpdateJSDocDeprecatedTag
     pub fn update_js_doc_deprecated_tag(
         &self,
         node: Node,
@@ -2528,7 +2528,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7531 UpdateJSDocSeeTag
+    // Go: ast/ast_generated.go:7602 UpdateJSDocSeeTag
     pub fn update_js_doc_see_tag(
         &self,
         node: Node,
@@ -2549,7 +2549,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7571 UpdateJSDocImplementsTag
+    // Go: ast/ast_generated.go:7642 UpdateJSDocImplementsTag
     pub fn update_js_doc_implements_tag(
         &self,
         node: Node,
@@ -2570,7 +2570,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7611 UpdateJSDocAugmentsTag
+    // Go: ast/ast_generated.go:7682 UpdateJSDocAugmentsTag
     pub fn update_js_doc_augments_tag(
         &self,
         node: Node,
@@ -2591,7 +2591,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7651 UpdateJSDocSatisfiesTag
+    // Go: ast/ast_generated.go:7722 UpdateJSDocSatisfiesTag
     pub fn update_js_doc_satisfies_tag(
         &self,
         node: Node,
@@ -2612,7 +2612,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7691 UpdateJSDocThrowsTag
+    // Go: ast/ast_generated.go:7762 UpdateJSDocThrowsTag
     pub fn update_js_doc_throws_tag(
         &self,
         node: Node,
@@ -2633,7 +2633,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7731 UpdateJSDocThisTag
+    // Go: ast/ast_generated.go:7802 UpdateJSDocThisTag
     pub fn update_js_doc_this_tag(
         &self,
         node: Node,
@@ -2654,7 +2654,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7775 UpdateJSDocImportTag
+    // Go: ast/ast_generated.go:7846 UpdateJSDocImportTag
     pub fn update_js_doc_import_tag(
         &self,
         node: Node,
@@ -2685,7 +2685,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7821 UpdateJSDocCallbackTag
+    // Go: ast/ast_generated.go:7892 UpdateJSDocCallbackTag
     pub fn update_js_doc_callback_tag(
         &self,
         node: Node,
@@ -2708,7 +2708,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7868 UpdateJSDocOverloadTag
+    // Go: ast/ast_generated.go:7939 UpdateJSDocOverloadTag
     pub fn update_js_doc_overload_tag(
         &self,
         node: Node,
@@ -2729,7 +2729,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7910 UpdateJSDocTypedefTag
+    // Go: ast/ast_generated.go:7981 UpdateJSDocTypedefTag
     pub fn update_js_doc_typedef_tag(
         &self,
         node: Node,
@@ -2752,7 +2752,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7958 UpdateJSDocSignature
+    // Go: ast/ast_generated.go:8029 UpdateJSDocSignature
     pub fn update_js_doc_signature(
         &self,
         node: Node,
@@ -2773,7 +2773,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:7996 UpdateJSDocNameReference
+    // Go: ast/ast_generated.go:8067 UpdateJSDocNameReference
     pub fn update_js_doc_name_reference(&self, node: Node, name: Node) -> Node {
         if name != node.name() {
             return update_node(self.new_js_doc_name_reference(name), node, self.hooks());
@@ -2781,7 +2781,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8059 UpdateModuleDeclaration
+    // Go: ast/ast_generated.go:8130 UpdateModuleDeclaration
     pub fn update_module_declaration(
         &self,
         node: Node,
@@ -2806,7 +2806,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8113 UpdateImportEqualsDeclaration
+    // Go: ast/ast_generated.go:8184 UpdateImportEqualsDeclaration
     pub fn update_import_equals_declaration(
         &self,
         node: Node,
@@ -2829,7 +2829,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8165 UpdateExportDeclaration
+    // Go: ast/ast_generated.go:8236 UpdateExportDeclaration
     pub fn update_export_declaration(
         &self,
         node: Node,
@@ -2860,7 +2860,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8213 UpdateImportTypeNode
+    // Go: ast/ast_generated.go:8284 UpdateImportTypeNode
     pub fn update_import_type_node(
         &self,
         node: Node,
@@ -2891,7 +2891,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8261 UpdateImportClause
+    // Go: ast/ast_generated.go:8332 UpdateImportClause
     pub fn update_import_clause(
         &self,
         node: Node,
@@ -2912,7 +2912,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8310 UpdateImportSpecifier
+    // Go: ast/ast_generated.go:8381 UpdateImportSpecifier
     pub fn update_import_specifier(
         &self,
         node: Node,
@@ -2933,7 +2933,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8377 UpdateJSDocLink
+    // Go: ast/ast_generated.go:8448 UpdateJSDocLink
     // PORT: Go `text []string` and `core.Same`; astdata stores the link text as one string, compared by value.
     pub fn update_js_doc_link(&self, node: Node, name: Node, text: &str) -> Node {
         if name != node.name() || text != node.text() {
@@ -2947,7 +2947,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8421 UpdateJSDocLinkPlain
+    // Go: ast/ast_generated.go:8492 UpdateJSDocLinkPlain
     // PORT: Go `text []string` and `core.Same`; astdata stores the link text as one string, compared by value.
     pub fn update_js_doc_link_plain(&self, node: Node, name: Node, text: &str) -> Node {
         if name != node.name() || text != node.text() {
@@ -2961,7 +2961,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8465 UpdateJSDocLinkCode
+    // Go: ast/ast_generated.go:8536 UpdateJSDocLinkCode
     // PORT: Go `text []string` and `core.Same`; astdata stores the link text as one string, compared by value.
     pub fn update_js_doc_link_code(&self, node: Node, name: Node, text: &str) -> Node {
         if name != node.name() || text != node.text() {
@@ -2975,7 +2975,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8517 UpdateTypeParameterDeclaration
+    // Go: ast/ast_generated.go:8588 UpdateTypeParameterDeclaration
     pub fn update_type_parameter_declaration(
         &self,
         node: Node,
@@ -3006,7 +3006,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8565 UpdateSyntheticReferenceExpression
+    // Go: ast/ast_generated.go:8636 UpdateSyntheticReferenceExpression
     pub fn update_synthetic_reference_expression(
         &self,
         node: Node,
@@ -3023,7 +3023,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8611 UpdateJSDocTypeLiteral
+    // Go: ast/ast_generated.go:8682 UpdateJSDocTypeLiteral
     // PORT: Go `core.Same` (slice identity) becomes element equality. The visitor passes the
     // unchanged children when `core.SameMap` would return the original slice.
     pub fn update_js_doc_type_literal(
@@ -3044,7 +3044,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast_generated.go:8658 UpdateJSDocParameterOrPropertyTag
+    // Go: ast/ast_generated.go:8734 UpdateJSDocParameterOrPropertyTag
     pub fn update_js_doc_parameter_or_property_tag(
         &self,
         node: Node,
@@ -3079,7 +3079,7 @@ impl NodeFactory {
         node
     }
 
-    // Go: ast/ast.go:2825 UpdateSourceFile
+    // Go: ast/ast.go:2752 UpdateSourceFile
     pub fn update_source_file(
         &self,
         node: Node,

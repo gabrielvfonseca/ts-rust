@@ -18,7 +18,7 @@ use std::io::Write;
 use std::sync::Arc;
 use std::time::Duration;
 
-// Go: cmd/tsc/lsp.go:21 runLSP
+// Go: cmd/tsc/lsp.go:21 runLSP (ts#64836)
 pub fn run_lsp(args: &[String]) -> i32 {
     let mut flag = new_flag_set("lsp", ErrorHandling::ContinueOnError);
     let stdio = flag.bool("stdio", false, "use stdio for communication");
@@ -62,12 +62,12 @@ pub fn run_lsp(args: &[String]) -> i32 {
 
     let fs = bundled::wrap_fs_exported(osvfs::osvfs_fs());
     let default_library_path = bundled::lib_path_exported();
+    // ts#64836: a rooted directory, or empty (ATA off) without a user
+    // cache directory. Go passes it as is (cmd/tsc/lsp.go:60).
     let typings_location = get_global_typings_cache_location();
-    // ts#64159: Go roots and normalizes the current directory and the
-    // typings location (cmd/tsc/lsp.go:48 RootedDirectoryPathFromAbsolute,
-    // :60 ToRootedDirectoryPath).
+    // ts#64159: Go roots and normalizes the current directory
+    // (cmd/tsc/lsp.go:48 RootedDirectoryPathFromAbsolute).
     let cwd = tspath::get_normalized_absolute_path(&must_getwd(), "");
-    let typings_location = tspath::get_normalized_absolute_path(&typings_location, &cwd);
 
     // Go: ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
     let (ctx, stop) = notify_context(&context::background());
@@ -165,12 +165,17 @@ pub fn start_parent_process_watchdog(ctx: &Context, stop: &CancelFunc, parent_pi
         });
 }
 
-// Go: vfs/osvfs/os.go:191 GetGlobalTypingsCacheLocation
-// PORT: ported here; `vfs/osvfs` is an accepted compiler file.
+// Go: vfs/osvfs/os.go:231 GetGlobalTypingsCacheLocation (ts#64836)
+// The rooted typings cache directory under the user cache directory, or ""
+// when there is no user cache directory or it is not absolute.
+// PORT: ported here; `vfs/osvfs` is an accepted compiler file. Go returns a
+// `tspath.RootedDirectoryPath`; the port keeps string paths.
 pub fn get_global_typings_cache_location() -> String {
-    let cache_dir = match user_cache_dir() {
-        Ok(dir) => dir,
-        Err(_) => temp_dir(),
+    let Ok(cache_dir) = user_cache_dir() else {
+        return String::new();
+    };
+    let Some(cache_path) = tspath::try_rooted_path_from_absolute(&cache_dir) else {
+        return String::new();
     };
 
     let subdir = if cfg!(windows) {
@@ -178,7 +183,10 @@ pub fn get_global_typings_cache_location() -> String {
     } else {
         "typescript"
     };
-    tspath::combine_paths(&cache_dir, &[subdir, crate::core::version_major_minor()])
+    // Go: RootedDirectoryPathFromPath(cachePath).ResolveDirectory(subdir).ResolveDirectory(core.VersionMajorMinor())
+    // PORT: `cache_path` is normalized and the names are plain, so the
+    // combined path is normalized as Go's.
+    tspath::combine_paths(&cache_path, &[subdir, crate::core::version_major_minor()])
 }
 
 // Go: os/file.go:504 UserCacheDir
@@ -214,19 +222,6 @@ fn user_cache_dir() -> Result<String, GoError> {
     }
 
     Ok(dir)
-}
-
-// Go: os/file_unix.go:390 tempDir
-fn temp_dir() -> String {
-    let mut dir = std::env::var("TMPDIR").unwrap_or_default();
-    if dir.is_empty() {
-        if cfg!(target_os = "android") {
-            dir = "/data/local/tmp".to_string();
-        } else {
-            dir = "/tmp".to_string();
-        }
-    }
-    dir
 }
 
 // Go: cmd/tsc/lsp.go:61 the NpmInstall func of runLSP (ts#64544)

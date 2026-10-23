@@ -3,7 +3,7 @@
 use crate::prelude::*;
 use std::borrow::Cow;
 
-// Go: ast/utilities.go:2797 IsRequireCall
+// Go: ast/utilities.go:2877 IsRequireCall
 pub fn is_require_call(node: Node, require_string_literal_like_argument: bool) -> bool {
     if !is_call_expression(node) {
         return false;
@@ -18,7 +18,7 @@ pub fn is_require_call(node: Node, require_string_literal_like_argument: bool) -
     !require_string_literal_like_argument || is_string_literal_like(call.arguments().get(0))
 }
 
-// Go: ast/utilities.go:2811 IsRequireVariableStatement
+// Go: ast/utilities.go:2891 IsRequireVariableStatement
 pub fn is_require_variable_statement(node: Node) -> bool {
     if is_variable_statement(node) {
         let declarations = node.declaration_list().declarations().nodes();
@@ -31,7 +31,7 @@ pub fn is_require_variable_statement(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:2820 GetJSXImplicitImportBase
+// Go: ast/utilities.go:2900 GetJSXImplicitImportBase
 pub fn get_jsx_implicit_import_base(compiler_options: &CompilerOptions, file: Node) -> String {
     let jsx_import_source_pragma = get_pragma_from_source_file(file, "jsximportsource");
     let jsx_runtime_pragma = get_pragma_from_source_file(file, "jsxruntime");
@@ -56,7 +56,7 @@ pub fn get_jsx_implicit_import_base(compiler_options: &CompilerOptions, file: No
     String::new()
 }
 
-// Go: ast/utilities.go:2843 GetJSXRuntimeImport
+// Go: ast/utilities.go:2923 GetJSXRuntimeImport
 pub fn get_jsx_runtime_import(base: &str, options: &CompilerOptions) -> String {
     if base.is_empty() {
         return base.to_string();
@@ -72,7 +72,7 @@ pub fn get_jsx_runtime_import(base: &str, options: &CompilerOptions) -> String {
     )
 }
 
-// Go: ast/utilities.go:2850 GetPragmaFromSourceFile
+// Go: ast/utilities.go:2930 GetPragmaFromSourceFile
 // PORT: Go `*Pragma` (nil when absent) -> `Option<FileRef<Pragma>>`, a guard
 // on an entry of `source_file_info(file).pragmas`. Pass it to
 // `get_pragma_argument` with `as_deref()`.
@@ -96,7 +96,7 @@ pub fn get_pragma_from_source_file(file: Node, name: &str) -> Option<FileRef<Pra
     })
 }
 
-// Go: ast/utilities.go:2862 GetPragmaArgument
+// Go: ast/utilities.go:2942 GetPragmaArgument
 pub fn get_pragma_argument(pragma: Option<&Pragma>, name: &str) -> String {
     if let Some(pragma) = pragma {
         if let Some(arg) = pragma.args.get(name) {
@@ -106,7 +106,7 @@ pub fn get_pragma_argument(pragma: Option<&Pragma>, name: &str) -> String {
     String::new()
 }
 
-// Go: ast/utilities.go:2874 IsVariableDeclarationInitializedToRequire
+// Go: ast/utilities.go:2954 IsVariableDeclarationInitializedToRequire
 // Of the form: `const x = require("x")` or `const { x } = require("x")` or with `var` or `let`
 // The variable must not be exported and must not have a type annotation, even a jsdoc one.
 // The initializer must be a call to `require` with a string literal or a string literal-like argument.
@@ -120,14 +120,14 @@ pub fn is_variable_declaration_initialized_to_require(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:2881 IsVariableDeclarationInitializedToBareOrAccessedRequire
+// Go: ast/utilities.go:2961 IsVariableDeclarationInitializedToBareOrAccessedRequire
 pub fn is_variable_declaration_initialized_to_bare_or_accessed_require(node: Node) -> bool {
     is_variable_declaration_initialized_with_require_helper(
         node, true, /*allowAccessedRequire*/
     )
 }
 
-// Go: ast/utilities.go:2885 isVariableDeclarationInitializedWithRequireHelper
+// Go: ast/utilities.go:2965 isVariableDeclarationInitializedWithRequireHelper
 pub fn is_variable_declaration_initialized_with_require_helper(
     node: Node,
     allow_accessed_require: bool,
@@ -155,7 +155,7 @@ pub fn is_variable_declaration_initialized_with_require_helper(
         && is_require_call(initializer, true /*requireStringLiteralLikeArgument*/)
 }
 
-// Go: ast/utilities.go:2905 GetModuleSpecifierOfBareOrAccessedRequire
+// Go: ast/utilities.go:2985 GetModuleSpecifierOfBareOrAccessedRequire
 pub fn get_module_specifier_of_bare_or_accessed_require(node: Node) -> Node {
     if is_variable_declaration_initialized_with_require_helper(
         node, false, /*allowAccessedRequire*/
@@ -173,7 +173,7 @@ pub fn get_module_specifier_of_bare_or_accessed_require(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:2918 IsModuleExportsAccessExpression
+// Go: ast/utilities.go:2998 IsModuleExportsAccessExpression
 pub fn is_module_exports_access_expression(node: Node) -> bool {
     if is_access_expression(node) && is_module_identifier(node.expression()) {
         let name = get_element_or_property_access_name(node);
@@ -184,12 +184,12 @@ pub fn is_module_exports_access_expression(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:2927 IsModuleExportsQualifiedName
+// Go: ast/utilities.go:3007 IsModuleExportsQualifiedName
 pub fn is_module_exports_qualified_name(node: Node) -> bool {
     is_qualified_name(node) && is_module_identifier(node.left()) && node.right().text() == "exports"
 }
 
-// Go: ast/utilities.go:2931 IsCheckJSEnabledForFile
+// Go: ast/utilities.go:3011 IsCheckJSEnabledForFile
 pub fn is_check_js_enabled_for_file(source_file: Node, compiler_options: &CompilerOptions) -> bool {
     if let Some(enabled) = with_source_file_info(source_file, |info| {
         info.check_js_directive
@@ -201,7 +201,7 @@ pub fn is_check_js_enabled_for_file(source_file: Node, compiler_options: &Compil
     compiler_options.check_js == Tristate::True
 }
 
-// Go: ast/utilities.go:2938 IsPlainJSFile
+// Go: ast/utilities.go:3018 IsPlainJSFile
 pub fn is_plain_js_file(file: Node, check_js: Tristate) -> bool {
     file.is_some()
         && with_source_file_info(file, |info| {
@@ -211,7 +211,7 @@ pub fn is_plain_js_file(file: Node, check_js: Tristate) -> bool {
         && check_js == Tristate::Unknown
 }
 
-// Go: ast/utilities.go:2942 GetLeftmostAccessExpression
+// Go: ast/utilities.go:3022 GetLeftmostAccessExpression
 pub fn get_leftmost_access_expression(expr: Node) -> Node {
     let mut expr = expr;
     while is_access_expression(expr) {
@@ -220,7 +220,7 @@ pub fn get_leftmost_access_expression(expr: Node) -> Node {
     expr
 }
 
-// Go: ast/utilities.go:2949 IsTypeOnlyImportDeclaration
+// Go: ast/utilities.go:3029 IsTypeOnlyImportDeclaration
 pub fn is_type_only_import_declaration(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::ImportSpecifier => node.is_type_only() || node.parent().parent().is_type_only(),
@@ -230,7 +230,7 @@ pub fn is_type_only_import_declaration(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:2961 isTypeOnlyExportDeclaration
+// Go: ast/utilities.go:3041 isTypeOnlyExportDeclaration
 pub fn is_type_only_export_declaration(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::ExportSpecifier => node.is_type_only() || node.parent().parent().is_type_only(),
@@ -243,12 +243,12 @@ pub fn is_type_only_export_declaration(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:2974 IsTypeOnlyImportOrExportDeclaration
+// Go: ast/utilities.go:3054 IsTypeOnlyImportOrExportDeclaration
 pub fn is_type_only_import_or_export_declaration(node: Node) -> bool {
     is_type_only_import_declaration(node) || is_type_only_export_declaration(node)
 }
 
-// Go: ast/utilities.go:2978 IsExclusivelyTypeOnlyImportOrExport
+// Go: ast/utilities.go:3058 IsExclusivelyTypeOnlyImportOrExport
 pub fn is_exclusively_type_only_import_or_export(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::ExportDeclaration => {
@@ -271,7 +271,7 @@ pub fn is_exclusively_type_only_import_or_export(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:2994 GetClassLikeDeclarationOfSymbol
+// Go: ast/utilities.go:3074 GetClassLikeDeclarationOfSymbol
 pub fn get_class_like_declaration_of_symbol(symbols: &SymbolArena, symbol: SymbolId) -> Node {
     symbols
         .sym(symbol)
@@ -282,7 +282,7 @@ pub fn get_class_like_declaration_of_symbol(symbols: &SymbolArena, symbol: Symbo
         .unwrap_or(Node::NIL)
 }
 
-// Go: ast/utilities.go:2998 IsCallLikeExpression
+// Go: ast/utilities.go:3078 IsCallLikeExpression
 pub fn is_call_like_expression(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::JsxOpeningElement
@@ -299,7 +299,7 @@ pub fn is_call_like_expression(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:3009 IsJsxCallLike
+// Go: ast/utilities.go:3089 IsJsxCallLike
 pub fn is_jsx_call_like(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -309,12 +309,12 @@ pub fn is_jsx_call_like(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:3017 IsCallLikeOrFunctionLikeExpression
+// Go: ast/utilities.go:3097 IsCallLikeOrFunctionLikeExpression
 pub fn is_call_like_or_function_like_expression(node: Node) -> bool {
     is_call_like_expression(node) || is_function_expression_or_arrow_function(node)
 }
 
-// Go: ast/utilities.go:3021 NodeHasKind
+// Go: ast/utilities.go:3101 NodeHasKind
 pub fn node_has_kind(node: Node, kind: SyntaxKind) -> bool {
     if node.is_nil() {
         return false;
@@ -322,14 +322,14 @@ pub fn node_has_kind(node: Node, kind: SyntaxKind) -> bool {
     node.kind() == kind
 }
 
-// Go: ast/utilities.go:3028 IsContextualKeyword
+// Go: ast/utilities.go:3108 IsContextualKeyword
 pub fn is_contextual_keyword(token: SyntaxKind) -> bool {
     // PORT: compare discriminants; crate::astdata::SyntaxKind does not derive Ord.
     SyntaxKind::FIRST_CONTEXTUAL_KEYWORD as u16 <= token as u16
         && token as u16 <= SyntaxKind::LAST_CONTEXTUAL_KEYWORD as u16
 }
 
-// Go: ast/utilities.go:3032 IsThisInTypeQuery
+// Go: ast/utilities.go:3112 IsThisInTypeQuery
 pub fn is_this_in_type_query(node: Node) -> bool {
     if !is_this_identifier(node) {
         return false;
@@ -344,13 +344,13 @@ pub fn is_this_in_type_query(node: Node) -> bool {
     parent.kind() == SyntaxKind::TypeQuery
 }
 
-// Go: ast/utilities.go:3043 IsLet
+// Go: ast/utilities.go:3123 IsLet
 // Gets whether a bound `VariableDeclaration` or `VariableDeclarationList` is part of a `let` declaration.
 pub fn is_let(node: Node) -> bool {
     (get_combined_node_flags(node) & NodeFlags::BLOCK_SCOPED) == NodeFlags::LET
 }
 
-// Go: ast/utilities.go:3047 IsClassMemberModifier
+// Go: ast/utilities.go:3127 IsClassMemberModifier
 pub fn is_class_member_modifier(token: SyntaxKind) -> bool {
     is_parameter_property_modifier(token)
         || token == SyntaxKind::StaticKeyword
@@ -358,12 +358,12 @@ pub fn is_class_member_modifier(token: SyntaxKind) -> bool {
         || token == SyntaxKind::AccessorKeyword
 }
 
-// Go: ast/utilities.go:3052 IsParameterPropertyModifier
+// Go: ast/utilities.go:3132 IsParameterPropertyModifier
 pub fn is_parameter_property_modifier(kind: SyntaxKind) -> bool {
     modifier_to_flag(kind).intersects(ModifierFlags::PARAMETER_PROPERTY_MODIFIER)
 }
 
-// Go: ast/utilities.go:3056 ForEachChildAndJSDoc
+// Go: ast/utilities.go:3136 ForEachChildAndJSDoc
 // PORT: Go `Visitor` (`func(*Node) bool`) -> `&mut dyn FnMut(Node) -> bool`.
 // `visitNodes` is inlined as a loop over `node.js_doc(file)`.
 pub fn for_each_child_and_js_doc(
@@ -379,7 +379,7 @@ pub fn for_each_child_and_js_doc(
     node.for_each_child(v)
 }
 
-// Go: ast/utilities.go:3063 HasTypeArguments
+// Go: ast/utilities.go:3143 HasTypeArguments
 pub fn has_type_arguments(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -395,13 +395,13 @@ pub fn has_type_arguments(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:3073 IsTypeReferenceType
+// Go: ast/utilities.go:3153 IsTypeReferenceType
 pub fn is_type_reference_type(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeReference
         || node.kind() == SyntaxKind::ExpressionWithTypeArguments
 }
 
-// Go: ast/utilities.go:3077 IsVariableLike
+// Go: ast/utilities.go:3157 IsVariableLike
 pub fn is_variable_like(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -416,7 +416,7 @@ pub fn is_variable_like(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:3086 HasInitializer
+// Go: ast/utilities.go:3166 HasInitializer
 pub fn has_initializer(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::VariableDeclaration
@@ -433,7 +433,7 @@ pub fn has_initializer(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:3097 IsVariableParameterOrProperty
+// Go: ast/utilities.go:3177 IsVariableParameterOrProperty
 pub fn is_variable_parameter_or_property(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -469,7 +469,7 @@ fn has_function_like_data_p4(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:3137 GetTypeAnnotationNode
+// Go: ast/utilities.go:3186 GetTypeAnnotationNode
 pub fn get_type_annotation_node(node: Node) -> Node {
     match node.kind() {
         SyntaxKind::VariableDeclaration
@@ -505,17 +505,17 @@ pub fn get_type_annotation_node(node: Node) -> Node {
     }
 }
 
-// Go: ast/utilities.go:3123 IsObjectTypeDeclaration
+// Go: ast/utilities.go:3203 IsObjectTypeDeclaration
 pub fn is_object_type_declaration(node: Node) -> bool {
     is_class_like(node) || is_interface_declaration(node) || is_type_literal_node(node)
 }
 
-// Go: ast/utilities.go:3127 IsClassOrTypeElement
+// Go: ast/utilities.go:3207 IsClassOrTypeElement
 pub fn is_class_or_type_element(node: Node) -> bool {
     is_class_element(node) || is_type_element(node)
 }
 
-// Go: ast/utilities.go:3131 GetClassExtendsHeritageElement
+// Go: ast/utilities.go:3211 GetClassExtendsHeritageElement
 pub fn get_class_extends_heritage_element(node: Node) -> Node {
     let heritage_elements = get_heritage_elements(node, SyntaxKind::ExtendsKeyword);
     if heritage_elements.len() > 0 {
@@ -524,12 +524,12 @@ pub fn get_class_extends_heritage_element(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:3139 IsTypeKeywordToken
+// Go: ast/utilities.go:3219 IsTypeKeywordToken
 pub fn is_type_keyword_token(node: Node) -> bool {
     node.kind() == SyntaxKind::TypeKeyword
 }
 
-// Go: ast/utilities.go:3144 IsJSDocSingleCommentNodeList
+// Go: ast/utilities.go:3224 IsJSDocSingleCommentNodeList
 // See `IsJSDocSingleCommentNode`.
 pub fn is_js_doc_single_comment_node_list(node_list: NodeList) -> bool {
     if node_list.is_nil() || node_list.nodes().len() == 0 {
@@ -548,7 +548,7 @@ pub fn is_js_doc_single_comment_node_list(node_list: NodeList) -> bool {
     }
 }
 
-// Go: ast/utilities.go:3156 IsJSDocSingleCommentNodeComment
+// Go: ast/utilities.go:3236 IsJSDocSingleCommentNodeComment
 // See `IsJSDocSingleCommentNode`.
 pub fn is_js_doc_single_comment_node_comment(node: Node) -> bool {
     if node.is_nil() || node.parent().is_nil() {
@@ -558,7 +558,7 @@ pub fn is_js_doc_single_comment_node_comment(node: Node) -> bool {
         && node == node.parent().comment_list().nodes().get(0)
 }
 
-// Go: ast/utilities.go:3165 IsJSDocSingleCommentNode
+// Go: ast/utilities.go:3245 IsJSDocSingleCommentNode
 // In Strada, if a JSDoc node has a single comment, that comment is represented as a string property
 // as a simplification, and therefore that comment is not visited by `forEachChild`.
 pub fn is_js_doc_single_comment_node(node: Node) -> bool {
@@ -567,7 +567,7 @@ pub fn is_js_doc_single_comment_node(node: Node) -> bool {
         && node.comment_list().nodes().len() == 1
 }
 
-// Go: ast/utilities.go:3169 IsValidTypeOnlyAliasUseSite
+// Go: ast/utilities.go:3249 IsValidTypeOnlyAliasUseSite
 pub fn is_valid_type_only_alias_use_site(use_site: Node) -> bool {
     use_site
         .flags()
@@ -578,7 +578,7 @@ pub fn is_valid_type_only_alias_use_site(use_site: Node) -> bool {
         || !(is_expression_node(use_site) || is_shorthand_property_name_use_site(use_site))
 }
 
-// Go: ast/utilities.go:3177 isIdentifierInNonEmittingHeritageClause
+// Go: ast/utilities.go:3257 isIdentifierInNonEmittingHeritageClause
 pub fn is_identifier_in_non_emitting_heritage_clause(node: Node) -> bool {
     if !is_identifier(node) {
         return false;
@@ -592,7 +592,7 @@ pub fn is_identifier_in_non_emitting_heritage_clause(node: Node) -> bool {
             || is_interface_declaration(parent.parent()))
 }
 
-// Go: ast/utilities.go:3188 isPartOfPossiblyValidTypeOrAbstractComputedPropertyName
+// Go: ast/utilities.go:3268 isPartOfPossiblyValidTypeOrAbstractComputedPropertyName
 pub fn is_part_of_possibly_valid_type_or_abstract_computed_property_name(node: Node) -> bool {
     let mut node = node;
     while node_kind_is(
@@ -613,19 +613,19 @@ pub fn is_part_of_possibly_valid_type_or_abstract_computed_property_name(node: N
     )
 }
 
-// Go: ast/utilities.go:3201 isShorthandPropertyNameUseSite
+// Go: ast/utilities.go:3281 isShorthandPropertyNameUseSite
 pub fn is_shorthand_property_name_use_site(use_site: Node) -> bool {
     is_identifier(use_site)
         && is_shorthand_property_assignment(use_site.parent())
         && use_site.parent().name() == use_site
 }
 
-// Go: ast/utilities.go:3205 GetPropertyNameForPropertyNameNode
+// Go: ast/utilities.go:3285 GetPropertyNameForPropertyNameNode
 pub fn get_property_name_for_property_name_node(name: Node) -> String {
     property_name_text(name).into_owned()
 }
 
-// Go: ast/utilities.go:3205 GetPropertyNameForPropertyNameNode
+// Go: ast/utilities.go:3285 GetPropertyNameForPropertyNameNode
 // Same logic, but it does not allocate. Node texts are `&'static str`, so
 // only the minus-signed numeric name (`[-1]`) needs a new String. Hot
 // callers (getLiteralTypeFromPropertyName) use this to skip a String per call.
@@ -659,12 +659,12 @@ pub fn property_name_text(name: Node) -> Cow<'static, str> {
     panic!("Unhandled case in getPropertyNameForPropertyNameNode")
 }
 
-// Go: ast/utilities.go:3227 IsPartOfTypeOnlyImportOrExportDeclaration
+// Go: ast/utilities.go:3307 IsPartOfTypeOnlyImportOrExportDeclaration
 pub fn is_part_of_type_only_import_or_export_declaration(node: Node) -> bool {
     find_ancestor(node, &mut is_type_only_import_or_export_declaration).is_some()
 }
 
-// Go: ast/utilities.go:3231 IsEmittableImport
+// Go: ast/utilities.go:3311 IsEmittableImport
 pub fn is_emittable_import(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::ImportDeclaration => {
@@ -676,7 +676,7 @@ pub fn is_emittable_import(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:3243 IsResolutionModeOverrideHost
+// Go: ast/utilities.go:3323 IsResolutionModeOverrideHost
 pub fn is_resolution_mode_override_host(node: Node) -> bool {
     if node.is_nil() {
         return false;
@@ -707,7 +707,7 @@ fn import_attributes_field_p4(node: Node) -> Node {
     attributes
 }
 
-// Go: ast/utilities.go:3254 HasResolutionModeOverride
+// Go: ast/utilities.go:3334 HasResolutionModeOverride
 pub fn has_resolution_mode_override(node: Node) -> bool {
     if node.is_nil() {
         return false;
@@ -732,30 +732,30 @@ pub fn has_resolution_mode_override(node: Node) -> bool {
     false
 }
 
-// Go: ast/utilities.go:3274 IsStringTextContainingNode
+// Go: ast/utilities.go:3354 IsStringTextContainingNode
 pub fn is_string_text_containing_node(node: Node) -> bool {
     node.kind() == SyntaxKind::StringLiteral || is_template_literal_kind(node.kind())
 }
 
-// Go: ast/utilities.go:3278 IsTemplateLiteralKind
+// Go: ast/utilities.go:3358 IsTemplateLiteralKind
 pub fn is_template_literal_kind(kind: SyntaxKind) -> bool {
     // PORT: compare discriminants; crate::astdata::SyntaxKind does not derive Ord.
     SyntaxKind::FIRST_TEMPLATE_TOKEN as u16 <= kind as u16
         && kind as u16 <= SyntaxKind::LAST_TEMPLATE_TOKEN as u16
 }
 
-// Go: ast/utilities.go:3282 IsTemplateLiteralToken
+// Go: ast/utilities.go:3362 IsTemplateLiteralToken
 pub fn is_template_literal_token(node: Node) -> bool {
     is_template_literal_kind(node.kind())
 }
 
-// Go: ast/utilities.go:3286 GetExternalModuleImportEqualsDeclarationExpression
+// Go: ast/utilities.go:3366 GetExternalModuleImportEqualsDeclarationExpression
 pub fn get_external_module_import_equals_declaration_expression(node: Node) -> Node {
     debug_assert!(is_external_module_import_equals_declaration(node));
     node.module_reference().expression()
 }
 
-// Go: ast/utilities.go:3291 CreateModifiersFromModifierFlags
+// Go: ast/utilities.go:3371 CreateModifiersFromModifierFlags
 pub fn create_modifiers_from_modifier_flags(
     flags: ModifierFlags,
     create_modifier: &mut dyn FnMut(SyntaxKind) -> Node,
@@ -809,7 +809,7 @@ pub fn create_modifiers_from_modifier_flags(
     result
 }
 
-// Go: ast/utilities.go:3341 GetThisParameter
+// Go: ast/utilities.go:3421 GetThisParameter
 pub fn get_this_parameter(signature: Node) -> Node {
     // callback tags do not currently support this parameters
     if signature.parameters().len() != 0 {
@@ -821,7 +821,7 @@ pub fn get_this_parameter(signature: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:3352 ReplaceModifiers
+// Go: ast/utilities.go:3432 ReplaceModifiers
 pub fn replace_modifiers(factory: &NodeFactory, node: Node, modifier_array: ModifierList) -> Node {
     match node.kind() {
         SyntaxKind::TypeParameter => {
@@ -1089,7 +1089,7 @@ pub fn replace_modifiers(factory: &NodeFactory, node: Node, modifier_array: Modi
     )
 }
 
-// Go: ast/utilities.go:3590 IsLateVisibilityPaintedStatement
+// Go: ast/utilities.go:3670 IsLateVisibilityPaintedStatement
 pub fn is_late_visibility_painted_statement(node: Node) -> bool {
     matches!(
         node.kind(),
@@ -1107,12 +1107,12 @@ pub fn is_late_visibility_painted_statement(node: Node) -> bool {
     )
 }
 
-// Go: ast/utilities.go:3609 IsExternalModuleAugmentation
+// Go: ast/utilities.go:3689 IsExternalModuleAugmentation
 pub fn is_external_module_augmentation(node: Node) -> bool {
     is_ambient_module(node) && is_module_augmentation_external(node)
 }
 
-// Go: ast/utilities.go:3613 GetSourceFileOfModule
+// Go: ast/utilities.go:3693 GetSourceFileOfModule
 pub fn get_source_file_of_module(symbols: &SymbolArena, module: SymbolId) -> Node {
     let mut declaration = symbols.sym(module).value_declaration;
     if declaration.is_nil() {
@@ -1121,7 +1121,7 @@ pub fn get_source_file_of_module(symbols: &SymbolArena, module: SymbolId) -> Nod
     get_source_file_of_node(declaration)
 }
 
-// Go: ast/utilities.go:3621 GetNonAugmentationDeclaration
+// Go: ast/utilities.go:3701 GetNonAugmentationDeclaration
 pub fn get_non_augmentation_declaration(symbols: &SymbolArena, symbol: SymbolId) -> Node {
     symbols
         .sym(symbol)
@@ -1132,7 +1132,7 @@ pub fn get_non_augmentation_declaration(symbols: &SymbolArena, symbol: SymbolId)
         .unwrap_or(Node::NIL)
 }
 
-// Go: ast/utilities.go:3658 IsTypeDeclaration
+// Go: ast/utilities.go:3707 IsTypeDeclaration
 pub fn is_type_declaration(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::TypeParameter
@@ -1149,26 +1149,26 @@ pub fn is_type_declaration(node: Node) -> bool {
     }
 }
 
-// Go: ast/utilities.go:3640 IsTypeDeclarationName
+// Go: ast/utilities.go:3720 IsTypeDeclarationName
 pub fn is_type_declaration_name(name: Node) -> bool {
     name.kind() == SyntaxKind::Identifier
         && is_type_declaration(name.parent())
         && get_name_of_declaration(name.parent()) == name
 }
 
-// Go: ast/utilities.go:3646 IsRightSideOfPropertyAccess
+// Go: ast/utilities.go:3726 IsRightSideOfPropertyAccess
 pub fn is_right_side_of_property_access(node: Node) -> bool {
     node.parent().kind() == SyntaxKind::PropertyAccessExpression && node.parent().name() == node
 }
 
-// Go: ast/utilities.go:3650 IsArgumentExpressionOfElementAccess
+// Go: ast/utilities.go:3730 IsArgumentExpressionOfElementAccess
 pub fn is_argument_expression_of_element_access(node: Node) -> bool {
     node.parent().is_some()
         && node.parent().kind() == SyntaxKind::ElementAccessExpression
         && node.parent().argument_expression() == node
 }
 
-// Go: ast/utilities.go:3654 ClimbPastPropertyAccess
+// Go: ast/utilities.go:3734 ClimbPastPropertyAccess
 pub fn climb_past_property_access(node: Node) -> Node {
     if is_right_side_of_property_access(node) {
         return node.parent();
@@ -1176,7 +1176,7 @@ pub fn climb_past_property_access(node: Node) -> Node {
     node
 }
 
-// Go: ast/utilities.go:3661 climbPastPropertyOrElementAccess
+// Go: ast/utilities.go:3741 climbPastPropertyOrElementAccess
 pub fn climb_past_property_or_element_access(node: Node) -> Node {
     if is_right_side_of_property_access(node) || is_argument_expression_of_element_access(node) {
         return node.parent();
@@ -1184,7 +1184,7 @@ pub fn climb_past_property_or_element_access(node: Node) -> Node {
     node
 }
 
-// Go: ast/utilities.go:3668 selectExpressionOfCallOrNewExpressionOrDecorator
+// Go: ast/utilities.go:3748 selectExpressionOfCallOrNewExpressionOrDecorator
 pub fn select_expression_of_call_or_new_expression_or_decorator(node: Node) -> Node {
     if is_call_expression(node) || is_new_expression(node) || is_decorator(node) {
         return node.expression();
@@ -1192,7 +1192,7 @@ pub fn select_expression_of_call_or_new_expression_or_decorator(node: Node) -> N
     Node::NIL
 }
 
-// Go: ast/utilities.go:3675 selectTagOfTaggedTemplateExpression
+// Go: ast/utilities.go:3755 selectTagOfTaggedTemplateExpression
 pub fn select_tag_of_tagged_template_expression(node: Node) -> Node {
     if is_tagged_template_expression(node) {
         return node.tag();
@@ -1200,7 +1200,7 @@ pub fn select_tag_of_tagged_template_expression(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:3682 selectTagNameOfJsxOpeningLikeElement
+// Go: ast/utilities.go:3762 selectTagNameOfJsxOpeningLikeElement
 pub fn select_tag_name_of_jsx_opening_like_element(node: Node) -> Node {
     if is_jsx_opening_element(node) || is_jsx_self_closing_element(node) {
         return node.tag_name();
@@ -1208,7 +1208,7 @@ pub fn select_tag_name_of_jsx_opening_like_element(node: Node) -> Node {
     Node::NIL
 }
 
-// Go: ast/utilities.go:3689 IsCallExpressionTarget
+// Go: ast/utilities.go:3769 IsCallExpressionTarget
 pub fn is_call_expression_target(
     node: Node,
     include_element_access: bool,

@@ -5,7 +5,7 @@ use crate::prelude::*;
 use smallvec::SmallVec;
 
 impl Checker {
-    // Go: checker/checker.go:20856 reportErrorsFromWidening
+    // Go: checker/checker.go:20888 reportErrorsFromWidening
     pub fn report_errors_from_widening(
         &mut self,
         declaration: Node,
@@ -33,7 +33,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:20867 shouldReportErrorsFromWideningWithContextualSignature
+    // Go: checker/checker.go:20899 shouldReportErrorsFromWideningWithContextualSignature
     pub fn should_report_errors_from_widening_with_contextual_signature(
         &mut self,
         declaration: Node,
@@ -89,7 +89,7 @@ impl Checker {
     // are on a best effort basis. Currently, if the null or undefined that causes widening is inside
     // an object literal property (arbitrarily deeply), this function reports an error. If no error is
     // reported, reportImplicitAnyError is a suitable fallback to report a general error.
-    // Go: checker/checker.go:20901 reportWideningErrorsInType
+    // Go: checker/checker.go:20933 reportWideningErrorsInType
     pub fn report_widening_errors_in_type(&mut self, t: TypeId) -> bool {
         let mut error_reported = false;
         if self
@@ -152,7 +152,7 @@ impl Checker {
         error_reported
     }
 
-    // Go: checker/checker.go:20939 getTypePredicateFromBody
+    // Go: checker/checker.go:20971 getTypePredicateFromBody
     pub fn get_type_predicate_from_body(&mut self, fn_: Node) -> TypePredicateId {
         match fn_.kind() {
             SyntaxKind::Constructor | SyntaxKind::GetAccessor | SyntaxKind::SetAccessor => {
@@ -185,7 +185,7 @@ impl Checker {
         self.check_if_expression_refines_any_parameter(fn_, single_return)
     }
 
-    // Go: checker/checker.go:20969 checkIfExpressionRefinesAnyParameter
+    // Go: checker/checker.go:21001 checkIfExpressionRefinesAnyParameter
     pub fn check_if_expression_refines_any_parameter(
         &mut self,
         fn_: Node,
@@ -220,7 +220,7 @@ impl Checker {
         TypePredicateId::NIL
     }
 
-    // Go: checker/checker.go:20989 checkIfExpressionRefinesParameter
+    // Go: checker/checker.go:21021 checkIfExpressionRefinesParameter
     pub fn check_if_expression_refines_parameter(
         &mut self,
         fn_: Node,
@@ -268,7 +268,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:21012 addOptionalTypeMarker
+    // Go: checker/checker.go:21044 addOptionalTypeMarker
     pub fn add_optional_type_marker(&mut self, t: TypeId) -> TypeId {
         if self.strict_null_checks {
             let optional_type = self.optional_type;
@@ -277,13 +277,13 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:21019 instantiateSignature
+    // Go: checker/checker.go:21051 instantiateSignature
     pub fn instantiate_signature(&mut self, sig: SignatureId, m: MapperId) -> SignatureId {
         let erase = m == self.permissive_mapper;
         self.instantiate_signature_ex(sig, m, erase /*eraseTypeParameters*/)
     }
 
-    // Go: checker/checker.go:21023 instantiateSignatureEx
+    // Go: checker/checker.go:21055 instantiateSignatureEx
     // PORT: the source lists are read by index instead of cloned (no call
     // below changes the lists of `sig`), and the new lists move into the
     // signature through `new_signature_owned`.
@@ -362,7 +362,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:21046 instantiateIndexInfo
+    // Go: checker/checker.go:21078 instantiateIndexInfo
     pub fn instantiate_index_info(&mut self, info: IndexInfoId, m: MapperId) -> IndexInfoId {
         let value_type = self.index_info(info).value_type;
         let new_value_type = self.instantiate_type(value_type, m);
@@ -387,7 +387,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:21054 resolveAnonymousTypeMembers
+    // Go: checker/checker.go:21086 resolveAnonymousTypeMembers
     pub fn resolve_anonymous_type_members(&mut self, t: TypeId) {
         let (d_target, d_mapper) = {
             let d = self.ty(t).as_object_type();
@@ -533,7 +533,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:21133 createInstantiatedSymbolTable
+    // Go: checker/checker.go:21174 createInstantiatedSymbolTable
     pub fn create_instantiated_symbol_table(
         &mut self,
         symbols: &[SymbolId],
@@ -551,7 +551,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:21144 instantiateSymbolTable
+    // Go: checker/checker.go:21185 instantiateSymbolTable
     pub fn instantiate_symbol_table(&mut self, symbols: SymbolTable, m: MapperId) -> SymbolTable {
         if self.symbols.len(symbols) == 0 {
             return SymbolTable::NIL;
@@ -572,7 +572,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:21157 instantiateSymbol
+    // Go: checker/checker.go:21198 instantiateSymbol
     pub fn instantiate_symbol(&mut self, symbol: SymbolId, m: MapperId) -> SymbolId {
         if symbol.is_nil() {
             return SymbolId::NIL;
@@ -604,6 +604,7 @@ impl Checker {
                 return symbol;
             }
         }
+        // Create a new transient symbol that shares the underlying data with the original symbol.
         // PERF (instfast1): the source symbol is read once for the test and
         // the copy when it is not an instantiation itself (99% of the calls).
         let source = self.sym(symbol);
@@ -639,7 +640,7 @@ impl Checker {
     // feasible to perform a complete analysis in all cases. In particular, property members with types
     // inferred from their initializers and function members with inferred return types are conservatively
     // assumed not to be free of "this" references.
-    // Go: checker/checker.go:21202 isThisless
+    // Go: checker/checker.go:21239 isThisless
     pub fn is_thisless(&self, symbol: SymbolId) -> bool {
         let declarations = &self.sym(symbol).declarations;
         if declarations.len() == 1 {
@@ -668,30 +669,41 @@ impl Checker {
 }
 
 /// The new symbol of Go `instantiateSymbol` for source `s`: its flags with
-/// TRANSIENT, its name, declarations, parent and value declaration, and the
-/// check flags it keeps with INSTANTIATED. Go calls newSymbol and then sets
-/// the fields; the port builds the full symbol and pushes it once.
+/// TRANSIENT, the check flags it keeps with INSTANTIATED, and the data that
+/// Go `newSharedDataSymbol` (checker.go:14346, #64691) shares with `s`: name,
+/// declarations, value declaration, parent, members, exports and export
+/// symbol. Go calls newSharedDataSymbol and then sets the check flags; the
+/// port builds the full symbol and pushes it once.
+/// PORT: Go shares one `symbolData`, so a later set on either symbol writes
+/// both. Here the instance gets a copy (a `SymbolTable` is an id, so the
+/// tables themselves are shared). The copy reads the same as the shared data
+/// because no Go setter writes these fields of a symbol after it can be
+/// instantiated: every setter writes a symbol that its own function made,
+/// or a merge or late-bind target before its members are resolved (the
+/// #64691 setter audit, bump E lane L3 report).
 #[inline(always)]
-fn instantiated_symbol_of(s: &Symbol) -> Symbol {
+pub(crate) fn instantiated_symbol_of(s: &Symbol) -> Symbol {
     Symbol {
         flags: s.flags | SymbolFlags::TRANSIENT,
-        name: s.name.clone(),
         check_flags: CheckFlags::INSTANTIATED
             | s.check_flags
                 & (CheckFlags::READONLY
                     | CheckFlags::LATE
                     | CheckFlags::OPTIONAL_PARAMETER
                     | CheckFlags::REST_PARAMETER),
+        name: s.name.clone(),
         declarations: s.declarations.clone(),
-        parent: s.parent,
         value_declaration: s.value_declaration,
-        ..Symbol::default()
+        members: s.members,
+        exports: s.exports,
+        parent: s.parent,
+        export_symbol: s.export_symbol,
     }
 }
 
 // A variable-like declaration is free of this references if it has a type annotation
 // that is thisless, or if it has no type annotation and no initializer (and is thus of type any).
-// Go: checker/checker.go:21221 isThislessVariableLikeDeclaration
+// Go: checker/checker.go:21258 isThislessVariableLikeDeclaration
 pub fn is_thisless_variable_like_declaration(node: Node) -> bool {
     let type_node = node.type_();
     if type_node.is_some() {
@@ -703,7 +715,7 @@ pub fn is_thisless_variable_like_declaration(node: Node) -> bool {
 // A type is free of this references if it's the any, string, number, boolean, symbol, or void keyword, a string
 // literal type, an array with an element type that is free of this references, or a type reference that is
 // free of this references.
-// Go: checker/checker.go:21232 isThislessType
+// Go: checker/checker.go:21269 isThislessType
 pub fn is_thisless_type(node: Node) -> bool {
     match node.kind() {
         SyntaxKind::AnyKeyword
@@ -727,7 +739,7 @@ pub fn is_thisless_type(node: Node) -> bool {
 // A function-like declaration is considered free of `this` references if it has a return type
 // annotation that is free of this references and if each parameter is thisless and if
 // each type parameter (if present) is thisless.
-// Go: checker/checker.go:21248 isThislessFunctionLikeDeclaration
+// Go: checker/checker.go:21285 isThislessFunctionLikeDeclaration
 pub fn is_thisless_function_like_declaration(node: Node) -> bool {
     let return_type = node.type_();
     (is_constructor_declaration(node) || return_type.is_some() && is_thisless_type(return_type))
@@ -742,14 +754,14 @@ pub fn is_thisless_function_like_declaration(node: Node) -> bool {
 }
 
 // A type parameter is thisless if its constraint is thisless, or if it has no constraint. */
-// Go: checker/checker.go:21256 isThislessTypeParameter
+// Go: checker/checker.go:21293 isThislessTypeParameter
 pub fn is_thisless_type_parameter(node: Node) -> bool {
     let constraint = node.constraint();
     constraint.is_nil() || is_thisless_type(constraint)
 }
 
 impl Checker {
-    // Go: checker/checker.go:21261 getDefaultConstructSignatures
+    // Go: checker/checker.go:21298 getDefaultConstructSignatures
     pub fn get_default_construct_signatures(&mut self, class_type: TypeId) -> Vec<SignatureId> {
         let base_constructor_type = self.get_base_constructor_type_of_class(class_type);
         let base_signatures =
@@ -859,7 +871,7 @@ impl Checker {
         Name::from(self.get_property_name_from_type(t).as_str())
     }
 
-    // Go: checker/checker.go:21298 resolveMappedTypeMembers
+    // Go: checker/checker.go:21335 resolveMappedTypeMembers
     pub fn resolve_mapped_type_members(&mut self, t: TypeId) {
         let members = self.symbols.new_table();
         let mut index_infos: Vec<IndexInfoId> = Vec::new();
@@ -1052,7 +1064,7 @@ impl Checker {
         self.set_structured_type_members(t, members, &[], &[], &index_infos);
     }
 
-    // Go: checker/checker.go:21388 getTypeOfMappedSymbol
+    // Go: checker/checker.go:21425 getTypeOfMappedSymbol
     pub fn get_type_of_mapped_symbol(&mut self, symbol: SymbolId) -> TypeId {
         if self
             .value_symbol_links
@@ -1135,7 +1147,7 @@ impl Checker {
     // Return the lower bound of the key type in a mapped type. Intuitively, the lower
     // bound includes those keys that are known to always be present, for example because
     // because of constraints on type parameters (e.g. 'keyof T' for a constrained T).
-    // Go: checker/checker.go:21425 getLowerBoundOfKeyType
+    // Go: checker/checker.go:21462 getLowerBoundOfKeyType
     pub fn get_lower_bound_of_key_type(&mut self, t: TypeId) -> TypeId {
         let flags = self.ty(t).flags;
         if flags.intersects(TypeFlags::INDEX) {
@@ -1191,7 +1203,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/checker.go:21456 resolveUnionTypeMembers
+    // Go: checker/checker.go:21493 resolveUnionTypeMembers
     pub fn resolve_union_type_members(&mut self, t: TypeId) {
         // The members and properties collections are empty for union types. To get all properties of a union
         // type use getPropertiesOfType (only the language service uses this).
@@ -1227,7 +1239,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:21475 getArrayMemberCallSignatures
+    // Go: checker/checker.go:21512 getArrayMemberCallSignatures
     pub fn get_array_member_call_signatures(&mut self, t: TypeId) -> Vec<SignatureId> {
         // Check if union is exclusively instantiations of a member of the global Array or ReadonlyArray type.
         let mut member_name = String::new();
@@ -1271,7 +1283,7 @@ impl Checker {
             .to_vec()
     }
 
-    // Go: checker/checker.go:21498 isArrayOrTupleSymbol
+    // Go: checker/checker.go:21535 isArrayOrTupleSymbol
     pub fn is_array_or_tuple_symbol(&mut self, symbol: SymbolId) -> bool {
         let global_array_symbol = self.ty(self.global_array_type).symbol;
         let global_readonly_array_symbol = self.ty(self.global_readonly_array_type).symbol;
@@ -1286,7 +1298,7 @@ impl Checker {
                 .is_some()
     }
 
-    // Go: checker/checker.go:21505 isReadonlyArraySymbol
+    // Go: checker/checker.go:21542 isReadonlyArraySymbol
     pub fn is_readonly_array_symbol(&mut self, symbol: SymbolId) -> bool {
         let global_readonly_array_symbol = self.ty(self.global_readonly_array_type).symbol;
         if symbol.is_nil() || global_readonly_array_symbol.is_nil() {
@@ -1300,7 +1312,7 @@ impl Checker {
     // Generic signatures must match exactly, but non-generic signatures are allowed to have extra optional
     // parameters and may differ in return types. When signatures differ in return types, the resulting return
     // type is the union of the constituent return types.
-    // Go: checker/checker.go:21516 getUnionSignatures
+    // Go: checker/checker.go:21553 getUnionSignatures
     pub fn get_union_signatures(
         &mut self,
         signature_lists: &[Vec<SignatureId>],
@@ -1415,7 +1427,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:21587 combineUnionOrIntersectionMemberSignatures
+    // Go: checker/checker.go:21624 combineUnionOrIntersectionMemberSignatures
     pub fn combine_union_or_intersection_member_signatures(
         &mut self,
         left: SignatureId,
@@ -1510,7 +1522,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/checker.go:21626 combineUnionOrIntersectionParameters
+    // Go: checker/checker.go:21663 combineUnionOrIntersectionParameters
     pub fn combine_union_or_intersection_parameters(
         &mut self,
         left: SignatureId,
@@ -1625,7 +1637,7 @@ impl Checker {
         params
     }
 
-    // Go: checker/checker.go:21692 combineUnionOrIntersectionThisParam
+    // Go: checker/checker.go:21729 combineUnionOrIntersectionThisParam
     pub fn combine_union_or_intersection_this_param(
         &mut self,
         left: SymbolId,
@@ -1653,7 +1665,7 @@ impl Checker {
         self.create_symbol_with_type(left, this_type)
     }
 
-    // Go: checker/checker.go:21706 resolveIntersectionTypeMembers
+    // Go: checker/checker.go:21743 resolveIntersectionTypeMembers
     pub fn resolve_intersection_type_members(&mut self, t: TypeId) {
         // The members and properties collections are empty for intersection types. To get all properties of an
         // intersection type use getPropertiesOfType (only the language service uses this).
@@ -1706,7 +1718,7 @@ impl Checker {
         );
     }
 
-    // Go: checker/checker.go:21739 appendSignatures
+    // Go: checker/checker.go:21776 appendSignatures
     pub fn append_signatures(
         &mut self,
         signatures: Vec<SignatureId>,
@@ -1734,7 +1746,7 @@ impl Checker {
         signatures
     }
 
-    // Go: checker/checker.go:21750 appendIndexInfo
+    // Go: checker/checker.go:21787 appendIndexInfo
     pub fn append_index_info(
         &mut self,
         index_infos: Vec<IndexInfoId>,

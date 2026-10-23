@@ -139,7 +139,7 @@ impl Script for Node {
         source_file_file_name(*self)
     }
 
-    // Go: ast/ast.go:2553 (*SourceFile).OriginalFileName
+    // Go: ast/ast.go:2478 (*SourceFile).OriginalFileName
     fn original_file_name(&self) -> &str {
         source_file_original_file_name(*self)
     }
@@ -148,12 +148,12 @@ impl Script for Node {
         ScriptText::File(source_file_text(*self))
     }
 
-    // Go: ast/ast.go:2563 (*SourceFile).SpanMap
+    // Go: ast/ast.go:2488 (*SourceFile).SpanMap
     fn span_map(&self) -> Option<&SpanMap> {
         source_file_span_map(*self)
     }
 
-    // Go: ast/ast.go:2545 (*SourceFile).OriginalText
+    // Go: ast/ast.go:2470 (*SourceFile).OriginalText
     fn original_text(&self) -> ScriptText<'_> {
         ScriptText::File(source_file_original_text(*self))
     }

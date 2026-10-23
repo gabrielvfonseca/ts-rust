@@ -616,7 +616,7 @@ pub fn get_checker_pool(p: &NewProgram) -> Rc<dyn CheckerPool> {
     program_checkers(p).checker_pool.clone()
 }
 
-// Go: checker/checker.go:913 NewChecker (the checker id)
+// Go: checker/checker.go:936 NewChecker (the checker id)
 // PORT: Go `NewChecker(program, tracer)` also returns the checker mutex; a
 // pool here holds `Rc<RefCell<Checker>>` and the borrow is the lock. The
 // tracer is dropped. Go `program.BindSourceFiles()` runs inside

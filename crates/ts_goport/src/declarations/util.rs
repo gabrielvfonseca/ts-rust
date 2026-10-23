@@ -203,25 +203,12 @@ pub(crate) fn should_emit_function_properties(input: Node) -> bool {
         .all(|&decl| !is_function_declaration(decl) || decl.body().is_nil())
 }
 
-// Go: transformers/declarations/util.go:164 getEffectiveBaseTypeNode
-pub(crate) fn get_effective_base_type_node(node: Node) -> Node {
-    // !!! TODO: JSDoc support
-    // if (baseType && isInJSFile(node)) {
-    //     // Prefer an @augments tag because it may have type parameters.
-    //     const tag = getJSDocAugmentsTag(node);
-    //     if (tag) {
-    //         return tag.class;
-    //     }
-    // }
-    get_class_extends_heritage_element(node)
-}
-
-// Go: transformers/declarations/util.go:177 isScopeMarker
+// Go: transformers/declarations/util.go:164 isScopeMarker
 pub(crate) fn is_scope_marker(node: Node) -> bool {
     is_export_assignment(node) || is_export_declaration(node)
 }
 
-// Go: transformers/declarations/util.go:181 hasScopeMarker
+// Go: transformers/declarations/util.go:168 hasScopeMarker
 // PORT: Go `*ast.StatementList` (nil allowed) is `Option<&[Node]>`.
 pub(crate) fn has_scope_marker(statements: Option<&[Node]>) -> bool {
     match statements {

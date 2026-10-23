@@ -255,7 +255,9 @@ impl ts_goport::printer::EmitResolver for NilResolver {
 }
 
 /// Go `&transformers.TransformOptions{CompilerOptions: compilerOptions,
-/// Context: emitContext}`: no emit resolver and no resolver.
+/// Context: emitContext}`: no emit resolver and no resolver. The other
+/// fields have their Go zero values (ts#64581: no rewrites,
+/// `CaseInsensitive`).
 pub(crate) fn transform_options(
     compiler_options: &'static CompilerOptions,
     emit_context: &Rc<EmitContext>,
@@ -268,6 +270,8 @@ pub(crate) fn transform_options(
         get_emit_module_format_of_file: Rc::new(|_file: Node| -> ModuleKind {
             panic!("invalid memory address or nil pointer dereference: GetEmitModuleFormatOfFile")
         }),
+        content_mapper_extension_rewrites: Vec::new(),
+        use_case_sensitive_file_names: false,
     }
 }
 
@@ -461,6 +465,9 @@ fn test_import_elision() {
                     get_emit_module_format_of_file: Rc::new(|_file: Node| -> ModuleKind {
                         panic!("invalid memory address or nil pointer dereference: GetEmitModuleFormatOfFile")
                     }),
+                    // Go zero values (ts#64581).
+                    content_mapper_extension_rewrites: Vec::new(),
+                    use_case_sensitive_file_names: false,
                 };
                 let file = new_type_eraser_transformer(&opts)
                     .expect("type eraser")

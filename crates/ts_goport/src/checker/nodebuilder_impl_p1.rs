@@ -205,9 +205,9 @@ impl NodeBuilderImpl {
     }
 }
 
-// Go: checker/nodebuilderimpl.go:112 defaultMaximumTruncationLength
+// Go: checker/nodebuilderimpl.go:120 defaultMaximumTruncationLength
 pub const DEFAULT_MAXIMUM_TRUNCATION_LENGTH: i32 = 160;
-// Go: checker/nodebuilderimpl.go:112 noTruncationMaximumTruncationLength
+// Go: checker/nodebuilderimpl.go:121 noTruncationMaximumTruncationLength
 pub const NO_TRUNCATION_MAXIMUM_TRUNCATION_LENGTH: i32 = 1_000_000;
 
 // Node builder utility functions

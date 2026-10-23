@@ -273,7 +273,7 @@ pub fn try_read_file(
 }
 
 impl CommandLineParser {
-    // Go: tsoptions/commandlineparser.go:232 (*commandLineParser).parseOptionValue
+    // Go: tsoptions/commandlineparser.go:232 (*commandLineParser).parseOptionValue (ts#64832)
     // PORT: the Go parameter `diag` is `diag_message`, because `diag` is the
     // diagnostics module in Rust.
     pub fn parse_option_value(
@@ -394,8 +394,19 @@ impl CommandLineParser {
                         );
                         // PORT: Go tests `err == nil`. validateJsonOptionValue
                         // returns nil errors or a non-empty slice, so that is
-                        // `is_empty`.
-                        if err.is_empty() {
+                        // `is_empty`. Go `opt.PathKind.IsRooted()` is
+                        // `is_file_path`.
+                        if let CompilerOptionsValue::String(path) = &val
+                            && err.is_empty()
+                            && opt.is_file_path
+                            && is_network_path_value(path, &self.current_directory)
+                        {
+                            // ts#64832
+                            self.errors.push(new_compiler_diagnostic(
+                                diag::Network_path_0_is_not_supported,
+                                args![path],
+                            ));
+                        } else if err.is_empty() {
                             self.options.insert(opt.name.to_string(), val);
                         } else {
                             self.errors.extend(err);
@@ -439,7 +450,7 @@ impl CommandLineParser {
         i
     }
 
-    // Go: tsoptions/commandlineparser.go:338 (*commandLineParser).parseListTypeOption
+    // Go: tsoptions/commandlineparser.go:340 (*commandLineParser).parseListTypeOption
     pub fn parse_list_type_option(
         &self,
         opt: &'static CommandLineOption,
@@ -449,7 +460,7 @@ impl CommandLineParser {
     }
 }
 
-// Go: tsoptions/commandlineparser.go:342 ParseListTypeOption
+// Go: tsoptions/commandlineparser.go:344 ParseListTypeOption
 // PORT: Go returns `[]any`: a `List`, or a `NilList` when `core.MapFiltered`
 // keeps no element (for example `--types ,`), so the option stays unset.
 pub fn parse_list_type_option(
@@ -547,7 +558,7 @@ fn map_filtered_list(values: Vec<CompilerOptionsValue>) -> CompilerOptionsValue 
     }
 }
 
-// Go: tsoptions/commandlineparser.go:387 convertJsonOptionOfEnumType
+// Go: tsoptions/commandlineparser.go:389 convertJsonOptionOfEnumType
 pub fn convert_json_option_of_enum_type(
     opt: &CommandLineOption,
     value: &str,

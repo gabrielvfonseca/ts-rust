@@ -1219,6 +1219,64 @@ fn test_watch_directories_batch() {
     });
 }
 
+// Go: watcher_test.go:1530 TestWatchRejectsNetworkPaths (ts#64832)
+#[test]
+fn test_watch_rejects_network_paths() {
+    run_for_each_watcher("TestWatchRejectsNetworkPaths", |t, wi| {
+        let dir = new_t_tmp_dir(t);
+        let r = Recorder::for_watcher(t, wi);
+
+        let mut network_paths = vec![
+            r"\\server\share".to_string(),
+            r"\??\UNC\server\share".to_string(),
+        ];
+        if std::env::consts::OS != "windows" {
+            // On POSIX systems, //dir resolves to /dir, so this is an existing
+            // directory that must still be refused.
+            network_paths.push(format!("/{dir}"));
+        }
+        let no_options: Vec<Box<dyn WatchOption>> = Vec::new();
+        for network_path in &network_paths {
+            let result = wi.watch_directories(&[
+                fswatch::WatchDirectoryRequest {
+                    dir: dir.clone(),
+                    callback: r.callback(),
+                    options: &no_options,
+                },
+                fswatch::WatchDirectoryRequest {
+                    dir: network_path.clone(),
+                    callback: r.callback(),
+                    options: &no_options,
+                },
+            ]);
+            match result {
+                Err(err) if errors::is(&err, &fswatch::ERR_NETWORK_PATH) => {}
+                Err(err) => fatal(format!(
+                    "WatchDirectories({network_path:?}) error = {}, want {}",
+                    err.error(),
+                    fswatch::ERR_NETWORK_PATH.error()
+                )),
+                Ok(_) => fatal(format!(
+                    "WatchDirectories({network_path:?}) error = <nil>, want {}",
+                    fswatch::ERR_NETWORK_PATH.error()
+                )),
+            }
+            match wi.watch_file(&format!("{network_path}/file.ts"), r.callback()) {
+                Err(err) if errors::is(&err, &fswatch::ERR_NETWORK_PATH) => {}
+                Err(err) => fatal(format!(
+                    "WatchFile({network_path:?}) error = {}, want {}",
+                    err.error(),
+                    fswatch::ERR_NETWORK_PATH.error()
+                )),
+                Ok(_) => fatal(format!(
+                    "WatchFile({network_path:?}) error = <nil>, want {}",
+                    fswatch::ERR_NETWORK_PATH.error()
+                )),
+            }
+        }
+    });
+}
+
 // ----- errors ------------------------------------------------------------
 
 // Go: watcher_test.go:1810 TestSubscribeMissingDirError

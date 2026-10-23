@@ -14,7 +14,7 @@ impl Checker {
     // an object type with the same set of properties as the source type, where the type of each
     // property is computed by inferring from the source property type to X for the type
     // variable T[P] (i.e. we treat the type T[P] as the type variable we're inferring for).
-    // Go: checker/inference.go:1004 inferTypeForHomomorphicMappedType
+    // Go: checker/inference.go:1015 inferTypeForHomomorphicMappedType
     pub fn infer_type_for_homomorphic_mapped_type(
         &mut self,
         source: TypeId,
@@ -36,7 +36,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/inference.go:1014 createReverseMappedType
+    // Go: checker/inference.go:1025 createReverseMappedType
     pub fn create_reverse_mapped_type(
         &mut self,
         source: TypeId,
@@ -112,7 +112,7 @@ impl Checker {
     // an object literal type with at least one property of an inferable type. For example, an object
     // literal { a: 123, b: x => true } is marked non-inferable because it contains a context sensitive
     // arrow function, but is considered partially inferable because property 'a' has an inferable type.
-    // Go: checker/inference.go:1060 isPartiallyInferableType
+    // Go: checker/inference.go:1071 isPartiallyInferableType
     pub fn is_partially_inferable_type(&mut self, t: TypeId) -> bool {
         if !self
             .ty(t)
@@ -139,7 +139,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/inference.go:1066 inferReverseMappedType
+    // Go: checker/inference.go:1077 inferReverseMappedType
     pub fn infer_reverse_mapped_type(
         &mut self,
         source: TypeId,
@@ -186,7 +186,7 @@ impl Checker {
         t
     }
 
-    // Go: checker/inference.go:1091 inferReverseMappedTypeWorker
+    // Go: checker/inference.go:1102 inferReverseMappedTypeWorker
     pub fn infer_reverse_mapped_type_worker(
         &mut self,
         source: TypeId,
@@ -224,7 +224,7 @@ impl Checker {
         self.get_widened_type(t)
     }
 
-    // Go: checker/inference.go:1099 resolveReverseMappedTypeMembers
+    // Go: checker/inference.go:1110 resolveReverseMappedTypeMembers
     pub fn resolve_reverse_mapped_type_members(&mut self, t: TypeId) {
         let (r_source, r_mapped_type, r_constraint_type) = {
             let r = self.ty(t).as_reverse_mapped_type();
@@ -349,7 +349,7 @@ impl Checker {
         self.set_structured_type_members(t, members, &[], &[], &index_infos);
     }
 
-    // Go: checker/inference.go:1145 getTypeOfReverseMappedSymbol
+    // Go: checker/inference.go:1156 getTypeOfReverseMappedSymbol
     pub fn get_type_of_reverse_mapped_symbol(&mut self, symbol: SymbolId) -> TypeId {
         if self
             .value_symbol_links
@@ -385,7 +385,7 @@ impl Checker {
     // and we make an attempt to do so even if the intersection has been reduced to a union.
     // This entire process allows us to possibly retrieve the filtering type literals.
     // e.g. { [K in keyof U & ("a" | "b") ] } -> "a" | "b"
-    // Go: checker/inference.go:1158 getLimitedConstraint
+    // Go: checker/inference.go:1169 getLimitedConstraint
     pub fn get_limited_constraint(&mut self, t: TypeId) -> TypeId {
         let mapped_type = self.ty(t).as_reverse_mapped_type().mapped_type;
         let constraint = self.get_constraint_type_from_mapped_type(mapped_type);
@@ -417,7 +417,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/inference.go:1178 replaceIndexedAccess
+    // Go: checker/inference.go:1189 replaceIndexedAccess
     pub fn replace_indexed_access(
         &mut self,
         instantiable: TypeId,
@@ -437,7 +437,7 @@ impl Checker {
         self.instantiate_type(instantiable, mapper)
     }
 
-    // Go: checker/inference.go:1185 typesDefinitelyUnrelated
+    // Go: checker/inference.go:1196 typesDefinitelyUnrelated
     pub fn types_definitely_unrelated(&mut self, source: TypeId, target: TypeId) -> bool {
         // Two tuple types with incompatible arities are definitely unrelated.
         // Two object types that each have a property that is unmatched in the other are definitely unrelated.
@@ -458,7 +458,7 @@ impl Checker {
     }
 
     // PORT: Go package function; reads type data, so it is a `Checker` method.
-    // Go: checker/inference.go:1195 tupleTypesDefinitelyUnrelated
+    // Go: checker/inference.go:1206 tupleTypesDefinitelyUnrelated
     pub fn tuple_types_definitely_unrelated(&self, source: TypeId, target: TypeId) -> bool {
         let s = self.target_tuple_type(source);
         let t = self.target_tuple_type(target);
@@ -468,7 +468,7 @@ impl Checker {
                     || t.fixed_length < s.fixed_length)
     }
 
-    // Go: checker/inference.go:1202 isTupleTypeStructureMatching
+    // Go: checker/inference.go:1213 isTupleTypeStructureMatching
     pub fn is_tuple_type_structure_matching(&self, t1: TypeId, t2: TypeId) -> bool {
         if self.get_type_reference_arity(t1) != self.get_type_reference_arity(t2) {
             return false;
@@ -483,7 +483,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/inference.go:1214 isTypeOrBaseIdenticalTo
+    // Go: checker/inference.go:1225 isTypeOrBaseIdenticalTo
     pub fn is_type_or_base_identical_to(&mut self, s: TypeId, t: TypeId) -> bool {
         if t == self.missing_type {
             return s == t;
@@ -495,7 +495,7 @@ impl Checker {
                 && self.ty(s).flags.intersects(TypeFlags::NUMBER_LITERAL)
     }
 
-    // Go: checker/inference.go:1223 isTypeCloselyMatchedBy
+    // Go: checker/inference.go:1234 isTypeCloselyMatchedBy
     pub fn is_type_closely_matched_by(&self, s: TypeId, t: TypeId) -> bool {
         let st = self.ty(s);
         let tt = self.ty(t);
@@ -510,7 +510,7 @@ impl Checker {
     }
 
     // Create an object with properties named in the string literal type. Every property has type `any`.
-    // Go: checker/inference.go:1229 createEmptyObjectTypeFromStringLiteral
+    // Go: checker/inference.go:1240 createEmptyObjectTypeFromStringLiteral
     pub fn create_empty_object_type_from_string_literal(&mut self, t: TypeId) -> TypeId {
         let members = self.symbols.new_table();
         let distributed = self.ty(t).distributed();
@@ -550,7 +550,7 @@ impl Checker {
         self.new_anonymous_type(SymbolId::NIL, members, &[], &[], &index_infos)
     }
 
-    // Go: checker/inference.go:1251 newInferenceContext
+    // Go: checker/inference.go:1262 newInferenceContext
     pub fn new_inference_context(
         &mut self,
         type_parameters: &[TypeId],
@@ -587,7 +587,7 @@ impl Checker {
         self.new_inference_context_worker(inferences, signature, flags, compare_types)
     }
 
-    // Go: checker/inference.go:1258 cloneInferenceContext
+    // Go: checker/inference.go:1269 cloneInferenceContext
     pub fn clone_inference_context(
         &mut self,
         n: InferenceContextId,
@@ -611,7 +611,7 @@ impl Checker {
         self.new_inference_context_worker(inferences, signature, flags, compare_types)
     }
 
-    // Go: checker/inference.go:1265 cloneInferredPartOfContext
+    // Go: checker/inference.go:1276 cloneInferredPartOfContext
     pub fn clone_inferred_part_of_context(&mut self, n: InferenceContextId) -> InferenceContextId {
         let count = self.inference_context(n).inferences.len();
         // PERF: Go filters the info pointers, then clones each kept info.
@@ -635,7 +635,7 @@ impl Checker {
         self.new_inference_context_worker(inferences, signature, flags, compare_types)
     }
 
-    // Go: checker/inference.go:1273 newInferenceContextWorker
+    // Go: checker/inference.go:1284 newInferenceContextWorker
     pub fn new_inference_context_worker(
         &mut self,
         inferences: Vec<InferenceInfo>,
@@ -662,7 +662,7 @@ impl Checker {
         n
     }
 
-    // Go: checker/inference.go:1285 addIntraExpressionInferenceSite
+    // Go: checker/inference.go:1296 addIntraExpressionInferenceSite
     pub fn add_intra_expression_inference_site(
         &mut self,
         n: InferenceContextId,
@@ -688,7 +688,7 @@ impl Checker {
     // arrow function. This happens automatically when the arrow functions are discrete arguments (because we
     // infer from each argument before processing the next), but when the arrow functions are elements of an
     // object or array literal, we need to perform intra-expression inferences early.
-    // Go: checker/inference.go:1302 inferFromIntraExpressionSites
+    // Go: checker/inference.go:1313 inferFromIntraExpressionSites
     pub fn infer_from_intra_expression_sites(&mut self, n: InferenceContextId) {
         // PORT: Go ranges over the slice header taken at loop start; the clone
         // keeps that behavior when inference appends new sites.
@@ -714,7 +714,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/inference.go:1317 getInferredType
+    // Go: checker/inference.go:1328 getInferredType
     pub fn get_inferred_type(&mut self, n: InferenceContextId, index: i32) -> TypeId {
         let index = index as usize;
         if self.inference_context(n).inferences[index]
@@ -928,7 +928,7 @@ impl Checker {
         self.inference_context(n).inferences[index].inferred_type
     }
 
-    // Go: checker/inference.go:1406 getInferredTypes
+    // Go: checker/inference.go:1418 getInferredTypes
     pub fn get_inferred_types(&mut self, n: InferenceContextId) -> Vec<TypeId> {
         let count = self.inference_context(n).inferences.len();
         let mut result = vec![TypeId::NIL; count];
@@ -949,7 +949,7 @@ impl Checker {
         result
     }
 
-    // Go: checker/inference.go:1414 getMapperFromContext
+    // Go: checker/inference.go:1426 getMapperFromContext
     pub fn get_mapper_from_context(&self, n: InferenceContextId) -> MapperId {
         if n.is_nil() {
             return MapperId::NIL;
@@ -959,7 +959,7 @@ impl Checker {
 
     // Return a type mapper that combines the context's return mapper with a mapper that erases any additional type parameters
     // to their inferences at the time of creation.
-    // Go: checker/inference.go:1423 createOuterReturnMapper
+    // Go: checker/inference.go:1435 createOuterReturnMapper
     pub fn create_outer_return_mapper(&mut self, context: InferenceContextId) -> MapperId {
         if self
             .inference_context(context)
@@ -979,7 +979,7 @@ impl Checker {
         self.inference_context(context).outer_return_mapper()
     }
 
-    // Go: checker/inference.go:1434 getCovariantInference
+    // Go: checker/inference.go:1446 getCovariantInference
     pub fn get_covariant_inference(
         &mut self,
         n: InferenceContextId,
@@ -1035,7 +1035,7 @@ impl Checker {
         self.get_widened_type(unwidened_type)
     }
 
-    // Go: checker/inference.go:1463 getContravariantInference
+    // Go: checker/inference.go:1475 getContravariantInference
     pub fn get_contravariant_inference(
         &mut self,
         n: InferenceContextId,
@@ -1055,7 +1055,7 @@ impl Checker {
         self.get_common_subtype(&contra_candidates)
     }
 
-    // Go: checker/inference.go:1470 unionObjectAndArrayLiteralCandidates
+    // Go: checker/inference.go:1482 unionObjectAndArrayLiteralCandidates
     pub fn union_object_and_array_literal_candidates(
         &mut self,
         candidates: &[TypeId],
@@ -1085,7 +1085,7 @@ impl Checker {
         SmallVec::from_slice(candidates)
     }
 
-    // Go: checker/inference.go:1482 hasPrimitiveConstraint
+    // Go: checker/inference.go:1494 hasPrimitiveConstraint
     pub fn has_primitive_constraint(&mut self, t: TypeId) -> bool {
         let mut constraint = self.get_constraint_of_type_parameter(t);
         if constraint.is_some() {
@@ -1103,7 +1103,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/inference.go:1493 isTypeParameterAtTopLevel
+    // Go: checker/inference.go:1505 isTypeParameterAtTopLevel
     pub fn is_type_parameter_at_top_level(&mut self, t: TypeId, tp: TypeId, depth: i32) -> bool {
         if t == tp {
             return true;
@@ -1133,7 +1133,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/inference.go:1501 isTypeParameterAtTopLevelInReturnType
+    // Go: checker/inference.go:1513 isTypeParameterAtTopLevelInReturnType
     pub fn is_type_parameter_at_top_level_in_return_type(
         &mut self,
         signature: SignatureId,
@@ -1148,7 +1148,7 @@ impl Checker {
         self.is_type_parameter_at_top_level(return_type, type_parameter, 0)
     }
 
-    // Go: checker/inference.go:1509 getTypeFromInference
+    // Go: checker/inference.go:1521 getTypeFromInference
     pub fn get_type_from_inference(&mut self, n: InferenceContextId, inference: usize) -> TypeId {
         // PORT: perf. The candidate snapshots live on the stack up to 8.
         let (candidates, contra_candidates) = {
@@ -1172,7 +1172,7 @@ impl Checker {
     // into `inference_contexts[n.inferences].inferences`, or `None` for nil.
     // `InferenceState::inferences` is the `InferenceContextId` whose list Go
     // passes to `inferTypes`.
-    // Go: checker/inference.go:1519 getInferenceInfoForType
+    // Go: checker/inference.go:1531 getInferenceInfoForType
     pub fn get_inference_info_for_type(&self, n: &InferenceState, t: TypeId) -> Option<usize> {
         if self.ty(t).flags.intersects(TypeFlags::TYPE_VARIABLE) {
             let t = self.get_non_distributed_type_parameter(t);
@@ -1190,7 +1190,7 @@ impl Checker {
         None
     }
 
-    // Go: checker/inference.go:1531 getCommonSupertype
+    // Go: checker/inference.go:1543 getCommonSupertype
     pub fn get_common_supertype(&mut self, types: &[TypeId]) -> TypeId {
         if types.len() == 1 {
             return types[0];
@@ -1225,7 +1225,7 @@ impl Checker {
         self.get_nullable_type(supertype, flags)
     }
 
-    // Go: checker/inference.go:1558 getSingleCommonSupertype
+    // Go: checker/inference.go:1570 getSingleCommonSupertype
     pub fn get_single_common_supertype(&mut self, types: &[TypeId]) -> TypeId {
         // First, find the leftmost type for which no type to the right is a strict supertype, and if that
         // type is a strict supertype of all other candidates, return it. Otherwise, return the leftmost type
@@ -1244,7 +1244,7 @@ impl Checker {
         self.find_leftmost_type(types, Checker::is_type_subtype_of)
     }
 
-    // Go: checker/inference.go:1569 findLeftmostType
+    // Go: checker/inference.go:1581 findLeftmostType
     pub fn find_leftmost_type(
         &mut self,
         types: &[TypeId],
@@ -1260,7 +1260,7 @@ impl Checker {
     }
 
     // Return the leftmost type for which no type to the right is a subtype.
-    // Go: checker/inference.go:1580 getCommonSubtype
+    // Go: checker/inference.go:1592 getCommonSubtype
     pub fn get_common_subtype(&mut self, types: &[TypeId]) -> TypeId {
         let mut subtype = TypeId::NIL;
         for &t in types {
@@ -1271,7 +1271,7 @@ impl Checker {
         subtype
     }
 
-    // Go: checker/inference.go:1590 getCombinedTypeFlags
+    // Go: checker/inference.go:1602 getCombinedTypeFlags
     pub fn get_combined_type_flags(&self, types: &[TypeId]) -> TypeFlags {
         let mut flags = TypeFlags::NONE;
         for &t in types {
@@ -1284,7 +1284,7 @@ impl Checker {
         flags
     }
 
-    // Go: checker/inference.go:1602 literalTypesWithSameBaseType
+    // Go: checker/inference.go:1614 literalTypesWithSameBaseType
     pub fn literal_types_with_same_base_type(&mut self, types: &[TypeId]) -> bool {
         let mut common_base_type = TypeId::NIL;
         for &t in types {
@@ -1301,7 +1301,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/inference.go:1618 isFromInferenceBlockedSource
+    // Go: checker/inference.go:1630 isFromInferenceBlockedSource
     pub fn is_from_inference_blocked_source(&self, t: TypeId) -> bool {
         // PERF: the skip set is empty outside the language service, and then
         // no declaration is in it. The reads below have no side effects.
@@ -1317,13 +1317,13 @@ impl Checker {
                 .any(|&d| self.is_skip_direct_inference_node(d))
     }
 
-    // Go: checker/inference.go:1622 isSkipDirectInferenceNode
+    // Go: checker/inference.go:1634 isSkipDirectInferenceNode
     pub fn is_skip_direct_inference_node(&self, node: Node) -> bool {
         self.skip_direct_inference_nodes.contains(&node)
     }
 }
 
-// Go: checker/inference.go:1626 newInferenceInfo
+// Go: checker/inference.go:1638 newInferenceInfo
 pub fn new_inference_info(type_parameter: TypeId) -> InferenceInfo {
     InferenceInfo {
         type_parameter,
@@ -1334,7 +1334,7 @@ pub fn new_inference_info(type_parameter: TypeId) -> InferenceInfo {
     }
 }
 
-// Go: checker/inference.go:1630 cloneInferenceInfo
+// Go: checker/inference.go:1642 cloneInferenceInfo
 pub fn clone_inference_info(info: &InferenceInfo) -> InferenceInfo {
     InferenceInfo {
         type_parameter: info.type_parameter,
@@ -1352,7 +1352,7 @@ pub fn clone_inference_info(info: &InferenceInfo) -> InferenceInfo {
 impl Checker {
     // PORT: Go package function over `[]*InferenceInfo`; takes the context
     // that owns the list.
-    // Go: checker/inference.go:1643 clearCachedInferences
+    // Go: checker/inference.go:1655 clearCachedInferences
     pub fn clear_cached_inferences(&mut self, inferences: InferenceContextId) {
         for inference in &mut self.inference_context_mut(inferences).inferences {
             if !inference.is_fixed {
@@ -1363,13 +1363,13 @@ impl Checker {
 
     // PORT: Go package function over one `*InferenceInfo`; takes
     // (context, index).
-    // Go: checker/inference.go:1651 hasInferenceCandidates
+    // Go: checker/inference.go:1663 hasInferenceCandidates
     pub fn has_inference_candidates(&self, n: InferenceContextId, info: usize) -> bool {
         let info = &self.inference_context(n).inferences[info];
         !info.candidates().is_empty() || !info.contra_candidates().is_empty()
     }
 
-    // Go: checker/inference.go:1655 hasInferenceCandidatesOrDefault
+    // Go: checker/inference.go:1667 hasInferenceCandidatesOrDefault
     pub fn has_inference_candidates_or_default(&self, n: InferenceContextId, info: usize) -> bool {
         self.has_inference_candidates(n, info)
             || has_type_parameter_default(
@@ -1384,7 +1384,7 @@ impl Checker {
 // (checker.go:21847, `Checker::has_type_parameter_default`). It is a free
 // function that takes the checker for type and symbol data, so the two
 // names do not collide.
-// Go: checker/inference.go:1659 hasTypeParameterDefault
+// Go: checker/inference.go:1671 hasTypeParameterDefault
 pub fn has_type_parameter_default(c: &Checker, tp: TypeId) -> bool {
     let symbol = c.ty(tp).symbol;
     if symbol.is_some() {
@@ -1400,7 +1400,7 @@ pub fn has_type_parameter_default(c: &Checker, tp: TypeId) -> bool {
 impl Checker {
     // PORT: Go package function over two `[]*InferenceInfo`; takes the
     // contexts that own the lists.
-    // Go: checker/inference.go:1670 hasOverlappingInferences
+    // Go: checker/inference.go:1682 hasOverlappingInferences
     pub fn has_overlapping_inferences(&self, a: InferenceContextId, b: InferenceContextId) -> bool {
         for i in 0..self.inference_context(a).inferences.len() {
             if self.has_inference_candidates(a, i) && self.has_inference_candidates(b, i) {
@@ -1413,7 +1413,7 @@ impl Checker {
     // PORT: Go stores the same `*InferenceInfo` in both lists. Rust copies the
     // value. Go callers drop the source list right after the merge, so no
     // later write can observe the difference.
-    // Go: checker/inference.go:1679 mergeInferences
+    // Go: checker/inference.go:1691 mergeInferences
     pub fn merge_inferences(&mut self, target: InferenceContextId, source: InferenceContextId) {
         for i in 0..self.inference_context(target).inferences.len() {
             if !self.has_inference_candidates(target, i) && self.has_inference_candidates(source, i)

@@ -33,7 +33,7 @@ use crate::modulespecifiers;
 
 use crate::flags_macros::go_enum;
 
-// Go: ls/autoimport/fix.go:30 newImportBinding
+// Go: ls/autoimport/fix.go:31 newImportBinding
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct NewImportBinding {
     pub kind: lsproto::ImportKind,
@@ -42,7 +42,7 @@ pub struct NewImportBinding {
     pub add_as_type_only: lsproto::AddAsTypeOnly,
 }
 
-// Go: ls/autoimport/fix.go:37 Fix
+// Go: ls/autoimport/fix.go:38 Fix
 #[derive(Clone, Debug, Default)]
 pub struct Fix {
     pub auto_import_fix: lsproto::AutoImportFix,
@@ -66,7 +66,7 @@ impl std::ops::DerefMut for Fix {
     }
 }
 
-// Go: ls/autoimport/fix.go:46 addToExistingImportFix
+// Go: ls/autoimport/fix.go:47 addToExistingImportFix
 #[derive(Clone, Debug, Default)]
 pub struct AddToExistingImportFix {
     pub import_clause_or_binding_pattern: Node,
@@ -76,7 +76,7 @@ pub struct AddToExistingImportFix {
 }
 
 impl Fix {
-    // Go: ls/autoimport/fix.go:56 Edits
+    // Go: ls/autoimport/fix.go:57 Edits
     // Edits produces the text edits and a human-readable description for the fix. The returned bool is false
     // when the fix targets a content-mapped file and any edit could not be placed within a single verbatim
     // span, meaning it cannot be safely applied to the original text and the caller should discard it.
@@ -88,6 +88,7 @@ impl Fix {
         format_options: &lsutil::FormatCodeSettings,
         converters: &Rc<lsconv::Converters>,
         preferences: &lsutil::UserPreferences,
+        include_symbol_name_in_description: bool,
     ) -> (Vec<lsproto::TextEdit>, String, bool) {
         let f = self;
         let locale = locale::from_context(ctx);
@@ -120,6 +121,17 @@ impl Fix {
                     preferences,
                 );
                 let (edits, safe) = file_edits(&mut tracker, file);
+                if include_symbol_name_in_description {
+                    return (
+                        edits,
+                        crate::diagnostics_loc::message_localize(
+                            diag::Import_0_from_1,
+                            &locale,
+                            &args![f.name, f.module_specifier],
+                        ),
+                        safe,
+                    );
+                }
                 (
                     edits,
                     crate::diagnostics_loc::message_localize(
@@ -210,6 +222,17 @@ impl Fix {
                     add_namespace_qualifier(f, &mut tracker, file, &locale);
                 }
                 let (edits, safe) = file_edits(&mut tracker, file);
+                if include_symbol_name_in_description {
+                    return (
+                        edits,
+                        crate::diagnostics_loc::message_localize(
+                            diag::Import_0_from_1,
+                            &locale,
+                            &args![f.name, f.module_specifier],
+                        ),
+                        safe,
+                    );
+                }
                 (
                     edits,
                     crate::diagnostics_loc::message_localize(
@@ -264,7 +287,7 @@ impl Fix {
     }
 }
 
-// Go: ls/autoimport/fix.go:133 fileEdits
+// Go: ls/autoimport/fix.go:141 fileEdits
 // fileEdits returns the edits recorded for file, along with whether they are safe to apply. GetChanges
 // drops the edits of any content-mapped file that cannot be faithfully mapped back to the original text,
 // so an empty result with safe == false means the fix could not be represented and must be discarded.
@@ -278,7 +301,7 @@ fn file_edits(tracker: &mut change::Tracker, file: Node) -> (Vec<lsproto::TextEd
     (edits, unmappable.is_empty())
 }
 
-// Go: ls/autoimport/fix.go:138 addImportType
+// Go: ls/autoimport/fix.go:146 addImportType
 pub fn add_import_type(
     f: &Fix,
     file: Node,
@@ -290,13 +313,16 @@ pub fn add_import_type(
         crate::core::go_panic("UsagePosition must be set for JSDoc type import fix".to_string());
     };
     let quote_preference = lsutil::get_quote_preference(file, preferences);
-    let mut quote_char = "\"";
+    let mut quote_char = QuoteChar::DOUBLE_QUOTE;
     if quote_preference == lsutil::QuotePreference::SINGLE {
-        quote_char = "'";
+        quote_char = QuoteChar::SINGLE_QUOTE;
     }
+    // Go `fmt.Sprintf("import(%c%s%c).", ...)`: `%c` prints the quote rune.
     let import_type_prefix = format!(
         "import({}{}{}).",
-        quote_char, f.module_specifier, quote_char
+        quote_char.0,
+        escape_string(&f.module_specifier, quote_char),
+        quote_char.0
     );
     tracker.insert_text(file, usage_position, &import_type_prefix);
     crate::diagnostics_loc::message_localize(
@@ -306,7 +332,7 @@ pub fn add_import_type(
     )
 }
 
-// Go: ls/autoimport/fix.go:152 addNamespaceQualifier
+// Go: ls/autoimport/fix.go:160 addNamespaceQualifier
 pub fn add_namespace_qualifier(
     f: &Fix,
     tracker: &mut change::Tracker,
@@ -322,7 +348,7 @@ pub fn add_namespace_qualifier(
     crate::diagnostics_loc::message_localize(diag::Change_0_to_1, locale, &args![f.name, qualified])
 }
 
-// Go: ls/autoimport/fix.go:161 getAddToExistingImportFix
+// Go: ls/autoimport/fix.go:169 getAddToExistingImportFix
 pub fn get_add_to_existing_import_fix(file: Node, fix: &Fix) -> AddToExistingImportFix {
     if fix.kind != lsproto::AutoImportFixKind::ADD_TO_EXISTING {
         crate::core::go_panic("expected add to existing import fix".to_string());
@@ -387,7 +413,7 @@ pub fn get_add_to_existing_import_fix(file: Node, fix: &Fix) -> AddToExistingImp
     }
 }
 
-// Go: ls/autoimport/fix.go:198 addToExistingImport
+// Go: ls/autoimport/fix.go:206 addToExistingImport
 pub fn add_to_existing_import(
     ct: &mut change::Tracker,
     file: Node,
@@ -570,7 +596,7 @@ pub fn add_to_existing_import(
     }
 }
 
-// Go: ls/autoimport/fix.go:321 getTypeKeywordOfTypeOnlyImport
+// Go: ls/autoimport/fix.go:329 getTypeKeywordOfTypeOnlyImport
 fn get_type_keyword_of_type_only_import(import_clause: Node, source_file: Node) -> Node {
     debug_assert!(
         import_clause.is_type_only(),
@@ -588,7 +614,7 @@ fn get_type_keyword_of_type_only_import(import_clause: Node, source_file: Node) 
     type_keyword
 }
 
-// Go: ls/autoimport/fix.go:331 addElementToBindingPattern
+// Go: ls/autoimport/fix.go:339 addElementToBindingPattern
 // PORT: Go `core.IfElse` evaluates both arguments, so the property name
 // identifier is made even when `propertyName` is empty (and then unused).
 // Go passes that identifier as the binding element's initializer.
@@ -624,7 +650,7 @@ fn add_element_to_binding_pattern(
     }
 }
 
-// Go: ls/autoimport/fix.go:346 getNewImports
+// Go: ls/autoimport/fix.go:354 getNewImports
 pub fn get_new_imports(
     ct: &mut change::Tracker,
     module_specifier: &str,
@@ -743,7 +769,7 @@ pub fn get_new_imports(
     statements
 }
 
-// Go: ls/autoimport/fix.go:415 getNewRequires
+// Go: ls/autoimport/fix.go:423 getNewRequires
 // PORT: Go does not read `compilerOptions`.
 pub fn get_new_requires(
     change_tracker: &mut change::Tracker,
@@ -825,7 +851,7 @@ pub fn get_new_requires(
     statements
 }
 
-// Go: ls/autoimport/fix.go:480 createConstEqualsRequireDeclaration
+// Go: ls/autoimport/fix.go:488 createConstEqualsRequireDeclaration
 fn create_const_equals_require_declaration(
     change_tracker: &mut change::Tracker,
     name: Node,
@@ -852,7 +878,7 @@ fn create_const_equals_require_declaration(
     factory.new_variable_statement(/*modifiers*/ ModifierList::NIL, declaration_list)
 }
 
-// Go: ls/autoimport/fix.go:503 insertImports
+// Go: ls/autoimport/fix.go:511 insertImports
 // PORT: Go `comparer` is a func value that is never nil here
 // (`detectCaseSensitivityBySort` falls back to the first comparer); a nil
 // value panics when called, as in Go.
@@ -928,7 +954,7 @@ pub fn insert_imports(
     }
 }
 
-// Go: ls/autoimport/fix.go:542 makeImport
+// Go: ls/autoimport/fix.go:550 makeImport
 fn make_import(
     ct: &mut change::Tracker,
     default_import: Node,
@@ -988,7 +1014,7 @@ fn unicode_to_upper(c: char) -> char {
 }
 
 impl View {
-    // Go: ls/autoimport/fix.go:554 GetFixes
+    // Go: ls/autoimport/fix.go:562 GetFixes
     // PORT: `ch` is the request checker (see the file header). Go
     // `usagePosition *lsproto.Position` is `Option<lsproto::Position>`.
     // Effect-TS/tsgo patch 018 runs the style transformer at each return
@@ -1119,7 +1145,7 @@ impl View {
     }
 }
 
-// Go: ls/autoimport/fix.go:623 getAddAsTypeOnly
+// Go: ls/autoimport/fix.go:631 getAddAsTypeOnly
 // getAddAsTypeOnly determines if an import should be type-only based on usage context
 fn get_add_as_type_only(
     is_valid_type_only_use_site: bool,
@@ -1141,7 +1167,7 @@ fn get_add_as_type_only(
 }
 
 impl View {
-    // Go: ls/autoimport/fix.go:636 tryUseExistingNamespaceImport
+    // Go: ls/autoimport/fix.go:644 tryUseExistingNamespaceImport
     pub fn try_use_existing_namespace_import(
         &self,
         ch: &mut Checker,
@@ -1192,7 +1218,7 @@ impl View {
     }
 }
 
-// Go: ls/autoimport/fix.go:669 getNamespaceLikeImportText
+// Go: ls/autoimport/fix.go:677 getNamespaceLikeImportText
 fn get_namespace_like_import_text(declaration: Node) -> String {
     match declaration.kind() {
         SyntaxKind::VariableDeclaration => {
@@ -1218,7 +1244,7 @@ fn get_namespace_like_import_text(declaration: Node) -> String {
 }
 
 impl View {
-    // Go: ls/autoimport/fix.go:690 tryAddToExistingImport
+    // Go: ls/autoimport/fix.go:698 tryAddToExistingImport
     // Effect-TS/tsgo patch 018 adds `usagePosition` and sets it on both
     // AddToExisting fixes (the port only with the Effect plugin on).
     pub fn try_add_to_existing_import(
@@ -1307,7 +1333,7 @@ impl View {
                 continue;
             }
             let import_clause = import_clause_node;
-            // ts#63915: no auto-import into a source phase import (fix.go:751).
+            // ts#63915: no auto-import into a source phase import (fix.go:759).
             if import_clause.phase_modifier() == SyntaxKind::SourceKeyword {
                 continue;
             }
@@ -1815,7 +1841,7 @@ impl View {
     }
 }
 
-// Go: ls/autoimport/fix.go:1097 isFixPossiblyReExportingImportingFile
+// Go: ls/autoimport/fix.go:1105 isFixPossiblyReExportingImportingFile
 // This is a simple heuristic to try to avoid creating an import cycle with a barrel re-export.
 // E.g., do not `import { Foo } from ".."` when you could `import { Foo } from "../Foo"`.
 // This can produce false positives or negatives if re-exports cross into sibling directories
@@ -1840,7 +1866,7 @@ fn is_fix_possibly_re_exporting_importing_file(
     false
 }
 
-// Go: ls/autoimport/fix.go:1104 isIndexFileName
+// Go: ls/autoimport/fix.go:1112 isIndexFileName
 // PORT: Go N' reads `fileName.BaseName()` (ts#64159); a rooted name always
 // has a separator, so the text after the last one is the same.
 fn is_index_file_name(file_name: &str) -> bool {

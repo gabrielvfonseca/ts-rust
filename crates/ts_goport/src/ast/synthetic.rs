@@ -2634,7 +2634,7 @@ fn new_ts_node(kind: SyntaxKind, data: BoxedData) -> crate::astdata::Node {
 }
 
 /// Go `node.AsMutable().SetModifiers(modifiers)`.
-// Go: ast/ast.go:227 (n *MutableNode) SetModifiers
+// Go: ast/ast_generated.go:11904 (n *MutableNode) SetModifiers
 // PORT: Go dispatches to `setModifiers` on the data. The kinds with a
 // `modifiers` field set it (ModifiersBase, NamedMemberBase,
 // BinaryExpression); other kinds do nothing, like Go `NodeDefault`.
@@ -2839,7 +2839,7 @@ pub fn source_file_parser_fields(file: Node) -> SyntheticSourceFileData {
     }
 }
 
-// Go: ast/ast.go:2805 (node *SourceFile) copyFrom
+// Go: ast/ast.go:2719 (node *SourceFile) copyFrom
 /// Copies the parser fields of `other` (parsed or factory-made) to the
 /// factory SourceFile `node`.
 pub fn source_file_copy_from(node: Node, other: Node) {

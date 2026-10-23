@@ -8,7 +8,7 @@ use std::os::unix::net::UnixStream as ApiStream;
 // The API pipe is a named pipe on Windows; a client opens it as a file.
 #[cfg(windows)]
 use std::fs::File as ApiStream;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::TryRecvError;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -95,24 +95,46 @@ fn hover(client: &LspClient) {
     assert!(hover.is_some_and(|hover| hover.hover.is_some()), "no hover");
 }
 
-/// Sends `custom/initializeAPISession` with a pipe in the temp dir (a socket
-/// file on Unix, a name under `\\.\pipe\` on Windows, which has no files
-/// for pipes).
+/// Sends `custom/initializeAPISession` with a pipe in the temp dir and
+/// returns the pipe that the server answers. On Unix the path must not
+/// exist: the server makes it a private directory and listens on
+/// `<path>/socket`, which it answers (ts#64818, Go server.go:2347 and
+/// :2405). On Windows it is a name under `\\.\pipe\` (no files), which the
+/// server answers as it is.
 fn init_api_session(client: &LspClient) -> PathBuf {
     #[cfg(unix)]
-    let pipe = std::env::temp_dir().join(format!("goport-apisess-{}.sock", std::process::id()));
+    let pipe = std::env::temp_dir().join(format!("goport-apisess-{}", std::process::id()));
     #[cfg(windows)]
     let pipe = PathBuf::from(format!(r"\\.\pipe\goport-apisess-{}", std::process::id()));
-    let _ = std::fs::remove_file(&pipe);
+    remove_api_pipe(&pipe.join("socket"));
+    request_api_session(client, &pipe)
+        .unwrap_or_else(|err| panic!("initializeAPISession failed: {err}"))
+}
+
+/// Sends `custom/initializeAPISession` with `pipe` and returns the pipe that
+/// the server answers, or the message of its error.
+fn request_api_session(client: &LspClient, pipe: &Path) -> Result<PathBuf, String> {
     let (session_msg, session) = client.send_request(
         &lsproto::CUSTOM_INITIALIZE_API_SESSION_INFO,
         lsproto::InitializeAPISessionParams {
             pipe: Some(pipe.to_string_lossy().into_owned()),
         },
     );
-    assert!(session_msg.error.is_none(), "initializeAPISession failed");
-    assert!(session.is_some_and(|session| session.is_some()));
-    pipe
+    if let Some(err) = session_msg.error {
+        return Err(err.message);
+    }
+    let session = session.flatten().expect("an API session");
+    Ok(PathBuf::from(session.pipe))
+}
+
+/// Removes what a session left of the API pipe `pipe`: the socket and its
+/// private directory on Unix (Go removes both when the transport closes).
+fn remove_api_pipe(pipe: &Path) {
+    let _ = std::fs::remove_file(pipe);
+    #[cfg(unix)]
+    if let Some(dir) = pipe.parent() {
+        let _ = std::fs::remove_dir(dir);
+    }
 }
 
 /// How long a read of the API pipe waits for the server.
@@ -219,6 +241,12 @@ impl ApiClient {
 /// Sends `shutdown`, which must be answered, and `exit`, which must end
 /// the server. Both have no params (`NoParams` would write `{}`).
 fn shutdown_and_exit(client: &LspClient) {
+    shutdown(client);
+    exit(client);
+}
+
+/// Sends `shutdown`, which must be answered.
+fn shutdown(client: &LspClient) {
     let id = jsonrpc::new_id_int(client.next_id());
     let shutdown = lsproto::RequestMessage {
         id: Some(id.clone()),
@@ -233,6 +261,10 @@ fn shutdown_and_exit(client: &LspClient) {
         "shutdown failed: {:?}",
         shutdown_msg.error.map(|err| err.message)
     );
+}
+
+/// Sends `exit`, which must end the server.
+fn exit(client: &LspClient) {
     client.write_msg(
         lsproto::RequestMessage {
             method: lsproto::Method::EXIT,
@@ -268,7 +300,7 @@ child_test! {
 
         shutdown_and_exit(&client);
         drop(api);
-        let _ = std::fs::remove_file(&pipe);
+        remove_api_pipe(&pipe);
     }
 }
 
@@ -358,6 +390,66 @@ child_test! {
             "the hover was answered"
         );
         drop(api);
-        let _ = std::fs::remove_file(&pipe);
+        remove_api_pipe(&pipe);
+    }
+}
+
+child_test! {
+    // Bump E L5 round 2 (B2, ts#64818): Go's apiSessionState.stop
+    // (server.go:278) closes the transport. That wakes the waiting Accept
+    // and removes the socket and its private directory, and stop waits for
+    // the goroutine, which logs the accept error. So after shutdown the
+    // pipe path is free, and a second session at it starts (Go N' probe:
+    // w2/l5-skeptic/probe/lsp_reuse_probe.py). Before, the directory
+    // stayed, and the second session failed with "mkdir P: file exists".
+    // On Windows the pipe is a name with no files.
+    #[cfg(unix)]
+    fn api_session_without_client_frees_its_pipe_on_shutdown() {
+        let accept_errors = Arc::new(Mutex::new(Vec::<String>::new()));
+        let log = Arc::clone(&accept_errors);
+        let client = start_server(Some(Arc::new(move |msg| {
+            if msg.method != lsproto::Method::WINDOW_LOG_MESSAGE {
+                return;
+            }
+            if let Ok(params) = lsproto::unmarshal_params::<lsproto::LogMessageParams>(msg)
+                && params.message.contains("failed to accept connection")
+            {
+                log.lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .push(params.message);
+            }
+        })));
+        let socket = init_api_session(&client);
+        let dir = socket.parent().expect("a private directory").to_path_buf();
+        assert!(dir.is_dir(), "{} is not a directory", dir.display());
+
+        shutdown(&client);
+        assert!(
+            !socket.exists() && !dir.exists(),
+            "{} stays after shutdown",
+            dir.display()
+        );
+        // The client reads messages in order, so the log came before the
+        // shutdown answer.
+        let accept_errors = accept_errors
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
+        let want = format!(
+            ": failed to accept connection: accept unix {}: use of closed network connection",
+            socket.to_string_lossy()
+        );
+        assert!(
+            accept_errors.len() == 1 && accept_errors[0].ends_with(&want),
+            "{accept_errors:?}"
+        );
+        exit(&client);
+
+        let client = start_server(None);
+        let second = request_api_session(&client, &dir)
+            .unwrap_or_else(|err| panic!("a second session at {}: {err}", dir.display()));
+        assert_eq!(second, socket);
+        shutdown_and_exit(&client);
+        assert!(!dir.exists(), "{} stays after shutdown", dir.display());
     }
 }

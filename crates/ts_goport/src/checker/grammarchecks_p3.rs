@@ -516,7 +516,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/grammarchecks.go:2136 checkGrammarTypeOnlyNamedImportsOrExports
+    // Go: checker/grammarchecks.go:2155 checkGrammarTypeOnlyNamedImportsOrExports
     pub fn check_grammar_type_only_named_imports_or_exports(
         &mut self,
         named_bindings: Node,
@@ -541,7 +541,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/grammarchecks.go:2157 checkGrammarImportCallExpression
+    // Go: checker/grammarchecks.go:2176 checkGrammarImportCallExpression
     pub fn check_grammar_import_call_expression(&mut self, node: Node) -> bool {
         if self.compiler_options.verbatim_module_syntax == Tristate::True
             && self.module_kind == ModuleKind::COMMON_JS

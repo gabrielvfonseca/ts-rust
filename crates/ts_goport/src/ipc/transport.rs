@@ -13,7 +13,7 @@ use crate::ipc::prelude::*;
 use crate::gostd::{GoError, errors};
 use std::io::{Read, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard, TryLockError};
+use std::sync::{Arc, LazyLock, Mutex, MutexGuard, TryLockError};
 
 /// Go `io.ReadWriteCloser` for an API connection.
 pub trait ReadWriteCloser: Send + Sync {
@@ -47,6 +47,28 @@ impl Write for ConnWriter {
     }
 }
 
+/// Go `net.ErrClosed` (`internal/poll.ErrNetClosing`): what an `Accept` or
+/// `Close` of a closed listener wraps.
+pub static ERR_NET_CLOSED: LazyLock<GoError> =
+    LazyLock::new(|| errors::new("use of closed network connection"));
+
+/// PORT: no Go counterpart. Tests in this binary that spawn a process hold
+/// this lock until the child exits, and a test that needs the last copy of a
+/// pipe end to close holds it for its whole body. A spawned child has a copy
+/// of every descriptor of this process until its exec closes the
+/// close-on-exec ones, and the spawn can return before that (Linux wakes the
+/// parent of a vfork-style spawn before the exec closes them), so a pipe
+/// would still have a reader.
+#[cfg(test)]
+pub(crate) static SPAWN_LOCK: Mutex<()> = Mutex::new(());
+
+/// Go `func() error`, the `cleanup` of a `PipeTransport` (ts#64818).
+pub type PipeCleanup = Box<dyn Fn() -> Result<(), GoError> + Send + Sync>;
+
+/// Go `(net.Listener, func() error)`, what `newPipeListener` and
+/// `newPrivatePipeListener` return with a nil error (ts#64818).
+pub type PipeListener = (Box<dyn NetListener>, Option<PipeCleanup>);
+
 /// Go `net.Listener`, the part `PipeTransport` uses.
 pub trait NetListener: Send + Sync {
     fn accept(&self) -> Result<Arc<dyn ReadWriteCloser>, GoError>;
@@ -55,7 +77,7 @@ pub trait NetListener: Send + Sync {
     fn addr(&self) -> String;
 }
 
-// Go: ipc/transport.go:9 Transport
+// Go: ipc/transport.go:10 Transport
 // Transport is an interface for accepting connections from API clients.
 pub trait Transport {
     // Accept waits for and returns the next connection.
@@ -64,36 +86,57 @@ pub trait Transport {
     fn close(&mut self) -> Result<(), GoError>;
 }
 
-// Go: ipc/transport.go:17 PipeTransport
+// Go: ipc/transport.go:18 PipeTransport
 // PipeTransport accepts connections on a Unix domain socket or Windows named pipe.
 pub struct PipeTransport {
     listener: Box<dyn NetListener>,
+    // ts#64818
+    cleanup: Option<PipeCleanup>,
 }
 
-// Go: ipc/transport.go:23 NewPipeTransport
-// NewPipeTransport creates a new transport listening on the given path.
-// On Unix, this creates a Unix domain socket. On Windows, this creates a named pipe.
+// Go: ipc/transport.go:26 NewPipeTransport (ts#64818)
+// NewPipeTransport creates a new pipe transport.
+// On Unix, path must not exist and is created as a private directory containing "socket".
+// On Windows, path is the named pipe path.
 pub fn new_pipe_transport(path: &str) -> Result<PipeTransport, GoError> {
-    let listener = new_pipe_listener(path)?;
-    Ok(PipeTransport { listener })
+    let (listener, cleanup) = new_pipe_listener(path)?;
+    Ok(PipeTransport { listener, cleanup })
+}
+
+// Go: ipc/transport.go:38 NewPrivatePipeTransport (ts#64818)
+// NewPrivatePipeTransport creates a transport at a private, generated path.
+pub fn new_private_pipe_transport(name: &str) -> Result<PipeTransport, GoError> {
+    let (listener, cleanup) = new_private_pipe_listener(name)?;
+    Ok(PipeTransport { listener, cleanup })
 }
 
 // PORT: the Go methods are also inherent methods, so callers need not
 // import `Transport`.
 impl PipeTransport {
-    // Go: ipc/transport.go:32 Accept
+    // Go: ipc/transport.go:50 Accept
     // Accept implements Transport.
     pub fn accept(&self) -> Result<Arc<dyn ReadWriteCloser>, GoError> {
         self.listener.accept()
     }
 
-    // Go: ipc/transport.go:37 Close
+    // Go: ipc/transport.go:55 Close (ts#64818)
     // Close implements Transport.
+    // The cleanup runs only on the first close: a later close fails with
+    // `net.ErrClosed` and leaves what another transport made at the path.
     pub fn close(&self) -> Result<(), GoError> {
-        self.listener.close()
+        let close_err = self.listener.close().err();
+        let Some(cleanup) = &self.cleanup else {
+            return close_err.map_or(Ok(()), Err);
+        };
+        if let Some(close_err) = close_err.as_ref()
+            && errors::is(close_err, &ERR_NET_CLOSED)
+        {
+            return Err(close_err.clone());
+        }
+        errors::join([close_err, cleanup().err()]).map_or(Ok(()), Err)
     }
 
-    // Go: ipc/transport.go:42 Path
+    // Go: ipc/transport.go:64 Path
     // Path returns the path of the pipe/socket.
     pub fn path(&self) -> String {
         self.listener.addr()
@@ -110,7 +153,7 @@ impl Transport for PipeTransport {
     }
 }
 
-// Go: ipc/transport.go:48 StdioTransport
+// Go: ipc/transport.go:70 StdioTransport
 // StdioTransport wraps stdin/stdout as a single connection transport.
 // It only accepts one connection.
 // PORT: Go `io.ReadCloser` / `io.WriteCloser` are boxed `Read` / `Write`
@@ -122,7 +165,7 @@ pub struct StdioTransport {
     used: bool,
 }
 
-// Go: ipc/transport.go:55 NewStdioTransport
+// Go: ipc/transport.go:77 NewStdioTransport
 // NewStdioTransport creates a transport using the given stdin/stdout.
 pub fn new_stdio_transport(
     stdin: Option<Box<dyn Read + Send>>,
@@ -136,7 +179,7 @@ pub fn new_stdio_transport(
 }
 
 impl StdioTransport {
-    // Go: ipc/transport.go:63 Accept
+    // Go: ipc/transport.go:85 Accept
     // Accept implements Transport.
     pub fn accept(&mut self) -> Result<Arc<dyn ReadWriteCloser>, GoError> {
         if self.used {
@@ -149,7 +192,7 @@ impl StdioTransport {
         }))
     }
 
-    // Go: ipc/transport.go:77 Close
+    // Go: ipc/transport.go:99 Close
     // Close implements Transport.
     pub fn close(&mut self) -> Result<(), GoError> {
         Ok(())
@@ -166,7 +209,7 @@ impl Transport for StdioTransport {
     }
 }
 
-// Go: ipc/transport.go:81 stdioConn
+// Go: ipc/transport.go:103 stdioConn
 // PORT: Go embeds the reader and writer; here each sits behind a mutex so
 // the connection can be shared (`ReadWriteCloser` takes `&self`).
 struct StdioConn {
@@ -270,7 +313,7 @@ impl<T> StdioFile<T> {
     fn close(&mut self, name: &str) -> Result<(), GoError> {
         match self {
             // Go N' loads `Close` from the method table of the nil `io.ReadCloser` or
-            // `io.WriteCloser`: addr=0x18 (transport.go:89, :90).
+            // `io.WriteCloser`: addr=0x18 (transport.go:111, :112 at 3e9236361fa9).
             StdioFile::Nil => crate::core::go_nil_dereference_at(0x18),
             StdioFile::Open(_) => {
                 *self = StdioFile::Closed;
@@ -312,7 +355,7 @@ impl ReadWriteCloser for StdioConn {
         }
     }
 
-    // Go: ipc/transport.go:88 Close
+    // Go: ipc/transport.go:110 Close
     fn close(&self) -> Result<(), GoError> {
         let err1 = self.stdin.close();
         let err2 = lock(&self.stdout).close(STDOUT_NAME);
@@ -322,15 +365,21 @@ impl ReadWriteCloser for StdioConn {
 }
 
 #[cfg(unix)]
-use crate::ipc::transport_unix::new_pipe_listener;
+use crate::ipc::transport_unix::{new_pipe_listener, new_private_pipe_listener};
 
 // PORT: not in Go. wasm has no sockets or named pipes, so `--pipe` fails
 // with this error (see crates/ts_wasm).
 #[cfg(target_family = "wasm")]
-pub fn new_pipe_listener(path: &str) -> Result<Box<dyn NetListener>, GoError> {
+pub fn new_pipe_listener(path: &str) -> Result<PipeListener, GoError> {
     Err(errors::new(format!(
         "listen {path}: pipes are not supported on wasm"
     )))
+}
+
+// PORT: not in Go (ts#64818). As `new_pipe_listener` on wasm.
+#[cfg(target_family = "wasm")]
+pub fn new_private_pipe_listener(name: &str) -> Result<PipeListener, GoError> {
+    new_pipe_listener(&generate_pipe_path(name))
 }
 
 // PORT: not in Go. A wasm build has no pipe paths; the listener above
@@ -344,9 +393,15 @@ pub fn generate_pipe_path(name: &str) -> String {
 // transport_windows.go (//go:build windows)
 // ---------------------------------------------------------------------------
 
-// Go: ipc/transport_windows.go:12 newPipeListener
+// Go: ipc/transport_windows.go:14 newPipeListener (ts#64818)
 // newPipeListener creates a Windows named pipe listener.
-// PORT: Go `winio.ListenPipe(path, nil)` makes a first pipe handle that
+// PORT divergence (ts#64818): Go gives the pipe the security descriptor
+// `D:P(A;;GA;;;<SID of the process user>)` (only that user has access) and
+// fails with "get pipe owner SID: ..." when it cannot read the user. miow's
+// builder has no security attributes, and the Win32 calls need `unsafe`
+// (D-W1), so the pipe keeps the default descriptor. The cleanup is nil, as
+// in Go.
+// PORT: Go `winio.ListenPipe` makes a first pipe handle that
 // reserves the name and a new pipe instance for each `Accept`. The port uses
 // miow's safe `NamedPipe` (no `unsafe`, D-W1): the listener keeps the pipe
 // instance that the next `Accept` connects, and makes the next one after a
@@ -359,20 +414,28 @@ pub fn generate_pipe_path(name: &str) -> String {
 // (`lsp/server.rs` `start_api_reader`). miow opens the pipe with
 // `FILE_FLAG_OVERLAPPED` and each read and write waits on its own thread's
 // event, so a read that waits does not hold a write on another thread.
-// `Close` does not end an `Accept` that waits on another thread. The LSP
-// server's `api-accept` thread closes the transport after its `Accept`; if
-// the server ends first, the process exit ends the wait, as in Go.
+// PORT divergence: `Close` does not end an `Accept` that waits on another
+// thread (winio's does). The LSP server's `stop` closes the transport and
+// does not wait for its `api-accept` thread: a client that connects later
+// is closed, and without one the process exit ends the wait.
 #[cfg(windows)]
-pub fn new_pipe_listener(path: &str) -> Result<Box<dyn NetListener>, GoError> {
+pub fn new_pipe_listener(path: &str) -> Result<PipeListener, GoError> {
     let first = new_pipe_instance(path, true)
         .map_err(|err| errors::new(format!("open {path}: {}", windows_error_text(&err))))?;
-    Ok(Box::new(WindowsPipeListener {
+    let listener: Box<dyn NetListener> = Box::new(WindowsPipeListener {
         state: Mutex::new(WindowsPipeListenerState {
             closed: false,
             waiting: Some(first),
         }),
         path: path.to_string(),
-    }))
+    });
+    Ok((listener, None))
+}
+
+// Go: ipc/transport_windows.go:25 newPrivatePipeListener (ts#64818)
+#[cfg(windows)]
+pub fn new_private_pipe_listener(name: &str) -> Result<PipeListener, GoError> {
+    new_pipe_listener(&generate_pipe_path(name))
 }
 
 /// One server instance of the named pipe `path`: duplex, byte mode, local
@@ -402,10 +465,6 @@ fn windows_error_text(err: &std::io::Error) -> String {
     }
 }
 
-/// Go winio `ErrPipeListenerClosed` (`net.ErrClosed`).
-#[cfg(windows)]
-const ERR_PIPE_LISTENER_CLOSED: &str = "use of closed network connection";
-
 /// Go winio `*win32PipeListener`.
 #[cfg(windows)]
 struct WindowsPipeListener {
@@ -432,7 +491,8 @@ impl NetListener for WindowsPipeListener {
         let pipe = {
             let mut state = lock(&self.state);
             if state.closed {
-                return Err(errors::new(ERR_PIPE_LISTENER_CLOSED));
+                // Go winio `ErrPipeListenerClosed` is `net.ErrClosed`.
+                return Err(ERR_NET_CLOSED.clone());
             }
             match state.waiting.take() {
                 Some(pipe) => pipe,
@@ -514,7 +574,7 @@ impl ReadWriteCloser for WindowsPipeConn {
     }
 }
 
-// Go: ipc/transport_windows.go:17 GeneratePipePath
+// Go: ipc/transport_windows.go:30 GeneratePipePath
 // GeneratePipePath returns a platform-appropriate pipe path for the given name.
 #[cfg(windows)]
 pub fn generate_pipe_path(name: &str) -> String {
@@ -568,6 +628,11 @@ mod tests {
     fn stdio_close_does_not_wait_for_a_read() {
         use std::sync::mpsc;
         use std::time::Duration;
+
+        // A child that another test spawns would keep the read end open.
+        let _spawn = SPAWN_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
 
         // Tells the test when the read of the pipe starts.
         struct Entered(std::io::PipeReader, mpsc::Sender<()>);

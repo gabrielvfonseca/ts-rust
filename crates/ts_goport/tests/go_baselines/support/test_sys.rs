@@ -817,7 +817,7 @@ impl TestSys {
         *lock(&self.current_write.0) = bytes;
     }
 
-    // Go: sys.go:556 getOutput
+    // Go: sys.go:566 getOutput
     pub fn get_output(&self, for_comparing: bool) -> String {
         let text = self.output_text();
         let lines: Vec<&str> = text.split('\n').collect();
@@ -830,13 +830,13 @@ impl TestSys {
         transformer.transform_lines()
     }
 
-    // Go: sys.go:566 clearOutput
+    // Go: sys.go:576 clearOutput
     pub fn clear_output(&self) {
         lock(&self.current_write.0).clear();
         self.tracer.borrow_mut().reset();
     }
 
-    // Go: sys.go:571 baselineFSwithDiff
+    // Go: sys.go:581 baselineFSwithDiff
     pub fn baseline_fs_with_diff(&self, baseline: &mut String) {
         self.fs_differ.borrow_mut().baseline_fs_with_diff(baseline);
     }
@@ -885,9 +885,9 @@ impl TestSys {
         *lock(&self.child_serialized_mtimes) = Some(mtimes);
     }
 
-    // Go: sys.go:575 writeFileNoError
-    // ts#64159: the path is rooted against the current directory (sys.go:576,
-    // :582, :588).
+    // Go: sys.go:585 writeFileNoError
+    // ts#64159: the path is rooted against the current directory (sys.go:586,
+    // :592, :598).
     pub fn write_file_no_error(&self, path: &str, content: &str) {
         let path = to_rooted_path(path, &self.get_current_directory());
         if let Err(err) = self.fs_from_file_map().write_file(&path, content) {
@@ -895,7 +895,7 @@ impl TestSys {
         }
     }
 
-    // Go: sys.go:581 removeNoError
+    // Go: sys.go:591 removeNoError
     pub fn remove_no_error(&self, path: &str) {
         let path = to_rooted_path(path, &self.get_current_directory());
         if let Err(err) = self.fs_from_file_map().remove(&path) {
@@ -903,7 +903,7 @@ impl TestSys {
         }
     }
 
-    // Go: sys.go:587 readFileNoError
+    // Go: sys.go:597 readFileNoError
     pub fn read_file_no_error(&self, path: &str) -> String {
         let (content, ok) = self
             .fs_from_file_map()
@@ -912,33 +912,33 @@ impl TestSys {
         content
     }
 
-    // Go: sys.go:595 renameFileNoError
+    // Go: sys.go:605 renameFileNoError
     pub fn rename_file_no_error(&self, old_path: &str, new_path: &str) {
         self.write_file_no_error(new_path, &self.read_file_no_error(old_path));
         self.remove_no_error(old_path);
     }
 
-    // Go: sys.go:600 replaceFileText
+    // Go: sys.go:610 replaceFileText
     pub fn replace_file_text(&self, path: &str, old_text: &str, new_text: &str) {
         let content = self.read_file_no_error(path);
         let content = content.replacen(old_text, new_text, 1);
         self.write_file_no_error(path, &content);
     }
 
-    // Go: sys.go:606 replaceFileTextAll
+    // Go: sys.go:616 replaceFileTextAll
     pub fn replace_file_text_all(&self, path: &str, old_text: &str, new_text: &str) {
         let content = self.read_file_no_error(path);
         let content = content.replace(old_text, new_text);
         self.write_file_no_error(path, &content);
     }
 
-    // Go: sys.go:612 appendFile
+    // Go: sys.go:622 appendFile
     pub fn append_file(&self, path: &str, text: &str) {
         let content = self.read_file_no_error(path);
         self.write_file_no_error(path, &format!("{content}{text}"));
     }
 
-    // Go: sys.go:617 prependFile
+    // Go: sys.go:627 prependFile
     pub fn prepend_file(&self, path: &str, text: &str) {
         let content = self.read_file_no_error(path);
         self.write_file_no_error(path, &format!("{text}{content}"));
@@ -1167,18 +1167,37 @@ static VERSION_STRINGS: LazyLock<VersionStrings> = LazyLock::new(|| {
     }
 });
 
+// Go: sys.go:494 sanitizeVersion
+fn sanitize_version(s: &str, version: &str, replacement: &str) -> String {
+    if let Some((before, after)) = s.split_once(version)
+        && after.starts_with("  ")
+    {
+        // Preserve the padded field width when replacing the version in the help header.
+        // PORT: as in Go, the width counts bytes and the padding counts chars (Go fmt
+        // counts runes).
+        let suffix = after.trim_start_matches(' ');
+        let width = version.len() + after.len() - suffix.len();
+        return format!("{before}{replacement:<width$}{suffix}").replace(version, replacement);
+    }
+    s.replace(version, replacement)
+}
+
 impl OutputSanitizer<'_> {
     // Go: sys.go:486 addOutputLine
     fn add_output_line(&mut self, s: &str) {
         let versions = &*VERSION_STRINGS;
         let s = s.replace(&format!("'{}'", version()), &format!("'{FAKE_TS_VERSION}'"));
-        let s = s.replace(&versions.english_version, &versions.fake_english_version);
-        let s = s.replace(&versions.czech_version, &versions.fake_czech_version);
+        let s = sanitize_version(
+            &s,
+            &versions.english_version,
+            &versions.fake_english_version,
+        );
+        let s = sanitize_version(&s, &versions.czech_version, &versions.fake_czech_version);
         let s = sanitize_internal_symbol_name(&s);
         self.output_lines.push(s);
     }
 
-    // Go: sys.go:494 sanitizeBuildStatusTimeStamp
+    // Go: sys.go:504 sanitizeBuildStatusTimeStamp
     // PORT: Go slices the bytes of the line; this slices its Go bytes.
     fn sanitize_build_status_time_stamp(&self) -> String {
         let status_line = go_string_bytes(self.lines[self.index]);
@@ -1192,7 +1211,7 @@ impl OutputSanitizer<'_> {
         go_string_from_bytes(bytes)
     }
 
-    // Go: sys.go:503 transformLines
+    // Go: sys.go:513 transformLines
     fn transform_lines(&mut self) -> String {
         while self.index < self.lines.len() {
             let line = self.lines[self.index];
@@ -1238,7 +1257,7 @@ impl OutputSanitizer<'_> {
         self.output_lines.join("\n")
     }
 
-    // Go: sys.go:529 addOrSkipLinesForComparing
+    // Go: sys.go:539 addOrSkipLinesForComparing
     // PORT: Go `sanitizeFirstLine` is always `sanitizeBuildStatusTimeStamp`
     // or nil; this is a flag.
     fn add_or_skip_lines_for_comparing(
@@ -1268,5 +1287,81 @@ impl OutputSanitizer<'_> {
             self.index += 1;
         }
         panic!("Expected lineEnd{line_end} not found after {line_start}");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Go: tsc_test.go:19 TestOutputSanitizerVersionPadding
+    // PORT: the Go subtests (language, then case) are one test; each assert
+    // names its subtest.
+    #[test]
+    fn output_sanitizer_version_padding() {
+        let (czech, _) = locale::parse("cs");
+        for (name, language) in [("en", &locale::DEFAULT), ("cs", &czech)] {
+            let localize_version =
+                |version: &str| message_localize(diag::Version_0, language, &[version.to_string()]);
+            let version = localize_version(version());
+            let fake_version = localize_version(FAKE_TS_VERSION);
+            let header = format!(
+                "{} - ",
+                message_localize(diag::X_tsc_Colon_The_TypeScript_Compiler, language, &[])
+            );
+            for (test_name, input, want) in [
+                ("version", version.clone(), fake_version.clone()),
+                (
+                    "version in prose",
+                    format!("{version} is installed"),
+                    format!("{fake_version} is installed"),
+                ),
+                (
+                    "repeated versions",
+                    format!("{version}, {version}"),
+                    format!("{fake_version}, {fake_version}"),
+                ),
+                (
+                    "header without logo",
+                    format!("{header}{version}"),
+                    format!("{header}{fake_version}"),
+                ),
+                (
+                    "header with logo",
+                    format!(
+                        "{:<115}\x1b[44m     \x1b[39;49m",
+                        format!("{header}{version}")
+                    ),
+                    format!(
+                        "{:<115}\x1b[44m     \x1b[39;49m",
+                        format!("{header}{fake_version}")
+                    ),
+                ),
+                (
+                    "narrow header with logo",
+                    format!(
+                        "{:<75}\x1b[44m     \x1b[39;49m",
+                        format!("{header}{version}")
+                    ),
+                    format!(
+                        "{:<75}\x1b[44m     \x1b[39;49m",
+                        format!("{header}{fake_version}")
+                    ),
+                ),
+            ] {
+                let mut sanitizer = OutputSanitizer {
+                    for_comparing: false,
+                    lines: Vec::new(),
+                    index: 0,
+                    output_lines: Vec::new(),
+                };
+                sanitizer.add_output_line(&input);
+                assert_eq!(
+                    sanitizer.output_lines.join("\n"),
+                    want,
+                    "{name}/{test_name}"
+                );
+            }
+        }
     }
 }

@@ -1993,7 +1993,7 @@ mod tests {
         }
     }
 
-    // Go: incremental/buildinfo_path_test.go:10 TestBuildInfoPathJSONRoundTrip (ts#64159)
+    // Go: incremental/buildinfo_path_test.go:20 TestBuildInfoPathJSONRoundTrip (ts#64159)
     // PORT: Go `BuildInfoPath` is a `String` here.
     #[test]
     fn test_build_info_path_json_round_trip() {

@@ -10,7 +10,7 @@ use crate::prelude::*;
 // symbol.go
 // ---------------------------------------------------------------------------
 
-// Go: ast/symbol.go:28 GetSourceFileOfSymbol (ts#64518)
+// Go: ast/symbol.go:128 GetSourceFileOfSymbol (ts#64518)
 // GetSourceFileOfSymbol returns the owning file of a published binder symbol, or
 // nil for a non-file-owned symbol, even if it borrows declarations from a file.
 // Ownership recovery walks only the first declaration's AST parents.
@@ -50,13 +50,13 @@ pub fn get_source_file_of_symbol(symbols: &SymbolArena, symbol: SymbolId) -> Nod
 }
 
 impl Symbol {
-    // Go: ast/symbol.go:23 IsExternalModule
+    // Go: ast/symbol.go:146 IsExternalModule
     #[must_use]
     pub fn is_external_module(&self) -> bool {
         self.flags.intersects(SymbolFlags::MODULE) && is_ambient_module_symbol_name(&self.name)
     }
 
-    // Go: ast/symbol.go:27 IsStatic
+    // Go: ast/symbol.go:150 IsStatic
     #[must_use]
     pub fn is_static(&self) -> bool {
         if self.value_declaration.is_nil() {
@@ -66,7 +66,7 @@ impl Symbol {
         modifier_flags.intersects(ModifierFlags::STATIC)
     }
 
-    // Go: ast/symbol.go:36 CombinedLocalAndExportSymbolFlags
+    // Go: ast/symbol.go:159 CombinedLocalAndExportSymbolFlags
     // See comment on `declareModuleMember` in `binder.go`.
     // PORT: Go follows `s.ExportSymbol` directly; here the arena that owns the
     // export symbol is passed in.
@@ -114,7 +114,7 @@ pub const INTERNAL_SYMBOL_NAME_DEFAULT: &str = "default"; // Default export symb
 pub const INTERNAL_SYMBOL_NAME_THIS: &str = "this";
 pub const INTERNAL_SYMBOL_NAME_MODULE_EXPORTS: &str = "module.exports";
 
-// Go: ast/symbol.go:72 SymbolName
+// Go: ast/symbol.go:195 SymbolName
 #[must_use]
 pub fn symbol_name(symbols: &SymbolArena, symbol: SymbolId) -> String {
     symbol_name_str(symbols, symbol).to_string()
@@ -135,7 +135,7 @@ pub fn symbol_name_str(symbols: &SymbolArena, symbol: SymbolId) -> &'static str 
     s.name.as_str()
 }
 
-// Go: ast/symbol.go:80 EscapeAllInternalSymbolNames
+// Go: ast/symbol.go:203 EscapeAllInternalSymbolNames
 // EscapeAllInternalSymbolNames replaces internal symbol name markers ("\xFE") with "__".
 // PORT: each byte 0xFE is the unit INTERNAL_SYMBOL_NAME_PREFIX in the port
 // form. A plain text search could also match a U+FDD0 unit (U+FDD0 twice)
@@ -159,7 +159,7 @@ pub fn escape_all_internal_symbol_names(name: &str) -> String {
     out
 }
 
-// Go: ast/symbol.go:84 EscapeInternalSymbolName
+// Go: ast/symbol.go:207 EscapeInternalSymbolName
 // PORT: Go `strings.CutPrefix(name, "\xFE")` reads the first Go byte. The
 // byte 0xFE is the unit `INTERNAL_SYMBOL_NAME_PREFIX` in the port form.
 #[must_use]
@@ -170,7 +170,7 @@ pub fn escape_internal_symbol_name(name: &str) -> String {
     name.to_string()
 }
 
-// Go: ast/symbol.go:95 EscapeSymbolName
+// Go: ast/symbol.go:218 EscapeSymbolName
 // EscapeSymbolName converts a binder symbol name into its escaped "__String"
 // form. Internal names (prefixed with the "\xFE" sentinel) become "__"-prefixed,
 // and user names that already begin with "__" gain an extra leading underscore
@@ -912,7 +912,7 @@ impl DiagnosticsCollection {
     // PORT: returns positions in `diagnostics` (Go returns the pointers).
     fn get_global_diagnostics_locked(&mut self) -> Vec<usize> {
         if !self.non_file_diagnostics_sorted {
-            // Go: ast/diagnostic.go:331 slices.SortStableFunc(c.nonFileDiagnostics, CompareDiagnostics)
+            // Go: ast/diagnostic.go:355 slices.SortStableFunc(c.nonFileDiagnostics, CompareDiagnostics)
             sort_diagnostic_ids(
                 &mut self.non_file_diagnostics,
                 &self.diagnostics,
@@ -948,7 +948,7 @@ impl DiagnosticsCollection {
     fn get_diagnostics_for_file_locked(&mut self, path: &'static str) -> Vec<usize> {
         if !self.file_diagnostics_sorted.contains(path) {
             if let Some(ids) = self.file_diagnostics.get_mut(path) {
-                // Go: ast/diagnostic.go:347 slices.SortStableFunc(c.fileDiagnostics[path], CompareDiagnostics)
+                // Go: ast/diagnostic.go:371 slices.SortStableFunc(c.fileDiagnostics[path], CompareDiagnostics)
                 sort_diagnostic_ids(ids, &self.diagnostics, &self.stored_file_names);
             }
             self.file_diagnostics_sorted.insert(path);
@@ -965,7 +965,7 @@ impl DiagnosticsCollection {
         for ids in lists {
             diagnostics.extend(ids.iter().map(|&id| self.diagnostics[id].clone()));
         }
-        // Go: ast/diagnostic.go:362 slices.SortFunc(diagnostics, CompareDiagnostics)
+        // Go: ast/diagnostic.go:386 slices.SortFunc(diagnostics, CompareDiagnostics)
         let path = |d: &Diagnostic| stored_diagnostic_path(&self.stored_file_names, d);
         crate::gostd::slices::sort_func(&mut diagnostics, |a, b| {
             compare_diagnostics_by(a, b, &path)
@@ -1623,7 +1623,7 @@ pub struct FlowSwitchClauseData {
     pub clause_end: i32,   // End index of case/default clause range
 }
 
-// Go: ast/flow.go:50 NewFlowSwitchClauseData
+// Go: ast/flow.go:59 NewFlowSwitchClauseData
 // PORT: returns the data value instead of a synthetic `*Node` (see the struct).
 #[must_use]
 pub fn new_flow_switch_clause_data(
@@ -1639,7 +1639,7 @@ pub fn new_flow_switch_clause_data(
 }
 
 impl FlowSwitchClauseData {
-    // Go: ast/flow.go:58 IsEmpty
+    // Go: ast/flow.go:67 IsEmpty
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.clause_start == self.clause_end
@@ -1656,7 +1656,7 @@ pub struct FlowReduceLabelData {
     pub antecedents: Vec<FlowNodeId>, // Temporary antecedent list
 }
 
-// Go: ast/flow.go:70 NewFlowReduceLabelData
+// Go: ast/flow.go:81 NewFlowReduceLabelData
 // PORT: returns the data value instead of a synthetic `*Node` (see the struct).
 #[must_use]
 pub fn new_flow_reduce_label_data(
@@ -1695,7 +1695,7 @@ fn child_node(file: usize, id: Option<crate::astdata::NodeId>) -> Node {
     id.map_or(Node::NIL, |id| Node::new(file, id))
 }
 
-// Go: ast.go:220 BodyData (read by ast/functionflags.go:17 GetFunctionFlags)
+// Go: ast_generated.go:11585 BodyData (read by ast/functionflags.go:13 GetFunctionFlags)
 /// Go `node.BodyData()`: the kind, `AsteriskToken` and `Body` of a node that
 /// embeds `BodyBase`, from one node data load. `None` for any other node (Go
 /// `BodyData()` is nil).
@@ -1754,7 +1754,7 @@ pub fn body_data(node: Node) -> Option<BodyData> {
     data
 }
 
-// Go: ast/ast_generated.go:9158 AsParameterDeclaration (its DotDotDotToken,
+// Go: ast/ast_generated.go:12389 AsParameterDeclaration (its DotDotDotToken,
 // QuestionToken and Initializer fields)
 /// Go `node.AsParameterDeclaration()`: its `DotDotDotToken`, `QuestionToken`
 /// and `Initializer`, from one node data load. `None` when the node data is

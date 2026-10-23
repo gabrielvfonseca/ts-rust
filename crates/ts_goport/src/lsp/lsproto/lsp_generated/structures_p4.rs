@@ -6354,7 +6354,7 @@ impl IsZero for ProfileResult {
 // Parameters for the initializeAPISession request.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct InitializeAPISessionParams {
-    // Optional path to use for the named pipe or Unix domain socket. If not provided, a unique path will be generated.
+    // Optional named pipe path on Windows. On Unix, the path must not exist and will be created as a private directory containing a socket named 'socket'. If not provided, a unique path will be generated.
     pub pipe: Option<String>,
 }
 
@@ -6621,7 +6621,7 @@ impl IsZero for ProjectInfoResult {
 }
 
 // Inline content mapper manifest supplied by a contributing extension.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ContentMapperManifest {
     // Human-readable mapper name.
     pub name: String,
@@ -6640,6 +6640,9 @@ pub struct ContentMapperManifest {
 
     // Whether the mapper uses project-scoped dynamic configuration.
     pub dynamic_config: Option<bool>,
+
+    // Default source-to-runtime output extension mappings.
+    pub output_extensions: Option<IndexMap<String, String>>,
 }
 
 impl UnmarshalerFrom for ContentMapperManifest {
@@ -6694,6 +6697,12 @@ impl UnmarshalerFrom for ContentMapperManifest {
                     }
                     json_unmarshal_decode(dec, &mut self.dynamic_config)?;
                 }
+                b"\"outputExtensions\"" => {
+                    if dec.peek_kind() == b'n' {
+                        return Err(err_null("outputExtensions"));
+                    }
+                    json_unmarshal_decode(dec, &mut self.output_extensions)?;
+                }
                 _ => {
                     dec.skip_value()?;
                 }
@@ -6728,6 +6737,7 @@ impl MarshalerTo for ContentMapperManifest {
         marshal_opt_field(enc, &mut first, "cwd", &self.cwd)?;
         marshal_opt_field(enc, &mut first, "compilerOptions", &self.compiler_options)?;
         marshal_opt_field(enc, &mut first, "dynamicConfig", &self.dynamic_config)?;
+        marshal_opt_field(enc, &mut first, "outputExtensions", &self.output_extensions)?;
         write_object_end(enc);
         Ok(())
     }
@@ -6742,6 +6752,7 @@ impl IsZero for ContentMapperManifest {
             && self.cwd.is_none()
             && self.compiler_options.is_none()
             && self.dynamic_config.is_none()
+            && self.output_extensions.is_none()
     }
 }
 

@@ -2,7 +2,7 @@
 
 use crate::frontend::prelude::*;
 
-// Go: tspath/extension.go:8 Extension constants
+// Go: tspath/extension.go:9 ExtensionTs and the other extension constants
 pub const EXTENSION_TS: &str = ".ts";
 pub const EXTENSION_TSX: &str = ".tsx";
 pub const EXTENSION_DTS: &str = ".d.ts";
@@ -17,7 +17,7 @@ pub const EXTENSION_CJS: &str = ".cjs";
 pub const EXTENSION_CTS: &str = ".cts";
 pub const EXTENSION_DCTS: &str = ".d.cts";
 
-// Go: tspath/extension.go:24 extension lists
+// Go: tspath/extension.go:25 SupportedDeclarationExtensions and the other extension lists
 // PORT: Go `slices.Concat` values are written out as constant lists with the
 // same order.
 pub const SUPPORTED_DECLARATION_EXTENSIONS: &[&str] =

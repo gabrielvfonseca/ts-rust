@@ -157,27 +157,27 @@ impl Checker {
         self.get_parent_of_symbol(symbol)
     }
 
-    // Go: checker/exports.go:107 TryFindAmbientModule
+    // Go: checker/exports.go:119 TryFindAmbientModule
     pub fn try_find_ambient_module_exported(&mut self, module_name: &str) -> SymbolId {
         self.try_find_ambient_module(module_name, true /*withAugmentations*/)
     }
 
-    // Go: checker/exports.go:111 GetImmediateAliasedSymbol
+    // Go: checker/exports.go:123 GetImmediateAliasedSymbol
     pub fn get_immediate_aliased_symbol_exported(&mut self, symbol: SymbolId) -> SymbolId {
         self.get_immediate_aliased_symbol(symbol)
     }
 
-    // Go: checker/exports.go:115 GetTargetSymbol
+    // Go: checker/exports.go:127 GetTargetSymbol
     pub fn get_target_symbol_exported(&mut self, symbol: SymbolId) -> SymbolId {
         self.get_target_symbol(symbol)
     }
 
-    // Go: checker/exports.go:119 GetTypeOnlyAliasDeclaration
+    // Go: checker/exports.go:131 GetTypeOnlyAliasDeclaration
     pub fn get_type_only_alias_declaration_exported(&mut self, symbol: SymbolId) -> Node {
         self.get_type_only_alias_declaration(symbol)
     }
 
-    // Go: checker/exports.go:123 ResolveExternalModuleName
+    // Go: checker/exports.go:135 ResolveExternalModuleName
     pub fn resolve_external_module_name_exported(
         &mut self,
         module_specifier: Node,
@@ -191,37 +191,37 @@ impl Checker {
         )
     }
 
-    // Go: checker/exports.go:127 ResolveExternalModuleSymbol
+    // Go: checker/exports.go:139 ResolveExternalModuleSymbol
     pub fn resolve_external_module_symbol_exported(&mut self, module_symbol: SymbolId) -> SymbolId {
         self.resolve_external_module_symbol(module_symbol, false /*dontResolveAlias*/)
     }
 
-    // Go: checker/exports.go:131 GetTypeFromTypeNode
+    // Go: checker/exports.go:143 GetTypeFromTypeNode
     pub fn get_type_from_type_node_exported(&mut self, node: Node) -> TypeId {
         self.get_type_from_type_node(node)
     }
 
-    // Go: checker/exports.go:135 IsArrayLikeType
+    // Go: checker/exports.go:147 IsArrayLikeType
     pub fn is_array_like_type_exported(&mut self, t: TypeId) -> bool {
         self.is_array_like_type(t)
     }
 
-    // Go: checker/exports.go:139 GetPropertiesOfType
+    // Go: checker/exports.go:151 GetPropertiesOfType
     pub fn get_properties_of_type_exported(&mut self, t: TypeId) -> Vec<SymbolId> {
         self.get_properties_of_type(t).to_vec()
     }
 
-    // Go: checker/exports.go:143 GetPropertyOfType
+    // Go: checker/exports.go:155 GetPropertyOfType
     pub fn get_property_of_type_exported(&mut self, t: TypeId, name: &str) -> SymbolId {
         self.get_property_of_type(t, name)
     }
 
-    // Go: checker/exports.go:147 TypeHasCallOrConstructSignatures
+    // Go: checker/exports.go:159 TypeHasCallOrConstructSignatures
     pub fn type_has_call_or_construct_signatures_exported(&mut self, t: TypeId) -> bool {
         self.type_has_call_or_construct_signatures(t)
     }
 
-    // Go: checker/exports.go:159 IsPropertyAccessible
+    // Go: checker/exports.go:171 IsPropertyAccessible
     // Checks if a property can be accessed in a location.
     // The location is given by the `node` parameter.
     // The node does not need to be a property access.
@@ -241,7 +241,7 @@ impl Checker {
         self.is_property_accessible(node, is_super, is_write, containing_type, property)
     }
 
-    // Go: checker/exports.go:163 GetTypeOfPropertyOfContextualType
+    // Go: checker/exports.go:175 GetTypeOfPropertyOfContextualType
     pub fn get_type_of_property_of_contextual_type_exported(
         &mut self,
         t: TypeId,
@@ -250,7 +250,7 @@ impl Checker {
         self.get_type_of_property_of_contextual_type(t, name)
     }
 
-    // Go: checker/exports.go:167 GetDeclarationModifierFlagsFromSymbol
+    // Go: checker/exports.go:179 GetDeclarationModifierFlagsFromSymbol
     pub fn get_declaration_modifier_flags_from_symbol_exported(
         &self,
         s: SymbolId,
@@ -258,12 +258,12 @@ impl Checker {
         self.get_declaration_modifier_flags_from_symbol(s)
     }
 
-    // Go: checker/exports.go:171 WasCanceled
+    // Go: checker/exports.go:183 WasCanceled
     pub fn was_canceled(&self) -> bool {
         self.was_canceled
     }
 
-    // Go: checker/exports.go:175 GetSignaturesOfType
+    // Go: checker/exports.go:187 GetSignaturesOfType
     pub fn get_signatures_of_type_exported(
         &mut self,
         t: TypeId,
@@ -272,42 +272,42 @@ impl Checker {
         self.get_signatures_of_type(t, kind).to_vec()
     }
 
-    // Go: checker/exports.go:179 GetDeclaredTypeOfSymbol
+    // Go: checker/exports.go:191 GetDeclaredTypeOfSymbol
     pub fn get_declared_type_of_symbol_exported(&mut self, symbol: SymbolId) -> TypeId {
         self.get_declared_type_of_symbol(symbol)
     }
 
-    // Go: checker/exports.go:183 GetTypeOfSymbol
+    // Go: checker/exports.go:195 GetTypeOfSymbol
     pub fn get_type_of_symbol_exported(&mut self, symbol: SymbolId) -> TypeId {
         self.get_type_of_symbol(symbol)
     }
 
-    // Go: checker/exports.go:187 GetNonMissingTypeOfSymbol
+    // Go: checker/exports.go:199 GetNonMissingTypeOfSymbol
     pub fn get_non_missing_type_of_symbol_exported(&mut self, symbol: SymbolId) -> TypeId {
         self.get_non_missing_type_of_symbol(symbol)
     }
 
-    // Go: checker/exports.go:191 GetConstraintOfTypeParameter
+    // Go: checker/exports.go:203 GetConstraintOfTypeParameter
     pub fn get_constraint_of_type_parameter_exported(&mut self, type_parameter: TypeId) -> TypeId {
         self.get_constraint_of_type_parameter(type_parameter)
     }
 
-    // Go: checker/exports.go:195 GetTrueTypeOfConditionalType
+    // Go: checker/exports.go:207 GetTrueTypeOfConditionalType
     pub fn get_true_type_of_conditional_type(&mut self, t: TypeId) -> TypeId {
         self.get_true_type_from_conditional_type(t)
     }
 
-    // Go: checker/exports.go:199 GetFalseTypeOfConditionalType
+    // Go: checker/exports.go:211 GetFalseTypeOfConditionalType
     pub fn get_false_type_of_conditional_type(&mut self, t: TypeId) -> TypeId {
         self.get_false_type_from_conditional_type(t)
     }
 
-    // Go: checker/exports.go:203 GetDefaultFromTypeParameter
+    // Go: checker/exports.go:215 GetDefaultFromTypeParameter
     pub fn get_default_from_type_parameter_exported(&mut self, type_parameter: TypeId) -> TypeId {
         self.get_default_from_type_parameter(type_parameter)
     }
 
-    // Go: checker/exports.go:207 GetEffectiveDeclarationFlags
+    // Go: checker/exports.go:219 GetEffectiveDeclarationFlags
     pub fn get_effective_declaration_flags_exported(
         &mut self,
         n: Node,
@@ -316,12 +316,12 @@ impl Checker {
         self.get_effective_declaration_flags(n, flags_to_check)
     }
 
-    // Go: checker/exports.go:211 GetBaseConstraintOfType
+    // Go: checker/exports.go:223 GetBaseConstraintOfType
     pub fn get_base_constraint_of_type_exported(&mut self, t: TypeId) -> TypeId {
         self.get_base_constraint_of_type(t)
     }
 
-    // Go: checker/exports.go:215 GetTypePredicateOfSignature
+    // Go: checker/exports.go:227 GetTypePredicateOfSignature
     pub fn get_type_predicate_of_signature_exported(
         &mut self,
         sig: SignatureId,
@@ -329,39 +329,39 @@ impl Checker {
         self.get_type_predicate_of_signature(sig)
     }
 
-    // Go: checker/exports.go:219 IsTupleType
+    // Go: checker/exports.go:231 IsTupleType
     pub fn is_tuple_type_exported(&self, t: TypeId) -> bool {
         self.is_tuple_type(t)
     }
 
-    // Go: checker/exports.go:223 IsTupleTypeTarget
+    // Go: checker/exports.go:235 IsTupleTypeTarget
     // PORT: a Go package function; a `Checker` method here because it reads
     // the type arena.
     pub fn is_tuple_type_target(&self, t: TypeId) -> bool {
         self.is_tuple_type(t) && self.ty(t).target() == t
     }
 
-    // Go: checker/exports.go:227 IsArrayType
+    // Go: checker/exports.go:239 IsArrayType
     pub fn is_array_type_exported(&self, t: TypeId) -> bool {
         self.is_array_type(t)
     }
 
-    // Go: checker/exports.go:231 IsReadonlySymbol
+    // Go: checker/exports.go:243 IsReadonlySymbol
     pub fn is_readonly_symbol_exported(&mut self, symbol: SymbolId) -> bool {
         self.is_readonly_symbol(symbol)
     }
 
-    // Go: checker/exports.go:235 GetReturnTypeOfSignature
+    // Go: checker/exports.go:247 GetReturnTypeOfSignature
     pub fn get_return_type_of_signature_exported(&mut self, sig: SignatureId) -> TypeId {
         self.get_return_type_of_signature(sig)
     }
 
-    // Go: checker/exports.go:239 HasEffectiveRestParameter
+    // Go: checker/exports.go:251 HasEffectiveRestParameter
     pub fn has_effective_rest_parameter_exported(&mut self, signature: SignatureId) -> bool {
         self.has_effective_rest_parameter(signature)
     }
 
-    // Go: checker/exports.go:243 GetLocalTypeParametersOfClassOrInterfaceOrTypeAlias
+    // Go: checker/exports.go:255 GetLocalTypeParametersOfClassOrInterfaceOrTypeAlias
     pub fn get_local_type_parameters_of_class_or_interface_or_type_alias_exported(
         &mut self,
         symbol: SymbolId,
@@ -369,7 +369,7 @@ impl Checker {
         self.get_local_type_parameters_of_class_or_interface_or_type_alias(symbol)
     }
 
-    // Go: checker/exports.go:247 GetContextualTypeForObjectLiteralElement
+    // Go: checker/exports.go:259 GetContextualTypeForObjectLiteralElement
     pub fn get_contextual_type_for_object_literal_element_exported(
         &mut self,
         element: Node,
@@ -378,12 +378,12 @@ impl Checker {
         self.get_contextual_type_for_object_literal_element(element, context_flags)
     }
 
-    // Go: checker/exports.go:251 TypePredicateToString
+    // Go: checker/exports.go:263 TypePredicateToString
     pub fn type_predicate_to_string_exported(&mut self, t: TypePredicateId) -> String {
         self.type_predicate_to_string(t)
     }
 
-    // Go: checker/exports.go:255 GetExpandedParameters
+    // Go: checker/exports.go:267 GetExpandedParameters
     pub fn get_expanded_parameters_exported(
         &mut self,
         signature: SignatureId,
@@ -392,18 +392,18 @@ impl Checker {
         self.get_expanded_parameters(signature, skip_union_expanding)
     }
 
-    // Go: checker/exports.go:259 GetResolvedSignature
+    // Go: checker/exports.go:271 GetResolvedSignature
     pub fn get_resolved_signature_exported(&mut self, node: Node) -> SignatureId {
         self.get_resolved_signature(node, None, CheckMode::NORMAL)
     }
 
-    // Go: checker/exports.go:264 GetTypeOfPropertyOfType
+    // Go: checker/exports.go:276 GetTypeOfPropertyOfType
     // Return the type of the given property in the given type, or nil if no such property exists
     pub fn get_type_of_property_of_type_exported(&mut self, t: TypeId, name: &str) -> TypeId {
         self.get_type_of_property_of_type(t, name)
     }
 
-    // Go: checker/exports.go:268 GetContextualTypeForArgumentAtIndex
+    // Go: checker/exports.go:280 GetContextualTypeForArgumentAtIndex
     pub fn get_contextual_type_for_argument_at_index_exported(
         &mut self,
         node: Node,
@@ -412,27 +412,27 @@ impl Checker {
         self.get_contextual_type_for_argument_at_index(node, arg_index)
     }
 
-    // Go: checker/exports.go:272 GetAwaitedType
+    // Go: checker/exports.go:284 GetAwaitedType
     pub fn get_awaited_type_exported(&mut self, t: TypeId) -> TypeId {
         self.get_awaited_type(t)
     }
 
-    // Go: checker/exports.go:276 GetIndexSignaturesAtLocation
+    // Go: checker/exports.go:288 GetIndexSignaturesAtLocation
     pub fn get_index_signatures_at_location_exported(&mut self, node: Node) -> Vec<Node> {
         self.get_index_signatures_at_location(node)
     }
 
-    // Go: checker/exports.go:280 GetResolvedSymbol
+    // Go: checker/exports.go:292 GetResolvedSymbol
     pub fn get_resolved_symbol_exported(&mut self, node: Node) -> SymbolId {
         self.get_resolved_symbol(node)
     }
 
-    // Go: checker/exports.go:284 GetJsxNamespace
+    // Go: checker/exports.go:296 GetJsxNamespace
     pub fn get_jsx_namespace_exported(&mut self, location: Node) -> String {
         self.get_jsx_namespace(location)
     }
 
-    // Go: checker/exports.go:288 GetJsxFragmentFactory
+    // Go: checker/exports.go:300 GetJsxFragmentFactory
     pub fn get_jsx_fragment_factory(&mut self, location: Node) -> String {
         let entity = self.get_jsx_fragment_factory_entity(location);
         if entity.is_some() {
@@ -441,7 +441,7 @@ impl Checker {
         String::new()
     }
 
-    // Go: checker/exports.go:296 ResolveName
+    // Go: checker/exports.go:308 ResolveName
     // PORT: the unexported twin is the Go function field `resolveName`
     // (`fnfields.rs` `resolve_name`).
     pub fn resolve_name_exported(
@@ -454,39 +454,39 @@ impl Checker {
         self.resolve_name(location, name, meaning, None, true, exclude_globals)
     }
 
-    // Go: checker/exports.go:300 GetSymbolFlags
+    // Go: checker/exports.go:312 GetSymbolFlags
     pub fn get_symbol_flags_exported(&mut self, symbol: SymbolId) -> SymbolFlags {
         self.get_symbol_flags(symbol)
     }
 
-    // Go: checker/exports.go:304 GetBaseTypes
+    // Go: checker/exports.go:316 GetBaseTypes
     pub fn get_base_types_exported(&mut self, t: TypeId) -> Vec<TypeId> {
         self.get_base_types(t)
     }
 
-    // Go: checker/exports.go:308 GetApparentType
+    // Go: checker/exports.go:320 GetApparentType
     pub fn get_apparent_type_exported(&mut self, t: TypeId) -> TypeId {
         self.get_apparent_type(t)
     }
 
-    // Go: checker/exports.go:312 GetReducedType
+    // Go: checker/exports.go:324 GetReducedType
     pub fn get_reduced_type_exported(&mut self, t: TypeId) -> TypeId {
         self.get_reduced_type(t)
     }
 
-    // Go: checker/exports.go:318 GetFullyQualifiedName
+    // Go: checker/exports.go:330 GetFullyQualifiedName
     // GetFullyQualifiedName returns the fully qualified name of a symbol, walking up
     // its parent chain (e.g. `"/path/to/module".Namespace.Name`).
     pub fn get_fully_qualified_name_exported(&mut self, symbol: SymbolId) -> String {
         self.get_fully_qualified_name(symbol, Node::NIL /*containingLocation*/)
     }
 
-    // Go: checker/exports.go:322 GetBaseConstructorTypeOfClass
+    // Go: checker/exports.go:334 GetBaseConstructorTypeOfClass
     pub fn get_base_constructor_type_of_class_exported(&mut self, t: TypeId) -> TypeId {
         self.get_base_constructor_type_of_class(t)
     }
 
-    // Go: checker/exports.go:326 GetMemberOverrideModifierStatus
+    // Go: checker/exports.go:338 GetMemberOverrideModifierStatus
     pub fn get_member_override_modifier_status_exported(
         &mut self,
         node: Node,
@@ -496,37 +496,37 @@ impl Checker {
         self.get_member_override_modifier_status(node, member, member_symbol)
     }
 
-    // Go: checker/exports.go:330 GetRestTypeOfSignature
+    // Go: checker/exports.go:342 GetRestTypeOfSignature
     pub fn get_rest_type_of_signature_exported(&mut self, sig: SignatureId) -> TypeId {
         self.get_rest_type_of_signature(sig)
     }
 
-    // Go: checker/exports.go:334 GetTypeArguments
+    // Go: checker/exports.go:346 GetTypeArguments
     pub fn get_type_arguments_exported(&mut self, t: TypeId) -> Vec<TypeId> {
         self.get_type_arguments(t).to_vec()
     }
 
-    // Go: checker/exports.go:338 GetIndexInfoOfType
+    // Go: checker/exports.go:350 GetIndexInfoOfType
     pub fn get_index_info_of_type_exported(&mut self, t: TypeId, key_type: TypeId) -> IndexInfoId {
         self.get_index_info_of_type(t, key_type)
     }
 
-    // Go: checker/exports.go:342 GetIndexTypeOfType
+    // Go: checker/exports.go:354 GetIndexTypeOfType
     pub fn get_index_type_of_type_exported(&mut self, t: TypeId, key_type: TypeId) -> TypeId {
         self.get_index_type_of_type(t, key_type)
     }
 
-    // Go: checker/exports.go:346 GetIndexInfosOfType
+    // Go: checker/exports.go:358 GetIndexInfosOfType
     pub fn get_index_infos_of_type_exported(&mut self, t: TypeId) -> Vec<IndexInfoId> {
         self.get_index_infos_of_type(t).to_vec()
     }
 
-    // Go: checker/exports.go:350 IsContextSensitive
+    // Go: checker/exports.go:362 IsContextSensitive
     pub fn is_context_sensitive_exported(&mut self, node: Node) -> bool {
         self.is_context_sensitive(node)
     }
 
-    // Go: checker/exports.go:354 FillMissingTypeArguments
+    // Go: checker/exports.go:366 FillMissingTypeArguments
     pub fn fill_missing_type_arguments_exported(
         &mut self,
         type_arguments: &[TypeId],
@@ -542,22 +542,22 @@ impl Checker {
         )
     }
 
-    // Go: checker/exports.go:358 GetMinTypeArgumentCount
+    // Go: checker/exports.go:370 GetMinTypeArgumentCount
     pub fn get_min_type_argument_count_exported(&mut self, type_parameters: &[TypeId]) -> i32 {
         self.get_min_type_argument_count(type_parameters)
     }
 
-    // Go: checker/exports.go:362 GetWidenedLiteralType
+    // Go: checker/exports.go:374 GetWidenedLiteralType
     pub fn get_widened_literal_type_exported(&mut self, t: TypeId) -> TypeId {
         self.get_widened_literal_type(t)
     }
 
-    // Go: checker/exports.go:366 IsTypeAssignableTo
+    // Go: checker/exports.go:378 IsTypeAssignableTo
     pub fn is_type_assignable_to_exported(&mut self, source: TypeId, target: TypeId) -> bool {
         self.is_type_assignable_to(source, target)
     }
 
-    // Go: checker/exports.go:370 GetUnionTypeEx
+    // Go: checker/exports.go:382 GetUnionTypeEx
     pub fn get_union_type_ex_exported(
         &mut self,
         types: &[TypeId],
@@ -566,7 +566,7 @@ impl Checker {
         self.get_union_type_ex(types, union_reduction, None, TypeId::NIL)
     }
 
-    // Go: checker/exports.go:374 RequiresAddingImplicitUndefined
+    // Go: checker/exports.go:386 RequiresAddingImplicitUndefined
     pub fn requires_adding_implicit_undefined_exported(&mut self, node: Node) -> bool {
         let mut enclosing_declaration = find_ancestor(node, is_declaration);
         if enclosing_declaration.is_nil() {
@@ -580,22 +580,22 @@ impl Checker {
         self.requires_adding_implicit_undefined(node, symbol, enclosing_declaration)
     }
 
-    // Go: checker/exports.go:386 RemoveMissingOrUndefinedType
+    // Go: checker/exports.go:398 RemoveMissingOrUndefinedType
     pub fn remove_missing_or_undefined_type_exported(&mut self, t: TypeId) -> TypeId {
         self.remove_missing_or_undefined_type(t)
     }
 
-    // Go: checker/exports.go:390 GetWidenedType
+    // Go: checker/exports.go:402 GetWidenedType
     pub fn get_widened_type_exported(&mut self, t: TypeId) -> TypeId {
         self.get_widened_type(t)
     }
 
-    // Go: checker/exports.go:394 CompareSymbols
+    // Go: checker/exports.go:406 CompareSymbols
     pub fn compare_symbols_exported(&mut self, s1: SymbolId, s2: SymbolId) -> i32 {
         self.compare_symbols(s1, s2)
     }
 
-    // Go: checker/exports.go:398 IsDistributedTypeParameter
+    // Go: checker/exports.go:410 IsDistributedTypeParameter
     // PORT: a Go package function; a `Checker` method here because it reads
     // the type arena.
     pub fn is_distributed_type_parameter(&self, t: TypeId) -> bool {

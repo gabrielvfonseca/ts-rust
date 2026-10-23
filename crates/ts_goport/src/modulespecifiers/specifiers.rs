@@ -1003,6 +1003,35 @@ pub(crate) fn try_get_module_name_as_node_module(
         return String::new();
     };
 
+    let case_sensitive = host.use_case_sensitive_file_names();
+    let global_typings_cache_location = host.get_global_typings_cache_location();
+    // Check reachability before consulting package.json exports, which can return
+    // a bare specifier directly. An exported path is only usable if the importing
+    // file can reach the package through node_modules, and packages under the
+    // global typings cache are excluded.
+    // ts#64599 (specifiers.go:762) moved this check here from after the package
+    // root loop. ts#64159: the directory that holds the top-level node_modules
+    // (`parts.TopLevelNodeModulesSearchRoot`, a root at least) must contain the
+    // importing directory as a path; N tested a string prefix, so "/a" matched
+    // "/ab/src".
+    let search_root_end = (parts.top_level_node_modules_index as usize)
+        .max(tspath::get_root_length(&path_obj.file_name));
+    let search_root = &path_obj.file_name[..search_root_end];
+    let compare_options = tspath::ComparePathsOptions {
+        use_case_sensitive_file_names: case_sensitive,
+        current_directory: String::new(),
+    };
+    if !tspath::contains_path(search_root, &info.source_directory, &compare_options)
+        || !global_typings_cache_location.is_empty()
+            && tspath::contains_path(
+                search_root,
+                &global_typings_cache_location,
+                &compare_options,
+            )
+    {
+        return String::new();
+    }
+
     // Simplify the full file path to something that can be resolved by Node.
     let preferences = get_module_specifier_preferences(
         user_preferences,
@@ -1014,10 +1043,9 @@ pub(crate) fn try_get_module_name_as_node_module(
     let allowed_endings =
         (preferences.get_allowed_endings_in_preferred_order)(RESOLUTION_MODE_NONE);
 
-    let case_sensitive = host.use_case_sensitive_file_names();
     let mut module_specifier = path_obj.file_name.clone();
     let mut is_package_root_path = false;
-    // ts#64159 (specifiers.go:768): a file directly in node_modules
+    // ts#64159 (specifiers.go:778): a file directly in node_modules
     // (`parts.IsDirectNodeModulesFile`, no package root) only gets its
     // ending processed (N tried package.json files at every "/" of the path).
     if !package_name_only && parts.package_root_index == -1 {
@@ -1085,33 +1113,8 @@ pub(crate) fn try_get_module_name_as_node_module(
         return String::new();
     }
 
-    let global_typings_cache_location = host.get_global_typings_cache_location();
-    // Get a path that's relative to node_modules or the importing file's path
-    // if node_modules folder is in this folder or any of its parent folders, no need to keep it.
-    // ts#64159 (specifiers.go:825): the directory that holds the top-level
-    // node_modules (`parts.TopLevelNodeModulesSearchRoot`, a root at least)
-    // must contain the importing directory as a path; N tested a string
-    // prefix, so "/a" matched "/ab/src".
-    let search_root_end = (parts.top_level_node_modules_index as usize)
-        .max(tspath::get_root_length(&path_obj.file_name));
-    let search_root = &path_obj.file_name[..search_root_end];
-    let compare_options = tspath::ComparePathsOptions {
-        use_case_sensitive_file_names: case_sensitive,
-        current_directory: String::new(),
-    };
-    if !tspath::contains_path(search_root, &info.source_directory, &compare_options)
-        || !global_typings_cache_location.is_empty()
-            && tspath::contains_path(
-                search_root,
-                &global_typings_cache_location,
-                &compare_options,
-            )
-    {
-        return String::new();
-    }
-
     // If the module was found in @types, get the actual Node package name
-    // ts#64159 (specifiers.go:831): a specifier outside the top-level
+    // ts#64159 (specifiers.go:833): a specifier outside the top-level
     // node_modules directory gives no name.
     let node_modules_prefix =
         &path_obj.file_name[..(parts.top_level_package_name_index + 1) as usize];
@@ -1122,7 +1125,7 @@ pub(crate) fn try_get_module_name_as_node_module(
     deps::get_package_name_from_types_package_name(node_modules_directory_name)
 }
 
-// Go: modulespecifiers/specifiers.go:839 pkgJsonDirAttemptResult
+// Go: modulespecifiers/specifiers.go:841 pkgJsonDirAttemptResult
 #[derive(Clone, Debug, Default)]
 struct PkgJsonDirAttemptResult {
     module_file_to_try: String,
@@ -1131,7 +1134,7 @@ struct PkgJsonDirAttemptResult {
     verbatim_from_exports: bool,
 }
 
-// Go: modulespecifiers/specifiers.go:846 tryDirectoryWithPackageJson
+// Go: modulespecifiers/specifiers.go:848 tryDirectoryWithPackageJson
 // ts#64544: `package_base_root_index` is the package root of the module
 // (`parts.PackageRootIndex` before the loop), for the index file name check.
 fn try_directory_with_package_json(
@@ -1264,7 +1267,7 @@ fn try_directory_with_package_json(
         if from_paths.is_empty() {
             maybe_blocked_by_types_versions = true;
         } else {
-            // ts#64159 (specifiers.go:947): Go resolves the file
+            // ts#64159 (specifiers.go:949): Go resolves the file
             // (`packageRootDirectory.ResolveFile(fromPaths)`), so "." and ".."
             // segments are reduced (N: CombinePaths).
             module_file_to_try = tspath::resolve_path_without_trailing_directory_separator(
@@ -1320,7 +1323,7 @@ fn try_directory_with_package_json(
     }
 }
 
-// Go: modulespecifiers/specifiers.go:982 isPackageMainFile (ts#64159)
+// Go: modulespecifiers/specifiers.go:984 isPackageMainFile (ts#64159)
 // ts#64159 takes this check out of tryDirectoryWithPackageJson and changes it:
 // - a main entry with directory intent ("./types/") does not name the sibling
 //   file "types.d.ts";
@@ -1369,7 +1372,7 @@ fn is_package_main_file(
         && tspath::remove_file_extension(&tspath::get_base_file_name(module_file_name)) == "index"
 }
 
-// Go: modulespecifiers/specifiers.go:1003 tryGetModuleNameFromExports
+// Go: modulespecifiers/specifiers.go:1005 tryGetModuleNameFromExports
 fn try_get_module_name_from_exports(
     options: &CompilerOptions,
     host: &dyn ModuleSpecifierGenerationHost,
@@ -1386,7 +1389,7 @@ fn try_get_module_name_from_exports(
         // * pattern mappings (contains a *)
         // * exact mappings (no *, does not end with /)
         for (k, subk) in exports.as_object() {
-            // ts#64159 (specifiers.go:1019): ResolvePathWithoutTrailingDirectorySeparator.
+            // ts#64159 (specifiers.go:1021): ResolvePathWithoutTrailingDirectorySeparator.
             let sub_package_name =
                 tspath::resolve_path_without_trailing_directory_separator(package_name, &[k]);
             let mut mode = MatchingMode::Exact;
@@ -1426,7 +1429,7 @@ fn try_get_module_name_from_exports(
     )
 }
 
-// Go: modulespecifiers/specifiers.go:1046 tryGetModuleNameFromPackageJsonImports
+// Go: modulespecifiers/specifiers.go:1048 tryGetModuleNameFromPackageJsonImports
 fn try_get_module_name_from_package_json_imports(
     module_file_name: &str,
     source_directory: &str,
@@ -1503,14 +1506,14 @@ fn try_get_module_name_from_package_json_imports(
     String::new()
 }
 
-// Go: modulespecifiers/specifiers.go:1111 specPair
+// Go: modulespecifiers/specifiers.go:1113 specPair
 #[derive(Clone, Debug)]
 struct SpecPair {
     ending: ModuleSpecifierEnding,
     value: String,
 }
 
-// Go: modulespecifiers/specifiers.go:1116 tryGetModuleNameFromPaths
+// Go: modulespecifiers/specifiers.go:1118 tryGetModuleNameFromPaths
 fn try_get_module_name_from_paths(
     relative_to_base_url: &str,
     file_name: &str,
@@ -1597,7 +1600,7 @@ fn try_get_module_name_from_paths(
     String::new()
 }
 
-// Go: modulespecifiers/specifiers.go:1219 validateEnding
+// Go: modulespecifiers/specifiers.go:1221 validateEnding
 fn validate_ending(
     c: &SpecPair,
     relative_to_base_url: &str,
@@ -1623,7 +1626,7 @@ fn validate_ending(
             )
 }
 
-// Go: modulespecifiers/specifiers.go:1230 tryGetModuleNameFromExportsOrImports
+// Go: modulespecifiers/specifiers.go:1232 tryGetModuleNameFromExportsOrImports
 #[allow(clippy::too_many_arguments)]
 fn try_get_module_name_from_exports_or_imports(
     options: &CompilerOptions,
@@ -1675,7 +1678,7 @@ fn try_get_module_name_from_exports_or_imports(
 
             match mode {
                 MatchingMode::Exact => {
-                    // ts#64159 (specifiers.go:1267): an exact target with a
+                    // ts#64159 (specifiers.go:1269): an exact target with a
                     // trailing separator names a directory, never this file.
                     if tspath::has_trailing_directory_separator(str_value) {
                         return String::new();
@@ -1774,7 +1777,7 @@ fn try_get_module_name_from_exports_or_imports(
                     }
                 }
                 MatchingMode::Pattern => {
-                    // ts#64159 (specifiers.go:1306): ResolvePath keeps a
+                    // ts#64159 (specifiers.go:1308): ResolvePath keeps a
                     // trailing separator of the pattern.
                     let path_or_pattern = tspath::resolve_path(package_directory, &[str_value]);
                     let (leading_slice, trailing_slice) = path_or_pattern
@@ -1918,7 +1921,7 @@ fn try_get_module_name_from_exports_or_imports(
     }
 }
 
-// Go: modulespecifiers/specifiers.go:1367 GetModuleSpecifier
+// Go: modulespecifiers/specifiers.go:1369 GetModuleSpecifier
 // `importingSourceFile` and `importingSourceFileName`? Why not just use `importingSourceFile.path`?
 // Because when this is called by the declaration emitter, `importingSourceFile` is the implementation
 // file, but `importingSourceFileName` and `toFileName` refer to declaration files (the former to the
@@ -1946,7 +1949,7 @@ pub fn get_module_specifier(
     )
 }
 
-// Go: modulespecifiers/specifiers.go:1388 UpdateModuleSpecifier
+// Go: modulespecifiers/specifiers.go:1390 UpdateModuleSpecifier
 #[allow(clippy::too_many_arguments)]
 pub fn update_module_specifier(
     compiler_options: &CompilerOptions,
@@ -1970,7 +1973,7 @@ pub fn update_module_specifier(
     )
 }
 
-// Go: modulespecifiers/specifiers.go:1410 getModuleSpecifierWithPreferences
+// Go: modulespecifiers/specifiers.go:1412 getModuleSpecifierWithPreferences
 #[allow(clippy::too_many_arguments)]
 fn get_module_specifier_with_preferences(
     compiler_options: &CompilerOptions,
@@ -2035,7 +2038,7 @@ fn get_module_specifier_with_preferences(
 mod tests {
     use super::*;
 
-    // Go: modulespecifiers/specifiers_test.go:328 TestIsPackageMainFilePreservesDirectoryIntent (ts#64159)
+    // Go: modulespecifiers/specifiers_test.go:332 TestIsPackageMainFilePreservesDirectoryIntent (ts#64159)
     #[test]
     fn is_package_main_file_preserves_directory_intent() {
         let package_root = "/project/node_modules/pkg";

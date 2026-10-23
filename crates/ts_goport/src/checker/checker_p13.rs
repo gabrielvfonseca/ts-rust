@@ -10,7 +10,7 @@
 use crate::prelude::*;
 
 impl Checker {
-    // Go: checker/checker.go:11438 isSameScopedBindingElement
+    // Go: checker/checker.go:11435 isSameScopedBindingElement
     pub fn is_same_scoped_binding_element(&mut self, node: Node, declaration: Node) -> bool {
         if is_binding_element(declaration) {
             let binding_element = find_ancestor(node, is_binding_element);
@@ -20,7 +20,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:11447 removeOptionalityFromDeclaredType
+    // Go: checker/checker.go:11444 removeOptionalityFromDeclaredType
     // Remove undefined from the annotated type of a parameter when there is an initializer (that doesn't include undefined)
     pub fn remove_optionality_from_declared_type(
         &mut self,
@@ -38,7 +38,7 @@ impl Checker {
         declared_type
     }
 
-    // Go: checker/checker.go:11455 parameterInitializerContainsUndefined
+    // Go: checker/checker.go:11452 parameterInitializerContainsUndefined
     pub fn parameter_initializer_contains_undefined(&mut self, declaration: Node) -> bool {
         if !self
             .node_links
@@ -79,7 +79,7 @@ impl Checker {
             .intersects(NodeCheckFlags::INITIALIZER_IS_UNDEFINED)
     }
 
-    // Go: checker/checker.go:11474 isInAmbientOrTypeNode
+    // Go: checker/checker.go:11471 isInAmbientOrTypeNode
     // PERF: U4 (CH7). `AMBIENT` is a parser bit (`Node::parser_flags`), and
     // the walk tests kinds from the store tables (`find_ancestor_with_kind`).
     pub fn is_in_ambient_or_type_node(&mut self, node: Node) -> bool {
@@ -96,7 +96,7 @@ impl Checker {
             .is_some()
     }
 
-    // Go: checker/checker.go:11480 checkPropertyAccessExpression
+    // Go: checker/checker.go:11477 checkPropertyAccessExpression
     pub fn check_property_access_expression(
         &mut self,
         node: Node,
@@ -118,7 +118,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:11488 checkPropertyAccessChain
+    // Go: checker/checker.go:11485 checkPropertyAccessChain
     pub fn check_property_access_chain(&mut self, node: Node, check_mode: CheckMode) -> TypeId {
         let left_type = self.check_expression(node.expression());
         let non_optional_type = self.get_optional_expression_type(left_type, node.expression());
@@ -134,7 +134,7 @@ impl Checker {
         self.propagate_optional_type_marker(t, node, non_optional_type != left_type)
     }
 
-    // Go: checker/checker.go:11494 checkPropertyAccessExpressionOrQualifiedName
+    // Go: checker/checker.go:11491 checkPropertyAccessExpressionOrQualifiedName
     pub fn check_property_access_expression_or_qualified_name(
         &mut self,
         node: Node,
@@ -405,7 +405,7 @@ impl Checker {
         self.get_flow_type_of_access_expression(node, prop, prop_type, right, check_mode)
     }
 
-    // Go: checker/checker.go:11628 getFlowTypeOfAccessExpression
+    // Go: checker/checker.go:11625 getFlowTypeOfAccessExpression
     pub fn get_flow_type_of_access_expression(
         &mut self,
         node: Node,
@@ -500,7 +500,7 @@ impl Checker {
         flow_type
     }
 
-    // Go: checker/checker.go:11675 getControlFlowContainer
+    // Go: checker/checker.go:11672 getControlFlowContainer
     // PERF: U4 (CH7). The walk tests kinds from the store tables
     // (`find_ancestor_with_kind`); `is_function_like(n)` is
     // `is_function_like_kind(n.kind())` for a node that is not nil.
@@ -547,7 +547,7 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:11681 getFlowTypeOfProperty
+    // Go: checker/checker.go:11678 getFlowTypeOfProperty
     pub fn get_flow_type_of_property(&mut self, reference: Node, prop: SymbolId) -> TypeId {
         let mut initial_type = self.undefined_type;
         if prop.is_some() && self.sym(prop).value_declaration.is_some() {
@@ -573,7 +573,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:11692 getTypeOfPropertyInBaseClass
+    // Go: checker/checker.go:11689 getTypeOfPropertyInBaseClass
     // Return the inherited type of the given property or undefined if property doesn't exist in a base class.
     pub fn get_type_of_property_in_base_class(&mut self, property: SymbolId) -> TypeId {
         let class_type = self.get_declaring_class(property);
@@ -587,7 +587,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:11703 isMethodAccessForCall
+    // Go: checker/checker.go:11700 isMethodAccessForCall
     // PERF: deferbody1. Go reads `node.Parent` and its `Kind` as fields, up
     // to four times. Here each read was a registry lookup, so the walk reads
     // the parent's view (`NodeRef`) and kind once per step.
@@ -631,7 +631,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:11711 lookupSymbolForPrivateIdentifierDeclaration
+    // Go: checker/checker.go:11708 lookupSymbolForPrivateIdentifierDeclaration
     // Lookup the private identifier lexically.
     pub fn lookup_symbol_for_private_identifier_declaration(
         &mut self,
@@ -657,7 +657,7 @@ impl Checker {
         SymbolId::NIL
     }
 
-    // Go: checker/checker.go:11727 getPrivateIdentifierPropertyOfType
+    // Go: checker/checker.go:11724 getPrivateIdentifierPropertyOfType
     pub fn get_private_identifier_property_of_type(
         &mut self,
         left_type: TypeId,
@@ -667,7 +667,7 @@ impl Checker {
         self.get_property_of_type(left_type, &name)
     }
 
-    // Go: checker/checker.go:11731 checkPrivateIdentifierPropertyAccess
+    // Go: checker/checker.go:11728 checkPrivateIdentifierPropertyAccess
     pub fn check_private_identifier_property_access(
         &mut self,
         left_type: TypeId,
@@ -737,7 +737,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:11767 reportNonexistentProperty
+    // Go: checker/checker.go:11764 reportNonexistentProperty
     pub fn report_nonexistent_property(
         &mut self,
         prop_node: Node,
@@ -889,7 +889,7 @@ impl Checker {
         self.add_error_or_suggestion(is_error, diagnostic);
     }
 
-    // Go: checker/checker.go:11830 getSuggestedLibForNonExistentProperty
+    // Go: checker/checker.go:11827 getSuggestedLibForNonExistentProperty
     pub fn get_suggested_lib_for_non_existent_property(
         &mut self,
         missing_property: &str,
@@ -910,7 +910,7 @@ impl Checker {
         String::new()
     }
 
-    // Go: checker/checker.go:11845 getSuggestedSymbolForNonexistentProperty
+    // Go: checker/checker.go:11842 getSuggestedSymbolForNonexistentProperty
     pub fn get_suggested_symbol_for_nonexistent_property(
         &mut self,
         name: Node,
@@ -930,7 +930,7 @@ impl Checker {
         self.get_spelling_suggestion_for_name(name.text(), &props, SymbolFlags::VALUE)
     }
 
-    // Go: checker/checker.go:11864 isValidPropertyAccessForCompletions
+    // Go: checker/checker.go:11861 isValidPropertyAccessForCompletions
     // Checks if an existing property access is valid for completions purposes.
     // @param node a property access-like node where we want to check if we can access a property.
     // This node does not need to be an access of the property we are checking.
@@ -951,7 +951,7 @@ impl Checker {
         // Previously we validated the 'this' type of methods but this adversely affected performance. See #31377 for more context.
     }
 
-    // Go: checker/checker.go:11877 isPropertyAccessible
+    // Go: checker/checker.go:11874 isPropertyAccessible
     // Checks if a property can be accessed in a location.
     // The location is given by the `node` parameter.
     // The node does not need to be a property access.
@@ -991,7 +991,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:11891 containerSeemsToBeEmptyDomElement
+    // Go: checker/checker.go:11888 containerSeemsToBeEmptyDomElement
     pub fn container_seems_to_be_empty_dom_element(&mut self, containing_type: TypeId) -> bool {
         !self
             .compiler_options
@@ -1005,7 +1005,7 @@ impl Checker {
             && self.is_empty_object_type(containing_type)
     }
 
-    // Go: checker/checker.go:11895 hasCommonDomTypeName
+    // Go: checker/checker.go:11892 hasCommonDomTypeName
     pub fn has_common_dom_type_name(&self, t: TypeId) -> bool {
         let symbol = self.ty(t).symbol;
         if symbol.is_nil() {
@@ -1018,7 +1018,7 @@ impl Checker {
             || name.starts_with("HTML") && name.ends_with("Element")
     }
 
-    // Go: checker/checker.go:11903 checkAndReportErrorForExtendingInterface
+    // Go: checker/checker.go:11900 checkAndReportErrorForExtendingInterface
     pub fn check_and_report_error_for_extending_interface(&mut self, error_location: Node) -> bool {
         let expression = self.get_entity_name_for_extending_interface(error_location);
         if expression.is_some()
@@ -1042,7 +1042,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:11915 getEntityNameForExtendingInterface
+    // Go: checker/checker.go:11912 getEntityNameForExtendingInterface
     // Climbs up parents to a heritage clause element and returns its entity name.
     pub fn get_entity_name_for_extending_interface(&mut self, node: Node) -> Node {
         match node.kind() {
@@ -1066,7 +1066,7 @@ impl Checker {
         Node::NIL
     }
 
-    // Go: checker/checker.go:11931 isUncalledFunctionReference
+    // Go: checker/checker.go:11928 isUncalledFunctionReference
     pub fn is_uncalled_function_reference(&mut self, node: Node, symbol: SymbolId) -> bool {
         if self
             .sym(symbol)
@@ -1093,7 +1093,7 @@ impl Checker {
         true
     }
 
-    // Go: checker/checker.go:11947 checkPropertyNotUsedBeforeDeclaration
+    // Go: checker/checker.go:11944 checkPropertyNotUsedBeforeDeclaration
     pub fn check_property_not_used_before_declaration(
         &mut self,
         prop: SymbolId,
@@ -1151,14 +1151,14 @@ impl Checker {
         }
     }
 
-    // Go: checker/checker.go:11969 isOptionalPropertyDeclaration
+    // Go: checker/checker.go:11966 isOptionalPropertyDeclaration
     pub fn is_optional_property_declaration(&mut self, node: Node) -> bool {
         is_property_declaration(node)
             && !has_accessor_modifier(node)
             && is_question_token(node.postfix_token())
     }
 
-    // Go: checker/checker.go:11973 isPropertyDeclaredInAncestorClass
+    // Go: checker/checker.go:11970 isPropertyDeclaredInAncestorClass
     pub fn is_property_declared_in_ancestor_class(&mut self, prop: SymbolId) -> bool {
         let parent = self.sym(prop).parent;
         if self.sym(parent).flags.intersects(SymbolFlags::CLASS) {
@@ -1174,7 +1174,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:11991 checkPropertyAccessibility
+    // Go: checker/checker.go:11988 checkPropertyAccessibility
     // Check whether the requested property access is valid.
     // Returns true if node is a valid property access, and false otherwise.
     // @param node The node to be checked.
@@ -1194,7 +1194,7 @@ impl Checker {
         )
     }
 
-    // Go: checker/checker.go:11995 checkPropertyAccessibilityEx
+    // Go: checker/checker.go:11992 checkPropertyAccessibilityEx
     pub fn check_property_accessibility_ex(
         &mut self,
         node: Node,
@@ -1217,7 +1217,7 @@ impl Checker {
         self.check_property_accessibility_at_location(node, is_super, writing, t, prop, error_node)
     }
 
-    // Go: checker/checker.go:12024 checkPropertyAccessibilityAtLocation
+    // Go: checker/checker.go:12021 checkPropertyAccessibilityAtLocation
     // Check whether the requested property can be accessed at the requested location.
     // Returns true if node is a valid property access, and false otherwise.
     // @param location The location node where we want to check if the property is accessible.
@@ -1416,14 +1416,14 @@ impl Checker {
         true
     }
 
-    // Go: checker/checker.go:12139 symbolHasNonMethodDeclaration
+    // Go: checker/checker.go:12136 symbolHasNonMethodDeclaration
     pub fn symbol_has_non_method_declaration(&mut self, symbol: SymbolId) -> bool {
         self.for_each_property(symbol, &mut |c: &mut Checker, prop: SymbolId| {
             !c.sym(prop).flags.intersects(SymbolFlags::METHOD)
         })
     }
 
-    // Go: checker/checker.go:12145 forEachProperty
+    // Go: checker/checker.go:12142 forEachProperty
     // Invoke the callback for each underlying property symbol of the given symbol and return the first
     // value that isn't undefined.
     pub fn for_each_property(
@@ -1449,7 +1449,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:12159 getDeclaringClass
+    // Go: checker/checker.go:12156 getDeclaringClass
     // Return the declaring class type of a property or undefined if property not declared in class
     pub fn get_declaring_class(&mut self, prop: SymbolId) -> TypeId {
         let parent = self.sym(prop).parent;
@@ -1460,7 +1460,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:12167 isValidOverrideOf
+    // Go: checker/checker.go:12164 isValidOverrideOf
     // Return true if source property is a valid override of protected parts of target property.
     pub fn is_valid_override_of(&mut self, source_prop: SymbolId, target_prop: SymbolId) -> bool {
         !self.for_each_property(target_prop, &mut |c: &mut Checker, tp: SymbolId| {
@@ -1474,7 +1474,7 @@ impl Checker {
         })
     }
 
-    // Go: checker/checker.go:12178 isPropertyInClassDerivedFrom
+    // Go: checker/checker.go:12175 isPropertyInClassDerivedFrom
     // Return true if some underlying source property is declared in a class that derives
     // from the given base class.
     pub fn is_property_in_class_derived_from(
@@ -1491,7 +1491,7 @@ impl Checker {
         })
     }
 
-    // Go: checker/checker.go:12188 isNodeUsedDuringClassInitialization
+    // Go: checker/checker.go:12185 isNodeUsedDuringClassInitialization
     pub fn is_node_used_during_class_initialization(&mut self, node: Node) -> bool {
         find_ancestor_or_quit(node, |element| {
             if is_constructor_declaration(element) && node_is_present(element.body())
@@ -1507,14 +1507,14 @@ impl Checker {
         .is_some()
     }
 
-    // Go: checker/checker.go:12199 isNodeWithinClass
+    // Go: checker/checker.go:12196 isNodeWithinClass
     pub fn is_node_within_class(&mut self, node: Node, class_declaration: Node) -> bool {
         self.for_each_enclosing_class(node, &mut |_c: &mut Checker, n: Node| {
             n == class_declaration
         })
     }
 
-    // Go: checker/checker.go:12203 forEachEnclosingClass
+    // Go: checker/checker.go:12200 forEachEnclosingClass
     pub fn for_each_enclosing_class(
         &mut self,
         node: Node,
@@ -1531,7 +1531,7 @@ impl Checker {
         false
     }
 
-    // Go: checker/checker.go:12217 isClassDerivedFromDeclaringClasses
+    // Go: checker/checker.go:12214 isClassDerivedFromDeclaringClasses
     // Return true if the given class derives from each of the declaring classes of the protected
     // constituents of the given property.
     pub fn is_class_derived_from_declaring_classes(
@@ -1551,7 +1551,7 @@ impl Checker {
         })
     }
 
-    // Go: checker/checker.go:12226 getEnclosingClassFromThisParameter
+    // Go: checker/checker.go:12223 getEnclosingClassFromThisParameter
     pub fn get_enclosing_class_from_this_parameter(&mut self, node: Node) -> TypeId {
         // 'this' type for a node comes from, in priority order...
         // 1. The type of a syntactic 'this' parameter in the enclosing function scope
@@ -1591,7 +1591,7 @@ impl Checker {
     }
 }
 
-// Go: checker/checker.go:12252 getThisParameterFromNodeContext
+// Go: checker/checker.go:12249 getThisParameterFromNodeContext
 pub fn get_this_parameter_from_node_context(node: Node) -> Node {
     let this_container = get_this_container(
         node, false, /*includeArrowFunctions*/
@@ -1604,7 +1604,7 @@ pub fn get_this_parameter_from_node_context(node: Node) -> Node {
 }
 
 impl Checker {
-    // Go: checker/checker.go:12260 getContextualThisParameterType
+    // Go: checker/checker.go:12257 getContextualThisParameterType
     pub fn get_contextual_this_parameter_type(&mut self, func: Node) -> TypeId {
         if is_arrow_function(func) {
             return TypeId::NIL;
@@ -1679,7 +1679,7 @@ impl Checker {
         TypeId::NIL
     }
 
-    // Go: checker/checker.go:12316 checkThisExpression
+    // Go: checker/checker.go:12313 checkThisExpression
     pub fn check_this_expression(&mut self, node: Node) -> TypeId {
         // Stop at the first arrow function so that we can
         // tell whether 'this' needs to be captured.

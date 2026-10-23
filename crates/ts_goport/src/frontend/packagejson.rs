@@ -673,16 +673,17 @@ pub struct Fields {
     pub content_mapper: Expected<ContentMapperFields>,
 }
 
-// Go: packagejson.go:117 ContentMapperFields (tsgo#4712)
+// Go: packagejson.go:117 ContentMapperFields (tsgo#4712, ts#64581)
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ContentMapperFields {
     pub exec: Expected<Vec<String>>,
     pub compiler_options: Expected<Vec<String>>,
     pub dynamic_config: Expected<bool>,
+    pub output_extensions: Expected<FxHashMap<String, String>>,
 }
 
 // PORT: the JSON v2 struct arshaler for `ContentMapperFields` (tags `exec`,
-// `compilerOptions`, `dynamicConfig`).
+// `compilerOptions`, `dynamicConfig`, `outputExtensions`).
 impl UnmarshalerFrom for ContentMapperFields {
     fn unmarshal_json_from(&mut self, dec: &mut JsonDecoder<'_>) -> Result<(), JsonError> {
         let is_object =
@@ -691,6 +692,9 @@ impl UnmarshalerFrom for ContentMapperFields {
                     "exec" => json_unmarshal_decode(dec, &mut self.exec)?,
                     "compilerOptions" => json_unmarshal_decode(dec, &mut self.compiler_options)?,
                     "dynamicConfig" => json_unmarshal_decode(dec, &mut self.dynamic_config)?,
+                    "outputExtensions" => {
+                        json_unmarshal_decode(dec, &mut self.output_extensions)?;
+                    }
                     _ => return Ok(false),
                 }
                 Ok(true)
@@ -707,7 +711,7 @@ impl ExpectedJsonKind for ContentMapperFields {
     const JSON_TYPE: &'static str = "unknown";
 }
 
-// Go: packagejson.go:123 typeScriptFields (tsgo#4712)
+// Go: packagejson.go:124 typeScriptFields (tsgo#4712)
 #[derive(Clone, Debug, Default)]
 struct TypeScriptFields {
     content_mapper: Expected<ContentMapperFields>,
@@ -849,7 +853,7 @@ impl UnmarshalerFrom for Fields {
     }
 }
 
-// Go: packagejson.go:127 Parse
+// Go: packagejson.go:128 Parse
 // PORT: Go returns `(Fields{}, err)` on error. The `Result` carries the same
 // information; callers use `unwrap_or_default()` for the zero `Fields`.
 // tsgo#4712: Go decodes into an anonymous struct that embeds the three field
@@ -1047,7 +1051,7 @@ impl VersionPaths {
     }
 }
 
-// Go: cache.go:123 InfoCacheEntry
+// Go: cache.go:182 InfoCacheEntry
 // PORT: Go `*InfoCacheEntry` is `Rc<InfoCacheEntry>`; a nil entry is `None`
 // at the call site, so the nil-receiver checks are gone.
 #[derive(Clone, Debug, Default)]
@@ -1058,25 +1062,25 @@ pub struct InfoCacheEntry {
 }
 
 impl InfoCacheEntry {
-    // Go: cache.go:129 Exists
+    // Go: cache.go:188 Exists
     #[must_use]
     pub fn exists(&self) -> bool {
         self.contents.is_some()
     }
 
-    // Go: cache.go:133 GetContents
+    // Go: cache.go:192 GetContents
     #[must_use]
     pub fn get_contents(&self) -> Option<&Rc<PackageJson>> {
         self.contents.as_ref()
     }
 
-    // Go: cache.go:140 GetDirectory
+    // Go: cache.go:140 GetDirectory (at 673a5f17d713; removed by ts#64159)
     #[must_use]
     pub fn get_directory(&self) -> &str {
         &self.package_directory
     }
 
-    // Go: cache.go:158 WithPackageDirectory
+    // Go: cache.go:208 WithPackageDirectory
     // WithPackageDirectory returns an entry whose PackageDirectory matches the
     // caller's value. The package.json info cache is keyed by the canonical
     // path of the package.json file, but multiple callers may look up the same
@@ -1136,7 +1140,7 @@ impl PendingInfo {
     }
 }
 
-// Go: cache.go:169 InfoCache
+// Go: cache.go:219 InfoCache
 // PORT: Go `collections.SyncMap` is a `RefCell` map. The cache is shared as
 // `Rc<InfoCache>`, so its methods take `&self`.
 #[derive(Debug, Default)]
@@ -1150,7 +1154,7 @@ pub struct InfoCache {
     use_case_sensitive_file_names: bool,
 }
 
-// Go: cache.go:175 NewInfoCache
+// Go: cache.go:224 NewInfoCache
 #[must_use]
 pub fn new_info_cache(current_directory: &str, use_case_sensitive_file_names: bool) -> InfoCache {
     InfoCache {
@@ -1178,7 +1182,7 @@ impl Clone for InfoCache {
 }
 
 impl InfoCache {
-    // Go: cache.go:182 Get
+    // Go: cache.go:247 Get
     // PORT: a pending read of the key (`add_pending`) becomes its entry
     // here, as Go's cache holds the first read of the load.
     #[must_use]
@@ -1226,7 +1230,7 @@ impl InfoCache {
         self.cache.borrow().contains_key(key)
     }
 
-    // Go: cache.go:190 Set
+    // Go: cache.go:254 Set
     // PORT: Go `LoadOrStore`: the first stored entry wins and is returned.
     // A pending read of the key (`add_pending`) is a parse worker's read
     // from earlier in the load, which Go's shared cache stored first, so it
@@ -1254,7 +1258,7 @@ impl InfoCache {
         .clone()
     }
 
-    // Go: cache.go:196 Range
+    // Go: cache.go:259 Range
     // PORT: Go `SyncMap.Range` allows writes to the map from `f`. The entries
     // are copied first, so `f` can call `set` without a `RefCell` panic. The
     // order is not defined, as in Go. The cache holds no nil entry.

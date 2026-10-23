@@ -20,7 +20,7 @@ use std::cell::Cell;
 use std::io::{Read, Write};
 use std::time::Duration;
 
-// Go: server.go:18 StdioServerOptions
+// Go: server.go:18 StdioServerOptions (ts#64818)
 // StdioServerOptions configures the STDIO-based API server.
 // PORT: Go `io.ReadCloser` / `io.WriteCloser` / `io.Writer` are boxed
 // `Read` / `Write` values; a nil one is `None`. `In` and `Async` are Rust
@@ -34,8 +34,8 @@ pub struct StdioServerOptions {
     pub err: Option<Box<dyn Write + Send>>,
     pub cwd: String,
     pub default_library_path: String,
-    // PipePath, if set, listens on a named pipe (Windows) or Unix domain
-    // socket instead of using In/Out for communication.
+    // PipePath, if set, is the named pipe path on Windows. On Unix, it must
+    // not exist and is created as a private directory containing "socket".
     pub pipe_path: String,
     // Callbacks specifies which filesystem operations should be delegated
     // to the client (e.g., "readFile", "fileExists"). Empty means no callbacks.

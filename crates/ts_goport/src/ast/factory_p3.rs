@@ -13,7 +13,7 @@ use crate::prelude::*;
 const NO_TOKEN_FLAGS: crate::astdata::TokenFlags = crate::astdata::TokenFlags(0);
 
 impl NodeFactory {
-    // Go: ast/ast_generated.go:875 NewDoStatement
+    // Go: ast/ast_generated.go:921 NewDoStatement
     pub fn new_do_statement(&self, statement: Node, expression: Node) -> Node {
         self.new_node(
             SyntaxKind::DoStatement,
@@ -24,7 +24,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:920 NewWhileStatement
+    // Go: ast/ast_generated.go:966 NewWhileStatement
     pub fn new_while_statement(&self, expression: Node, statement: Node) -> Node {
         self.new_node(
             SyntaxKind::WhileStatement,
@@ -35,7 +35,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:968 NewForStatement
+    // Go: ast/ast_generated.go:1014 NewForStatement
     pub fn new_for_statement(
         &self,
         initializer: Node,
@@ -54,7 +54,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1024 NewForInOrOfStatement
+    // Go: ast/ast_generated.go:1070 NewForInOrOfStatement
     pub fn new_for_in_or_of_statement(
         &self,
         kind: SyntaxKind,
@@ -74,7 +74,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1072 NewBreakStatement
+    // Go: ast/ast_generated.go:1123 NewBreakStatement
     pub fn new_break_statement(&self, label: Node) -> Node {
         self.new_node(
             SyntaxKind::BreakStatement,
@@ -84,7 +84,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1110 NewContinueStatement
+    // Go: ast/ast_generated.go:1161 NewContinueStatement
     pub fn new_continue_statement(&self, label: Node) -> Node {
         self.new_node(
             SyntaxKind::ContinueStatement,
@@ -94,7 +94,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1189 NewWithStatement
+    // Go: ast/ast_generated.go:1240 NewWithStatement
     pub fn new_with_statement(&self, expression: Node, statement: Node) -> Node {
         self.new_node(
             SyntaxKind::WithStatement,
@@ -105,7 +105,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1235 NewSwitchStatement
+    // Go: ast/ast_generated.go:1286 NewSwitchStatement
     pub fn new_switch_statement(&self, expression: Node, case_block: Node) -> Node {
         self.new_node(
             SyntaxKind::SwitchStatement,
@@ -116,7 +116,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1281 NewCaseBlock
+    // Go: ast/ast_generated.go:1332 NewCaseBlock
     pub fn new_case_block(&self, clauses: NodeList) -> Node {
         self.new_node(
             SyntaxKind::CaseBlock,
@@ -126,7 +126,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1326 NewCaseOrDefaultClause
+    // Go: ast/ast_generated.go:1377 NewCaseOrDefaultClause
     pub fn new_case_or_default_clause(
         &self,
         kind: SyntaxKind,
@@ -142,7 +142,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1375 NewThrowStatement
+    // Go: ast/ast_generated.go:1431 NewThrowStatement
     pub fn new_throw_statement(&self, expression: Node) -> Node {
         self.new_node(
             SyntaxKind::ThrowStatement,
@@ -152,7 +152,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1420 NewTryStatement
+    // Go: ast/ast_generated.go:1476 NewTryStatement
     pub fn new_try_statement(
         &self,
         try_block: Node,
@@ -169,7 +169,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1469 NewCatchClause
+    // Go: ast/ast_generated.go:1525 NewCatchClause
     pub fn new_catch_clause(&self, variable_declaration: Node, block: Node) -> Node {
         self.new_node(
             SyntaxKind::CatchClause,
@@ -180,7 +180,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1507 NewDebuggerStatement
+    // Go: ast/ast_generated.go:1563 NewDebuggerStatement
     pub fn new_debugger_statement(&self) -> Node {
         self.new_node(
             SyntaxKind::DebuggerStatement,
@@ -188,7 +188,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1530 NewLabeledStatement
+    // Go: ast/ast_generated.go:1586 NewLabeledStatement
     pub fn new_labeled_statement(&self, label: Node, statement: Node) -> Node {
         self.new_node(
             SyntaxKind::LabeledStatement,
@@ -199,7 +199,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1799 NewBindingPattern
+    // Go: ast/ast_generated.go:1855 NewBindingPattern
     pub fn new_binding_pattern(&self, kind: SyntaxKind, elements: NodeList) -> Node {
         self.new_node(
             kind,
@@ -209,7 +209,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1907 NewBindingElement
+    // Go: ast/ast_generated.go:1968 NewBindingElement
     pub fn new_binding_element(
         &self,
         dot_dot_dot_token: Node,
@@ -228,7 +228,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:1956 NewMissingDeclaration
+    // Go: ast/ast_generated.go:2017 NewMissingDeclaration
     pub fn new_missing_declaration(&self, modifiers: ModifierList) -> Node {
         self.new_node(
             SyntaxKind::MissingDeclaration,
@@ -238,7 +238,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:2272 NewJSTypeAliasDeclaration
+    // Go: ast/ast_generated.go:2333 NewJSTypeAliasDeclaration
     pub fn new_js_type_alias_declaration(
         &self,
         modifiers: ModifierList,
@@ -257,7 +257,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:2534 NewJSImportDeclaration
+    // Go: ast/ast_generated.go:2595 NewJSImportDeclaration
     pub fn new_js_import_declaration(
         &self,
         modifiers: ModifierList,
@@ -276,7 +276,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:2647 NewNamespaceImport
+    // Go: ast/ast_generated.go:2708 NewNamespaceImport
     pub fn new_namespace_import(&self, name: Node) -> Node {
         self.new_node(
             SyntaxKind::NamespaceImport,
@@ -286,7 +286,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:2785 NewNamespaceExportDeclaration
+    // Go: ast/ast_generated.go:2846 NewNamespaceExportDeclaration
     pub fn new_namespace_export_declaration(&self, modifiers: ModifierList, name: Node) -> Node {
         self.new_node(
             SyntaxKind::NamespaceExportDeclaration,
@@ -297,7 +297,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:2829 NewNamespaceExport
+    // Go: ast/ast_generated.go:2890 NewNamespaceExport
     pub fn new_namespace_export(&self, name: Node) -> Node {
         self.new_node(
             SyntaxKind::NamespaceExport,
@@ -307,7 +307,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:3488 NewSemicolonClassElement
+    // Go: ast/ast_generated.go:3549 NewSemicolonClassElement
     pub fn new_semicolon_class_element(&self) -> Node {
         self.new_node(
             SyntaxKind::SemicolonClassElement,
@@ -315,7 +315,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:3516 NewClassStaticBlockDeclaration
+    // Go: ast/ast_generated.go:3577 NewClassStaticBlockDeclaration
     pub fn new_class_static_block_declaration(&self, modifiers: ModifierList, body: Node) -> Node {
         self.new_node(
             SyntaxKind::ClassStaticBlockDeclaration,
@@ -326,7 +326,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:3554 NewOmittedExpression
+    // Go: ast/ast_generated.go:3615 NewOmittedExpression
     pub fn new_omitted_expression(&self) -> Node {
         self.new_node(
             SyntaxKind::OmittedExpression,
@@ -334,7 +334,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:3821 NewPostfixUnaryExpression
+    // Go: ast/ast_generated.go:3887 NewPostfixUnaryExpression
     pub fn new_postfix_unary_expression(&self, operand: Node, operator: SyntaxKind) -> Node {
         self.new_node(
             SyntaxKind::PostfixUnaryExpression,
@@ -345,7 +345,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:4359 NewMetaProperty
+    // Go: ast/ast_generated.go:4425 NewMetaProperty
     pub fn new_meta_property(&self, keyword_token: SyntaxKind, name: Node) -> Node {
         self.new_node(
             SyntaxKind::MetaProperty,
@@ -356,7 +356,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:4482 NewTemplateExpression
+    // Go: ast/ast_generated.go:4548 NewTemplateExpression
     pub fn new_template_expression(&self, head: Node, template_spans: NodeList) -> Node {
         self.new_node(
             SyntaxKind::TemplateExpression,
@@ -367,7 +367,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:4527 NewTemplateSpan
+    // Go: ast/ast_generated.go:4593 NewTemplateSpan
     pub fn new_template_span(&self, expression: Node, literal: Node) -> Node {
         self.new_node(
             SyntaxKind::TemplateSpan,
@@ -378,7 +378,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:4756 NewSpreadAssignment
+    // Go: ast/ast_generated.go:4822 NewSpreadAssignment
     pub fn new_spread_assignment(&self, expression: Node) -> Node {
         self.new_node(
             SyntaxKind::SpreadAssignment,
@@ -388,7 +388,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:4855 NewShorthandPropertyAssignment
+    // Go: ast/ast_generated.go:4921 NewShorthandPropertyAssignment
     pub fn new_shorthand_property_assignment(
         &self,
         modifiers: ModifierList,
@@ -411,7 +411,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6311 NewPartiallyEmittedExpression
+    // Go: ast/ast_generated.go:6382 NewPartiallyEmittedExpression
     pub fn new_partially_emitted_expression(&self, expression: Node) -> Node {
         self.new_node(
             SyntaxKind::PartiallyEmittedExpression,
@@ -421,7 +421,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6356 NewJsxElement
+    // Go: ast/ast_generated.go:6427 NewJsxElement
     pub fn new_jsx_element(
         &self,
         opening_element: Node,
@@ -438,7 +438,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6398 NewJsxAttributes
+    // Go: ast/ast_generated.go:6469 NewJsxAttributes
     pub fn new_jsx_attributes(&self, properties: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsxAttributes,
@@ -448,7 +448,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6438 NewJsxNamespacedName
+    // Go: ast/ast_generated.go:6509 NewJsxNamespacedName
     pub fn new_jsx_namespaced_name(&self, namespace: Node, name: Node) -> Node {
         self.new_node(
             SyntaxKind::JsxNamespacedName,
@@ -459,7 +459,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6484 NewJsxOpeningElement
+    // Go: ast/ast_generated.go:6555 NewJsxOpeningElement
     pub fn new_jsx_opening_element(
         &self,
         tag_name: Node,
@@ -476,7 +476,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6527 NewJsxSelfClosingElement
+    // Go: ast/ast_generated.go:6598 NewJsxSelfClosingElement
     pub fn new_jsx_self_closing_element(
         &self,
         tag_name: Node,
@@ -493,7 +493,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6570 NewJsxFragment
+    // Go: ast/ast_generated.go:6641 NewJsxFragment
     pub fn new_jsx_fragment(
         &self,
         opening_fragment: Node,
@@ -510,7 +510,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6609 NewJsxOpeningFragment
+    // Go: ast/ast_generated.go:6680 NewJsxOpeningFragment
     pub fn new_jsx_opening_fragment(&self) -> Node {
         self.new_node(
             SyntaxKind::JsxOpeningFragment,
@@ -518,7 +518,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6630 NewJsxClosingFragment
+    // Go: ast/ast_generated.go:6701 NewJsxClosingFragment
     pub fn new_jsx_closing_fragment(&self) -> Node {
         self.new_node(
             SyntaxKind::JsxClosingFragment,
@@ -526,7 +526,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6655 NewJsxAttribute
+    // Go: ast/ast_generated.go:6726 NewJsxAttribute
     pub fn new_jsx_attribute(&self, name: Node, initializer: Node) -> Node {
         self.new_node(
             SyntaxKind::JsxAttribute,
@@ -537,7 +537,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6700 NewJsxSpreadAttribute
+    // Go: ast/ast_generated.go:6771 NewJsxSpreadAttribute
     pub fn new_jsx_spread_attribute(&self, expression: Node) -> Node {
         self.new_node(
             SyntaxKind::JsxSpreadAttribute,
@@ -547,7 +547,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6738 NewJsxClosingElement
+    // Go: ast/ast_generated.go:6809 NewJsxClosingElement
     pub fn new_jsx_closing_element(&self, tag_name: Node) -> Node {
         self.new_node(
             SyntaxKind::JsxClosingElement,
@@ -557,7 +557,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6777 NewJsxExpression
+    // Go: ast/ast_generated.go:6848 NewJsxExpression
     pub fn new_jsx_expression(&self, dot_dot_dot_token: Node, expression: Node) -> Node {
         self.new_node(
             SyntaxKind::JsxExpression,
@@ -568,7 +568,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6817 NewJsxText
+    // Go: ast/ast_generated.go:6888 NewJsxText
     pub fn new_jsx_text(
         &self,
         text: impl Into<String>,
@@ -584,7 +584,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6882 NewJSDoc
+    // Go: ast/ast_generated.go:6953 NewJSDoc
     pub fn new_js_doc(&self, comment: NodeList, tags: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsDoc,
@@ -595,7 +595,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6921 NewJSDocTypeExpression
+    // Go: ast/ast_generated.go:6992 NewJSDocTypeExpression
     pub fn new_js_doc_type_expression(&self, type_node: Node) -> Node {
         self.new_node(
             SyntaxKind::JsDocTypeExpression,
@@ -605,7 +605,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6959 NewJSDocNonNullableType
+    // Go: ast/ast_generated.go:7030 NewJSDocNonNullableType
     pub fn new_js_doc_non_nullable_type(&self, type_node: Node) -> Node {
         self.new_node(
             SyntaxKind::JsDocNonNullableType,
@@ -615,7 +615,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:6997 NewJSDocNullableType
+    // Go: ast/ast_generated.go:7068 NewJSDocNullableType
     pub fn new_js_doc_nullable_type(&self, type_node: Node) -> Node {
         self.new_node(
             SyntaxKind::JsDocNullableType,
@@ -625,12 +625,12 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7034 NewJSDocAllType
+    // Go: ast/ast_generated.go:7105 NewJSDocAllType
     pub fn new_js_doc_all_type(&self) -> Node {
         self.new_node(SyntaxKind::JsDocAllType, crate::astdata::JsDocAllTypeData)
     }
 
-    // Go: ast/ast_generated.go:7056 NewJSDocVariadicType
+    // Go: ast/ast_generated.go:7127 NewJSDocVariadicType
     pub fn new_js_doc_variadic_type(&self, type_node: Node) -> Node {
         self.new_node(
             SyntaxKind::JsDocVariadicType,
@@ -640,7 +640,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7094 NewJSDocOptionalType
+    // Go: ast/ast_generated.go:7165 NewJSDocOptionalType
     pub fn new_js_doc_optional_type(&self, type_node: Node) -> Node {
         self.new_node(
             SyntaxKind::JsDocOptionalType,
@@ -650,7 +650,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7132 NewJSDocTypeTag
+    // Go: ast/ast_generated.go:7203 NewJSDocTypeTag
     pub fn new_js_doc_type_tag(
         &self,
         tag_name: Node,
@@ -667,7 +667,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7171 NewJSDocUnknownTag
+    // Go: ast/ast_generated.go:7242 NewJSDocUnknownTag
     pub fn new_js_doc_unknown_tag(&self, tag_name: Node, comment: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsDocUnknownTag,
@@ -678,7 +678,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7211 NewJSDocTemplateTag
+    // Go: ast/ast_generated.go:7282 NewJSDocTemplateTag
     pub fn new_js_doc_template_tag(
         &self,
         tag_name: Node,
@@ -697,7 +697,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7255 NewJSDocReturnTag
+    // Go: ast/ast_generated.go:7326 NewJSDocReturnTag
     pub fn new_js_doc_return_tag(
         &self,
         tag_name: Node,
@@ -714,7 +714,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7294 NewJSDocPublicTag
+    // Go: ast/ast_generated.go:7365 NewJSDocPublicTag
     pub fn new_js_doc_public_tag(&self, tag_name: Node, comment: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsDocPublicTag,
@@ -725,7 +725,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7332 NewJSDocPrivateTag
+    // Go: ast/ast_generated.go:7403 NewJSDocPrivateTag
     pub fn new_js_doc_private_tag(&self, tag_name: Node, comment: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsDocPrivateTag,
@@ -736,7 +736,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7370 NewJSDocProtectedTag
+    // Go: ast/ast_generated.go:7441 NewJSDocProtectedTag
     pub fn new_js_doc_protected_tag(&self, tag_name: Node, comment: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsDocProtectedTag,
@@ -747,7 +747,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7408 NewJSDocReadonlyTag
+    // Go: ast/ast_generated.go:7479 NewJSDocReadonlyTag
     pub fn new_js_doc_readonly_tag(&self, tag_name: Node, comment: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsDocReadonlyTag,
@@ -758,7 +758,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7446 NewJSDocOverrideTag
+    // Go: ast/ast_generated.go:7517 NewJSDocOverrideTag
     pub fn new_js_doc_override_tag(&self, tag_name: Node, comment: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsDocOverrideTag,
@@ -769,7 +769,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7484 NewJSDocDeprecatedTag
+    // Go: ast/ast_generated.go:7555 NewJSDocDeprecatedTag
     pub fn new_js_doc_deprecated_tag(&self, tag_name: Node, comment: NodeList) -> Node {
         self.new_node(
             SyntaxKind::JsDocDeprecatedTag,
@@ -780,7 +780,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7523 NewJSDocSeeTag
+    // Go: ast/ast_generated.go:7594 NewJSDocSeeTag
     pub fn new_js_doc_see_tag(
         &self,
         tag_name: Node,
@@ -797,7 +797,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7563 NewJSDocImplementsTag
+    // Go: ast/ast_generated.go:7634 NewJSDocImplementsTag
     pub fn new_js_doc_implements_tag(
         &self,
         tag_name: Node,
@@ -814,7 +814,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7603 NewJSDocAugmentsTag
+    // Go: ast/ast_generated.go:7674 NewJSDocAugmentsTag
     pub fn new_js_doc_augments_tag(
         &self,
         tag_name: Node,
@@ -831,7 +831,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7643 NewJSDocSatisfiesTag
+    // Go: ast/ast_generated.go:7714 NewJSDocSatisfiesTag
     pub fn new_js_doc_satisfies_tag(
         &self,
         tag_name: Node,
@@ -848,7 +848,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7683 NewJSDocThrowsTag
+    // Go: ast/ast_generated.go:7754 NewJSDocThrowsTag
     pub fn new_js_doc_throws_tag(
         &self,
         tag_name: Node,
@@ -865,7 +865,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7723 NewJSDocThisTag
+    // Go: ast/ast_generated.go:7794 NewJSDocThisTag
     pub fn new_js_doc_this_tag(
         &self,
         tag_name: Node,
@@ -882,7 +882,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7765 NewJSDocImportTag
+    // Go: ast/ast_generated.go:7836 NewJSDocImportTag
     pub fn new_js_doc_import_tag(
         &self,
         tag_name: Node,
@@ -903,7 +903,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7812 NewJSDocCallbackTag
+    // Go: ast/ast_generated.go:7883 NewJSDocCallbackTag
     pub fn new_js_doc_callback_tag(
         &self,
         tag_name: Node,
@@ -922,7 +922,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7860 NewJSDocOverloadTag
+    // Go: ast/ast_generated.go:7931 NewJSDocOverloadTag
     pub fn new_js_doc_overload_tag(
         &self,
         tag_name: Node,
@@ -939,7 +939,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7901 NewJSDocTypedefTag
+    // Go: ast/ast_generated.go:7972 NewJSDocTypedefTag
     pub fn new_js_doc_typedef_tag(
         &self,
         tag_name: Node,
@@ -958,7 +958,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7950 NewJSDocSignature
+    // Go: ast/ast_generated.go:8021 NewJSDocSignature
     pub fn new_js_doc_signature(
         &self,
         type_parameters: NodeList,
@@ -976,7 +976,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:7990 NewJSDocNameReference
+    // Go: ast/ast_generated.go:8061 NewJSDocNameReference
     pub fn new_js_doc_name_reference(&self, name: Node) -> Node {
         self.new_node(
             SyntaxKind::JsDocNameReference,
@@ -986,7 +986,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:8345 NewJSDocText
+    // Go: ast/ast_generated.go:8416 NewJSDocText
     pub fn new_js_doc_text(&self, text: Vec<String>) -> Node {
         self.new_text_node(
             SyntaxKind::JsDocText,
@@ -994,7 +994,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:8369 NewJSDocLink
+    // Go: ast/ast_generated.go:8440 NewJSDocLink
     pub fn new_js_doc_link(&self, name: Node, text: Vec<String>) -> Node {
         self.new_text_node(
             SyntaxKind::JsDocLink,
@@ -1005,7 +1005,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:8413 NewJSDocLinkPlain
+    // Go: ast/ast_generated.go:8484 NewJSDocLinkPlain
     pub fn new_js_doc_link_plain(&self, name: Node, text: Vec<String>) -> Node {
         self.new_text_node(
             SyntaxKind::JsDocLinkPlain,
@@ -1016,7 +1016,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:8457 NewJSDocLinkCode
+    // Go: ast/ast_generated.go:8528 NewJSDocLinkCode
     pub fn new_js_doc_link_code(&self, name: Node, text: Vec<String>) -> Node {
         self.new_text_node(
             SyntaxKind::JsDocLinkCode,
@@ -1027,7 +1027,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:8558 NewSyntheticReferenceExpression
+    // Go: ast/ast_generated.go:8629 NewSyntheticReferenceExpression
     pub fn new_synthetic_reference_expression(&self, expression: Node, this_arg: Node) -> Node {
         self.new_node(
             SyntaxKind::SyntheticReferenceExpression,
@@ -1038,7 +1038,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:8604 NewJSDocTypeLiteral
+    // Go: ast/ast_generated.go:8675 NewJSDocTypeLiteral
     // PORT: a Go nil or empty slice is `None`; Go code only ranges over it.
     pub fn new_js_doc_type_literal(
         &self,
@@ -1055,7 +1055,7 @@ impl NodeFactory {
         )
     }
 
-    // Go: ast/ast_generated.go:8647 NewJSDocParameterOrPropertyTag
+    // Go: ast/ast_generated.go:8718 NewJSDocParameterOrPropertyTag
     pub fn new_js_doc_parameter_or_property_tag(
         &self,
         kind: SyntaxKind,

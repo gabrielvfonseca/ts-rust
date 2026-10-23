@@ -258,7 +258,7 @@ impl Session {
         }
     }
 
-    // Go: api/session.go:3337 resolveSymbolTablePropertyOfSymbol
+    // Go: api/session.go:3441 resolveSymbolTablePropertyOfSymbol (ts#64691)
     // resolveSymbolTablePropertyOfSymbol resolves a symbol property of type `SymbolTable` and returns an array of symbol responses.
     // Results are sorted using the checker's canonical symbol ordering so that API consumers receive
     // a stable, deterministic order instead of Go's randomized map iteration order.
@@ -1137,7 +1137,7 @@ fn non_nil_diagnostics(diags: &[Diagnostic]) -> Vec<DiagnosticResponse> {
 }
 
 impl Session {
-    // Go: api/session.go:3791 handleGetWellKnownSymbols
+    // Go: api/session.go:4207 handleGetWellKnownSymbols (ts#64691)
     // handleGetWellKnownSymbols returns the handle ids of the per-checker singleton
     // symbols (unknown, undefined, arguments) so the client can identify them by id.
     pub fn handle_get_well_known_symbols(

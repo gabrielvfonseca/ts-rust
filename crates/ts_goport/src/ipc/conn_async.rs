@@ -1711,10 +1711,10 @@ pub(crate) mod tests {
     /// blocked read, and then closes it. A shutdown alone is not enough on
     /// macOS, where the peer can still write to a socket that only shut
     /// down.
-    struct PipeEnd(std::sync::RwLock<Option<UnixStream>>);
+    pub(crate) struct PipeEnd(std::sync::RwLock<Option<UnixStream>>);
 
     impl PipeEnd {
-        fn new(stream: UnixStream) -> Self {
+        pub(crate) fn new(stream: UnixStream) -> Self {
             PipeEnd(std::sync::RwLock::new(Some(stream)))
         }
 

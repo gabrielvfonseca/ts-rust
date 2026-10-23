@@ -8,7 +8,7 @@ use crate::prelude::*;
 
 // TypeMapperKind
 
-// Go: checker/mapper.go:11 TypeMapperKind
+// Go: checker/mapper.go:16 TypeMapperKind
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(i32)]
 pub enum TypeMapperKind {
@@ -105,7 +105,7 @@ impl std::fmt::Debug for TypeMapper {
 }
 
 impl TypeMapper {
-    // Go: checker/mapper.go:27 (*TypeMapper).Kind
+    // Go: checker/mapper.go:73 (*TypeMapper).Kind
     #[must_use]
     pub fn kind(&self) -> TypeMapperKind {
         match self {
@@ -122,7 +122,7 @@ impl TypeMapper {
         }
     }
 
-    // Go: checker/mapper.go:28 (*TypeMapper).MapsThisOnly
+    // Go: checker/mapper.go:75 (*TypeMapper).MapsThisOnly
     // PORT: Go calls isThisTypeParameter(source) here. That reads the type
     // arena, which a `TypeMapper` cannot reach, so the constructors compute
     // it once and store it. A type's isThisType is set right after the type
@@ -173,13 +173,13 @@ impl TypeMapper {
 
 // TypeMapperBase
 
-// Go: checker/mapper.go:102 TypeMapperBase
+// Go: checker/mapper.go:154 TypeMapperBase
 #[derive(Clone, Copy, Debug, Default)]
 pub struct TypeMapperBase;
 
 // SimpleTypeMapper
 
-// Go: checker/mapper.go:112 SimpleTypeMapper
+// Go: checker/mapper.go:163 SimpleTypeMapper
 #[derive(Clone, Debug, Default)]
 pub struct SimpleTypeMapper {
     pub source: TypeId,
@@ -190,7 +190,7 @@ pub struct SimpleTypeMapper {
 
 // ArrayTypeMapper
 
-// Go: checker/mapper.go:143 ArrayTypeMapper
+// Go: checker/mapper.go:190 ArrayTypeMapper
 // PORT: the cached Go `MapsThisOnly`, `len(m.sources) == 1 &&
 // isThisTypeParameter(m.sources[0])`, is the bool of `TypeMapper::Array`.
 #[derive(Clone, Debug, Default)]
@@ -201,7 +201,7 @@ pub struct ArrayTypeMapper {
 
 // ArrayToSingleTypeMapper
 
-// Go: checker/mapper.go:176 ArrayToSingleTypeMapper
+// Go: checker/mapper.go:219 ArrayToSingleTypeMapper
 #[derive(Clone, Debug, Default)]
 pub struct ArrayToSingleTypeMapper {
     pub sources: Vec<TypeId>,
@@ -212,7 +212,7 @@ pub struct ArrayToSingleTypeMapper {
 
 // DeferredTypeMapper
 
-// Go: checker/mapper.go:203 DeferredTypeMapper
+// Go: checker/mapper.go:246 DeferredTypeMapper
 #[derive(Clone)]
 pub struct DeferredTypeMapper {
     pub sources: Vec<TypeId>,
@@ -223,7 +223,7 @@ pub struct DeferredTypeMapper {
 
 // FunctionTypeMapper
 
-// Go: checker/mapper.go:232 FunctionTypeMapper
+// Go: checker/mapper.go:275 FunctionTypeMapper
 #[derive(Clone)]
 pub struct FunctionTypeMapper {
     pub fn_: TypeMapperFn,
@@ -231,7 +231,7 @@ pub struct FunctionTypeMapper {
 
 // MergedTypeMapper
 
-// Go: checker/mapper.go:250 MergedTypeMapper
+// Go: checker/mapper.go:293 MergedTypeMapper
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MergedTypeMapper {
     pub m1: MapperId,
@@ -240,7 +240,7 @@ pub struct MergedTypeMapper {
 
 // CompositeTypeMapper
 
-// Go: checker/mapper.go:274 CompositeTypeMapper
+// Go: checker/mapper.go:313 CompositeTypeMapper
 // PORT: the Go `c *Checker` field is dropped; `mapper_map` gets the checker.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct CompositeTypeMapper {
@@ -250,7 +250,7 @@ pub struct CompositeTypeMapper {
 
 // InferenceTypeMapper
 
-// Go: checker/mapper.go:300 InferenceTypeMapper
+// Go: checker/mapper.go:339 InferenceTypeMapper
 // PORT: the Go `c *Checker` field is dropped; `mapper_map` gets the checker.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct InferenceTypeMapper {
@@ -273,13 +273,13 @@ impl Checker {
         id
     }
 
-    // Go: checker/mapper.go:40 getMappedType
+    // Go: checker/mapper.go:92 getMappedType
     pub fn get_mapped_type(&mut self, t: TypeId, mapper: MapperId) -> TypeId {
         let t = self.get_non_distributed_type_parameter(t);
         self.mapper_map(mapper, t)
     }
 
-    // Go: checker/mapper.go:26 (*TypeMapper).Map
+    // Go: checker/mapper.go:50 (*TypeMapper).Map
     // Dispatches to the Go `Map` method of each mapper kind.
     // PERF (instfast1): the simple and array mappers (about 60% of the calls
     // on T3 server) map here. Each other kind is a tail call with the
@@ -287,16 +287,16 @@ impl Checker {
     // reads its mapper twice.
     pub fn mapper_map(&mut self, m: MapperId, t: TypeId) -> TypeId {
         match self.mapper(m) {
-            // Go: checker/mapper.go:106 (*TypeMapperBase).Map
+            // Go: checker/mapper.go:158 (*TypeMapperBase).Map
             TypeMapper::Base(_) => t,
-            // Go: checker/mapper.go:126 (*SimpleTypeMapper).Map
+            // Go: checker/mapper.go:177 (*SimpleTypeMapper).Map
             TypeMapper::Simple(d) => {
                 if t == d.source {
                     return d.target;
                 }
                 t
             }
-            // Go: checker/mapper.go:157 (*ArrayTypeMapper).Map
+            // Go: checker/mapper.go:204 (*ArrayTypeMapper).Map
             TypeMapper::Array(d, _) => {
                 for (i, s) in d.sources.iter().enumerate() {
                     if t == *s {
@@ -305,7 +305,7 @@ impl Checker {
                 }
                 t
             }
-            // Go: checker/mapper.go:190 (*ArrayToSingleTypeMapper).Map
+            // Go: checker/mapper.go:233 (*ArrayToSingleTypeMapper).Map
             TypeMapper::ArrayToSingle(d) => {
                 if d.sources.contains(&t) {
                     return d.target;
@@ -332,7 +332,7 @@ impl Checker {
     #[inline(never)]
     fn callback_mapper_map(&mut self, m: MapperId, t: TypeId) -> TypeId {
         match self.mapper(m) {
-            // Go: checker/mapper.go:217 (*DeferredTypeMapper).Map
+            // Go: checker/mapper.go:260 (*DeferredTypeMapper).Map
             TypeMapper::Deferred(d) => {
                 let mut target: Option<DeferredTypeFn> = None;
                 for (i, s) in d.sources.iter().enumerate() {
@@ -346,7 +346,7 @@ impl Checker {
                 }
                 t
             }
-            // Go: checker/mapper.go:244 (*FunctionTypeMapper).Map
+            // Go: checker/mapper.go:287 (*FunctionTypeMapper).Map
             TypeMapper::Function(d) => {
                 let f = d.fn_.clone();
                 f(self, t)
@@ -355,14 +355,14 @@ impl Checker {
         }
     }
 
-    // Go: checker/mapper.go:264 (*MergedTypeMapper).Map
+    // Go: checker/mapper.go:307 (*MergedTypeMapper).Map
     #[inline(never)]
     fn merged_mapper_map(&mut self, m1: MapperId, m2: MapperId, t: TypeId) -> TypeId {
         let t1 = self.mapper_map(m1, t);
         self.mapper_map(m2, t1)
     }
 
-    // Go: checker/mapper.go:290 (*CompositeTypeMapper).Map
+    // Go: checker/mapper.go:329 (*CompositeTypeMapper).Map
     #[inline(never)]
     fn composite_mapper_map(&mut self, m1: MapperId, m2: MapperId, t: TypeId) -> TypeId {
         let t1 = self.mapper_map(m1, t);
@@ -372,13 +372,13 @@ impl Checker {
         self.mapper_map(m2, t)
     }
 
-    // Go: checker/mapper.go:27 (*TypeMapper).Kind
+    // Go: checker/mapper.go:73 (*TypeMapper).Kind
     #[must_use]
     pub fn mapper_kind(&self, m: MapperId) -> TypeMapperKind {
         self.mapper(m).kind()
     }
 
-    // Go: checker/mapper.go:28 (*TypeMapper).MapsThisOnly
+    // Go: checker/mapper.go:75 (*TypeMapper).MapsThisOnly
     #[must_use]
     pub fn mapper_maps_this_only(&self, m: MapperId) -> bool {
         self.mapper(m).maps_this_only()
@@ -386,7 +386,7 @@ impl Checker {
 
     // Factory functions
 
-    // Go: checker/mapper.go:44 newTypeMapper
+    // Go: checker/mapper.go:96 newTypeMapper
     pub fn new_type_mapper(&mut self, sources: &[TypeId], targets: &[TypeId]) -> MapperId {
         if sources.len() == 1 {
             return self.new_simple_type_mapper(sources[0], targets[0]);
@@ -406,7 +406,7 @@ impl Checker {
         self.new_array_type_mapper_shared(sources, targets)
     }
 
-    // Go: checker/mapper.go:51 combineTypeMappers
+    // Go: checker/mapper.go:103 combineTypeMappers
     pub fn combine_type_mappers(&mut self, m1: MapperId, m2: MapperId) -> MapperId {
         if m1.is_some() {
             return self.new_composite_type_mapper(m1, m2);
@@ -414,7 +414,7 @@ impl Checker {
         m2
     }
 
-    // Go: checker/mapper.go:58 mapTypeWithCompositeMapper
+    // Go: checker/mapper.go:110 mapTypeWithCompositeMapper
     pub fn map_type_with_composite_mapper(
         &mut self,
         t: TypeId,
@@ -431,7 +431,7 @@ impl Checker {
         self.get_mapped_type(t, m2)
     }
 
-    // Go: checker/mapper.go:69 mergeTypeMappers
+    // Go: checker/mapper.go:121 mergeTypeMappers
     pub fn merge_type_mappers(&mut self, m1: MapperId, m2: MapperId) -> MapperId {
         if m1.is_some() {
             return self.new_merged_type_mapper(m1, m2);
@@ -439,7 +439,7 @@ impl Checker {
         m2
     }
 
-    // Go: checker/mapper.go:76 prependTypeMapping
+    // Go: checker/mapper.go:128 prependTypeMapping
     pub fn prepend_type_mapping(
         &mut self,
         source: TypeId,
@@ -455,7 +455,7 @@ impl Checker {
         self.new_merged_type_mapper(simple, mapper)
     }
 
-    // Go: checker/mapper.go:83 appendTypeMapping
+    // Go: checker/mapper.go:135 appendTypeMapping
     pub fn append_type_mapping(
         &mut self,
         mapper: MapperId,
@@ -473,7 +473,7 @@ impl Checker {
 
     // Maps forward-references to later types parameters to the empty object type.
     // This is used during inference when instantiating type parameter defaults.
-    // Go: checker/mapper.go:92 newBackreferenceMapper
+    // Go: checker/mapper.go:144 newBackreferenceMapper
     pub fn new_backreference_mapper(
         &mut self,
         context: InferenceContextId,
@@ -488,10 +488,10 @@ impl Checker {
         self.new_array_to_single_type_mapper(&type_parameters, unknown_type)
     }
 
-    // Go: checker/mapper.go:118 newSimpleTypeMapper
+    // Go: checker/mapper.go:169 newSimpleTypeMapper
     #[inline(always)]
     pub fn new_simple_type_mapper(&mut self, source: TypeId, target: TypeId) -> MapperId {
-        // Go: checker/mapper.go:137 (*SimpleTypeMapper).MapsThisOnly
+        // Go: checker/mapper.go:184 (*SimpleTypeMapper).MapsThisOnly
         let maps_this_only = self.is_this_type_parameter(source);
         self.alloc_type_mapper(TypeMapper::Simple(SimpleTypeMapper {
             source,
@@ -500,7 +500,7 @@ impl Checker {
         }))
     }
 
-    // Go: checker/mapper.go:149 newArrayTypeMapper
+    // Go: checker/mapper.go:196 newArrayTypeMapper
     // PORT: Go keeps the caller's slices; we copy them. Go callers do not
     // mutate these slices after building the mapper.
     pub fn new_array_type_mapper(&mut self, sources: &[TypeId], targets: &[TypeId]) -> MapperId {
@@ -515,7 +515,7 @@ impl Checker {
         sources: SharedList<TypeId>,
         targets: SharedList<TypeId>,
     ) -> MapperId {
-        // Go: checker/mapper.go:170 (*ArrayTypeMapper).MapsThisOnly
+        // Go: checker/mapper.go:213 (*ArrayTypeMapper).MapsThisOnly
         let maps_this_only = sources.len() == 1 && self.is_this_type_parameter(sources[0]);
         self.alloc_type_mapper(TypeMapper::Array(
             Box::new(ArrayTypeMapper { sources, targets }),
@@ -523,14 +523,14 @@ impl Checker {
         ))
     }
 
-    // Go: checker/mapper.go:182 newArrayToSingleTypeMapper
+    // Go: checker/mapper.go:225 newArrayToSingleTypeMapper
     #[inline(always)]
     pub fn new_array_to_single_type_mapper(
         &mut self,
         sources: &[TypeId],
         target: TypeId,
     ) -> MapperId {
-        // Go: checker/mapper.go:197 (*ArrayToSingleTypeMapper).MapsThisOnly
+        // Go: checker/mapper.go:240 (*ArrayToSingleTypeMapper).MapsThisOnly
         let maps_this_only = sources.len() == 1 && self.is_this_type_parameter(sources[0]);
         self.alloc_type_mapper(TypeMapper::ArrayToSingle(Box::new(
             ArrayToSingleTypeMapper {
@@ -541,13 +541,13 @@ impl Checker {
         )))
     }
 
-    // Go: checker/mapper.go:209 newDeferredTypeMapper
+    // Go: checker/mapper.go:252 newDeferredTypeMapper
     pub fn new_deferred_type_mapper(
         &mut self,
         sources: &[TypeId],
         targets: Vec<DeferredTypeFn>,
     ) -> MapperId {
-        // Go: checker/mapper.go:226 (*DeferredTypeMapper).MapsThisOnly
+        // Go: checker/mapper.go:269 (*DeferredTypeMapper).MapsThisOnly
         let maps_this_only = sources.len() == 1 && self.is_this_type_parameter(sources[0]);
         self.alloc_type_mapper(TypeMapper::Deferred(Box::new(DeferredTypeMapper {
             sources: sources.to_vec(),
@@ -556,27 +556,27 @@ impl Checker {
         })))
     }
 
-    // Go: checker/mapper.go:237 newFunctionTypeMapper
+    // Go: checker/mapper.go:280 newFunctionTypeMapper
     pub fn new_function_type_mapper(&mut self, fn_: TypeMapperFn) -> MapperId {
         self.alloc_type_mapper(TypeMapper::Function(Box::new(FunctionTypeMapper { fn_ })))
     }
 
-    // Go: checker/mapper.go:256 newMergedTypeMapper
+    // Go: checker/mapper.go:299 newMergedTypeMapper
     pub fn new_merged_type_mapper(&mut self, m1: MapperId, m2: MapperId) -> MapperId {
         self.alloc_type_mapper(TypeMapper::Merged(MergedTypeMapper { m1, m2 }))
     }
 
-    // Go: checker/mapper.go:281 newCompositeTypeMapper
+    // Go: checker/mapper.go:320 newCompositeTypeMapper
     pub fn new_composite_type_mapper(&mut self, m1: MapperId, m2: MapperId) -> MapperId {
         self.alloc_type_mapper(TypeMapper::Composite(CompositeTypeMapper { m1, m2 }))
     }
 
-    // Go: checker/mapper.go:307 newInferenceTypeMapper
+    // Go: checker/mapper.go:307 newInferenceTypeMapper (at fed0bf24149f; ts#64796 makes it initInferenceTypeMapper, checker/mapper.go:346)
     pub fn new_inference_type_mapper(&mut self, n: InferenceContextId, fixing: bool) -> MapperId {
         self.alloc_type_mapper(TypeMapper::Inference(InferenceTypeMapper { n, fixing }))
     }
 
-    // Go: checker/mapper.go:316 (*InferenceTypeMapper).Map
+    // Go: checker/mapper.go:354 (*InferenceTypeMapper).Map
     // PERF: out of line, so `mapper_map` makes only tail calls.
     #[inline(never)]
     fn inference_type_mapper_map(

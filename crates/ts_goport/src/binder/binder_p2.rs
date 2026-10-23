@@ -72,7 +72,7 @@ fn binder_is_external_or_common_js_module(b: &Binder) -> bool {
 }
 
 impl Binder {
-    // Go: ast/utilities.go:4226 IsImplicitlyExportedJSDocDeclaration
+    // Go: ast/utilities.go:4306 IsImplicitlyExportedJSDocDeclaration
     // PORT: while binding, the CommonJS indicator of the file is binder
     // state, so the Go `ast.IsExternalOrCommonJSModule(node.Parent)` test
     // reads it from the binder. The parent is always the file being bound.
