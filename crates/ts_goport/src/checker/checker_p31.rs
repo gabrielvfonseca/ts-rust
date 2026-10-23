@@ -707,21 +707,27 @@ impl Checker {
     }
 
     // Go: checker/checker.go:29027 markPropertyAliasReferenced
+    // PERF: aliasmark1n. Go tests `isPartOfImportEqualsModuleReference` (a
+    // walk to the root) before the `left` test. Both only read the AST and
+    // return with no effect, so the cheap `left` test goes first: `this.x`
+    // and the outer accesses of `a.b.c` skip the walk. Returns and effects
+    // are Go's for every input; `getResolvedSymbol` and the rest keep Go's
+    // order.
     pub fn mark_property_alias_referenced(
         &mut self,
         location: Node, /*PropertyAccessExpression | QualifiedName*/
         prop_symbol: SymbolId,
         parent_type: TypeId,
     ) {
-        if is_part_of_import_equals_module_reference(location) {
-            return;
-        }
         let left = if is_property_access_expression(location) {
             location.expression()
         } else {
             location.left()
         };
         if is_this_identifier(left) || !is_identifier(left) {
+            return;
+        }
+        if is_part_of_import_equals_module_reference(location) {
             return;
         }
         let parent_symbol = self.get_resolved_symbol(left);
