@@ -901,7 +901,7 @@ impl NewProgram {
     pub fn common_source_directory(&self) -> String {
         self.common_source_directory
             .get_or_init(|| {
-                let files = || -> Vec<String> {
+                let files = || -> Vec<&str> {
                     self.processed_files
                         .files
                         .iter()
@@ -911,10 +911,10 @@ impl NewProgram {
                             source_file_may_be_emitted(file, self, false, false)
                                 && !file.is_declaration_file
                         })
-                        .map(|file| file.file_name().to_string())
+                        .map(|file| file.file_name())
                         .collect()
                 };
-                let mut check = |source_files: &[String], root_directory: &str| -> bool {
+                let mut check = |source_files: &[&str], root_directory: &str| -> bool {
                     self.check_source_files_belong_to_path(source_files, root_directory)
                 };
                 get_common_source_directory(
@@ -1098,15 +1098,18 @@ impl NewProgram {
     // work). Same result and diagnostics.
     pub fn check_source_files_belong_to_path(
         &self,
-        source_files: &[String],
+        source_files: &[&str],
         root_directory: &str,
     ) -> bool {
         let mut all_files_belong_to_path = true;
-        // ts#64159 (program.go:1844): the file system's case sensitivity (N:
-        // the zero-value `comparePathsOptions`, case-insensitive).
-        let case_sensitivity = self.case_sensitivity();
+        // ts#64159 (program.go:1857): the file system's case sensitivity (N:
+        // the zero-value `comparePathsOptions`, case-insensitive), and Go's
+        // test on rooted paths (`CaseSensitivity.ContainsFilePath`): the
+        // root directory and the program file names are rooted and
+        // normalized.
+        let use_case_sensitive_file_names = self.use_case_sensitive_file_names();
         for file in source_files {
-            if !contains_path(root_directory, file, &case_sensitivity) {
+            if !contains_rooted_path(root_directory, file, use_case_sensitive_file_names) {
                 let absolute_source_file_path = get_canonical_file_name(
                     &get_normalized_absolute_path(file, &self.get_current_directory()),
                     self.use_case_sensitive_file_names(),
@@ -1117,7 +1120,7 @@ impl NewProgram {
                         file: Path(absolute_source_file_path),
                         diagnostic_reason: None,
                         message: diag::File_0_is_not_under_rootDir_1_rootDir_is_expected_to_contain_all_source_files,
-                        args: vec![file.clone(), root_directory.to_string()],
+                        args: vec![file.to_string(), root_directory.to_string()],
                     }),
                 }));
                 all_files_belong_to_path = false;

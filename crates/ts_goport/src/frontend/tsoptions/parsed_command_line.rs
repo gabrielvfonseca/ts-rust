@@ -616,7 +616,7 @@ impl ParsedCommandLine {
     // (`common_source_directory_unchecked` reads the value without them).
     pub fn common_source_directory(&self) -> &str {
         self.common_source_directory.get_or_init(|| {
-            let mut check = |source_files: &[String], root_directory: &str| -> bool {
+            let mut check = |source_files: &[&str], root_directory: &str| -> bool {
                 self.check_source_files_belong_to_path(source_files, root_directory)
             };
             get_common_source_directory(
@@ -650,7 +650,7 @@ impl ParsedCommandLine {
 
     // The `files` closure of Go CommonSourceDirectory
     // (tsoptions/parsedcommandline.go:190).
-    fn common_source_directory_files(&self) -> Vec<String> {
+    fn common_source_directory_files(&self) -> Vec<&str> {
         self.parsed_config
             .file_names
             .iter()
@@ -663,14 +663,14 @@ impl ParsedCommandLine {
                     && has_js_file_extension(file))
                     && !is_declaration_file_name(file)
             })
-            .cloned()
+            .map(String::as_str)
             .collect()
     }
 
     // Go: tsoptions/parsedcommandline.go:207 (*ParsedCommandLine).checkSourceFilesBelongToPath
     pub fn check_source_files_belong_to_path(
         &self,
-        source_files: &[String],
+        source_files: &[&str],
         root_directory: &str,
     ) -> bool {
         let mut all_files_belong_to_path = true;

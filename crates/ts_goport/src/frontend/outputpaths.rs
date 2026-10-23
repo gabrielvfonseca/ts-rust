@@ -510,7 +510,7 @@ pub fn get_build_info_file_name(options: &CompilerOptions, opts: &ComparePathsOp
 
 // Go: outputpaths/commonsourcedirectory.go:8 computeCommonSourceDirectoryOfFilenames
 fn compute_common_source_directory_of_filenames(
-    file_names: &[String],
+    file_names: &[impl AsRef<str>],
     current_directory: &str,
     use_case_sensitive_file_names: bool,
 ) -> String {
@@ -519,7 +519,7 @@ fn compute_common_source_directory_of_filenames(
     for source_file in file_names {
         // Each file contributes into common source file path
         let mut source_path_components =
-            get_normalized_path_components(source_file, current_directory);
+            get_normalized_path_components(source_file.as_ref(), current_directory);
 
         // The base file name is not part of the common directory path
         source_path_components.pop();
@@ -584,12 +584,14 @@ pub fn get_computed_common_source_directory(
 // Go: outputpaths/commonsourcedirectory.go:20 GetCommonSourceDirectory
 // PORT: Go `checkSourceFilesBelongToPath` is a nillable callback; its
 // result is unused.
-pub fn get_common_source_directory(
+// PERF (buildprog1): `files` borrows the names, as Go's slice of rooted
+// paths shares the strings: no copy of each name.
+pub fn get_common_source_directory<'a>(
     options: &CompilerOptions,
-    files: impl FnOnce() -> Vec<String>,
+    files: impl FnOnce() -> Vec<&'a str>,
     current_directory: &str,
     use_case_sensitive_file_names: bool,
-    check_source_files_belong_to_path: Option<&mut dyn FnMut(&[String], &str) -> bool>,
+    check_source_files_belong_to_path: Option<&mut dyn FnMut(&[&'a str], &str) -> bool>,
 ) -> String {
     let mut common_source_directory;
     if !options.root_dir.is_empty() {
