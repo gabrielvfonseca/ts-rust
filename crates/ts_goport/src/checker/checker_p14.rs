@@ -1987,3 +1987,210 @@ impl<'a> CheckFrames<'a> {
         None
     }
 }
+
+/// Issue #99: long chains of binary operators bind and check on a 1 MiB
+/// thread stack (a wasm host has about 1 MB), with Go's diagnostics. Go and
+/// the port before the binary frames recursed for each level: natively
+/// about 320 B (bind) and 540 B (check) for each level, so 20,000 levels
+/// needed 6 and 11 MB. Each test checks one file in a program of its own
+/// (`singleThreaded`, so the bind runs on the test's thread): after a
+/// TS2563, Go's checker skips flow analysis for the rest of its files. The
+/// expected text is the output of tsgo-oracle-3e9236361fa9
+/// (typescript@7.1.0-beta) on the same file and options, with
+/// `--pretty false`.
+#[cfg(test)]
+mod binary_chain_tests {
+    use super::*;
+
+    /// `n` terms `v`, with `special` terms at their indexes, joined by `op`.
+    fn chain(n: usize, op: &str, special: &[(usize, &str)]) -> String {
+        let mut terms = vec!["v"; n];
+        for &(index, term) in special {
+            terms[index] = term;
+        }
+        terms.join(op)
+    }
+
+    /// A 1 MiB thread stack.
+    const SMALL_STACK: usize = 1 << 20;
+
+    /// The diagnostics of `text` as file `name`, from a bind and a check on
+    /// a thread with a `stack`-byte stack, one line each as tsc prints them,
+    /// with the file name only.
+    fn check_on_a_stack(stack: usize, name: &'static str, text: String) -> Vec<String> {
+        static CALLS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let call = CALLS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let dir =
+            std::env::temp_dir().join(format!("ts_goport_stack99_{}_{call}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join(name), text).unwrap();
+        std::fs::write(
+            dir.join("tsconfig.json"),
+            format!(
+                r#"{{"compilerOptions":{{"strict":true,"types":[],"lib":["es5"],"target":"es2022","noEmit":true,"skipLibCheck":true,"singleThreaded":true}},"files":["{name}"]}}"#
+            ),
+        )
+        .unwrap();
+        let config = dir.join("tsconfig.json").to_string_lossy().into_owned();
+        let run = move || {
+            let program = crate::program::try_load_version(&config, |_| {})
+                .unwrap_or_else(|e| panic!("cannot load {config}: {e}"));
+            let scope = crate::core::enter_program(Some(program));
+            let file = program
+                .source_files()
+                .find(|file| file.info.file_name.ends_with(&format!("/{name}")))
+                .expect("the file is in the program")
+                .root;
+            let mut checker = Box::new(Checker::new(0));
+            let diagnostics = crate::program::sort_and_deduplicate_diagnostics(
+                crate::program::get_semantic_diagnostics_with_checker(
+                    &crate::gostd::context::background(),
+                    &mut checker,
+                    file,
+                ),
+            );
+            let lines: Vec<String> = diagnostics
+                .iter()
+                .map(|d| {
+                    let line = crate::program::format_diagnostic(d);
+                    let at = line.find(name).expect("the line names the file");
+                    line[at..].trim_end().to_string()
+                })
+                .collect();
+            drop(checker);
+            drop(scope);
+            crate::program::release_program(program);
+            lines
+        };
+        let lines = std::thread::Builder::new()
+            .name(format!("stack99-{name}"))
+            .stack_size(stack)
+            .spawn(run)
+            .unwrap()
+            .join()
+            .unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        lines
+    }
+
+    /// `declare const v: number;` then `export const <name> = <body>;` for
+    /// each statement.
+    fn module(statements: &[(String, String)]) -> String {
+        let mut text = String::from("declare const v: number;\n");
+        for (name, body) in statements {
+            text.push_str(&format!("export const {name} = {body};\n"));
+        }
+        text
+    }
+
+    /// `module` with one statement, `total`.
+    fn total(body: String) -> String {
+        module(&[("total".to_string(), body)])
+    }
+
+    const TS2563: &str = "error TS2563: The containing function or module body is too large for control flow analysis.";
+
+    #[test]
+    fn plus_chain_checks_on_a_small_stack() {
+        let text = total(chain(20_000, " + ", &[]));
+        assert_eq!(
+            check_on_a_stack(SMALL_STACK, "plus.ts", text),
+            Vec::<String>::new()
+        );
+    }
+
+    /// Calls as operands: the identifier `f` of a function gets no flow
+    /// analysis, so the stack holds only the bind and the check.
+    #[test]
+    fn logical_chains_check_on_a_small_stack() {
+        for (name, op) in [
+            ("and.ts", " && "),
+            ("or.ts", " || "),
+            ("nullish.ts", " ?? "),
+        ] {
+            let text = format!(
+                "declare function f(): number;\nexport const total = {};\n",
+                vec!["f()"; 20_000].join(op)
+            );
+            assert_eq!(
+                check_on_a_stack(SMALL_STACK, name, text),
+                Vec::<String>::new(),
+                "{name}"
+            );
+        }
+    }
+
+    /// References as operands, as in the issue. The flow analysis of each
+    /// `v` walks back through the condition of each `v` before it, by
+    /// recursion as in Go, up to Go's limit of 2000 (TS2563). That walk is
+    /// not in the binary frames: natively it needs about 650 B for each
+    /// level, about 1.3 MB at the limit. On 4 MiB the old bind (about 8.5
+    /// MB) overflowed.
+    #[test]
+    fn logical_chains_of_references_reach_the_flow_limit() {
+        for (name, op) in [
+            ("and.ts", " && "),
+            ("or.ts", " || "),
+            ("nullish.ts", " ?? "),
+        ] {
+            let text = total(chain(20_000, op, &[]));
+            assert_eq!(
+                check_on_a_stack(4 << 20, name, text),
+                [format!("{name}(1,1): {TS2563}")],
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn comma_chain_checks_on_a_small_stack() {
+        // One term on each line, as in the measurements: the error span of
+        // each Left starts at the first term.
+        let text = total(format!("({})", chain(20_000, ",\n", &[])));
+        let expected = vec![
+            "comma.ts(2,23): error TS2695: Left side of comma operator is unused and has no side effects.";
+            19_999
+        ];
+        assert_eq!(check_on_a_stack(SMALL_STACK, "comma.ts", text), expected);
+    }
+
+    /// The check's T1 probes (stack99 go-note-check.md): a `null` in each of
+    /// 4 chains gives a TS18050 for each, and 4 calls with one argument too
+    /// many in one chain give a TS2554 for each, at Go's positions.
+    #[test]
+    fn chain_diagnostics_keep_go_positions_on_a_small_stack() {
+        const N: usize = 5_000;
+        let marks = [2, N / 4, N / 2, N - 1];
+        let nulls: Vec<(String, String)> = marks
+            .iter()
+            .enumerate()
+            .map(|(i, &mark)| (format!("bad{i}"), chain(N, " + ", &[(mark, "null")])))
+            .collect();
+        let null = "error TS18050: The value 'null' cannot be used here.";
+        assert_eq!(
+            check_on_a_stack(SMALL_STACK, "null.ts", module(&nulls)),
+            [
+                format!("null.ts(2,29): {null}"),
+                format!("null.ts(3,5021): {null}"),
+                format!("null.ts(4,10021): {null}"),
+                format!("null.ts(5,20017): {null}"),
+            ]
+        );
+        let calls: Vec<(usize, &str)> =
+            marks.iter().map(|&mark| (mark, "Math.abs(v, 0)")).collect();
+        let arity = "error TS2554: Expected 1 arguments, but got 2.";
+        assert_eq!(
+            check_on_a_stack(
+                SMALL_STACK,
+                "call.ts",
+                module(&[("bad".to_string(), chain(N, " + ", &calls))])
+            ),
+            [
+                format!("call.ts(2,40): {arity}"),
+                format!("call.ts(2,5045): {arity}"),
+                format!("call.ts(2,10058): {arity}"),
+                format!("call.ts(2,20067): {arity}"),
+            ]
+        );
+    }
+}
