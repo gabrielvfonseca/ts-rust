@@ -1,4 +1,4 @@
-//! Go: execute/build/orchestrator.go:264-658, the watch part of the build
+//! Go: execute/build/orchestrator.go:473-863, the watch part of the build
 //! orchestrator (`Watch`, `updateWatch`, `resetCaches`,
 //! `checkTasksForEventChanges`, `computeDesiredWatches`, `DoCycle`), with
 //! `rangeTask` (orchestrator.go:917) for these callers, and
