@@ -35,7 +35,7 @@ impl Checker {
     // If the given type is an object or union type with a single signature, and if that signature has at
     // least as many parameters as the given function, return the signature. Otherwise return undefined.
     // Go: checker/checker.go:10533 getContextualCallSignature
-    // PERF: portonly1 item 6. Go `core.Filter` (checker.go:10538) returns
+    // PERF: portonly1 item 6. Go `core.Filter` (checker.go:10535) returns
     // the input slice when every element passes and copies only otherwise.
     // The port collected the passing signatures into a new Vec each call.
     pub fn get_contextual_call_signature(&mut self, t: TypeId, node: Node) -> SignatureId {

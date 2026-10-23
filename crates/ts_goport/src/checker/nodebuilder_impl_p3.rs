@@ -1846,8 +1846,8 @@ impl Checker {
     }
 
     // Go: checker/nodebuilderimpl.go:3173 typeReferenceToTypeNode
-    // Go N' nodebuilderimpl.go:3160: since ts#64556 the array and tuple part
-    // is `array_or_tuple_type_to_node`.
+    // Go nodebuilderimpl.go:3099 arrayOrTupleTypeToNode: since ts#64556 the array
+    // and tuple part is `array_or_tuple_type_to_node`.
     pub fn type_reference_to_type_node(
         &mut self,
         b: &Rc<RefCell<NodeBuilderImpl>>,

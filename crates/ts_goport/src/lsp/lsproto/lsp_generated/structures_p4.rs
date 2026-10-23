@@ -6701,7 +6701,7 @@ impl UnmarshalerFrom for ContentMapperManifest {
                     if dec.peek_kind() == b'n' {
                         return Err(err_null("outputExtensions"));
                     }
-                    json_unmarshal_decode(dec, &mut self.output_extensions)?;
+                    unmarshal_go_map(dec, &mut self.output_extensions, "map[string]string")?;
                 }
                 _ => {
                     dec.skip_value()?;
@@ -6786,7 +6786,7 @@ impl UnmarshalerFrom for InferredProjectContentMapperContribution {
                     if dec.peek_kind() == b'n' {
                         return Err(err_null("options"));
                     }
-                    json_unmarshal_decode(dec, &mut self.options)?;
+                    unmarshal_go_map(dec, &mut self.options, "map[string]interface {}")?;
                 }
                 b"\"manifest\"" => {
                     missing &= !MISSING_MANIFEST;
@@ -7534,7 +7534,7 @@ impl UnmarshalerFrom for ProjectInfoTelemetryEvent {
                     if dec.peek_kind() == b'n' {
                         return Err(err_null("properties"));
                     }
-                    json_unmarshal_decode(dec, &mut self.properties)?;
+                    unmarshal_go_map(dec, &mut self.properties, "map[string]string")?;
                 }
                 b"\"measurements\"" => {
                     missing &= !MISSING_MEASUREMENTS;

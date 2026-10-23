@@ -2472,7 +2472,7 @@ pub(crate) fn mode_for_import_usage(
 /// tells (Go `resolveImportsAndModuleAugmentations`: a JSDoc import of a TS
 /// file adds no file).
 // Go: fileloader.go (*fileLoader).resolveImportsAndModuleAugmentations, the
-// importIndex condition (pin fed0bf24149f: fileloader.go:917)
+// importIndex condition (fileloader.go:934)
 fn import_adds_file(import: Node) -> bool {
     is_in_js_file(import) || !import.flags().intersects(NodeFlags::JS_DOC)
 }

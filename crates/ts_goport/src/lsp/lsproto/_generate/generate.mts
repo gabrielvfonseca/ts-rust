@@ -2237,6 +2237,12 @@ function rustConstName(goName: string): string {
     return snakeCase(goName).toUpperCase();
 }
 
+// goReflectTypeName returns Go's reflect name of a generated Go type, as the v2
+// errors print it: `any` is `interface {}` and lsproto types get the package.
+function goReflectTypeName(name: string): string {
+    return name.replace(/\bany\b/g, "interface {}").replace(/\b[A-Z]\w*/g, t => `lsproto.${t}`);
+}
+
 // rustStr returns a Rust string literal for s.
 function rustStr(s: string): string {
     let r = '"';
@@ -3221,7 +3227,14 @@ function generateCode(): Map<string, string> {
                     writeLine(`                        return Err(err_null(${rustStr(prop.name)}));`);
                     writeLine(`                    }`);
                 }
-                writeLine(`                    json_unmarshal_decode(dec, &mut self.${rustFieldName(goFieldName(prop))})?;`);
+                if (resolvedType.name.startsWith("map[string]")) {
+                    // PORT: `IndexMap<String, V>` decodes as Go `collections.OrderedMap`; a Go
+                    // map field gets the v2 map arshaler's kind error (`unmarshal_go_map`).
+                    writeLine(`                    unmarshal_go_map(dec, &mut self.${rustFieldName(goFieldName(prop))}, ${rustStr(goReflectTypeName(resolvedType.name))})?;`);
+                }
+                else {
+                    writeLine(`                    json_unmarshal_decode(dec, &mut self.${rustFieldName(goFieldName(prop))})?;`);
+                }
                 writeLine(`                }`);
             }
 
