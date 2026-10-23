@@ -1,0 +1,2 @@
+# Patch bytes must stay exact (their sha256 is in the saved state): no eol conversion.
+*.patch -text
