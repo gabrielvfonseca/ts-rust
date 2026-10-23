@@ -622,7 +622,7 @@ fn test_get_normalized_absolute_path() {
     );
 }
 
-// Go: path_test.go:420 TestGetNormalizedAbsolutePathWithoutRoot (at 673a5f17d713; removed by
+// Go: path_test.go:436 TestGetNormalizedAbsolutePathWithoutRoot (at 673a5f17d713; removed by
 // ts#64159 with the function. The port keeps it.)
 #[test]
 fn test_get_normalized_absolute_path_without_root() {

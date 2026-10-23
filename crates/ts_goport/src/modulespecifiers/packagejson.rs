@@ -243,7 +243,7 @@ impl Fields {
     }
 }
 
-// Go: packagejson/packagejson.go:127 Parse
+// Go: packagejson/packagejson.go:128 Parse
 // PORT: `data` is the file's Go bytes. Go fails on invalid UTF-8 in a
 // string. Each string value is in the port form (see
 // `scanner_util::GO_STRING_MARKER`).

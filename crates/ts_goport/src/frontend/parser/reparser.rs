@@ -56,7 +56,7 @@ macro_rules! with_function_like_data {
     };
 }
 
-// Go: ast/ast.go:677 (m *MutableNode) SetType
+// Go: ast/ast.go:663 (m *MutableNode) SetType
 // PORT: only the kinds that the reparser writes. Go panics on other kinds.
 fn set_type(n: Node, t: Node) {
     let id = node_opt_child_id(n, t);
@@ -76,7 +76,7 @@ fn set_type(n: Node, t: Node) {
     });
 }
 
-// Go: ast/ast.go:387 (m *MutableNode) SetExpression
+// Go: ast/ast.go:373 (m *MutableNode) SetExpression
 // PORT: only the kinds that the reparser writes.
 fn set_expression(n: Node, expr: Node) {
     let id = node_child_id(n, expr);
@@ -91,7 +91,7 @@ fn set_expression(n: Node, expr: Node) {
     });
 }
 
-// Go: ast/ast.go:765 (m *MutableNode) SetInitializer
+// Go: ast/ast.go:751 (m *MutableNode) SetInitializer
 // PORT: only the kinds that the reparser writes.
 fn set_initializer(n: Node, initializer: Node) {
     let id = node_child_id(n, initializer);
@@ -103,7 +103,7 @@ fn set_initializer(n: Node, initializer: Node) {
     });
 }
 
-// Go: ast/ast.go:227 (m *MutableNode) SetModifiers
+// Go: ast/ast_generated.go:11904 (n *MutableNode) SetModifiers
 // PORT: only the kinds that the reparser writes.
 fn set_modifiers(n: Node, modifiers: ModifierList) {
     let mods = node_modifiers_value(n, modifiers);

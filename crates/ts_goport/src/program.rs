@@ -2819,7 +2819,7 @@ pub fn resolve_lazy_js_doc(file: Node, info: &SourceFileInfo, node: Node) -> &'s
     go_frontend::resolve_lazy_js_doc(file, info, node)
 }
 
-// Go: compiler/program.go:145 FileExists
+// Go: compiler/program.go:146 FileExists
 // Go: ls/autoimport/aliasresolver.go:174 FileExists (unimplemented)
 pub fn file_exists(path: &str) -> bool {
     alias_resolver_unimplemented();
@@ -2852,7 +2852,7 @@ pub fn uses_uri_style_node_core_modules() -> Tristate {
     Tristate::Unknown
 }
 
-// Go: compiler/program.go:214 GetProjectReferenceFromSource
+// Go: compiler/program.go:215 GetProjectReferenceFromSource
 // PORT: the Go frontend program has the port.
 pub fn get_project_reference_from_source(
     path: &str,
@@ -2862,7 +2862,7 @@ pub fn get_project_reference_from_source(
     with_go(|go| go.get_project_reference_from_source(path))
 }
 
-// Go: compiler/program.go:219 IsSourceFromProjectReference
+// Go: compiler/program.go:220 IsSourceFromProjectReference
 pub fn is_source_from_project_reference(path: &str) -> bool {
     // Go: ls/autoimport/aliasresolver.go:239 IsSourceFromProjectReference (unimplemented)
     alias_resolver_unimplemented();
@@ -4692,7 +4692,7 @@ fn collect_diagnostics(
     filter_and_sort_diagnostics(result)
 }
 
-// Go: compiler/program.go:719 collectCheckerDiagnostics
+// Go: compiler/program.go:724 collectCheckerDiagnostics
 /// Collects diagnostics for one file (or all files when `file` is nil) with
 /// the checker that owns each file. The bin uses this to guard each file.
 pub fn collect_checker_diagnostics_with(

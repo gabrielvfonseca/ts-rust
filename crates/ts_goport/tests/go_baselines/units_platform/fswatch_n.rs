@@ -707,7 +707,7 @@ fn test_recursive_subscribe_symlinked_directory_does_not_follow_descendant_symli
 
 // ----- watcher_test.go: consolidation ------------------------------------
 
-// Go: watcher_test.go:1530 countingWatcherImpl
+// Go: watcher_test.go:1559 countingWatcherImpl
 // PORT: Go also keeps the closed watches, which no test reads.
 struct CountingWatcherImpl {
     base: WatcherBase,
@@ -722,7 +722,7 @@ thread_local! {
         const { RefCell::new(None) };
 }
 
-// Go: watcher_test.go:1536 newCountingWatcherImpl
+// Go: watcher_test.go:1565 newCountingWatcherImpl
 fn new_counting_watcher_impl() -> Arc<dyn WatcherImpl> {
     let impl_ = Arc::new_cyclic(|self_: &Weak<CountingWatcherImpl>| {
         let b = CountingWatcherImpl {
@@ -792,7 +792,7 @@ fn assert_consolidated(dw: &DirWatch, parent: &str) {
     );
 }
 
-// Go: watcher_test.go:1557 TestFastRecursiveWatcherConsolidatesSiblingDirectories
+// Go: watcher_test.go:1586 TestFastRecursiveWatcherConsolidatesSiblingDirectories
 #[test]
 fn test_fast_recursive_watcher_consolidates_sibling_directories() {
     let (_tmp, root) = temp_dir();
@@ -827,7 +827,7 @@ fn test_fast_recursive_watcher_consolidates_sibling_directories() {
     );
 }
 
-// Go: watcher_test.go:1609 TestFastRecursiveWatcherDoesNotConsolidateSymlinkOutsideRoot
+// Go: watcher_test.go:1638 TestFastRecursiveWatcherDoesNotConsolidateSymlinkOutsideRoot
 #[test]
 fn test_fast_recursive_watcher_does_not_consolidate_symlink_outside_root() {
     let (_tmp, root) = temp_dir();
@@ -889,7 +889,7 @@ fn pnpm_layout(root: &str) -> (String, String) {
     (logical_parent, link)
 }
 
-// Go: watcher_test.go:1672 TestConsolidatedSymlinkChildMapsSharedLogicalPath
+// Go: watcher_test.go:1701 TestConsolidatedSymlinkChildMapsSharedLogicalPath
 #[test]
 fn test_consolidated_symlink_child_maps_shared_logical_path() {
     let (_tmp, root) = temp_dir();
@@ -923,7 +923,7 @@ fn test_consolidated_symlink_child_maps_shared_logical_path() {
     assert_eq!(got.path, want, "mapEvent path");
 }
 
-// Go: watcher_test.go:1699 TestConsolidatedSymlinkChildTerminatesFromSharedLogicalPath
+// Go: watcher_test.go:1728 TestConsolidatedSymlinkChildTerminatesFromSharedLogicalPath
 #[test]
 fn test_consolidated_symlink_child_terminates_from_shared_logical_path() {
     let (_tmp, root) = temp_dir();
@@ -953,7 +953,7 @@ fn test_consolidated_symlink_child_terminates_from_shared_logical_path() {
     }
 }
 
-// Go: watcher_test.go:1728 TestConsolidatedChildWatchFiltersAgainstRequestedDir
+// Go: watcher_test.go:1757 TestConsolidatedChildWatchFiltersAgainstRequestedDir
 #[test]
 fn test_consolidated_child_watch_filters_against_requested_dir() {
     let (_tmp, tmp) = temp_dir();
@@ -984,7 +984,7 @@ fn test_consolidated_child_watch_filters_against_requested_dir() {
     );
 }
 
-// Go: watcher_test.go:1767 TestConsolidatedChildWatchIgnoresEventsBeforeSubscribe
+// Go: watcher_test.go:1796 TestConsolidatedChildWatchIgnoresEventsBeforeSubscribe
 #[test]
 fn test_consolidated_child_watch_ignores_events_before_subscribe() {
     let (_tmp, tmp) = temp_dir();
@@ -1001,7 +1001,7 @@ fn test_consolidated_child_watch_ignores_events_before_subscribe() {
     assert_event_sequence(&collected(&got), &[(EventKind::Delete, child)]);
 }
 
-// Go: watcher_test.go:1788 TestRecursiveWatchWithIgnoreDoesNotFilterByLogicalRoot
+// Go: watcher_test.go:1817 TestRecursiveWatchWithIgnoreDoesNotFilterByLogicalRoot
 #[test]
 fn test_recursive_watch_with_ignore_does_not_filter_by_logical_root() {
     let (_tmp, tmp) = temp_dir();
