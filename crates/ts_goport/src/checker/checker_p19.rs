@@ -33,6 +33,14 @@ impl Checker {
             match name.kind() {
                 SyntaxKind::ObjectBindingPattern => {
                     if self.is_object_literal_type(t) {
+<<<<<<< HEAD
+=======
+                        if contextual_type.is_some()
+                            && !self.get_properties_of_object_type(contextual_type).is_empty()
+                        {
+                            return contextual_type;
+                        }
+>>>>>>> f9622b6c8 (fix(checker): use contextual type for destructured param with default)
                         return self.pad_object_literal_type(t, name);
                     }
                 }
